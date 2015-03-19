@@ -1,5 +1,7 @@
 # **Blender Maxwell Render integration addon**
 
+![teaser](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr2.jpg)
+
 ### features:
 
 * UI as close to Maxwell Studio as possible
