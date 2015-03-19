@@ -4,7 +4,7 @@
 
 ### important notice:
 
-* currently it works on Mac OS X only
+* **currently it works only on Mac OS X**
 * it might work with a little effort on Linux, this is currently on TODO list
 * Windows support is planned in the not so distant future, as time allows and some windows machine appears in my neighbourhood..
 
