@@ -26,7 +26,7 @@
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```render_maxwell``` and put to ```~/Library/Application Support/Blender/2.74/scripts/addons/```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
-![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.jpg)
+![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
 
 ***
 
