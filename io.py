@@ -1379,7 +1379,15 @@ class MXSExport():
                 d['parent'] = ob.parent.name
             
             # d = self._object_transform(ob, d)
-            b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+            # b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+            if(ob.parent_type == 'BONE'):
+                oamw = ob.matrix_world.copy()
+                apmw = ob.parent.matrix_world.copy()
+                apmw.invert()
+                amw = apmw * oamw
+                b, p = self._matrix_to_base_and_pivot(amw)
+            else:
+                b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
             d['base'] = b
             d['pivot'] = p
             
@@ -1462,7 +1470,16 @@ class MXSExport():
             d['parent'] = ob.parent.name
         
         # d = self._object_transform(ob, d)
-        b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+        # b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+        if(ob.parent_type == 'BONE'):
+            oamw = ob.matrix_world.copy()
+            apmw = ob.parent.matrix_world.copy()
+            apmw.invert()
+            amw = apmw * oamw
+            b, p = self._matrix_to_base_and_pivot(amw)
+        else:
+            b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+        
         d['base'] = b
         d['pivot'] = p
         
@@ -1594,7 +1611,16 @@ class MXSExport():
             # anyway, use matrix_world and everything will be ok..
             
             # d = self._object_transform(ob, d)
-            b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+            # b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+            if(ob.parent_type == 'BONE'):
+                oamw = ob.matrix_world.copy()
+                apmw = ob.parent.matrix_world.copy()
+                apmw.invert()
+                amw = apmw * oamw
+                b, p = self._matrix_to_base_and_pivot(amw)
+            else:
+                b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+            
             d['base'] = b
             d['pivot'] = p
             
