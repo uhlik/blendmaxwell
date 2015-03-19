@@ -20,15 +20,15 @@
 * Maxwell Particles with Realflow .bin, currently without animation support
 * Wireframe scene export (all edges are converted to instanced cylinder of user defined radius)
 
-### installation Mac OS X:
+![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
+
+### installation - Mac OS X:
 
 * Download Maxwell Render 3.1.0 from [http://maxwellrender.com/](http://maxwellrender.com/) and install to ```/Applications```
 * Download python 3.4.1 from [https://www.python.org/downloads/release/python-341/](https://www.python.org/downloads/release/python-341/) and install
 * Copy ```_pymaxwell.so``` and ```pymaxwell.py``` from ```/Applications/Maxwell 3/Libs/pymaxwell/python3.4/``` to ```/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/```
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```render_maxwell``` and put to ```~/Library/Application Support/Blender/2.74/scripts/addons/```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
-
-![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
 
 ***
 
