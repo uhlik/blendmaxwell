@@ -1,0 +1,96 @@
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
+import os
+import re
+import logging
+
+
+LOG_FILE_PATH = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log.txt'))
+with open(LOG_FILE_PATH, 'w', encoding='utf-8', ):
+    # clear log file..
+    pass
+
+LOG_CONVERT = re.compile("\033\[[0-9;]+m")
+LEVEL = logging.NOTSET
+
+
+class LogFileFormatter(logging.Formatter):
+    def format(self, record):
+        return re.sub(LOG_CONVERT, '', record.msg)
+
+
+logger = logging.getLogger("Maxwell Render")
+logger.setLevel(LEVEL)
+logger.propagate = False
+fh = logging.FileHandler(LOG_FILE_PATH)
+fh.setLevel(LEVEL)
+ch = logging.StreamHandler()
+ch.setLevel(LEVEL)
+ch.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
+fh.setFormatter(LogFileFormatter())
+if(len(logger.handlers) == 0):
+    # "Reload scripts" (F8) causes handlers to be added again and duplicates output.. this fixes it
+    logger.addHandler(ch)
+    logger.addHandler(fh)
+
+
+class LogStyles:
+    NORMAL = "\033[40m\033[32m"
+    HEADER = "\033[46m\033[30m"
+    MESSAGE = "\033[42m\033[30m"
+    WARNING = "\033[43m\033[1;30m"
+    ERROR = "\033[41m\033[1;30m"
+    END = "\033[0m"
+    EOL = "\n"
+
+
+def log(msg="", indent=0, style=LogStyles.NORMAL, instance=None, prefix="> ", ):
+    if(instance is None):
+        inst = ""
+    else:
+        cn = instance.__class__.__name__
+        cl = cn.split(".")
+        inst = "{0}: ".format(cl[-1])
+    
+    m = "{0}{1}{2}{3}{4}{5}".format("    " * indent, style, prefix, inst, msg, LogStyles.END)
+    
+    # print(m)
+    logger.info(m)
+
+
+def log_args(locals, self, header="arguments: ", indent=1, style=LogStyles.NORMAL, prefix="> ", ):
+    import inspect
+    l = dict([(k, v) for k, v in locals.items() if v != self and k != '__class__'])
+    f = [i for i in inspect.getfullargspec(self.__init__).args if i != 'self']
+    t = "    "
+    s = " "
+    hl = 0
+    for i in f:
+        if(len(i) > hl):
+            hl = len(i)
+    # hl += 1
+    vs = ["{0}: {1}".format(i.ljust(hl, s), l[i]) for i in f]
+    for i, v in enumerate(vs):
+        if(i == 0):
+            vs[i] = "{0}{1}\n".format(header, v)
+        elif(i == len(vs) - 1):
+            vs[i] = "{0}{1}{2}{3}".format(t * indent, s * len(prefix), s * len(header), v)
+        else:
+            vs[i] = "{0}{1}{2}{3}\n".format(t * indent, s * len(prefix), s * len(header), v)
+    log("".join(vs), indent, style, None, prefix, )
