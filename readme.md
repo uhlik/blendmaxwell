@@ -2,6 +2,12 @@
 
 ![teaser](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr2.jpg)
 
+### important notice:
+
+* currently it works on Mac OS X only
+* it might work with a little effort on Linux, this is currently on TODO list
+* Windows support is planned in the not so distant future, as time allows and some windows machine appears in my neighbourhood..
+
 ### features:
 
 * UI as close to Maxwell Studio as possible
