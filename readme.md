@@ -1,4 +1,4 @@
-# **Blender Maxwell Render integration addon**
+# **Blender Maxwell Render integration**
 
 ![teaser](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr2.jpg)
 
