@@ -1,4 +1,4 @@
-# **Blender Maxwell Render integration**
+# **Maxwell Render integration for Blender**
 
 ![teaser](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr2.jpg)
 
