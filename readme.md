@@ -10,6 +10,7 @@
 
 ### features:
 
+* compatible with Maxwell Render 3.1.0.0
 * UI as close to Maxwell Studio as possible
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
