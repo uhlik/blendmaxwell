@@ -673,13 +673,14 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
         o = context.camera
         r = context.scene.render
         
-        r = l.row(align=True)
-        r.operator('maxwell_render.auto_focus', "Auto Focus")
+        l.operator('maxwell_render.auto_focus', "Auto Focus")
         
-        # r = l.row()
+        cam = context.camera
+        l.prop(o, 'dof_object')
+        
+        r = l.row()
+        r.enabled = cam.dof_object is None
         r.prop(o, 'dof_distance')
-        # r.enabled = False
-        # l.prop(o, 'dof_object')
         
         l.prop(m, 'lens')
         r = l.row()
