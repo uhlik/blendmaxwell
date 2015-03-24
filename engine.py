@@ -33,6 +33,29 @@ class MaxwellRenderExportEngine(RenderEngine):
     bl_use_preview = True
     
     def render(self, scene):
+        m = scene.maxwell_render
+        bp = bpy.path.abspath(bpy.context.blend_data.filepath)
+        if(bp == ""):
+            self.report({'ERROR'}, "Save file first.")
+            return
+        
+        cams = [o for o in scene.objects if o.type == 'CAMERA']
+        if(len(cams) == 0):
+            self.report({'ERROR'}, "No Camera found in scene.")
+            return
+        
+        ed = bpy.path.abspath(m.export_output_directory)
+        h, t = os.path.split(bp)
+        n, e = os.path.splitext(t)
+        p = os.path.join(ed, "{}.mxs".format(n))
+        
+        if(not m.export_overwrite and os.path.exists(p)):
+            if(m.exporting_animation_now):
+                m.exporting_animation_now = False
+                m.exporting_animation_frame_number = 1
+            self.report({'ERROR'}, "Scene file already exist in Output directory.")
+            return
+        
         s = scene.render.resolution_percentage / 100.0
         self.size_x = int(scene.render.resolution_x * s)
         self.size_y = int(scene.render.resolution_y * s)
