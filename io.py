@@ -567,6 +567,24 @@ class MXSExport():
         # print("-" * 100)
         # raise Exception()
         
+        # find instances without base and change first one to base, quick and dirty..
+        # this case happens when object (by name chosen as base) is on hidden layer and marked to be not exported
+        # also, hope this is the last change of this nasty piece of code..
+        def find_base_object_name(mnm):
+            for bo in self.bases:
+                if(bo['mesh'].name == mnm):
+                    return bo['object'].name
+        
+        bdb = {}
+        for o in self.instances:
+            if(find_base_object_name(o['mesh'].name) is None):
+                o['export_type'] = 'BASE_INSTANCE'
+                self.bases.append(o)
+                self.instances.remove(o)
+        
+        # ----------------------------------------------------------------------------------
+        # everything above this line is pure magic, below is just standard code
+        
         return h
     
     def _scene_properties(self):
