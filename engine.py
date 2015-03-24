@@ -94,13 +94,14 @@ class MaxwellRenderExportEngine(RenderEngine):
             if(m.export_log_open):
                 import platform
                 import subprocess
+                import shlex
                 pl = platform.system()
                 if(pl == 'Darwin'):
-                    os.system("open {}".format(LOG_FILE_PATH))
+                    os.system("open {}".format(shlex.quote(LOG_FILE_PATH)))
                 elif(pl == 'Linux'):
-                    subprocess.call(["xdg-open", LOG_FILE_PATH])
+                    subprocess.call(["xdg-open", shlex.quote(LOG_FILE_PATH)])
                 elif(pl == 'Windows'):
-                    os.system("start {}".format(LOG_FILE_PATH))
+                    os.system("start {}".format(shlex.quote(LOG_FILE_PATH)))
                 else:
                     pass
         
