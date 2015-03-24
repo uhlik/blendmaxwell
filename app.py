@@ -53,18 +53,14 @@ def _open_in_application(application, file_path):
     path = os.path.realpath(file_path)
     s = platform.system()
     if(s == 'Darwin'):
-        app = shlex.quote(application)
-        command_line = 'open -a {0} {1}'.format(app, path)
+        command_line = 'open -a {0} {1}'.format(shlex.quote(application), shlex.quote(path))
         args = shlex.split(command_line)
         p = subprocess.Popen(args)
     elif(s == 'Linux'):
         # subprocess.Popen(['xdg-open', d], )
-        
-        app = shlex.quote(application)
-        command_line = 'nohup {0} {1}'.format(app, path)
+        command_line = 'nohup {0} {1}'.format(shlex.quote(application), shlex.quote(path))
         args = shlex.split(command_line)
         p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-        
     elif(s == 'Windows'):
         # os.startfile(os.path.normpath(d))
         pass
