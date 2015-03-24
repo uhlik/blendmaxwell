@@ -1811,9 +1811,7 @@ class MXSExport():
             f.write(code)
         
         s = platform.system()
-        # if(s == 'Darwin'):
         if(s == 'Darwin' or s == 'Linux'):
-            
             switches = ''
             if(append):
                 switches += '-a'
@@ -1831,19 +1829,25 @@ class MXSExport():
                 switches += '-w'
         
             if(switches != ''):
-                command_line = "{0} {1} {2} {3} {4} {5}".format(self.PY, self.script_path, switches, LOG_FILE_PATH, self.scene_data_path, self.mxs_path, )
+                command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(self.PY),
+                                                                shlex.quote(self.script_path),
+                                                                switches,
+                                                                shlex.quote(LOG_FILE_PATH),
+                                                                shlex.quote(self.scene_data_path),
+                                                                shlex.quote(self.mxs_path), )
             else:
-                command_line = "{0} {1} {2} {3} {4}".format(self.PY, self.script_path, LOG_FILE_PATH, self.scene_data_path, self.mxs_path, )
-        
+                command_line = "{0} {1} {2} {3} {4}".format(shlex.quote(self.PY),
+                                                            shlex.quote(self.script_path),
+                                                            shlex.quote(LOG_FILE_PATH),
+                                                            shlex.quote(self.scene_data_path),
+                                                            shlex.quote(self.mxs_path), )
+            
             log("command:", 2)
             log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
             args = shlex.split(command_line, )
             o = subprocess.call(args, )
             if(o != 0):
                 log("error in {0}".format(self.script_path), 0, LogStyles.ERROR, )
-            
-        # elif(s == 'Linux'):
-            
         elif(s == 'Windows'):
             pass
         else:
