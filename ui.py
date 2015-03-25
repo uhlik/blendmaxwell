@@ -295,12 +295,12 @@ class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
         s = l.split()
         c = s.column()
         c.prop(scene, "layers", text="Viewport Layers")
-        if(m.render_use_layers == 'RENDER'):
-            c.enabled = False
+        # if(m.render_use_layers == 'RENDER'):
+        #     c.enabled = False
         c = s.column()
         c.prop(rl, "layers", text="Render Layers")
-        if(m.render_use_layers == 'VIEWPORT'):
-            c.enabled = False
+        # if(m.render_use_layers == 'VIEWPORT'):
+        #     c.enabled = False
 
 
 class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
