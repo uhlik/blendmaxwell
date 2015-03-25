@@ -45,6 +45,15 @@ changelog:
 
 ***
 
+links:
+
+[blenderartist.org thread](http://blenderartists.org/forum/showthread.php?366067-Maxwell-Render-integration-for-Blender-%28different-one%29)
+
+[maxwellrender.com/forum thread](http://www.maxwellrender.com/forum/viewtopic.php?f=138&t=43385)
+
+
+***
+
 footnotes:
 
 * Maxwell Render python bindings, "pymaxwell", provided by Next Limit is not compatible with python used in Blender. It can't be loaded directly and this is why separate python 3 installation is needed and exporting is done in two steps. What happens internally is, blender scene is serialized to JSON and custom binary mesh format to temporary directory together with extra python script which is then run with system python and creates Maxwell scene file using pymaxwell. It's a bit slower, but what is a few minutes extra in unbiased rendering anyway..
