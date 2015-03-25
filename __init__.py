@@ -39,7 +39,7 @@ if "bpy" in locals():
     imp.reload(props)
     imp.reload(ops)
     imp.reload(ui)
-    imp.reload(io)
+    imp.reload(export)
 else:
     from . import log
     from . import progress
