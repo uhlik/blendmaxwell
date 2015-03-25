@@ -21,7 +21,7 @@ import os
 import bpy
 from bpy.types import RenderEngine
 
-from .log import LOG_FILE_PATH
+from .log import log, LOG_FILE_PATH
 from . import progress
 from . import app
 from . import export
@@ -33,44 +33,59 @@ class MaxwellRenderExportEngine(RenderEngine):
     bl_use_preview = True
     
     def render(self, scene):
-        m = scene.maxwell_render
-        bp = bpy.path.abspath(bpy.context.blend_data.filepath)
-        if(bp == ""):
-            self.report({'ERROR'}, "Save file first.")
-            return
+        try:
+            m = scene.maxwell_render
+            bp = bpy.path.abspath(bpy.context.blend_data.filepath)
+            if(bp == ""):
+                self.report({'ERROR'}, "Save file first.")
+                return
+            
+            cams = [o for o in scene.objects if o.type == 'CAMERA']
+            if(len(cams) == 0):
+                self.report({'ERROR'}, "No Camera found in scene.")
+                return
+            
+            ed = bpy.path.abspath(m.export_output_directory)
+            h, t = os.path.split(bp)
+            n, e = os.path.splitext(t)
+            p = os.path.join(ed, "{}.mxs".format(n))
+            
+            if(not os.path.exists(ed)):
+                self.report({'ERROR'}, "Export directory does not exist.")
+                return
+            
+            if(not os.access(ed, os.W_OK)):
+                self.report({'ERROR'}, "Export directory is not writeable.")
+                return
+            
+            if(not m.export_overwrite and os.path.exists(p)):
+                if(m.exporting_animation_now):
+                    m.exporting_animation_now = False
+                    m.exporting_animation_frame_number = 1
+                self.report({'ERROR'}, "Scene file already exist in Output directory.")
+                return
+            
+            s = scene.render.resolution_percentage / 100.0
+            self.size_x = int(scene.render.resolution_x * s)
+            self.size_y = int(scene.render.resolution_y * s)
+            if(scene.name == 'preview'):
+                pass
+            else:
+                self.render_scene(scene)
         
-        cams = [o for o in scene.objects if o.type == 'CAMERA']
-        if(len(cams) == 0):
-            self.report({'ERROR'}, "No Camera found in scene.")
-            return
-        
-        ed = bpy.path.abspath(m.export_output_directory)
-        h, t = os.path.split(bp)
-        n, e = os.path.splitext(t)
-        p = os.path.join(ed, "{}.mxs".format(n))
-        
-        if(not os.path.exists(ed)):
-            self.report({'ERROR'}, "Export directory does not exist.")
-            return
-    
-        if(not os.access(ed, os.W_OK)):
-            self.report({'ERROR'}, "Export directory is not writeable.")
-            return
-        
-        if(not m.export_overwrite and os.path.exists(p)):
-            if(m.exporting_animation_now):
-                m.exporting_animation_now = False
-                m.exporting_animation_frame_number = 1
-            self.report({'ERROR'}, "Scene file already exist in Output directory.")
-            return
-        
-        s = scene.render.resolution_percentage / 100.0
-        self.size_x = int(scene.render.resolution_x * s)
-        self.size_y = int(scene.render.resolution_y * s)
-        if(scene.name == 'preview'):
-            pass
-        else:
-            self.render_scene(scene)
+        except Exception as ex:
+            import traceback
+            m = traceback.format_exc()
+            log(m)
+            
+            # import sys
+            # import traceback
+            # exc_type, exc_value, exc_traceback = sys.exc_info()
+            # lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            # log("".join(lines))
+            
+            # self.report({'ERROR'}, '{}'.format(ex))
+            self.report({'ERROR'}, m)
     
     def render_scene(self, scene):
         progress.set_default_progress_reporting(progress.PROGRESS_BAR)
