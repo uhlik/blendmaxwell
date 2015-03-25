@@ -1,0 +1,15 @@
+
+softTabs        = true
+tabSize         = 4
+scmStatus       = true
+
+TM_PYTHON       = "/usr/local/bin/python3"
+TM_GIT          = "/usr/local/git/bin/git"
+
+excludeInFolderSearch = "{$excludeInFolderSearch,__pycache__}"
+excludeInBrowser = "{$excludeInBrowser,__pycache__,.tm_properties}"
+# excludeInBrowser = "{$excludeInBrowser}"
+excludeInFileChooser = "{$excludeInFileChooser,__pycache__,*.{c,so},.tm_properties}"
+excludeFilesInBrowser = "{$excludeFilesInBrowser,*.{c,so},.tm_properties}"
+# includeInBrowser = "{$includeInBrowser}"
+# includeInFileChooser = "{$includeInFileChooser}"
