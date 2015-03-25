@@ -53,6 +53,14 @@ class RenderExport(Operator):
         n, e = os.path.splitext(t)
         p = os.path.join(ed, "{}.mxs".format(n))
         
+        if(not os.path.exists(ed)):
+            self.report({'ERROR'}, "Export directory does not exist.")
+            return
+    
+        if(not os.access(ed, os.W_OK)):
+            self.report({'ERROR'}, "Export directory is not writeable.")
+            return
+        
         if(not m.export_overwrite and os.path.exists(p)):
             self.report({'ERROR'}, "Scene file already exist in Output directory.")
             return {'CANCELLED'}
@@ -90,6 +98,14 @@ class AnimationExport(Operator):
             h, t = os.path.split(bp)
             n, e = os.path.splitext(t)
             p = os.path.join(ed, "{0}_{1:06d}.mxs".format(n, frame))
+            
+            if(not os.path.exists(ed)):
+                self.report({'ERROR'}, "Export directory does not exist.")
+                return
+        
+            if(not os.access(ed, os.W_OK)):
+                self.report({'ERROR'}, "Export directory is not writeable.")
+                return
             
             if(not m.export_overwrite and os.path.exists(p)):
                 m.exporting_animation_now = False
