@@ -340,8 +340,14 @@ def mesh(d, s):
             mat = material_placeholder(s)
         else:
             mat = material(d['materials'][0][1], s, d['materials'][0][0])
-        for t, ma in m['f_setTriangleMaterial']:
-            o.setTriangleMaterial(t, mat)
+        # # this is causing error: Object [...] is not an emitter but has triangles with an emitter material applied to it
+        # # details here: http://support.nextlimit.com/display/knfaq/Render+error+messages
+        # # what is probably happening is, if setTriangleMaterial is used even with the same material on all triangles
+        # # somewhere it is flagged as multi material mesh..
+        # for t, ma in m['f_setTriangleMaterial']:
+        #     o.setTriangleMaterial(t, mat)
+        # # fix
+        o.setMaterial(mat)
     else:
         # no material
         pass
