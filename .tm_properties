@@ -3,7 +3,7 @@ softTabs        = true
 tabSize         = 4
 scmStatus       = true
 
-TM_PYTHON       = "/usr/local/bin/python3"
+TM_PYTHON       = "/Library/Frameworks/Python.framework/Versions/3.4/bin/python3"
 TM_GIT          = "/usr/local/git/bin/git"
 
 excludeInFolderSearch = "{$excludeInFolderSearch,__pycache__}"
