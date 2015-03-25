@@ -247,14 +247,21 @@ class MXSExport():
         so = sort_objects()
         
         # visibility
+        mx = self.context.scene.maxwell_render
         layers = self.context.scene.layers
+        render_layers = self.context.scene.render.layers.active.layers
         
         def check_visibility(o):
             """Objects which are in visible layers and have hide_render: False are considered visible,
                objects which are only hidden from viewport are renderable, therefore visible."""
-            for i, l in enumerate(o.layers):
-                if(layers[i] is True and l is True and o.hide_render is False):
-                    return True
+            if(mx.render_use_layers == 'RENDER'):
+                for i, l in enumerate(o.layers):
+                    if(render_layers[i] is True and l is True and o.hide_render is False):
+                        return True
+            else:
+                for i, l in enumerate(o.layers):
+                    if(layers[i] is True and l is True and o.hide_render is False):
+                        return True
             return False
         
         # export type

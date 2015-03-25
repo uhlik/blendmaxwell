@@ -278,6 +278,31 @@ class IllumCausticsOptionsPanel(RenderButtonsPanel, Panel):
         l.prop(m, 'illum_caustics_refr_caustics')
 
 
+class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Layer"
+    
+    def draw(self, context):
+        l = self.layout
+        m = context.scene.maxwell_render
+        
+        l.prop(m, "render_use_layers")
+        
+        scene = context.scene
+        rd = scene.render
+        rl = rd.layers.active
+        
+        s = l.split()
+        c = s.column()
+        c.prop(scene, "layers", text="Viewport Layers")
+        if(m.render_use_layers == 'RENDER'):
+            c.enabled = False
+        c = s.column()
+        c.prop(rl, "layers", text="Render Layers")
+        if(m.render_use_layers == 'VIEWPORT'):
+            c.enabled = False
+
+
 class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Channels"
