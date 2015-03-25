@@ -24,7 +24,7 @@ from bpy.types import RenderEngine
 from .log import LOG_FILE_PATH
 from . import progress
 from . import app
-from . import io
+from . import export
 
 
 class MaxwellRenderExportEngine(RenderEngine):
@@ -101,13 +101,13 @@ class MaxwellRenderExportEngine(RenderEngine):
                  'wire_mat': wire_mat,
                  'clay_mat': clay_mat,
                  'keep_intermediates': m.export_keep_intermediates, }
-            ex = io.MXSExportWireframe(**d)
+            ex = export.MXSExportWireframe(**d)
         else:
             d = {'context': bpy.context,
                  'mxs_path': p,
                  'use_instances': m.export_use_instances,
                  'keep_intermediates': m.export_keep_intermediates, }
-            ex = io.MXSExport(**d)
+            ex = export.MXSExport(**d)
         
         if((m.exporting_animation_now and scene.frame_current == scene.frame_end) or not m.exporting_animation_now):
             ls = []

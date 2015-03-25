@@ -50,7 +50,7 @@ else:
     from . import props
     from . import ops
     from . import ui
-    from . import io
+    from . import export
 
 
 import os
