@@ -72,7 +72,8 @@ class MaxwellRenderPreferences(bpy.types.AddonPreferences):
 
 
 def get_selected_panels():
-    l = ['DATA_PT_camera_display', 'bl_ui.properties_data_mesh', 'bl_ui.properties_particle', 'bl_ui.properties_render_layer', ]
+    l = ['DATA_PT_camera_display', 'bl_ui.properties_data_mesh', 'bl_ui.properties_particle',
+         'bl_ui.properties_render_layer', 'bl_ui.properties_texture', ]
     e = ['DATA_PT_normals', 'DATA_PT_texture_space', 'DATA_PT_customdata', 'DATA_PT_custom_props_mesh',
          'RENDERLAYER_PT_layer_options', 'RENDERLAYER_PT_layer_passes', 'RENDERLAYER_UL_renderlayers', ]
     a = get_all_panels()
