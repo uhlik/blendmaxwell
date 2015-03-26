@@ -17,14 +17,22 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import os
+import shlex
+import subprocess
+import platform
 
 import bpy
-from bpy.props import BoolProperty, StringProperty
+from bpy.props import BoolProperty, StringProperty, EnumProperty
 from bpy.types import Operator
 from mathutils import Vector
 
-from . import app
 from . import maths
+
+
+def prefs():
+    a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
+    p = bpy.context.user_preferences.addons[a].preferences
+    return p
 
 
 class RenderExport(Operator):
@@ -55,11 +63,11 @@ class RenderExport(Operator):
         
         if(not os.path.exists(ed)):
             self.report({'ERROR'}, "Export directory does not exist.")
-            return
+            return {'CANCELLED'}
     
         if(not os.access(ed, os.W_OK)):
             self.report({'ERROR'}, "Export directory is not writeable.")
-            return
+            return {'CANCELLED'}
         
         if(not m.export_overwrite and os.path.exists(p)):
             self.report({'ERROR'}, "Scene file already exist in Output directory.")
@@ -101,11 +109,11 @@ class AnimationExport(Operator):
             
             if(not os.path.exists(ed)):
                 self.report({'ERROR'}, "Export directory does not exist.")
-                return
-        
+                return {'CANCELLED'}
+            
             if(not os.access(ed, os.W_OK)):
                 self.report({'ERROR'}, "Export directory is not writeable.")
-                return
+                return {'CANCELLED'}
             
             if(not m.export_overwrite and os.path.exists(p)):
                 m.exporting_animation_now = False
@@ -288,7 +296,47 @@ class CreateMaterial(Operator):
         return change_ext
     
     def execute(self, context):
-        app.create_mxm_in_mxed(bpy.path.abspath(self.filepath))
+        p = os.path.abspath(bpy.path.abspath(self.filepath))
+        
+        if(p == ""):
+            self.report({'ERROR'}, "Filepath is empty")
+            return {'CANCELLED'}
+        if(os.path.isdir(p)):
+            self.report({'ERROR'}, "Filepath is directory")
+            return {'CANCELLED'}
+        
+        h, t = os.path.split(p)
+        n, e = os.path.splitext(t)
+        if(e.lower() != ".mxm"):
+            self.report({'ERROR'}, "Extension is not .mxm")
+            return {'CANCELLED'}
+        
+        if(not os.path.exists(os.path.dirname(p))):
+            self.report({'ERROR'}, "Directory does not exist")
+            return {'CANCELLED'}
+        
+        if(not os.access(os.path.dirname(p), os.W_OK)):
+            self.report({'ERROR'}, "Directory is not writeable")
+            return {'CANCELLED'}
+        
+        s = platform.system()
+        if(s == 'Darwin'):
+            app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Mxed.app', 'Contents', 'MacOS', 'Mxed', )))
+            command_line = "{0} -new:'{1}'".format(app, p, )
+            args = shlex.split(command_line, )
+            process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
+        elif(s == 'Linux'):
+            # app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'mxed', )))
+            # command_line = "nohup {0} -new:'{1}'".format(app, p, )
+            # args = shlex.split(command_line, )
+            # process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
+            pass
+        elif(s == 'Windows'):
+            pass
+        else:
+            self.report({'ERROR'}, "Unknown platform")
+            return {'CANCELLED'}
+        
         if(self.backface):
             context.object.maxwell_render.backface_material_file = bpy.path.relpath(self.filepath)
         else:
@@ -309,7 +357,105 @@ class EditMaterial(Operator):
     
     def execute(self, context):
         if(self.backface):
-            app.open_mxm_in_mxed(bpy.path.abspath(context.object.maxwell_render.backface_material_file))
+            p = os.path.abspath(bpy.path.abspath(context.object.maxwell_render.backface_material_file))
         else:
-            app.open_mxm_in_mxed(bpy.path.abspath(context.material.maxwell_render.mxm_file))
+            p = os.path.abspath(bpy.path.abspath(context.material.maxwell_render.mxm_file))
+        
+        if(p == ""):
+            self.report({'ERROR'}, "Filepath is empty")
+            return {'CANCELLED'}
+        if(os.path.isdir(p)):
+            self.report({'ERROR'}, "Filepath is directory")
+            return {'CANCELLED'}
+        
+        h, t = os.path.split(p)
+        n, e = os.path.splitext(t)
+        if(e.lower() != ".mxm"):
+            self.report({'ERROR'}, "Extension is not .mxm")
+            return {'CANCELLED'}
+        
+        if(not os.path.exists(os.path.dirname(p))):
+            self.report({'ERROR'}, "Directory does not exist")
+            return {'CANCELLED'}
+        
+        if(not os.access(os.path.dirname(p), os.W_OK)):
+            self.report({'ERROR'}, "Directory is not writeable")
+            return {'CANCELLED'}
+        
+        s = platform.system()
+        if(s == 'Darwin'):
+            app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Mxed.app', 'Contents', 'MacOS', 'Mxed', )))
+            command_line = "{0} -mxm:'{1}'".format(app, p, )
+            args = shlex.split(command_line, )
+            p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
+        elif(s == 'Linux'):
+            # app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'mxed', )))
+            # command_line = "nohup {0} -mxm:'{1}'".format(app, p, )
+            # args = shlex.split(command_line, )
+            # p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
+            pass
+        elif(s == 'Windows'):
+            pass
+        else:
+            self.report({'ERROR'}, "Unknown platform")
+            return {'CANCELLED'}
+        
+        return {'FINISHED'}
+
+
+class OpenMXS(Operator):
+    bl_idname = "maxwell_render.open_mxs"
+    bl_label = "Open MXS"
+    bl_description = ""
+    
+    filepath = StringProperty(name="Filepath", subtype='FILE_PATH', options={'HIDDEN'}, )
+    application = EnumProperty(name="Application", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ], default='STUDIO', options={'HIDDEN'}, )
+    
+    def execute(self, context):
+        p = os.path.abspath(bpy.path.abspath(self.filepath))
+        
+        if(p == ""):
+            self.report({'ERROR'}, "Filepath is empty")
+            return {'CANCELLED'}
+        if(os.path.isdir(p)):
+            self.report({'ERROR'}, "Filepath is directory")
+            return {'CANCELLED'}
+        
+        h, t = os.path.split(p)
+        n, e = os.path.splitext(t)
+        if(e.lower() != ".mxs"):
+            self.report({'ERROR'}, "Extension is not .mxs")
+            return {'CANCELLED'}
+        
+        s = platform.system()
+        if(s == 'Darwin'):
+            if(self.application == 'STUDIO'):
+                app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Studio.app', ))
+                command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                args = shlex.split(command_line)
+                p = subprocess.Popen(args)
+            elif(self.application == 'MAXWELL'):
+                app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Maxwell.app', ))
+                command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                args = shlex.split(command_line)
+                p = subprocess.Popen(args)
+            else:
+                self.report({'ERROR'}, "Unknown application")
+                return {'CANCELLED'}
+        elif(s == 'Linux'):
+            # subprocess.Popen(['xdg-open', p], )
+            
+            # app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio', ))
+            # command_line = 'nohup {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+            # args = shlex.split(command_line)
+            # p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
+            pass
+        elif(s == 'Windows'):
+            # app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio.exe', ))
+            # os.startfile(os.path.normpath(p))
+            pass
+        else:
+            self.report({'ERROR'}, "Unknown platform")
+            return {'CANCELLED'}
+        
         return {'FINISHED'}

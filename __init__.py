@@ -32,7 +32,6 @@ if "bpy" in locals():
     import imp
     imp.reload(log)
     imp.reload(progress)
-    imp.reload(app)
     imp.reload(maths)
     imp.reload(utils)
     imp.reload(engine)
@@ -43,7 +42,6 @@ if "bpy" in locals():
 else:
     from . import log
     from . import progress
-    from . import app
     from . import maths
     from . import utils
     from . import engine

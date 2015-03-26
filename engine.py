@@ -23,8 +23,8 @@ from bpy.types import RenderEngine
 
 from .log import log, LOG_FILE_PATH
 from . import progress
-from . import app
 from . import export
+from . import ops
 
 
 class MaxwellRenderExportEngine(RenderEngine):
@@ -153,10 +153,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         # open in..
         if(ex is not None and not m.exporting_animation_now):
-            if(m.export_open_with == 'STUDIO'):
-                app.open_mxs_in_studio(ex.mxs_path)
-            if(m.export_open_with == 'MAXWELL'):
-                app.open_mxs_in_maxwell(ex.mxs_path)
+            bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=m.export_open_with, )
         
         # and make black rectangle as a render result
         c = self.size_x * self.size_y
