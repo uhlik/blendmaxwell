@@ -41,6 +41,7 @@
 
 changelog:
 
+* 0.1.4 added: render layers panel, fixed: path handling, instance bases on hidden layers and many more
 * 0.1.3 first release
 
 ***
