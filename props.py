@@ -51,9 +51,9 @@ def _gmt_auto(self, context):
 
 
 def _override_sun(self, context):
-    if(_override_sun_skip.value):
+    if(_overrides.sun_skip):
         return
-    _override_sun_skip.value = True
+    _overrides.sun_skip = True
     suns = [o for o in bpy.data.objects if (o and o.type == 'LAMP' and o.data.type == 'SUN')]
     
     for o in suns:
@@ -71,7 +71,37 @@ def _override_sun(self, context):
         else:
             mx.override = False
     
-    _override_sun_skip.value = False
+    _overrides.sun_skip = False
+
+
+def _override_output_image(self, context):
+    if(_overrides.output_image):
+        return
+    _overrides.output_image = True
+    
+    h, t = os.path.split(self.output_image)
+    n, e = os.path.splitext(t)
+    es = ['.png', '.jpg', '.tga', '.tif', '.jp2', '.hdr', '.exr', '.bmp', ]
+    if(not e.lower() in es):
+        e = '.png'
+    
+    p = bpy.path.ensure_ext(self.output_image, e, case_sensitive=False, )
+    if(p != self.output_image):
+        self.output_image = p
+    
+    _overrides.output_image = False
+
+
+def _override_output_mxi(self, context):
+    if(_overrides.output_mxi):
+        return
+    _overrides.output_mxi = True
+    
+    p = bpy.path.ensure_ext(self.output_mxi, '.mxi', case_sensitive=False, )
+    if(p != self.output_mxi):
+        self.output_mxi = p
+    
+    _overrides.output_mxi = False
 
 
 def _update_gpu_dof(self, context):
@@ -80,8 +110,10 @@ def _update_gpu_dof(self, context):
     dof_options.fstop = self.fstop
 
 
-class _override_sun_skip():
-    value = False
+class _overrides():
+    sun_skip = False
+    output_image = False
+    output_mxi = False
 
 
 class SceneProperties(PropertyGroup):
@@ -96,9 +128,9 @@ class SceneProperties(PropertyGroup):
     
     output_depth = EnumProperty(name="Output Depth", items=_output_depth_items, description="Bit depth per channel for image output", )
     output_image_enabled = BoolProperty(name="Image", default=True, description="Render image", )
-    output_image = StringProperty(name="Image", default="", subtype='FILE_PATH', description="Image path", )
+    output_image = StringProperty(name="Image", default="", subtype='FILE_PATH', description="Image path", update=_override_output_image, )
     output_mxi_enabled = BoolProperty(name="MXI", default=True, description="Render .MXI", )
-    output_mxi = StringProperty(name="MXI", default="", subtype='FILE_PATH', description=".MXI path", )
+    output_mxi = StringProperty(name="MXI", default="", subtype='FILE_PATH', description=".MXI path", update=_override_output_mxi, )
     
     materials_override = BoolProperty(name="Override", default=False, description="Override all materials in scene with one material", )
     materials_override_path = StringProperty(name="Override File", default="", subtype='FILE_PATH', description="Path to override material (.MXM)", )

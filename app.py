@@ -163,7 +163,13 @@ def create_mxm_in_mxed(file_path):
         if(file_path != ""):
             if(_check_file_path(file_path)):
                 if(_check_extension(file_path, ".mxm")):
-                    p = os.path.realpath(file_path)
+                    if(os.path.exists(os.path.dirname(file_path))):
+                        if(os.access(os.path.dirname(file_path), os.W_OK)):
+                            p = os.path.realpath(file_path)
+                        else:
+                            raise ValueError("directory is not writeable")
+                    else:
+                        raise ValueError("directory does not exist")
                 else:
                     raise ValueError("file_path must end with .mxm")
             else:
