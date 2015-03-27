@@ -198,8 +198,7 @@ class SceneProperties(PropertyGroup):
                                            ('BESTRGB_12', "Best RGB", ""),
                                            ('DONRGB4_13', "Don RGB 4", ""),
                                            ('HDTV_14', "HDTV (Rec.709)", ""),
-                                           ('ACES_15', "ACES", ""),
-                                          ],
+                                           ('ACES_15', "ACES", ""), ],
                                     default='SRGB_0', description="Image color space", )
     tone_burn = FloatProperty(name="Burn", default=0.8, min=0.0, max=1.0, precision=2, description="Image burn value", )
     tone_gamma = FloatProperty(name="Monitor Gamma", default=2.20, min=0.10, max=3.50, precision=2, description="Image gamma value", )
