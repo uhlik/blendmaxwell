@@ -759,7 +759,8 @@ class MXSExport():
                                 a['objects'].append(o.name)
                     scene['channels_custom_alpha_groups'].append(a)
             
-            scene['tone_color_space'] = int(mx.tone_color_space[-1:])
+            # scene['tone_color_space'] = int(mx.tone_color_space[-1:])
+            scene['tone_color_space'] = int(mx.tone_color_space.split('_')[1])
             scene['tone_whitepoint'] = mx.tone_whitepoint
             scene['tone_tint'] = mx.tone_tint
             scene['tone_burn'] = mx.tone_burn

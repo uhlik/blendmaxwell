@@ -182,7 +182,25 @@ class SceneProperties(PropertyGroup):
     channels_custom_alpha = BoolProperty(name="Custom Alpha", default=False, )
     channels_custom_alpha_file = EnumProperty(name="Custom Alpha File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", "")], default='PNG16', )
     
-    tone_color_space = EnumProperty(name="Color Space", items=[('SRGB_0', "sRGB IEC61966-2.1", ""), ('ARGB_1', "Adobe RGB 98", "")], default='SRGB_0', description="Image color space", )
+    tone_color_space = EnumProperty(name="Color Space",
+                                    items=[('SRGB_0', "sRGB IEC61966-2.1", ""),
+                                           ('ADOBE98_1', "Adobe RGB 98", ""),
+                                           ('APPLE_2', "Apple RGB / SGI", ""),
+                                           ('PAL_3', "PAL / SECAM (EBU3213)", ""),
+                                           ('NTSC_4', "NTSC 1953", ""),
+                                           ('NTSC1979_5', "NTSC 1979 (SMPTE-C)", ""),
+                                           ('WIDEGAMUT_6', "Wide Gamut RGB", ""),
+                                           ('PROPHOTO_7', "ProPhoto RGB (ROMM)", ""),
+                                           ('ECIRRGB_8', "ECI RGB", ""),
+                                           ('CIE1931_9', "CIE 1931", ""),
+                                           ('BRUCERGB_10', "Bruce RGB", ""),
+                                           ('COLORMATCH_11', "ColorMatch RGB", ""),
+                                           ('BESTRGB_12', "Best RGB", ""),
+                                           ('DONRGB4_13', "Don RGB 4", ""),
+                                           ('HDTV_14', "HDTV (Rec.709)", ""),
+                                           ('ACES_15', "ACES", ""),
+                                          ],
+                                    default='SRGB_0', description="Image color space", )
     tone_burn = FloatProperty(name="Burn", default=0.8, min=0.0, max=1.0, precision=2, description="Image burn value", )
     tone_gamma = FloatProperty(name="Monitor Gamma", default=2.20, min=0.10, max=3.50, precision=2, description="Image gamma value", )
     tone_sharpness = BoolProperty(name="Sharpness", default=False, description="Image sharpness", )
