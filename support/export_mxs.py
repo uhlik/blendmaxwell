@@ -323,6 +323,10 @@ def mesh(d, s):
         o.setTriangle(t[0], t[1][0], t[1][1], t[1][2], t[2][0], t[2][1], t[2][2], )
     
     if(d['num_materials'] > 1):
+        
+        print(d['name'])
+        print(d['num_materials'])
+        
         # multi material
         mats = []
         for mi in range(d['num_materials']):
@@ -335,9 +339,13 @@ def mesh(d, s):
         for t, ma in m['f_setTriangleMaterial']:
             o.setTriangleMaterial(t, mats[ma])
     elif(d['num_materials'] == 1):
-        # single material
+        # # single material
+        # if(d['materials'][0][1] == ""):
+        #     mat = material_placeholder(s)
+        # else:
+        #     mat = material(d['materials'][0][1], s, d['materials'][0][0])
         if(d['materials'][0][1] == ""):
-            mat = material_placeholder(s)
+            mat = None
         else:
             mat = material(d['materials'][0][1], s, d['materials'][0][0])
         # # this is causing error: Object [...] is not an emitter but has triangles with an emitter material applied to it
@@ -347,7 +355,8 @@ def mesh(d, s):
         # for t, ma in m['f_setTriangleMaterial']:
         #     o.setTriangleMaterial(t, mat)
         # # fix
-        o.setMaterial(mat)
+        if(mat is not None):
+            o.setMaterial(mat)
     else:
         # no material
         pass
@@ -753,6 +762,14 @@ def hierarchy(d, s):
                 ch = s.getObject(d[i]['name'])
                 p = s.getObject(d[i]['parent'])
                 ch.setParent(p)
+    '''
+    for i in range(len(d)):
+        if(d['type'] == 'PARTICLES'):
+            if(d['parent'] is not None):
+                if(d['hide_parent']):
+                    p = s.getObject(d[i]['parent'])
+                    p.setHide(True)
+    '''
 
 
 def wireframe_hierarchy(d, s, ws):
