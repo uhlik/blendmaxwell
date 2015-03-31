@@ -1792,8 +1792,10 @@ class MXSExport():
                         d = {'props': ps.settings.maxwell_particles_extension,
                              # 'matrix': o.matrix_world,
                              # TODO verify / fix particles transformation. not sure if it right..
-                             'matrix': o.matrix_local,
+                             # 'matrix': o.matrix_local,
+                             'matrix': Matrix(),
                              'type': ps.settings.maxwell_render.use,
+                             'ps': ps,
                              'name': "{}-{}".format(o.name, ps.name),
                              'parent': parent, }
                         self.particles.append(d)
@@ -1850,8 +1852,8 @@ class MXSExport():
         
         for dp in self.particles:
             q = None
-            log("{0}".format(d['name']), 2)
-            b, p = self._matrix_to_base_and_pivot(d['matrix'])
+            log("{0} ({1})".format(dp['name'], dp['type']), 2)
+            b, p = self._matrix_to_base_and_pivot(dp['matrix'])
             m = dp['props']
             ps = dp['ps']
             if(dp['type'] == 'PARTICLES'):
@@ -1873,7 +1875,7 @@ class MXSExport():
                      'opacity': m.opacity, 'hidden_camera': m.hidden_camera, 'hidden_camera_in_shadow_channel': m.hidden_camera_in_shadow_channel,
                      'hidden_global_illumination': m.hidden_global_illumination, 'hidden_reflections_refractions': m.hidden_reflections_refractions,
                      'hidden_zclip_planes': m.hidden_zclip_planes, 'object_id': self._color_to_rgb8(m.object_id),
-                     'name': d['name'], 'parent': d['parent'], 'material': bpy.path.abspath(m.material_file), 'material_embed': m.material_embed,
+                     'name': dp['name'], 'parent': dp['parent'], 'material': bpy.path.abspath(m.material_file), 'material_embed': m.material_embed,
                      'base': b, 'pivot': p, 'matrix': None, 'hide': m.hide, 'hide_parent': m.hide_parent, 'type': 'PARTICLES', }
             elif(dp['type'] == 'GRASS'):
                 q = {'material': bpy.path.abspath(m.material), 'material_embed': m.material_embed,
