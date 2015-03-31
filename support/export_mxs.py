@@ -323,10 +323,6 @@ def mesh(d, s):
         o.setTriangle(t[0], t[1][0], t[1][1], t[1][2], t[2][0], t[2][1], t[2][2], )
     
     if(d['num_materials'] > 1):
-        
-        print(d['name'])
-        print(d['num_materials'])
-        
         # multi material
         mats = []
         for mi in range(d['num_materials']):
