@@ -1090,7 +1090,7 @@ class HairExtPanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        m = context.particle_system.settings.maxwell_hair_extension
+        # m = context.particle_system.settings.maxwell_hair_extension
         
         l.label("Not implemented yet..", icon='ERROR', )
 
@@ -1265,6 +1265,43 @@ class MesherExtPanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        m = context.particle_system.settings.maxwell_mesher_extension
+        # m = context.particle_system.settings.maxwell_mesher_extension
+        
+        l.label("Not implemented yet..", icon='ERROR', )
+
+
+class ScatterExtPanel(ParticleButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Scatter"
+    
+    @classmethod
+    def poll(cls, context):
+        psys = context.particle_system
+        engine = context.scene.render.engine
+        settings = 0
+        
+        if psys:
+            settings = psys.settings
+        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
+            settings = context.space_data.pin_id
+        
+        if not settings:
+            return False
+        
+        m = context.particle_system.settings.maxwell_render
+        if(m.use != 'SCATTER'):
+            return False
+        
+        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        l = self.layout
+        
+        o = context.object
+        p = context.particle_system
+        if(p is None):
+            return
+        
+        # m = context.particle_system.settings.maxwell_scatter_extension
         
         l.label("Not implemented yet..", icon='ERROR', )

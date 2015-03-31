@@ -486,6 +486,7 @@ class ParticlesProperties(PropertyGroup):
                                            ('HAIR', "Hair", ""),
                                            ('PARTICLES', "Particles", ""),
                                            ('MESHER', "Mesher", ""),
+                                           ('SCATTER', "Scatter", ""),
                                            ('NONE', "None", "")], default='NONE', )
     
     @classmethod
@@ -630,19 +631,43 @@ class ParticlesExtProperties(PropertyGroup):
 
 
 class HairExtProperties(PropertyGroup):
-    pass
+    @classmethod
+    def register(cls):
+        bpy.types.ParticleSettings.maxwell_hair_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.ParticleSettings.maxwell_hair_extension
 
 
 class MesherExtProperties(PropertyGroup):
-    pass
+    @classmethod
+    def register(cls):
+        bpy.types.ParticleSettings.maxwell_mesher_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.ParticleSettings.maxwell_mesher_extension
 
 
 class ClonerExtProperties(PropertyGroup):
-    pass
+    @classmethod
+    def register(cls):
+        bpy.types.ParticleSettings.maxwell_cloner_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.ParticleSettings.maxwell_cloner_extension
 
 
 class ScatterExtProperties(PropertyGroup):
-    pass
+    @classmethod
+    def register(cls):
+        bpy.types.Object.maxwell_scatter_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Object.maxwell_scatter_extension
 
 
 class SubdivisionExtProperties(PropertyGroup):
@@ -654,8 +679,8 @@ class SubdivisionExtProperties(PropertyGroup):
     
     @classmethod
     def register(cls):
-        bpy.types.ParticleSettings.maxwell_cloner_extension = PointerProperty(type=cls)
+        bpy.types.Object.maxwell_subdivision_extension = PointerProperty(type=cls)
     
     @classmethod
     def unregiser(cls):
-        del bpy.types.ParticleSettings.maxwell_cloner_extension
+        del bpy.types.Object.maxwell_subdivision_extension
