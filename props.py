@@ -469,8 +469,117 @@ class CustomAlphaPropertyGroup(PropertyGroup):
         del bpy.types.Group.maxwell_render
 
 
+class SunProperties(PropertyGroup):
+    override = BoolProperty(name="Override Environment Settings", default=False, description="When True, this lamp will override Sun direction from Environment Settings", update=_override_sun, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.SunLamp.maxwell_render = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.SunLamp.maxwell_render
+
+
 class ParticlesProperties(PropertyGroup):
-    use = EnumProperty(name="Type", items=[('USE_BIN', "RealFlow .BIN", ""), ('USE_BLENDER', "Blender Particles", ""), ('NONE', "None", "")], default='NONE', )
+    use = EnumProperty(name="Type", items=[('GRASS', "Grass", ""),
+                                           ('HAIR', "Hair", ""),
+                                           ('PARTICLES', "Particles", ""),
+                                           ('MESHER', "Mesher", ""),
+                                           ('NONE', "None", "")], default='NONE', )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.ParticleSettings.maxwell_render = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.ParticleSettings.maxwell_render
+
+
+class GrassExtProperties(PropertyGroup):
+    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    material_backface_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    
+    density = IntProperty(name="Density (blades/m2)", default=3000, min=0, max=100000000, )
+    density_map = StringProperty(name="Density Map", default="", )
+    
+    length = FloatProperty(name="Length (cm)", default=10.0, min=0.0, max=100000.0, precision=3, )
+    length_map = StringProperty(name="Length Map", default="", )
+    length_variation = FloatProperty(name="Length Variation (%)", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    
+    root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.1, max=100000.0, precision=3, )
+    tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.1, max=100000.0, precision=3, )
+    
+    direction_type = EnumProperty(name="Direction Type", items=[('0', "Polygon Normal", ""), ('1', "World Z", "")], default='0', )
+    
+    initial_angle = FloatProperty(name="Initial Angle", default=math.radians(80.000), min=math.radians(0.000), max=math.radians(90.000), precision=1, subtype='ANGLE', )
+    initial_angle_variation = FloatProperty(name="Initial Angle Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    initial_angle_map = StringProperty(name="Initial Angle Map", default="", )
+    
+    start_bend = FloatProperty(name="Start Bend (%)", default=40.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    start_bend_variation = FloatProperty(name="Start Bend Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    start_bend_map = StringProperty(name="Start Bend Map", default="", )
+    
+    bend_radius = FloatProperty(name="Bend Radius (cm)", default=10.0, min=0.0, max=10000.0, precision=1, )
+    bend_radius_variation = FloatProperty(name="Bend Radius Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    bend_radius_map = StringProperty(name="Bend Radius Map", default="", )
+    
+    bend_angle = FloatProperty(name="Bend Angle", default=math.radians(80.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )
+    bend_angle_variation = FloatProperty(name="Bend Radius Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    bend_angle_map = StringProperty(name="Bend Radius Map", default="", )
+    
+    cut_off = FloatProperty(name="Cut Off (%)", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    cut_off_variation = FloatProperty(name="Cut Off Variation (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    cut_off_map = StringProperty(name="Cut Off Map", default="", )
+    
+    points_per_blade = IntProperty(name="Points Per Blade", default=4, min=2, max=20, )
+    primitive_type = EnumProperty(name="Primitive Type", items=[('0', "Curve", ""), ('1', "Flat", ""), ('2', "Cylinder", "")], default='0', )
+    seed = IntProperty(name="Random Seed", default=0, min=0, max=16300, )
+    
+    lod = BoolProperty(name="Enable Level of Detail", default=False, )
+    lod_min_distance = FloatProperty(name="Min Distance (m)", default=10.0, min=0.0, max=100000.0, precision=2, )
+    lod_max_distance = FloatProperty(name="Max Distance (m)", default=50.0, min=0.0, max=100000.0, precision=2, )
+    lod_max_distance_density = FloatProperty(name="Max Distance Density (%)", default=50.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
+    
+    display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
+    display_max_blades = IntProperty(name="Display Max. Blades", default=1000, min=0, max=100000, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.ParticleSettings.maxwell_grass_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.ParticleSettings.maxwell_grass_extension
+
+
+class HairExtProperties(PropertyGroup):
+    
+    @classmethod
+    def register(cls):
+        bpy.types.ParticleSettings.maxwell_hair_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.ParticleSettings.maxwell_hair_extension
+
+
+class ParticlesExtProperties(PropertyGroup):
+    material_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', )
+    material_embed = BoolProperty(name="Embed Into Scene", default=True, )
+    opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
+    hidden_camera = BoolProperty(name="Camera", default=False, )
+    hidden_camera_in_shadow_channel = BoolProperty(name="Camera In Shadow Channel", default=False, )
+    hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
+    hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
+    hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
+    object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    
+    hide = BoolProperty(name="Hide (in Maxwell Studio)", default=False, )
+    hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=True, )
     
     bin_filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
     bin_radius_multiplier = FloatProperty(name="Radius Multiplier", default=1.0, min=0.000001, max=1000000.0, step=3, precision=6, )
@@ -522,34 +631,21 @@ class ParticlesProperties(PropertyGroup):
     bin_min_velocity = FloatProperty(name="Min Velocity Modulus", default=0.0, min=0.0, max=1000000.0, step=3, )
     bin_max_velocity = FloatProperty(name="Max Velocity Modulus", default=1.0, min=0.0, max=1000000.0, step=3, )
     
-    material_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', )
-    material_embed = BoolProperty(name="Embed Into Scene", default=True, )
-    opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
-    hidden_camera = BoolProperty(name="Camera", default=False, )
-    hidden_camera_in_shadow_channel = BoolProperty(name="Camera In Shadow Channel", default=False, )
-    hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
-    hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
-    hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
-    object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
-    
-    hide = BoolProperty(name="Hide (in Maxwell Studio)", default=False, )
-    
     @classmethod
     def register(cls):
-        bpy.types.ParticleSettings.maxwell_render = PointerProperty(type=cls)
+        bpy.types.ParticleSettings.maxwell_particles_extension = PointerProperty(type=cls)
     
     @classmethod
     def unregiser(cls):
-        del bpy.types.ParticleSettings.maxwell_render
+        del bpy.types.ParticleSettings.maxwell_particles_extension
 
 
-class SunProperties(PropertyGroup):
-    override = BoolProperty(name="Override Environment Settings", default=False, description="When True, this lamp will override Sun direction from Environment Settings", update=_override_sun, )
+class MesherExtProperties(PropertyGroup):
     
     @classmethod
     def register(cls):
-        bpy.types.SunLamp.maxwell_render = PointerProperty(type=cls)
+        bpy.types.ParticleSettings.maxwell_mesher_extension = PointerProperty(type=cls)
     
     @classmethod
     def unregiser(cls):
-        del bpy.types.SunLamp.maxwell_render
+        del bpy.types.ParticleSettings.maxwell_mesher_extension

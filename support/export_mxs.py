@@ -215,6 +215,54 @@ def material(path, s, embed, ):
     return r
 
 
+def texture(d, s):
+    t = CtextureMap()
+    t.setPath(d['path'])
+    
+    t.uvwChannelID = d['channel']
+    
+    t.brightness = d['brightness']
+    t.contrast = d['contrast']
+    t.saturation = d['saturation']
+    t.hue = d['hue']
+    
+    t.useGlobalMap = d['use_override_map']
+    t.useAbsoluteUnits = d['tile_method_units']
+    
+    t.uIsTiled = d['tile_method_type'][0]
+    t.vIsTiled = d['tile_method_type'][1]
+    
+    t.uIsMirrored = d['mirror'][0]
+    t.vIsMirrored = d['mirror'][1]
+    
+    vec = Cvector2D()
+    vec.assign(d['offset'][0], d['offset'][1])
+    t.offset = vec
+    t.rotation = d['rotation']
+    t.invert = d['invert']
+    t.useAlpha = d['alpha_only']
+    if(d['interpolation']):
+        t.typeInterpolation = 1
+    else:
+        t.typeInterpolation = 0
+    t.clampMin = d['rgb_clamp'][0]
+    t.clampMax = d['rgb_clamp'][1]
+    
+    vec = Cvector2D()
+    vec.assign(d['repeat'][0], d['repeat'][1])
+    t.scale = vec
+    
+    # t.cosA
+    # t.doGammaCorrection
+    # t.normalMappingFlipGreen
+    # t.normalMappingFlipRed
+    # t.normalMappingFullRangeBlue
+    # t.sinA
+    # t.theTextureExtensions
+    
+    return t
+
+
 def base_and_pivot(o, d):
     b = d['base']
     p = d['pivot']
@@ -743,29 +791,133 @@ def particles(d, s):
     o = s.createGeometryProceduralObject(d['name'], params)
     
     mat = material(d['material'], s, d['material_embed'])
+    o.setMaterial(mat)
     
     base_and_pivot(o, d)
     object_props(o, d)
 
 
+def grass(d, s):
+    m = CextensionManager.instance()
+    m.loadAllExtensions()
+    
+    e = m.createDefaultGeometryModifierExtension('MaxwellGrass')
+    p = e.getExtensionData()
+    
+    # data = [(0, 'UCHAR'), (1, 'UINT'), (2, 'INT'), (3, 'FLOAT'), (4, 'DOUBLE'), (5, 'STRING'), (6, 'FLOATARRAY'), (7, 'DOUBLEARRAY'),
+    #         (8, 'BYTEARRAY'), (9, 'INTARRAY'), (10, 'MXPARAMLIST'), (11, 'MXPARAMLISTARRAY'), (12, 'RGB'), ]
+    # mp = p.getByIndex(3)[1]
+    # for i in range(mp.getNumItems()):
+    #     s = list(mp.getByIndex(i))
+    #     for di, dt in data:
+    #         if(di == s[4]):
+    #             s[4] = "{} ({})".format(di, dt)
+    #     print(str(tuple(s)))
+    
+    def texture_data_to_mxparams(d, mp):
+        if(d is None):
+            return
+        # mp.setString('CtextureMap.FileName', d['path'])
+        # hey, seriously.. WTF?
+        mp.setString('CtextureMap.FileName', ''.join(d['path']))
+        mp.setByte('CtextureMap.uvwChannel', d['channel'])
+        mp.setByte('CtextureMap.uIsTiled', d['tile_method_type'][0])
+        mp.setByte('CtextureMap.vIsTiled', d['tile_method_type'][1])
+        mp.setByte('CtextureMap.uIsMirrored', d['mirror'][0])
+        mp.setByte('CtextureMap.vIsMirrored', d['mirror'][1])
+        mp.setFloat('CtextureMap.scale.x', d['repeat'][0])
+        mp.setFloat('CtextureMap.scale.y', d['repeat'][1])
+        mp.setFloat('CtextureMap.offset.x', d['offset'][0])
+        mp.setFloat('CtextureMap.offset.y', d['offset'][1])
+        mp.setFloat('CtextureMap.rotation', d['rotation'])
+        mp.setByte('CtextureMap.invert', d['invert'])
+        mp.setByte('CtextureMap.useAbsoluteUnits', d['tile_method_units'])
+        mp.setByte('CtextureMap.useAlpha', d['alpha_only'])
+        mp.setByte('CtextureMap.typeInterpolation', d['interpolation'])
+        mp.setFloat('CtextureMap.saturation', d['saturation'])
+        mp.setFloat('CtextureMap.contrast', d['contrast'])
+        mp.setFloat('CtextureMap.brightness', d['brightness'])
+        mp.setFloat('CtextureMap.hue', d['hue'])
+        mp.setFloat('CtextureMap.clampMin', d['rgb_clamp'][0])
+        mp.setFloat('CtextureMap.clampMax', d['rgb_clamp'][1])
+        mp.setFloat('CtextureMap.useGlobalMap', d['use_override_map'])
+    
+    if(d['material'] != ""):
+        mat = material(d['material'], s, d['material_embed'])
+        p.setString('Material', mat.getName())
+    
+    if(d['backface_material'] != ""):
+        bmat = material(d['backface_material'], s, d['material_backface_embed'])
+        p.setString('Double Sided Material', bmat.getName())
+    
+    p.setUInt('Density', d['density'])
+    
+    mxp = p.getByName('Density Map')[0]
+    texture_data_to_mxparams(d['density_map'], p.getByName('Density Map')[0])
+    
+    p.setFloat('Length', d['length'])
+    texture_data_to_mxparams(d['length_map'], p.getByName('Length Map')[0])
+    p.setFloat('Length Variation', d['length_variation'])
+    
+    p.setFloat('Root Width', d['root_width'])
+    p.setFloat('Tip Width', d['tip_width'])
+    
+    p.setUInt('Direction Type', d['direction_type'])
+    
+    p.setFloat('Initial Angle', d['initial_angle'])
+    p.setFloat('Initial Angle Variation', d['initial_angle_variation'])
+    texture_data_to_mxparams(d['initial_angle_map'], p.getByName('Initial Angle Map')[0])
+    
+    p.setFloat('Start Bend', d['start_bend'])
+    p.setFloat('Start Bend Variation', d['start_bend_variation'])
+    texture_data_to_mxparams(d['start_bend_map'], p.getByName('Start Bend Map')[0])
+    
+    p.setFloat('Bend Radius', d['bend_radius'])
+    p.setFloat('Bend Radius Variation', d['bend_radius_variation'])
+    texture_data_to_mxparams(d['bend_radius_map'], p.getByName('Bend Radius Map')[0])
+    
+    p.setFloat('Bend Angle', d['bend_angle'])
+    p.setFloat('Bend Angle Variation', d['bend_angle_variation'])
+    texture_data_to_mxparams(d['bend_angle_map'], p.getByName('Bend Angle Map')[0])
+    
+    p.setFloat('Cut Off', d['cut_off'])
+    p.setFloat('Cut Off Variation', d['cut_off_variation'])
+    texture_data_to_mxparams(d['cut_off_map'], p.getByName('Cut Off Map')[0])
+    
+    p.setUInt('Points per Blade', d['points_per_blade'])
+    p.setUInt('Primitive Type', d['primitive_type'])
+    
+    p.setUInt('Seed', d['seed'])
+    
+    p.setByte('Enable LOD', d['lod'])
+    p.setFloat('LOD Min Distance', d['lod_min_distance'])
+    p.setFloat('LOD Max Distance', d['lod_max_distance'])
+    p.setFloat('LOD Max Distance Density', d['lod_max_distance_density'])
+    
+    p.setUInt('Display Percent', d['display_percent'])
+    p.setUInt('Display Max. Blades', d['display_max_blades'])
+    
+    o = s.getObject(d['object'])
+    o.applyGeometryModifierExtension(p)
+
+
 def hierarchy(d, s):
     log("setting object hierarchy..", 2)
     object_types = ['EMPTY', 'MESH', 'INSTANCE', 'PARTICLES', ]
-    exclude = ['SCENE', 'ENVIRONMENT', ]
+    exclude = ['SCENE', 'ENVIRONMENT', 'GRASS', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types and d[i]['type'] not in exclude):
             if(d[i]['parent'] is not None):
                 ch = s.getObject(d[i]['name'])
                 p = s.getObject(d[i]['parent'])
                 ch.setParent(p)
-    '''
+    
     for i in range(len(d)):
-        if(d['type'] == 'PARTICLES'):
-            if(d['parent'] is not None):
-                if(d['hide_parent']):
+        if(d[i]['type'] == 'PARTICLES'):
+            if(d[i]['parent'] is not None):
+                if(d[i]['hide_parent']):
                     p = s.getObject(d[i]['parent'])
                     p.setHide(True)
-    '''
 
 
 def wireframe_hierarchy(d, s, ws):
@@ -933,6 +1085,8 @@ def main(args):
             environment(d, mxs)
         elif(d['type'] == 'PARTICLES'):
             particles(d, mxs)
+        elif(d['type'] == 'GRASS'):
+            grass(d, mxs)
         elif(d['type'] == 'WIREFRAME_MATERIAL'):
             mat = wireframe_material(d, mxs)
             m = {'name': d['name'], 'data': mat, }

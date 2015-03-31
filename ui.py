@@ -934,109 +934,337 @@ class ParticlesPanel(ParticleButtonsPanel, Panel):
         m = context.particle_system.settings.maxwell_render
         
         l.prop(m, 'use', expand=True, )
-        if(m.use == 'USE_BIN'):
-            l.label("Object Properties:")
-            s = l.split(percentage=0.7)
-            c = s.column()
-            c.prop(m, 'material_file')
-            c = s.column()
-            c.prop(m, 'material_embed', text='Embed', )
+
+
+class GrassExtPanel(ParticleButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Grass"
+    
+    @classmethod
+    def poll(cls, context):
+        psys = context.particle_system
+        engine = context.scene.render.engine
+        settings = 0
+        
+        if psys:
+            settings = psys.settings
+        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
+            settings = context.space_data.pin_id
+        
+        if not settings:
+            return False
+        
+        m = context.particle_system.settings.maxwell_render
+        if(m.use != 'GRASS'):
+            return False
+        
+        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        l = self.layout
+        
+        o = context.object
+        p = context.particle_system
+        if(p is None):
+            return
+        
+        ps = context.particle_system.settings
+        m = context.particle_system.settings.maxwell_grass_extension
+        
+        l.label("Primitive:")
+        s = l.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'material')
+        c = s.column()
+        c.prop(m, 'material_embed', text='Embed', )
+        
+        s = l.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'backface_material')
+        c = s.column()
+        c.prop(m, 'material_backface_embed', text='Embed', )
+        
+        l.prop(m, 'points_per_blade')
+        r = l.row()
+        r.label("Primitive Type:")
+        r.prop(m, 'primitive_type', expand=True, )
+        l.separator()
+        
+        l.label("Grass Density:")
+        l.prop(m, 'density')
+        r = l.row()
+        r.prop_search(m, 'density_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop(m, 'seed')
+        l.separator()
+        
+        l.label("Blade Length:")
+        l.prop(m, 'length')
+        r = l.row()
+        r.prop_search(m, 'length_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop(m, 'length_variation')
+        l.separator()
+        
+        l.label("Width:")
+        l.prop(m, 'root_width')
+        l.prop(m, 'tip_width')
+        l.separator()
+        
+        l.label("Angle:")
+        l.prop(m, 'direction_type')
+        l.prop(m, 'initial_angle')
+        r = l.row()
+        r.prop_search(m, 'initial_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop(m, 'initial_angle_variation')
+        l.separator()
+        
+        l.label("Bend:")
+        l.prop(m, 'start_bend')
+        r = l.row()
+        r.prop_search(m, 'start_bend_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop(m, 'start_bend_variation')
+        
+        l.prop(m, 'bend_radius')
+        r = l.row()
+        r.prop_search(m, 'bend_radius_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop(m, 'bend_radius_variation')
+        
+        l.prop(m, 'bend_angle')
+        r = l.row()
+        r.prop_search(m, 'bend_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop(m, 'bend_angle_variation')
+        l.separator()
+        
+        l.label("Cut Off:")
+        l.prop(m, 'cut_off')
+        r = l.row()
+        r.prop_search(m, 'cut_off_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop(m, 'cut_off_variation')
+        l.separator()
+        
+        l.prop(m, 'lod')
+        r = l.row()
+        r.prop(m, 'lod_min_distance')
+        r.prop(m, 'lod_max_distance')
+        if(not m.lod):
+            r.enabled = False
+        r = l.row()
+        r.prop(m, 'lod_max_distance_density')
+        if(not m.lod):
+            r.enabled = False
+        l.separator()
+        
+        l.label("Display:")
+        l.prop(m, 'display_percent')
+        l.prop(m, 'display_max_blades')
+
+
+class HairExtPanel(ParticleButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Hair"
+    
+    @classmethod
+    def poll(cls, context):
+        psys = context.particle_system
+        engine = context.scene.render.engine
+        settings = 0
+        
+        if psys:
+            settings = psys.settings
+        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
+            settings = context.space_data.pin_id
+        
+        if not settings:
+            return False
+        
+        m = context.particle_system.settings.maxwell_render
+        if(m.use != 'HAIR'):
+            return False
+        
+        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        l = self.layout
+        
+        o = context.object
+        p = context.particle_system
+        if(p is None):
+            return
+        
+        m = context.particle_system.settings.maxwell_hair_extension
+        
+        l.label("Not implemented yet..", icon='ERROR', )
+
+
+class ParticlesExtPanel(ParticleButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Particles"
+    
+    @classmethod
+    def poll(cls, context):
+        psys = context.particle_system
+        engine = context.scene.render.engine
+        settings = 0
+        
+        if psys:
+            settings = psys.settings
+        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
+            settings = context.space_data.pin_id
+        
+        if not settings:
+            return False
+        
+        m = context.particle_system.settings.maxwell_render
+        if(m.use != 'PARTICLES'):
+            return False
+        
+        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        l = self.layout
+        
+        o = context.object
+        p = context.particle_system
+        if(p is None):
+            return
+        
+        m = context.particle_system.settings.maxwell_particles_extension
+        
+        l.label("Object Properties:")
+        s = l.split(percentage=0.7)
+        c = s.column()
+        c.prop(m, 'material_file')
+        c = s.column()
+        c.prop(m, 'material_embed', text='Embed', )
+        l.separator()
+        l.prop(m, 'hide')
+        l.prop(m, 'hide_parent')
+        l.prop(m, 'opacity')
+        l.prop(m, 'object_id')
+        l.separator()
+        l.label("Hidden from:")
+        s = l.split(percentage=0.5)
+        c = s.column()
+        c.prop(m, 'hidden_camera')
+        c.prop(m, 'hidden_camera_in_shadow_channel')
+        c.prop(m, 'hidden_global_illumination')
+        c = s.column()
+        c.prop(m, 'hidden_reflections_refractions')
+        c.prop(m, 'hidden_zclip_planes')
+        l.separator()
+        
+        l.label("Sequence:")
+        l.prop(m, 'bin_filename')
+        l.prop(m, 'bin_radius_multiplier')
+        l.prop(m, 'bin_motion_blur_multiplier')
+        l.prop(m, 'bin_shutter_speed')
+        l.prop(m, 'bin_load_particles')
+        l.prop(m, 'bin_axis_system')
+        l.prop(m, 'bin_frame_number')
+        l.prop(m, 'bin_fps')
+        l.separator()
+        
+        l.prop(m, 'bin_advanced')
+        
+        if(m.bin_advanced):
+            l.label("Multipoint:")
+            l.prop(m, 'bin_extra_create_np_pp')
+            l.prop(m, 'bin_extra_dispersion')
+            l.prop(m, 'bin_extra_deformation')
             l.separator()
-            l.prop(m, 'hide')
-            l.prop(m, 'opacity')
-            l.prop(m, 'object_id')
-            l.separator()
-            l.label("Hidden from:")
+            
+            l.label("Extra Arrays Loading:")
             s = l.split(percentage=0.5)
             c = s.column()
-            c.prop(m, 'hidden_camera')
-            c.prop(m, 'hidden_camera_in_shadow_channel')
-            c.prop(m, 'hidden_global_illumination')
+            c.prop(m, 'bin_load_force')
+            c.prop(m, 'bin_load_vorticity')
+            c.prop(m, 'bin_load_normal')
+            c.prop(m, 'bin_load_neighbors_num')
+            c.prop(m, 'bin_load_uv')
+            c.prop(m, 'bin_load_age')
+            c.prop(m, 'bin_load_isolation_time')
             c = s.column()
-            c.prop(m, 'hidden_reflections_refractions')
-            c.prop(m, 'hidden_zclip_planes')
+            c.prop(m, 'bin_load_viscosity')
+            c.prop(m, 'bin_load_density')
+            c.prop(m, 'bin_load_pressure')
+            c.prop(m, 'bin_load_mass')
+            c.prop(m, 'bin_load_temperature')
+            c.prop(m, 'bin_load_id')
             l.separator()
             
-            l.label("Sequence:")
-            l.prop(m, 'bin_filename')
-            l.prop(m, 'bin_radius_multiplier')
-            l.prop(m, 'bin_motion_blur_multiplier')
-            l.prop(m, 'bin_shutter_speed')
-            l.prop(m, 'bin_load_particles')
-            l.prop(m, 'bin_axis_system')
-            l.prop(m, 'bin_frame_number')
-            l.prop(m, 'bin_fps')
-            l.separator()
-            
-            l.prop(m, 'bin_advanced')
-            
-            if(m.bin_advanced):
-                l.label("Multipoint:")
-                l.prop(m, 'bin_extra_create_np_pp')
-                l.prop(m, 'bin_extra_dispersion')
-                l.prop(m, 'bin_extra_deformation')
-                l.separator()
-                
-                l.label("Extra Arrays Loading:")
-                s = l.split(percentage=0.5)
-                c = s.column()
-                c.prop(m, 'bin_load_force')
-                c.prop(m, 'bin_load_vorticity')
-                c.prop(m, 'bin_load_normal')
-                c.prop(m, 'bin_load_neighbors_num')
-                c.prop(m, 'bin_load_uv')
-                c.prop(m, 'bin_load_age')
-                c.prop(m, 'bin_load_isolation_time')
-                c = s.column()
-                c.prop(m, 'bin_load_viscosity')
-                c.prop(m, 'bin_load_density')
-                c.prop(m, 'bin_load_pressure')
-                c.prop(m, 'bin_load_mass')
-                c.prop(m, 'bin_load_temperature')
-                c.prop(m, 'bin_load_id')
-                l.separator()
-                
-                l.label("Magnitude Normalizing Values:")
-                s = l.split(percentage=0.5)
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_force')
-                c.prop(m, 'bin_max_force')
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_vorticity')
-                c.prop(m, 'bin_max_vorticity')
-                s = l.split(percentage=0.5)
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_nneighbors')
-                c.prop(m, 'bin_max_nneighbors')
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_age')
-                c.prop(m, 'bin_max_age')
-                s = l.split(percentage=0.5)
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_isolation_time')
-                c.prop(m, 'bin_max_isolation_time')
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_viscosity')
-                c.prop(m, 'bin_max_viscosity')
-                s = l.split(percentage=0.5)
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_density')
-                c.prop(m, 'bin_max_density')
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_pressure')
-                c.prop(m, 'bin_max_pressure')
-                s = l.split(percentage=0.5)
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_mass')
-                c.prop(m, 'bin_max_mass')
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_temperature')
-                c.prop(m, 'bin_max_temperature')
-                s = l.split(percentage=0.5)
-                c = s.column(align=True)
-                c.prop(m, 'bin_min_velocity')
-                c.prop(m, 'bin_max_velocity')
-        elif(m.use == 'USE_BLENDER'):
-            l.label("Not implemented yet..", icon='ERROR', )
-        else:
-            pass
+            l.label("Magnitude Normalizing Values:")
+            s = l.split(percentage=0.5)
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_force')
+            c.prop(m, 'bin_max_force')
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_vorticity')
+            c.prop(m, 'bin_max_vorticity')
+            s = l.split(percentage=0.5)
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_nneighbors')
+            c.prop(m, 'bin_max_nneighbors')
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_age')
+            c.prop(m, 'bin_max_age')
+            s = l.split(percentage=0.5)
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_isolation_time')
+            c.prop(m, 'bin_max_isolation_time')
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_viscosity')
+            c.prop(m, 'bin_max_viscosity')
+            s = l.split(percentage=0.5)
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_density')
+            c.prop(m, 'bin_max_density')
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_pressure')
+            c.prop(m, 'bin_max_pressure')
+            s = l.split(percentage=0.5)
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_mass')
+            c.prop(m, 'bin_max_mass')
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_temperature')
+            c.prop(m, 'bin_max_temperature')
+            s = l.split(percentage=0.5)
+            c = s.column(align=True)
+            c.prop(m, 'bin_min_velocity')
+            c.prop(m, 'bin_max_velocity')
+
+
+class MesherExtPanel(ParticleButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Mesher"
+    
+    @classmethod
+    def poll(cls, context):
+        psys = context.particle_system
+        engine = context.scene.render.engine
+        settings = 0
+        
+        if psys:
+            settings = psys.settings
+        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
+            settings = context.space_data.pin_id
+        
+        if not settings:
+            return False
+        
+        m = context.particle_system.settings.maxwell_render
+        if(m.use != 'MESHER'):
+            return False
+        
+        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        l = self.layout
+        
+        o = context.object
+        p = context.particle_system
+        if(p is None):
+            return
+        
+        m = context.particle_system.settings.maxwell_mesher_extension
+        
+        l.label("Not implemented yet..", icon='ERROR', )

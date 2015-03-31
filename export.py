@@ -1313,7 +1313,7 @@ class MXSExport():
                         mmx = None
                     if(mmx is not None):
                         # there is material with data
-                        fm = mmx.mxm_file
+                        fm = bpy.path.abspath(mmx.mxm_file)
                         if(not check_path(fm)):
                             fm = ""
                         if(fm != ""):
@@ -1776,7 +1776,7 @@ class MXSExport():
         for o in scene.objects:
             if(len(o.particle_systems) != 0):
                 for ps in o.particle_systems:
-                    if(ps.settings.maxwell_render.use == 'USE_BIN'):
+                    if(ps.settings.maxwell_render.use == 'PARTICLES'):
                         parent = o.name
                         p = verify_parent(parent)
                         if(not p):
@@ -1789,41 +1789,130 @@ class MXSExport():
                             log("Particles cannot be exported without 'Maxwell Render' addon enabled..", 1, LogStyles.WARNING, )
                             continue
                         
-                        d = {'props': mx,
-                             'matrix': o.matrix_world,
+                        d = {'props': ps.settings.maxwell_particles_extension,
+                             # 'matrix': o.matrix_world,
+                             # TODO verify / fix particles transformation. not sure if it right..
+                             'matrix': o.matrix_local,
+                             'type': ps.settings.maxwell_render.use,
                              'name': "{}-{}".format(o.name, ps.name),
                              'parent': parent, }
                         self.particles.append(d)
-                    elif(ps.settings.maxwell_render.use == 'USE_BLENDER'):
-                        log("Blender particles are currently not supported.", 1, LogStyles.WARNING, )
+                    elif(ps.settings.maxwell_render.use == 'GRASS'):
+                        try:
+                            mx = ps.settings.maxwell_render
+                        except:
+                            log("Particles cannot be exported without 'Maxwell Render' addon enabled..", 1, LogStyles.WARNING, )
+                            continue
+                        
+                        d = {'props': ps.settings.maxwell_grass_extension,
+                             # 'matrix': o.matrix_world,
+                             # TODO verify / fix particles transformation. not sure if it right..
+                             'matrix': o.matrix_local,
+                             'type': ps.settings.maxwell_render.use,
+                             'ps': ps,
+                             'name': "{}-{}".format(o.name, ps.name),
+                             'parent': o.name, }
+                        self.particles.append(d)
                     else:
                         pass
         
-        for d in self.particles:
+        def texture_to_data(name, ps):
+            tex = None
+            for ts in ps.settings.texture_slots:
+                if(ts is not None):
+                    if(ts.texture is not None):
+                        if(ts.texture.type == 'IMAGE'):
+                            if(ts.texture.name == name):
+                                tex = ts.texture
+            
+            d = {'type': 'IMAGE',
+                 'path': "",
+                 'channel': 0,
+                 'use_override_map': False,
+                 'tile_method_type': [True, True],
+                 'tile_method_units': 0,
+                 'repeat': [1.0, 1.0],
+                 'mirror': [False, False],
+                 'offset': [0.0, 0.0],
+                 'rotation': 0.0,
+                 'invert': False,
+                 'alpha_only': False,
+                 'interpolation': False,
+                 'brightness': 0.0,
+                 'contrast': 0.0,
+                 'saturation': 0.0,
+                 'hue': 0.0,
+                 'rgb_clamp': [0.0, 255.0], }
+            if(tex is not None):
+                d['path'] = bpy.path.abspath(tex.image.filepath),
+                return d
+            return None
+        
+        for dp in self.particles:
+            q = None
             log("{0}".format(d['name']), 2)
             b, p = self._matrix_to_base_and_pivot(d['matrix'])
-            m = d['props']
-            d = {'bin_filename': bpy.path.abspath(m.bin_filename),
-                 'bin_radius_multiplier': m.bin_radius_multiplier, 'bin_motion_blur_multiplier': m.bin_motion_blur_multiplier, 'bin_shutter_speed': m.bin_shutter_speed,
-                 'bin_load_particles': m.bin_load_particles, 'bin_axis_system': int(m.bin_axis_system[-1:]), 'bin_frame_number': m.bin_frame_number, 'bin_fps': m.bin_fps,
-                 'bin_extra_create_np_pp': m.bin_extra_create_np_pp, 'bin_extra_dispersion': m.bin_extra_dispersion, 'bin_extra_deformation': m.bin_extra_deformation,
-                 'bin_load_force': int(m.bin_load_force), 'bin_load_vorticity': int(m.bin_load_vorticity), 'bin_load_normal': int(m.bin_load_normal),
-                 'bin_load_neighbors_num': int(m.bin_load_neighbors_num), 'bin_load_uv': int(m.bin_load_uv), 'bin_load_age': int(m.bin_load_age),
-                 'bin_load_isolation_time': int(m.bin_load_isolation_time), 'bin_load_viscosity': int(m.bin_load_viscosity),
-                 'bin_load_density': int(m.bin_load_density), 'bin_load_pressure': int(m.bin_load_pressure), 'bin_load_mass': int(m.bin_load_mass),
-                 'bin_load_temperature': int(m.bin_load_temperature), 'bin_load_id': int(m.bin_load_id),
-                 'bin_min_force': m.bin_min_force, 'bin_max_force': m.bin_max_force, 'bin_min_vorticity': m.bin_min_vorticity, 'bin_max_vorticity': m.bin_max_vorticity,
-                 'bin_min_nneighbors': m.bin_min_nneighbors, 'bin_max_nneighbors': m.bin_max_nneighbors, 'bin_min_age': m.bin_min_age, 'bin_max_age': m.bin_max_age,
-                 'bin_min_isolation_time': m.bin_min_isolation_time, 'bin_max_isolation_time': m.bin_max_isolation_time, 'bin_min_viscosity': m.bin_min_viscosity,
-                 'bin_max_viscosity': m.bin_max_viscosity, 'bin_min_density': m.bin_min_density, 'bin_max_density': m.bin_max_density, 'bin_min_pressure': m.bin_min_pressure,
-                 'bin_max_pressure': m.bin_max_pressure, 'bin_min_mass': m.bin_min_mass, 'bin_max_mass': m.bin_max_mass, 'bin_min_temperature': m.bin_min_temperature,
-                 'bin_max_temperature': m.bin_max_temperature, 'bin_min_velocity': m.bin_min_velocity, 'bin_max_velocity': m.bin_max_velocity,
-                 'opacity': m.opacity, 'hidden_camera': m.hidden_camera, 'hidden_camera_in_shadow_channel': m.hidden_camera_in_shadow_channel,
-                 'hidden_global_illumination': m.hidden_global_illumination, 'hidden_reflections_refractions': m.hidden_reflections_refractions,
-                 'hidden_zclip_planes': m.hidden_zclip_planes, 'object_id': self._color_to_rgb8(m.object_id),
-                 'name': d['name'], 'parent': d['parent'], 'material': bpy.path.abspath(m.material_file), 'material_embed': m.material_embed,
-                 'base': b, 'pivot': p, 'matrix': None, 'hide': m.hide, 'type': 'PARTICLES', }
-            self.data.append(d)
+            m = dp['props']
+            ps = dp['ps']
+            if(dp['type'] == 'PARTICLES'):
+                q = {'bin_filename': bpy.path.abspath(m.bin_filename),
+                     'bin_radius_multiplier': m.bin_radius_multiplier, 'bin_motion_blur_multiplier': m.bin_motion_blur_multiplier, 'bin_shutter_speed': m.bin_shutter_speed,
+                     'bin_load_particles': m.bin_load_particles, 'bin_axis_system': int(m.bin_axis_system[-1:]), 'bin_frame_number': m.bin_frame_number, 'bin_fps': m.bin_fps,
+                     'bin_extra_create_np_pp': m.bin_extra_create_np_pp, 'bin_extra_dispersion': m.bin_extra_dispersion, 'bin_extra_deformation': m.bin_extra_deformation,
+                     'bin_load_force': int(m.bin_load_force), 'bin_load_vorticity': int(m.bin_load_vorticity), 'bin_load_normal': int(m.bin_load_normal),
+                     'bin_load_neighbors_num': int(m.bin_load_neighbors_num), 'bin_load_uv': int(m.bin_load_uv), 'bin_load_age': int(m.bin_load_age),
+                     'bin_load_isolation_time': int(m.bin_load_isolation_time), 'bin_load_viscosity': int(m.bin_load_viscosity),
+                     'bin_load_density': int(m.bin_load_density), 'bin_load_pressure': int(m.bin_load_pressure), 'bin_load_mass': int(m.bin_load_mass),
+                     'bin_load_temperature': int(m.bin_load_temperature), 'bin_load_id': int(m.bin_load_id),
+                     'bin_min_force': m.bin_min_force, 'bin_max_force': m.bin_max_force, 'bin_min_vorticity': m.bin_min_vorticity, 'bin_max_vorticity': m.bin_max_vorticity,
+                     'bin_min_nneighbors': m.bin_min_nneighbors, 'bin_max_nneighbors': m.bin_max_nneighbors, 'bin_min_age': m.bin_min_age, 'bin_max_age': m.bin_max_age,
+                     'bin_min_isolation_time': m.bin_min_isolation_time, 'bin_max_isolation_time': m.bin_max_isolation_time, 'bin_min_viscosity': m.bin_min_viscosity,
+                     'bin_max_viscosity': m.bin_max_viscosity, 'bin_min_density': m.bin_min_density, 'bin_max_density': m.bin_max_density, 'bin_min_pressure': m.bin_min_pressure,
+                     'bin_max_pressure': m.bin_max_pressure, 'bin_min_mass': m.bin_min_mass, 'bin_max_mass': m.bin_max_mass, 'bin_min_temperature': m.bin_min_temperature,
+                     'bin_max_temperature': m.bin_max_temperature, 'bin_min_velocity': m.bin_min_velocity, 'bin_max_velocity': m.bin_max_velocity,
+                     'opacity': m.opacity, 'hidden_camera': m.hidden_camera, 'hidden_camera_in_shadow_channel': m.hidden_camera_in_shadow_channel,
+                     'hidden_global_illumination': m.hidden_global_illumination, 'hidden_reflections_refractions': m.hidden_reflections_refractions,
+                     'hidden_zclip_planes': m.hidden_zclip_planes, 'object_id': self._color_to_rgb8(m.object_id),
+                     'name': d['name'], 'parent': d['parent'], 'material': bpy.path.abspath(m.material_file), 'material_embed': m.material_embed,
+                     'base': b, 'pivot': p, 'matrix': None, 'hide': m.hide, 'hide_parent': m.hide_parent, 'type': 'PARTICLES', }
+            elif(dp['type'] == 'GRASS'):
+                q = {'material': bpy.path.abspath(m.material), 'material_embed': m.material_embed,
+                     'backface_material': bpy.path.abspath(m.backface_material), 'material_backface_embed': m.material_backface_embed,
+                     'density': int(m.density), 'density_map': texture_to_data(m.density_map, ps),
+                     'length': m.length, 'length_map': texture_to_data(m.length_map, ps), 'length_variation': m.length_variation,
+                     'root_width': m.root_width, 'tip_width': m.tip_width,
+                     'direction_type': int(m.direction_type),
+                     'initial_angle': math.degrees(m.initial_angle), 'initial_angle_variation': m.initial_angle_variation, 'initial_angle_map': texture_to_data(m.initial_angle_map, ps),
+                     'start_bend': m.start_bend, 'start_bend_variation': m.start_bend_variation, 'start_bend_map': texture_to_data(m.start_bend_map, ps),
+                     'bend_radius': m.bend_radius, 'bend_radius_variation': m.bend_radius_variation, 'bend_radius_map': texture_to_data(m.bend_radius_map, ps),
+                     'bend_angle': math.degrees(m.bend_angle), 'bend_angle_variation': m.bend_angle_variation, 'bend_angle_map': texture_to_data(m.bend_angle_map, ps),
+                     'cut_off': m.cut_off, 'cut_off_variation': m.cut_off_variation, 'cut_off_map': texture_to_data(m.cut_off_map, ps),
+                     'points_per_blade': int(m.points_per_blade), 'primitive_type': int(m.primitive_type), 'seed': m.seed,
+                     'lod': m.lod, 'lod_min_distance': m.lod_min_distance, 'lod_max_distance': m.lod_max_distance, 'lod_max_distance_density': m.lod_max_distance_density,
+                     'display_percent': int(m.display_percent), 'display_max_blades': int(m.display_max_blades),
+                     
+                     # pass some default to skip checks this time..
+                     'opacity': 100,
+                     'hidden_camera': False,
+                     'hidden_camera_in_shadow_channel': False,
+                     'hidden_global_illumination': False,
+                     'hidden_reflections_refractions': False,
+                     'hidden_zclip_planes': False,
+                     'object_id': [255, 255, 255],
+                     'name': dp['name'],
+                     'parent': None,
+                     'base': None,
+                     'pivot': None,
+                     'matrix': None,
+                     'hide': False,
+                     
+                     'object': dp['parent'],
+                     'type': 'GRASS', }
+            else:
+                raise TypeError("Unsupported particles type: {}".format(dp['type']))
+            
+            if(q is not None):
+                self.data.append(q)
     
     def _pymaxwell(self, append=False, instancer=False, wireframe=False, ):
         """Generate pymaxwell script in temp directory and execute it."""
