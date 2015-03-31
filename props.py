@@ -556,17 +556,6 @@ class GrassExtProperties(PropertyGroup):
         del bpy.types.ParticleSettings.maxwell_grass_extension
 
 
-class HairExtProperties(PropertyGroup):
-    
-    @classmethod
-    def register(cls):
-        bpy.types.ParticleSettings.maxwell_hair_extension = PointerProperty(type=cls)
-    
-    @classmethod
-    def unregiser(cls):
-        del bpy.types.ParticleSettings.maxwell_hair_extension
-
-
 class ParticlesExtProperties(PropertyGroup):
     material_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', )
     material_embed = BoolProperty(name="Embed Into Scene", default=True, )
@@ -640,12 +629,33 @@ class ParticlesExtProperties(PropertyGroup):
         del bpy.types.ParticleSettings.maxwell_particles_extension
 
 
+class HairExtProperties(PropertyGroup):
+    pass
+
+
 class MesherExtProperties(PropertyGroup):
+    pass
+
+
+class ClonerExtProperties(PropertyGroup):
+    pass
+
+
+class ScatterExtProperties(PropertyGroup):
+    pass
+
+
+class SubdivisionExtProperties(PropertyGroup):
+    level = IntProperty(name="Subdivision Level", default=2, min=0, max=99, )
+    scheme = EnumProperty(name="Subdivision Scheme", items=[('0', "Catmull-Clark", ""), ('1', "Loop", "")], default='0', )
+    interpolation = EnumProperty(name="UV Interpolation", items=[('0', "None", ""), ('1', "Edges", ""), ('2', "Edges And Corners", ""), ('3', "Sharp", "")], default='2', )
+    crease = FloatProperty(name="Edge Crease (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    smooth = FloatProperty(name="Smooth Angle", default=math.radians(90.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )
     
     @classmethod
     def register(cls):
-        bpy.types.ParticleSettings.maxwell_mesher_extension = PointerProperty(type=cls)
+        bpy.types.ParticleSettings.maxwell_cloner_extension = PointerProperty(type=cls)
     
     @classmethod
     def unregiser(cls):
-        del bpy.types.ParticleSettings.maxwell_mesher_extension
+        del bpy.types.ParticleSettings.maxwell_cloner_extension
