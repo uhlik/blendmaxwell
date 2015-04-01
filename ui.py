@@ -56,9 +56,19 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         l = self.layout
         m = context.scene.maxwell_render
         
+        l.label("Workflow:")
         l.prop(m, 'export_open_with')
+        l.prop(m, 'instance_app')
+        
+        l.separator()
+        r = l.row()
+        r.prop(m, 'export_overwrite')
+        if(m.export_incremental):
+            r.enabled = False
+        l.prop(m, 'export_incremental')
+        
+        l.label("Options:")
         l.prop(m, 'export_use_instances')
-        l.prop(m, 'export_overwrite')
         l.prop(m, 'export_keep_intermediates')
 
 

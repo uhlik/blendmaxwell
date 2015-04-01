@@ -45,35 +45,19 @@ class RenderExport(Operator):
         m = scene.maxwell_render
         
         m.exporting_animation_now = False
+        m.private_image = m.output_image
+        m.private_mxi = m.output_mxi
         
-        bp = bpy.path.abspath(bpy.context.blend_data.filepath)
-        if(bp == ""):
-            self.report({'ERROR'}, "Save file first.")
+        try:
+            bpy.ops.render.render(animation=False, write_still=False, use_viewport=False, layer="", scene="", )
+        except Exception as e:
+            self.report({'ERROR'}, str(e))
+            m.output_image = m.private_image
+            m.output_mxi = m.private_mxi
             return {'CANCELLED'}
+        m.output_image = m.private_image
+        m.output_mxi = m.private_mxi
         
-        cams = [o for o in scene.objects if o.type == 'CAMERA']
-        if(len(cams) == 0):
-            self.report({'ERROR'}, "No Camera found in scene.")
-            return {'CANCELLED'}
-        
-        ed = bpy.path.abspath(m.export_output_directory)
-        h, t = os.path.split(bp)
-        n, e = os.path.splitext(t)
-        p = os.path.join(ed, "{}.mxs".format(n))
-        
-        if(not os.path.exists(ed)):
-            self.report({'ERROR'}, "Export directory does not exist.")
-            return {'CANCELLED'}
-    
-        if(not os.access(ed, os.W_OK)):
-            self.report({'ERROR'}, "Export directory is not writeable.")
-            return {'CANCELLED'}
-        
-        if(not m.export_overwrite and os.path.exists(p)):
-            self.report({'ERROR'}, "Scene file already exist in Output directory.")
-            return {'CANCELLED'}
-        
-        bpy.ops.render.render(animation=False, write_still=False, use_viewport=False, layer="", scene="", )
         return {'FINISHED'}
 
 
@@ -85,47 +69,47 @@ class AnimationExport(Operator):
     def execute(self, context):
         scene = context.scene
         m = scene.maxwell_render
-        bp = bpy.path.abspath(bpy.context.blend_data.filepath)
-        if(bp == ""):
-            self.report({'ERROR'}, "Save file first.")
-            return {'CANCELLED'}
-        
-        cams = [o for o in scene.objects if o.type == 'CAMERA']
-        if(len(cams) == 0):
-            self.report({'ERROR'}, "No Camera found in scene.")
-            return {'CANCELLED'}
         
         m.exporting_animation_now = True
+        m.exporting_animation_first_frame = True
+        # store image names, if they are blank, will be set default from inside engine
+        # and thus written correctly at the end of operator
+        m.private_image = m.output_image
+        m.private_mxi = m.output_mxi
+        
         orig_frame = scene.frame_current
         scene_frames = range(scene.frame_start, scene.frame_end + 1)
         for frame in scene_frames:
             scene.frame_set(frame, 0.0)
             m.exporting_animation_frame_number = frame
             
-            ed = bpy.path.abspath(m.export_output_directory)
-            h, t = os.path.split(bp)
-            n, e = os.path.splitext(t)
-            p = os.path.join(ed, "{0}_{1:06d}.mxs".format(n, frame))
-            
-            if(not os.path.exists(ed)):
-                self.report({'ERROR'}, "Export directory does not exist.")
-                return {'CANCELLED'}
-            
-            if(not os.access(ed, os.W_OK)):
-                self.report({'ERROR'}, "Export directory is not writeable.")
-                return {'CANCELLED'}
-            
-            if(not m.export_overwrite and os.path.exists(p)):
+            try:
+                bpy.ops.render.render(animation=False, write_still=False, use_viewport=False, layer="", scene="", )
+                # remove frame number for fresh start
+                m.output_image = m.private_image
+                m.output_mxi = m.private_mxi
+            except Exception as e:
+                self.report({'ERROR'}, str(e))
+                # reset flags
                 m.exporting_animation_now = False
+                m.exporting_animation_first_frame = True
                 m.exporting_animation_frame_number = 1
-                self.report({'ERROR'}, "Scene file already exist in Output directory.")
+                # remove frame number to not stop with some silly name..
+                m.output_image = m.private_image
+                m.output_mxi = m.private_mxi
                 return {'CANCELLED'}
             
-            bpy.ops.render.render(animation=False, write_still=False, use_viewport=False, layer="", scene="", )
+            m.exporting_animation_first_frame = False
         
         scene.frame_set(orig_frame, 0.0)
+        
+        # reset flags
         m.exporting_animation_now = False
+        m.exporting_animation_first_frame = True
         m.exporting_animation_frame_number = 1
+        # remove frame number, all done.
+        m.output_image = m.private_image
+        m.output_mxi = m.private_mxi
         
         return {'FINISHED'}
 
@@ -409,9 +393,13 @@ class OpenMXS(Operator):
     bl_description = ""
     
     filepath = StringProperty(name="Filepath", subtype='FILE_PATH', options={'HIDDEN'}, )
-    application = EnumProperty(name="Application", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ], default='STUDIO', options={'HIDDEN'}, )
+    application = EnumProperty(name="Application", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "", "") ], default='STUDIO', options={'HIDDEN'}, )
+    instance_app = BoolProperty(name="Open a new instance", default=False, )
     
     def execute(self, context):
+        if(self.application == 'NONE'):
+            return {'FINISHED'}
+        
         p = os.path.abspath(bpy.path.abspath(self.filepath))
         
         if(p == ""):
@@ -431,12 +419,18 @@ class OpenMXS(Operator):
         if(s == 'Darwin'):
             if(self.application == 'STUDIO'):
                 app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Studio.app', ))
-                command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                if(self.instance_app):
+                    command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                else:
+                    command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
                 args = shlex.split(command_line)
                 p = subprocess.Popen(args)
             elif(self.application == 'MAXWELL'):
                 app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Maxwell.app', ))
-                command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                if(self.instance_app):
+                    command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                else:
+                    command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
                 args = shlex.split(command_line)
                 p = subprocess.Popen(args)
             else:

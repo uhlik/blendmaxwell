@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import os
+import re
 
 import bpy
 from bpy.types import RenderEngine
@@ -33,38 +34,128 @@ class MaxwellRenderExportEngine(RenderEngine):
     bl_use_preview = True
     
     def render(self, scene):
+        m = scene.maxwell_render
+        
+        bp = bpy.path.abspath(bpy.context.blend_data.filepath)
+        # check if file is saved, if not raise error
+        if(bp == ""):
+            self.report({'ERROR'}, "Save file first.")
+            return
+        
+        # other checks, like for camera (if not present, blender will raise error anyway)
+        cams = [o for o in scene.objects if o.type == 'CAMERA']
+        if(len(cams) == 0):
+            self.report({'ERROR'}, "No Camera found in scene.")
+            return
+        
+        ed = bpy.path.abspath(m.export_output_directory)
+        # check if directory exists else error
+        if(not os.path.exists(ed)):
+            self.report({'ERROR'}, "Export directory does not exist.")
+            return
+        # check if directory if writeable else error
+        if(not os.access(ed, os.W_OK)):
+            self.report({'ERROR'}, "Export directory is not writeable.")
+            return
+        
+        h, t = os.path.split(bp)
+        n, e = os.path.splitext(t)
+        if(m.exporting_animation_now and not m.exporting_animation_first_frame):
+            mxs_name = m.private_name
+            mxs_increment = m.private_increment
+            mxs_suffix = m.private_suffix
+        else:
+            mxs_name = n
+            mxs_increment = ""
+            mxs_suffix = ""
+        
+        def walk_dir(p):
+            """gets directory contents in format: {files:[...], dirs:[...]}"""
+            r = {'files': [], 'dirs': [], }
+            for (root, dirs, files) in os.walk(p):
+                r['files'].extend(files)
+                r['dirs'].extend(dirs)
+                break
+            return r
+        
+        if(m.exporting_animation_now):
+            mxs_suffix = '_{:06d}'.format(m.exporting_animation_frame_number)
+            if(m.export_incremental):
+                # add or increment mxs number
+                if(m.exporting_animation_first_frame):
+                    # do this just once for a first frame
+                    m.exporting_animation_first_frame = False
+                    
+                    dc = walk_dir(ed)
+                    # get files from destination and filter all files starting with mxs_name and with .mxs extension
+                    older = [f for f in dc['files'] if(f.startswith(mxs_name) and f.endswith(".mxs"))]
+                    nn = 0
+                    if(len(older) > 0):
+                        older.sort()
+                        pat = re.compile(str('^{0}.\d\d\d_\d\d\d\d\d\d.mxs$'.format(mxs_name)))
+                        for ofn in older:
+                            if(re.search(pat, ofn)):
+                                # get increment number from each, if there is some of course
+                                num = int(ofn[len(mxs_name) + 1:-len("_000000.mxs")])
+                                if(nn < num):
+                                    nn = num
+                        nn += 1
+                    if(nn != 0):
+                        # there were some already incremented files, lets make nes increment from highest
+                        mxs_increment = '.{:0>3}'.format(nn)
+            elif(m.export_overwrite):
+                # overwrite, no error reporting, no path changing
+                pass
+            else:
+                # check and raise error if mxs exists, if not continue
+                p = os.path.join(ed, "{}{}{}.mxs".format(mxs_name, mxs_increment, mxs_suffix))
+                if(os.path.exists(p) and not m.export_overwrite):
+                    # # reset animation flags
+                    # m.exporting_animation_now = False
+                    # m.exporting_animation_frame_number = 1
+                    # m.exporting_animation_first_frame = True
+                    self.report({'ERROR'}, "Scene file already exist in Output directory.")
+                    return
+        else:
+            if(m.export_incremental):
+                # add or increment mxs number
+                dc = walk_dir(ed)
+                # get files from destination and filter all files starting with mxs_name and with .mxs extension
+                older = [f for f in dc['files'] if(f.startswith(mxs_name) and f.endswith(".mxs"))]
+                nn = 0
+                if(len(older) > 0):
+                    older.sort()
+                    pat = re.compile(str('^{0}.\d\d\d.mxs$'.format(mxs_name)))
+                    for ofn in older:
+                        if(re.search(pat, ofn)):
+                            # get increment number from each, if there is some of course
+                            num = int(ofn[len(mxs_name) + 1:-len(".mxs")])
+                            if(nn < num):
+                                nn = num
+                    nn += 1
+                if(nn != 0):
+                    # there were some already incremented files, lets make nes increment from highest
+                    mxs_increment = '.{:0>3}'.format(nn)
+            elif(m.export_overwrite):
+                # overwrite, no error reporting, no path changing
+                pass
+            else:
+                # check and raise error if mxs exists, if not continue
+                p = os.path.join(ed, "{}{}{}.mxs".format(mxs_name, mxs_increment, mxs_suffix))
+                if(os.path.exists(p) and not m.export_overwrite):
+                    self.report({'ERROR'}, "Scene file already exist in Output directory.")
+                    return
+        
+        # store it to use it render_scene (is this needed? it was in example.. i can do whole work here)
+        # but the problem is, when exporting animation, this is called for each frame, so i got to store these props
+        # maybe.. maybe not
+        m.private_name = mxs_name
+        m.private_increment = mxs_increment
+        m.private_suffix = mxs_suffix
+        m.private_path = os.path.join(ed, "{}{}{}.mxs".format(mxs_name, mxs_increment, mxs_suffix))
+        m.private_basepath = os.path.join(ed, "{}{}.mxs".format(mxs_name, mxs_increment))
+        
         try:
-            m = scene.maxwell_render
-            bp = bpy.path.abspath(bpy.context.blend_data.filepath)
-            if(bp == ""):
-                self.report({'ERROR'}, "Save file first.")
-                return
-            
-            cams = [o for o in scene.objects if o.type == 'CAMERA']
-            if(len(cams) == 0):
-                self.report({'ERROR'}, "No Camera found in scene.")
-                return
-            
-            ed = bpy.path.abspath(m.export_output_directory)
-            h, t = os.path.split(bp)
-            n, e = os.path.splitext(t)
-            p = os.path.join(ed, "{}.mxs".format(n))
-            
-            if(not os.path.exists(ed)):
-                self.report({'ERROR'}, "Export directory does not exist.")
-                return
-            
-            if(not os.access(ed, os.W_OK)):
-                self.report({'ERROR'}, "Export directory is not writeable.")
-                return
-            
-            if(not m.export_overwrite and os.path.exists(p)):
-                if(m.exporting_animation_now):
-                    m.exporting_animation_now = False
-                    m.exporting_animation_frame_number = 1
-                self.report({'ERROR'}, "Scene file already exist in Output directory.")
-                return
-            
             s = scene.render.resolution_percentage / 100.0
             self.size_x = int(scene.render.resolution_x * s)
             self.size_y = int(scene.render.resolution_y * s)
@@ -72,7 +163,6 @@ class MaxwellRenderExportEngine(RenderEngine):
                 pass
             else:
                 self.render_scene(scene)
-        
         except Exception as ex:
             import traceback
             m = traceback.format_exc()
@@ -91,20 +181,50 @@ class MaxwellRenderExportEngine(RenderEngine):
         progress.set_default_progress_reporting(progress.PROGRESS_BAR)
         
         m = scene.maxwell_render
-        bp = bpy.path.abspath(bpy.context.blend_data.filepath)
+        p = m.private_path
+        bp = m.private_basepath
         
-        ed = bpy.path.abspath(m.export_output_directory)
+        # write default one if not set, do not care if enabled, this is more usable when i change my mind later
         h, t = os.path.split(bp)
         n, e = os.path.splitext(t)
-        p = os.path.join(ed, "{}.mxs".format(n))
+        if(m.output_image == ""):
+            m.output_image = os.path.join(h, "{}.png".format(n))
+            m.private_image = m.output_image
+        if(m.output_mxi == ""):
+            m.output_mxi = os.path.join(h, "{}.mxi".format(n))
+            m.private_mxi = m.output_mxi
         
-        if(m.exporting_animation_now):
-            p = os.path.join(ed, "{0}_{1:06d}.mxs".format(n, m.exporting_animation_frame_number))
+        def remove_increment(path):
+            h, t = os.path.split(bpy.path.abspath(path))
+            n, e = os.path.splitext(t)
+            pat = re.compile(str('.\d\d\d{}$'.format(e)))
+            if(re.search(pat, t)):
+                n = t[:-len(".000{}".format(e))]
+            return h, n, e
         
-        if(m.output_image == "" and m.output_image_enabled):
-            m.output_image = os.path.join(ed, "{}.png".format(n))
-        if(m.output_mxi == "" and m.output_mxi_enabled):
-            m.output_mxi = os.path.join(ed, "{}.mxi".format(n))
+        if(m.export_incremental):
+            # increment also both image files, and also do not care if enabled
+            if(m.private_increment != ""):
+                h, n, e = remove_increment(m.output_image)
+                m.output_image = os.path.join(h, "{}{}{}".format(n, m.private_increment, e))
+                h, n, e = remove_increment(m.output_mxi)
+                m.output_mxi = os.path.join(h, "{}{}{}".format(n, m.private_increment, e))
+        
+        if(m.output_image_enabled):
+            # if exporting animation add correct frame number
+            if(m.exporting_animation_now):
+                # frame number from image paths will be removed after export is finished in animation operator
+                h, t = os.path.split(bpy.path.abspath(m.output_image))
+                n, e = os.path.splitext(t)
+                m.output_image = os.path.join(h, "{}{}{}".format(n, m.private_suffix, e))
+        
+        if(m.output_mxi_enabled):
+            # if exporting animation add correct frame number
+            if(m.exporting_animation_now):
+                # frame number from image paths will be removed after export is finished in animation operator
+                h, t = os.path.split(bpy.path.abspath(m.output_mxi))
+                n, e = os.path.splitext(t)
+                m.output_mxi = os.path.join(h, "{}{}{}".format(n, m.private_suffix, e))
         
         ex = None
         if(m.export_wireframe):
@@ -153,7 +273,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         # open in..
         if(ex is not None and not m.exporting_animation_now):
-            bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=m.export_open_with, )
+            bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=m.export_open_with, instance_app=m.instance_app, )
         
         # and make black rectangle as a render result
         c = self.size_x * self.size_y

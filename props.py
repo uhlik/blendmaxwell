@@ -79,6 +79,8 @@ def _override_output_image(self, context):
         return
     _overrides.output_image = True
     
+    self.output_image = bpy.path.abspath(self.output_image)
+    
     h, t = os.path.split(self.output_image)
     n, e = os.path.splitext(t)
     es = ['.png', '.jpg', '.tga', '.tif', '.jp2', '.hdr', '.exr', '.bmp', ]
@@ -86,7 +88,7 @@ def _override_output_image(self, context):
         e = '.png'
     
     p = bpy.path.ensure_ext(self.output_image, e, case_sensitive=False, )
-    if(p != self.output_image):
+    if(p != self.output_image and p != e):
         self.output_image = p
     
     _overrides.output_image = False
@@ -97,8 +99,11 @@ def _override_output_mxi(self, context):
         return
     _overrides.output_mxi = True
     
+    self.output_mxi = bpy.path.abspath(self.output_mxi)
+    
+    e = '.mxi'
     p = bpy.path.ensure_ext(self.output_mxi, '.mxi', case_sensitive=False, )
-    if(p != self.output_mxi):
+    if(p != self.output_mxi and p != e):
         self.output_mxi = p
     
     _overrides.output_mxi = False
@@ -232,7 +237,10 @@ class SceneProperties(PropertyGroup):
     export_use_instances = BoolProperty(name="Use Instances", default=True, description="Convert multi-user mesh objects to instances", )
     export_keep_intermediates = BoolProperty(name="Keep Intermediates", default=False, description="Do not remove intermediate files used for scene export (usable only for debugging purposes)", )
     # export_auto_open = BoolProperty(name="Open In Studio", description="", default=True, )
+    
     export_open_with = EnumProperty(name="Open With", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "None", "")], default='STUDIO', description="After export, open in ...", )
+    instance_app = BoolProperty(name="Open a new instance of application", default=False, description="Open a new instance of the application even if one is already running", )
+    
     export_wireframe = BoolProperty(name="Wireframe", default=False, description="Wireframe and Clay scene export", )
     export_edge_radius = FloatProperty(name="Edge Radius", default=0.00025, min=0.0, max=1.0, precision=6, description="Wireframe edge radius (meters)", )
     export_edge_resolution = IntProperty(name="Edge Resolution", default=32, min=3, max=128, description="Wireframe edge resolution", )
@@ -246,13 +254,22 @@ class SceneProperties(PropertyGroup):
     export_clay_mat_roughness = FloatProperty(name="Clay Roughness", default=97.0, min=0.0, max=100.0, step=3, precision=2, subtype='PERCENTAGE', description="Clay roughness value", )
     
     export_overwrite = BoolProperty(name="Overwrite Existing Scene", default=True, description="", )
+    export_incremental = BoolProperty(name="Incremental", default=False, description="Always export a new file", )
     
     export_log = StringProperty(name="Export Log String", default="", )
     export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
     export_log_open = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
     
-    exporting_animation_now = BoolProperty(default=False, )
-    exporting_animation_frame_number = IntProperty(default=1, )
+    exporting_animation_now = BoolProperty(default=False, options={'HIDDEN'}, )
+    exporting_animation_frame_number = IntProperty(default=1, options={'HIDDEN'}, )
+    exporting_animation_first_frame = BoolProperty(default=True, options={'HIDDEN'}, )
+    private_name = StringProperty(default="", options={'HIDDEN'}, )
+    private_increment = StringProperty(default="", options={'HIDDEN'}, )
+    private_suffix = StringProperty(default="", options={'HIDDEN'}, )
+    private_path = StringProperty(default="", options={'HIDDEN'}, )
+    private_basepath = StringProperty(default="", options={'HIDDEN'}, )
+    private_image = StringProperty(default="", options={'HIDDEN'}, )
+    private_mxi = StringProperty(default="", options={'HIDDEN'}, )
     
     @classmethod
     def register(cls):
