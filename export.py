@@ -1789,16 +1789,27 @@ class MXSExport():
                             log("Particles cannot be exported without 'Maxwell Render' addon enabled..", 1, LogStyles.WARNING, )
                             continue
                         
-                        d = {'props': ps.settings.maxwell_particles_extension,
-                             # 'matrix': o.matrix_world,
-                             # TODO verify / fix particles transformation. not sure if it right..
-                             # 'matrix': o.matrix_local,
-                             'matrix': Matrix(),
-                             'type': ps.settings.maxwell_render.use,
-                             'ps': ps,
-                             'name': "{}-{}".format(o.name, ps.name),
-                             'parent': parent, }
-                        self.particles.append(d)
+                        renderable = False
+                        for om in self.meshes:
+                            if(om['object'] == o):
+                                if(om['export']):
+                                    renderable = True
+                            break
+                        show_render = False
+                        for mo in o.modifiers:
+                            if(mo.type == 'PARTICLE_SYSTEM'):
+                                if(mo.particle_system == ps):
+                                    if(mo.show_render is True):
+                                        show_render = True
+                        
+                        if(renderable and show_render):
+                            d = {'props': ps.settings.maxwell_particles_extension,
+                                 'matrix': Matrix(),
+                                 'type': ps.settings.maxwell_render.use,
+                                 'ps': ps,
+                                 'name': "{}-{}".format(o.name, ps.name),
+                                 'parent': parent, }
+                            self.particles.append(d)
                     elif(ps.settings.maxwell_render.use == 'GRASS'):
                         try:
                             mx = ps.settings.maxwell_render
@@ -1806,15 +1817,27 @@ class MXSExport():
                             log("Particles cannot be exported without 'Maxwell Render' addon enabled..", 1, LogStyles.WARNING, )
                             continue
                         
-                        d = {'props': ps.settings.maxwell_grass_extension,
-                             # 'matrix': o.matrix_world,
-                             # TODO verify / fix particles transformation. not sure if it right..
-                             'matrix': o.matrix_local,
-                             'type': ps.settings.maxwell_render.use,
-                             'ps': ps,
-                             'name': "{}-{}".format(o.name, ps.name),
-                             'parent': o.name, }
-                        self.particles.append(d)
+                        renderable = False
+                        for om in self.meshes:
+                            if(om['object'] == o):
+                                if(om['export']):
+                                    renderable = True
+                            break
+                        show_render = False
+                        for mo in o.modifiers:
+                            if(mo.type == 'PARTICLE_SYSTEM'):
+                                if(mo.particle_system == ps):
+                                    if(mo.show_render is True):
+                                        show_render = True
+                        
+                        if(renderable and show_render):
+                            d = {'props': ps.settings.maxwell_grass_extension,
+                                 'matrix': o.matrix_local,
+                                 'type': ps.settings.maxwell_render.use,
+                                 'ps': ps,
+                                 'name': "{}-{}".format(o.name, ps.name),
+                                 'parent': o.name, }
+                            self.particles.append(d)
                     else:
                         pass
         
