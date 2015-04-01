@@ -95,6 +95,9 @@ def get_all_panels():
     return r
 
 
+addon_keymaps = []
+
+
 def register():
     s = platform.system()
     if(s == 'Windows'):
@@ -124,9 +127,24 @@ def register():
     # for p in get_all_panels():
     for p in get_selected_panels():
         p.COMPAT_ENGINES.add(engine.MaxwellRenderExportEngine.bl_idname)
+    
+    # override render shorcuts
+    kcfg = bpy.context.window_manager.keyconfigs.addon
+    if(kcfg):
+        km = kcfg.keymaps.new(name='Screen')
+        kmi = km.keymap_items.new('maxwell_render.render_export', 'F12', 'PRESS')
+        addon_keymaps.append((km, kmi))
+        km = kcfg.keymaps.new(name='Screen')
+        kmi = km.keymap_items.new('maxwell_render.animation_export', 'F12', 'PRESS', ctrl=True, )
+        addon_keymaps.append((km, kmi))
 
 
 def unregister():
+    # remove shorcuts
+    for km, kmi in addon_keymaps:
+        km.keymap_items.remove(kmi)
+    addon_keymaps.clear()
+    
     # bpy.utils.unregister_module(__name__, verbose=True)
     bpy.utils.unregister_module(__name__)
     
