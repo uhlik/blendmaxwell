@@ -393,7 +393,7 @@ class OpenMXS(Operator):
     bl_description = ""
     
     filepath = StringProperty(name="Filepath", subtype='FILE_PATH', options={'HIDDEN'}, )
-    application = EnumProperty(name="Application", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "", "") ], default='STUDIO', options={'HIDDEN'}, )
+    application = EnumProperty(name="Application", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "", ""), ], default='STUDIO', options={'HIDDEN'}, )
     instance_app = BoolProperty(name="Open a new instance", default=False, )
     
     def execute(self, context):
