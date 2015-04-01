@@ -420,7 +420,9 @@ class OpenMXS(Operator):
             if(self.application == 'STUDIO'):
                 app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Studio.app', ))
                 if(self.instance_app):
-                    command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                    # command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                    app = os.path.join(app, "Contents/MacOS/Studio")
+                    command_line = '{0} -mxs:{1}'.format(shlex.quote(app), shlex.quote(p))
                 else:
                     command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
                 args = shlex.split(command_line)
@@ -428,7 +430,9 @@ class OpenMXS(Operator):
             elif(self.application == 'MAXWELL'):
                 app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Maxwell.app', ))
                 if(self.instance_app):
-                    command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                    # command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
+                    app = os.path.join(app, "Contents/MacOS/Maxwell")
+                    command_line = '{0} -mxs:{}'.format(shlex.quote(app), shlex.quote(p))
                 else:
                     command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
                 args = shlex.split(command_line)
