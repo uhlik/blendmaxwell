@@ -1944,7 +1944,12 @@ class MXSExport():
                 if(switches != ''):
                     switches += ' '
                 switches += '-w'
-        
+            
+            # if(QUIET):
+            #     if(switches != ''):
+            #         switches += ' '
+            #     switches += '-q'
+            
             if(switches != ''):
                 command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(self.PY),
                                                                 shlex.quote(self.script_path),
@@ -1965,6 +1970,7 @@ class MXSExport():
             o = subprocess.call(args, )
             if(o != 0):
                 log("error in {0}".format(self.script_path), 0, LogStyles.ERROR, )
+                raise Exception("error in {0}".format(self.script_path))
         elif(s == 'Windows'):
             pass
         else:
