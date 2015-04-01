@@ -29,7 +29,7 @@
 
 ![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
 
-### installation - Mac OS X:
+### addon installation - Mac OS X:
 
 * Download Maxwell Render 3.1.0 from [http://maxwellrender.com/](http://maxwellrender.com/) and install to ```/Applications```
 * Download python 3.4.1 from [https://www.python.org/downloads/release/python-341/](https://www.python.org/downloads/release/python-341/) and install
@@ -37,10 +37,18 @@
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```render_maxwell``` and put to ```~/Library/Application Support/Blender/2.74/scripts/addons/```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
+### to update addon - Mac OS X:
+
+* Start Blender, disable addon in User Preferences, hit 'Save User Settings' and quit
+* Remove ```~/Library/Application Support/Blender/2.74/scripts/addons/render_maxwell```
+* Download this repository clicking 'Download ZIP', extract, rename directory to ```render_maxwell``` and put to ```~/Library/Application Support/Blender/2.74/scripts/addons/```
+* Start Blender again, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
+
 ***
 
 changelog:
 
+* 0.1.5 added: maxwell grass modifier, incremental export, minor ui tweaks and additions, launch multiple instances of maxwell and studio, fixed: material placeholders on triangle groups, maxwell particles transformation, error reporting
 * 0.1.4 added: render layers panel, fixed: path handling, instance bases on hidden layers and many more
 * 0.1.3 first release
 
