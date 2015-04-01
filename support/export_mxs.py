@@ -35,9 +35,12 @@ from pymaxwell import *
 
 
 logger = None
+quiet = False
 
 
 def log(msg, indent=0):
+    if(quiet):
+        return
     # print("{0}> {1}".format("    " * indent, msg))
     logger.info("{0}> {1}".format("    " * indent, msg))
 
@@ -154,6 +157,8 @@ class PercentDone():
         self.n = "\n"
     
     def step(self, numdone=1):
+        if(quiet):
+            return
         self.current += numdone
         self.percent = int(self.current / (self.total / 100))
         if(self.percent > self.last):
@@ -1161,10 +1166,13 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--append', action='store_true', help='append to existing mxs (result_path)')
     parser.add_argument('-w', '--wireframe', action='store_true', help='scene data contains wireframe scene')
     parser.add_argument('-i', '--instancer', action='store_true', help='scene data contains instancer (python only)')
+    parser.add_argument('-q', '--quiet', action='store_true', help='no logging except errors')
     parser.add_argument('log_file', type=str, help='path to log file')
     parser.add_argument('scene_data_path', type=str, help='path to serialized scene data file')
     parser.add_argument('result_path', type=str, help='path to result .mxs')
     args = parser.parse_args()
+    
+    quiet = args.quiet
     
     logger = logging.getLogger()
     logger.setLevel(logging.NOTSET)
@@ -1182,7 +1190,7 @@ if __name__ == "__main__":
     except Exception as e:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        # sys.stdout.write("".join(lines))
-        log("".join(lines))
+        sys.stdout.write("".join(lines))
+        # log("".join(lines))
         sys.exit(1)
     sys.exit(0)
