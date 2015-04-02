@@ -26,6 +26,7 @@ from bl_ui.properties_render import RenderButtonsPanel
 from bl_ui.properties_world import WorldButtonsPanel
 from bl_ui.properties_render_layer import RenderLayerButtonsPanel
 from bl_ui.properties_material import MaterialButtonsPanel
+from bl_ui.properties_texture import TextureButtonsPanel
 from bl_ui.properties_particle import ParticleButtonsPanel
 from bl_ui.properties_data_lamp import DataButtonsPanel
 
@@ -927,6 +928,98 @@ class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
             r.operator('maxwell_render.create_material').backface = True
         else:
             r.operator('maxwell_render.edit_material').backface = True
+
+
+class TexturePanel(TextureButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Texture"
+    
+    @classmethod
+    def poll(cls, context):
+        return False
+    
+    def draw(self, context):
+        l = self.layout
+        m = context.texture.maxwell_render
+        
+        
+        # tex = context.texture
+        # l.template_image(tex, "image", tex.image_user)
+        
+        
+        tex = None
+        ts = context.texture_slot
+        if(ts.texture is not None):
+            if(ts.texture.type == 'IMAGE'):
+                tex = ts.texture
+        if(tex is None):
+            l.active = False
+        
+        
+        
+        
+        # s = l.split(percentage=0.25)
+        # s.label("Path:")
+        # s.prop(m, 'path', text="", )
+        
+        # l.prop_search(m, 'path', tex, 'image', text="")
+        # l.prop_search(m, "path", bpy.data, "images")
+        # l.prop(tex, 'image')
+        
+        # l.template_image(tex, "image", tex.image_user, )
+        
+        # l.separator()
+        # l.label("Projection Properties:")
+        l.prop(m, 'use_global_map')
+        
+        sub = l.column()
+        sub.active = not m.use_global_map
+        
+        # l.prop(m, 'channel')
+        tex = context.texture_slot
+        # tex.texture_coords = 'UV'
+        
+        # col = split.column()
+        # col.prop(tex, "texture_coords", text="")
+        
+        ob = context.object
+        r = sub.row()
+        s = r.split(percentage=0.25)
+        s.label(text="Channel:")
+        s.prop_search(tex, "uv_layer", ob.data, "uv_textures", text="")
+        
+        r = sub.row()
+        r.prop(m, 'tiling_method', expand=True, )
+        r = sub.row()
+        r.prop(m, 'tiling_units', expand=True, )
+        r = sub.row()
+        r.prop(m, 'repeat')
+        
+        r = sub.row()
+        r.label("Mirror:")
+        r.prop(m, 'mirror_x', text="X", )
+        r.prop(m, 'mirror_y', text="Y", )
+        
+        r = sub.row()
+        r.prop(m, 'offset')
+        sub.prop(m, 'rotation')
+        
+        l.separator()
+        # l.label("Image Properties:")
+        
+        sub = l.column()
+        r = sub.row()
+        r.prop(m, 'invert')
+        r.prop(m, 'use_alpha')
+        sub.prop(m, 'type_interpolation')
+        r = sub.row()
+        r.prop(m, 'brightness')
+        r.prop(m, 'contrast')
+        r = sub.row()
+        r.prop(m, 'saturation')
+        r.prop(m, 'hue')
+        r = sub.row()
+        r.prop(m, 'clamp')
 
 
 class ParticlesPanel(ParticleButtonsPanel, Panel):

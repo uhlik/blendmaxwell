@@ -20,7 +20,7 @@ import os
 import math
 
 import bpy
-from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty, StringProperty, EnumProperty, FloatVectorProperty
+from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty, StringProperty, EnumProperty, FloatVectorProperty, IntVectorProperty
 from bpy.types import PropertyGroup
 from mathutils import Vector
 
@@ -471,6 +471,34 @@ class MaterialProperties(PropertyGroup):
     @classmethod
     def unregiser(cls):
         del bpy.types.Material.maxwell_render
+
+
+class TextureProperties(PropertyGroup):
+    # path = StringProperty(name="Path", default="", subtype='FILE_PATH', description="", )
+    use_global_map = BoolProperty(name="Use Override Map", default=False, )
+    tiling_method = EnumProperty(name="Tiling Method", items=[('TILE_XY', "Tile XY", ""), ('TILE_X', "Tile X", ""), ('TILE_Y', "Tile Y", ""), ('NO_TILING', "No Tiling", ""), ], default='TILE_XY', )
+    tiling_units = EnumProperty(name="Tiling Units", items=[('0', "Relative", ""), ('1', "Meters", ""), ], default='0', )
+    repeat = FloatVectorProperty(name="Repeat", default=(0.0, 0.0), min=-1000.0, max=1000.0, precision=3, size=2, )
+    mirror_x = BoolProperty(name="Mirror X", default=False, )
+    mirror_y = BoolProperty(name="Mirror Y", default=False, )
+    offset = FloatVectorProperty(name="Offset", default=(0.0, 0.0), min=-1000.0, max=1000.0, precision=3, size=2, )
+    rotation = FloatProperty(name="Rotation", default=math.radians(0.000), min=math.radians(0.000), max=math.radians(360.000), precision=3, subtype='ANGLE', )
+    invert = BoolProperty(name="Invert", default=False, )
+    use_alpha = BoolProperty(name="Alpha Only", default=False, )
+    type_interpolation = EnumProperty(name="Interpolation", items=[('0', "Off", ""), ('1', "On", ""), ], default='0', )
+    brightness = FloatProperty(name="Brightness", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    contrast = FloatProperty(name="Contrast", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    saturation = FloatProperty(name="Saturation", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    hue = FloatProperty(name="Hue", default=0.0, min=-180.0, max=180.0, precision=3, subtype='PERCENTAGE', )
+    clamp = IntVectorProperty(name="RGB Clamp", default=(0, 255), min=0, max=255, subtype='NONE', size=2, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Texture.maxwell_render = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Texture.maxwell_render
 
 
 class CustomAlphaPropertyGroup(PropertyGroup):
