@@ -937,15 +937,19 @@ class TexturePanel(TextureButtonsPanel, Panel):
     @classmethod
     def poll(cls, context):
         return False
+        
+        if(not super().poll(context)):
+            return False
+        if(context.space_data.texture_context not in ['MATERIAL', 'PARTICLES']):
+            return False
+        return True
     
     def draw(self, context):
         l = self.layout
         m = context.texture.maxwell_render
         
-        
         # tex = context.texture
         # l.template_image(tex, "image", tex.image_user)
-        
         
         tex = None
         ts = context.texture_slot
@@ -956,20 +960,27 @@ class TexturePanel(TextureButtonsPanel, Panel):
             l.active = False
         
         
-        
-        
         # s = l.split(percentage=0.25)
         # s.label("Path:")
         # s.prop(m, 'path', text="", )
         
+        
         # l.prop_search(m, 'path', tex, 'image', text="")
         # l.prop_search(m, "path", bpy.data, "images")
-        # l.prop(tex, 'image')
+        c = l.column()
+        if(tex is not None and tex.image):
+            image = tex.image
+            c.active = False
+            c.enabled = False
+            c.prop(image, 'filepath', text="Path:")
+            c.prop(tex, 'image')
+        else:
+            c.label("Load an image", icon='ERROR', )
         
         # l.template_image(tex, "image", tex.image_user, )
         
         # l.separator()
-        # l.label("Projection Properties:")
+        l.label("Projection Properties:")
         l.prop(m, 'use_global_map')
         
         sub = l.column()
@@ -983,17 +994,19 @@ class TexturePanel(TextureButtonsPanel, Panel):
         # col.prop(tex, "texture_coords", text="")
         
         ob = context.object
+        
         r = sub.row()
         s = r.split(percentage=0.25)
         s.label(text="Channel:")
-        s.prop_search(tex, "uv_layer", ob.data, "uv_textures", text="")
+        if(len(ob.data.uv_textures) == 0):
+            s.label("No UV Maps", icon='ERROR', )
+        else:
+            s.prop_search(tex, "uv_layer", ob.data, "uv_textures", text="")
         
         r = sub.row()
         r.prop(m, 'tiling_method', expand=True, )
         r = sub.row()
         r.prop(m, 'tiling_units', expand=True, )
-        r = sub.row()
-        r.prop(m, 'repeat')
         
         r = sub.row()
         r.label("Mirror:")
@@ -1001,23 +1014,56 @@ class TexturePanel(TextureButtonsPanel, Panel):
         r.prop(m, 'mirror_y', text="Y", )
         
         r = sub.row()
+        r.prop(m, 'repeat')
+        
+        # r = sub.row()
+        # r.label("Mirror:")
+        # r.prop(m, 'mirror_x', text="X", )
+        # r.prop(m, 'mirror_y', text="Y", )
+        
+        r = sub.row()
         r.prop(m, 'offset')
+        
         sub.prop(m, 'rotation')
         
+        # r = sub.row()
+        # s = r.split(percentage=0.32)
+        # s.label(text="Rotation:")
+        # s.prop(m, 'rotation')
+        
         l.separator()
-        # l.label("Image Properties:")
+        l.label("Image Properties:")
         
         sub = l.column()
         r = sub.row()
         r.prop(m, 'invert')
         r.prop(m, 'use_alpha')
-        sub.prop(m, 'type_interpolation')
-        r = sub.row()
-        r.prop(m, 'brightness')
-        r.prop(m, 'contrast')
-        r = sub.row()
-        r.prop(m, 'saturation')
-        r.prop(m, 'hue')
+        r.prop(m, 'interpolation')
+        # sub.prop(m, 'type_interpolation')
+        
+        # s = sub.split(percentage=0.5)
+        # c = s.column(align=True)
+        # c.prop(m, 'brightness')
+        # c.prop(m, 'contrast')
+        # c.prop(m, 'saturation')
+        # c.prop(m, 'hue')
+        #
+        # c = s.column()
+        # c.prop(m, 'type_interpolation')
+        # c.prop(m, 'clamp')
+        
+        # r = sub.row()
+        # r.prop(m, 'brightness')
+        # r.prop(m, 'contrast')
+        # r = sub.row()
+        # r.prop(m, 'saturation')
+        # r.prop(m, 'hue')
+        
+        sub.prop(m, 'brightness')
+        sub.prop(m, 'contrast')
+        sub.prop(m, 'saturation')
+        sub.prop(m, 'hue')
+        
         r = sub.row()
         r.prop(m, 'clamp')
 

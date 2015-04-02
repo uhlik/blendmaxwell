@@ -474,7 +474,7 @@ class MaterialProperties(PropertyGroup):
 
 
 class TextureProperties(PropertyGroup):
-    # path = StringProperty(name="Path", default="", subtype='FILE_PATH', description="", )
+    path = StringProperty(name="Path", default="", subtype='FILE_PATH', description="", )
     use_global_map = BoolProperty(name="Use Override Map", default=False, )
     tiling_method = EnumProperty(name="Tiling Method", items=[('TILE_XY', "Tile XY", ""), ('TILE_X', "Tile X", ""), ('TILE_Y', "Tile Y", ""), ('NO_TILING', "No Tiling", ""), ], default='TILE_XY', )
     tiling_units = EnumProperty(name="Tiling Units", items=[('0', "Relative", ""), ('1', "Meters", ""), ], default='0', )
@@ -485,7 +485,8 @@ class TextureProperties(PropertyGroup):
     rotation = FloatProperty(name="Rotation", default=math.radians(0.000), min=math.radians(0.000), max=math.radians(360.000), precision=3, subtype='ANGLE', )
     invert = BoolProperty(name="Invert", default=False, )
     use_alpha = BoolProperty(name="Alpha Only", default=False, )
-    type_interpolation = EnumProperty(name="Interpolation", items=[('0', "Off", ""), ('1', "On", ""), ], default='0', )
+    # type_interpolation = EnumProperty(name="Interpolation", items=[('0', "Off", ""), ('1', "On", ""), ], default='0', )
+    interpolation = BoolProperty(name="Interpolation", default=False, )
     brightness = FloatProperty(name="Brightness", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
     contrast = FloatProperty(name="Contrast", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
     saturation = FloatProperty(name="Saturation", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
