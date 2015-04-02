@@ -1705,7 +1705,7 @@ class MXSExport():
                             if(om['object'] == o):
                                 if(om['export']):
                                     renderable = True
-                            break
+                                    break
                         show_render = False
                         for mo in o.modifiers:
                             if(mo.type == 'PARTICLE_SYSTEM'):
@@ -1733,7 +1733,7 @@ class MXSExport():
                             if(om['object'] == o):
                                 if(om['export']):
                                     renderable = True
-                            break
+                                    break
                         show_render = False
                         for mo in o.modifiers:
                             if(mo.type == 'PARTICLE_SYSTEM'):
