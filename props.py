@@ -256,8 +256,8 @@ class SceneProperties(PropertyGroup):
     export_overwrite = BoolProperty(name="Overwrite Existing Scene", default=True, description="", )
     export_incremental = BoolProperty(name="Incremental", default=False, description="Always export a new file", )
     
-    export_log = StringProperty(name="Export Log String", default="", )
-    export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
+    # export_log = StringProperty(name="Export Log String", default="", )
+    # export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
     export_log_open = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
     
     exporting_animation_now = BoolProperty(default=False, options={'HIDDEN'}, )

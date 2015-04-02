@@ -40,13 +40,14 @@ class ExportPanel(RenderButtonsPanel, Panel):
     def draw(self, context):
         l = self.layout
         m = context.scene.maxwell_render
+        sub = l.column()
         
-        r = l.row(align=True)
+        r = sub.row(align=True)
         r.operator("maxwell_render.render_export")
         r.operator("maxwell_render.animation_export")
         
-        l.label("Scene Export Directory:")
-        l.prop(m, 'export_output_directory', text="")
+        sub.label("Scene Export Directory:")
+        sub.prop(m, 'export_output_directory', text="")
 
 
 class ExportOptionsPanel(RenderButtonsPanel, Panel):
@@ -56,21 +57,23 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
     def draw(self, context):
         l = self.layout
         m = context.scene.maxwell_render
+        sub = l.column()
         
-        l.label("Workflow:")
-        l.prop(m, 'export_open_with')
-        l.prop(m, 'instance_app')
+        sub.label("Workflow:")
+        sub.prop(m, 'export_open_with')
+        sub.prop(m, 'instance_app')
         
-        l.separator()
-        r = l.row()
+        sub.separator()
+        r = sub.row()
         r.prop(m, 'export_overwrite')
         if(m.export_incremental):
             r.enabled = False
-        l.prop(m, 'export_incremental')
+        sub.prop(m, 'export_incremental')
         
-        l.label("Options:")
-        l.prop(m, 'export_use_instances')
-        l.prop(m, 'export_keep_intermediates')
+        sub.label("Options:")
+        sub.prop(m, 'export_use_instances')
+        sub.prop(m, 'export_keep_intermediates')
+        sub.prop(m, 'export_log_open', )
 
 
 class ExportSpecialsPanel(RenderButtonsPanel, Panel):
@@ -80,16 +83,13 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
-        ll = self.layout
+        b = sub.box()
         
-        b = l.box()
-        l = b
-        
-        l.prop(m, 'export_wireframe')
+        b.prop(m, 'export_wireframe')
         if(m.export_wireframe):
-            
-            c = l.column()
+            c = b.column()
             c.label("Wireframe Options:")
             r = c.row(align=True)
             r.prop(m, 'export_edge_radius')
@@ -118,42 +118,25 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
             r.prop(m, 'export_clay_mat_roughness', text="Roughness", )
 
 
-class ExportLogPanel(RenderButtonsPanel, Panel):
-    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Export Log"
-    
-    def draw(self, context):
-        l = self.layout
-        m = context.scene.maxwell_render
-        
-        r = l.row()
-        r.prop(m, 'export_log_display', )
-        r.prop(m, 'export_log_open', )
-        
-        if(m.export_log_display):
-            ls = m.export_log.split('\n')
-            for i, s in enumerate(ls):
-                l.label(s.rstrip('\n'))
-
-
 class SceneOptionsPanel(RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Scene"
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        l.prop(m, 'scene_time')
-        l.prop(m, 'scene_sampling_level')
-        r = l.row()
+        sub.prop(m, 'scene_time')
+        sub.prop(m, 'scene_sampling_level')
+        r = sub.row()
         r.prop(m, 'scene_multilight')
         r.prop(m, 'scene_multilight_type', text="", )
-        r = l.row()
+        r = sub.row()
         r.prop(m, 'scene_cpu_threads')
         # r.prop(m, 'scene_priority')
-        l.prop(m, 'scene_quality')
-        # l.prop(m, 'scene_command_line')
+        sub.prop(m, 'scene_quality')
+        # sub.prop(m, 'scene_command_line')
 
 
 class OutputOptionsPanel(RenderButtonsPanel, Panel):
@@ -162,11 +145,12 @@ class OutputOptionsPanel(RenderButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        l.prop(m, 'output_depth')
+        sub.prop(m, 'output_depth')
         
-        s = l.split(percentage=0.25)
+        s = sub.split(percentage=0.25)
         c = s.column()
         c.prop(m, 'output_image_enabled')
         c = s.column()
@@ -174,7 +158,7 @@ class OutputOptionsPanel(RenderButtonsPanel, Panel):
         if(not m.output_image_enabled):
             c.enabled = False
         
-        s = l.split(percentage=0.25)
+        s = sub.split(percentage=0.25)
         c = s.column()
         c.prop(m, 'output_mxi_enabled')
         c = s.column()
@@ -190,9 +174,10 @@ class MaterialsOptionsPanel(RenderButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        s = l.split(percentage=0.33)
+        s = sub.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'materials_override')
         c = s.column()
@@ -200,9 +185,9 @@ class MaterialsOptionsPanel(RenderButtonsPanel, Panel):
         if(not m.materials_override):
             c.enabled = False
         
-        l.prop(m, 'materials_search_path')
-        l.separator()
-        l.prop(m, 'materials_directory')
+        sub.prop(m, 'materials_search_path')
+        sub.separator()
+        sub.prop(m, 'materials_directory')
 
 
 class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
@@ -212,11 +197,12 @@ class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        l.prop(m, 'globals_motion_blur')
-        l.prop(m, 'globals_diplacement')
-        l.prop(m, 'globals_dispersion')
+        sub.prop(m, 'globals_motion_blur')
+        sub.prop(m, 'globals_diplacement')
+        sub.prop(m, 'globals_dispersion')
 
 
 class ToneMappingOptionsPanel(RenderButtonsPanel, Panel):
@@ -226,15 +212,16 @@ class ToneMappingOptionsPanel(RenderButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        l.prop(m, 'tone_color_space')
-        l.prop(m, 'tone_whitepoint')
-        l.prop(m, 'tone_tint')
-        r = l.row()
+        sub.prop(m, 'tone_color_space')
+        sub.prop(m, 'tone_whitepoint')
+        sub.prop(m, 'tone_tint')
+        r = sub.row()
         r.prop(m, 'tone_burn')
         r.prop(m, 'tone_gamma')
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.5)
         c = s.column()
         c.prop(m, 'tone_sharpness')
@@ -251,14 +238,15 @@ class SimulensOptionsPanel(RenderButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        l.prop(m, 'simulens_aperture_map')
-        l.prop(m, 'simulens_obstacle_map')
-        r = l.row()
+        sub.prop(m, 'simulens_aperture_map')
+        sub.prop(m, 'simulens_obstacle_map')
+        r = sub.row()
         r.prop(m, 'simulens_diffraction')
         r.prop(m, 'simulens_diffraction_value', text="", )
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.5)
         c = s.column()
         s2 = c.split(percentage=0.075)
@@ -267,10 +255,10 @@ class SimulensOptionsPanel(RenderButtonsPanel, Panel):
         c2.label('Frequency')
         c = s.column()
         c.prop(m, 'simulens_frequency', text="", )
-        r = l.row()
+        r = sub.row()
         r.prop(m, 'simulens_scattering')
         r.prop(m, 'simulens_scattering_value', text="", )
-        r = l.row()
+        r = sub.row()
         r.prop(m, 'simulens_devignetting')
         r.prop(m, 'simulens_devignetting_value', text="", )
 
@@ -282,11 +270,12 @@ class IllumCausticsOptionsPanel(RenderButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        l.prop(m, 'illum_caustics_illumination')
-        l.prop(m, 'illum_caustics_refl_caustics')
-        l.prop(m, 'illum_caustics_refr_caustics')
+        sub.prop(m, 'illum_caustics_illumination')
+        sub.prop(m, 'illum_caustics_refl_caustics')
+        sub.prop(m, 'illum_caustics_refr_caustics')
 
 
 class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
@@ -295,15 +284,16 @@ class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        l.prop(m, "render_use_layers")
+        sub.prop(m, "render_use_layers")
         
         scene = context.scene
         rd = scene.render
         rl = rd.layers.active
         
-        s = l.split()
+        s = sub.split()
         c = s.column()
         c.prop(scene, "layers", text="Viewport Layers")
         # if(m.render_use_layers == 'RENDER'):
@@ -320,11 +310,12 @@ class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.scene.maxwell_render
         
-        l.prop(m, 'channels_output_mode')
+        sub.prop(m, 'channels_output_mode')
         
-        r = l.row()
+        r = sub.row()
         c = r.column()
         c.prop(m, 'channels_render')
         c = r.column()
@@ -332,132 +323,132 @@ class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
         if(not m.channels_render):
             c.enabled = False
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_alpha')
         c = s.column()
         c.prop(m, 'channels_alpha_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c = s.column()
         c.prop(m, 'channels_alpha_opaque')
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_z_buffer')
         c = s.column()
         c.prop(m, 'channels_z_buffer_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c = s.column()
         c.prop(m, 'channels_z_buffer_near', text="Near (m)")
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c = s.column()
         c.prop(m, 'channels_z_buffer_far', text="Far (m)")
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_shadow')
         c = s.column()
         c.prop(m, 'channels_shadow_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_material_id')
         c = s.column()
         c.prop(m, 'channels_material_id_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_object_id')
         c = s.column()
         c.prop(m, 'channels_object_id_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_motion_vector')
         c = s.column()
         c.prop(m, 'channels_motion_vector_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_roughness')
         c = s.column()
         c.prop(m, 'channels_roughness_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_fresnel')
         c = s.column()
         c.prop(m, 'channels_fresnel_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_normals')
         c = s.column()
         c.prop(m, 'channels_normals_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c = s.column()
         c.prop(m, 'channels_normals_space', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_position')
         c = s.column()
         c.prop(m, 'channels_position_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c = s.column()
         c.prop(m, 'channels_position_space', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_deep')
         c = s.column()
         c.prop(m, 'channels_deep_file', text="", )
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c = s.column()
         c.prop(m, 'channels_deep_type')
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c = s.column()
         c.prop(m, 'channels_deep_min_dist')
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c = s.column()
         c.prop(m, 'channels_deep_max_samples')
         
-        r = l.row()
+        r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
         c.prop(m, 'channels_uv')
@@ -479,13 +470,14 @@ class ChannelsCustomAlphasPanel(RenderLayerButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         
-        l.label("Custom Alphas are defined by Object groups.")
+        sub.label("Custom Alphas are defined by Object groups.")
         
         for g in bpy.data.groups:
             m = g.maxwell_render
             
-            b = l.box()
+            b = sub.box()
             s = b.split(percentage=0.20)
             
             c = s.column()
@@ -511,9 +503,10 @@ class EnvironmentPanel(WorldButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.world.maxwell_render
         
-        l.prop(m, 'env_type', text="", )
+        sub.prop(m, 'env_type', text="", )
 
 
 class SkySettingsPanel(WorldButtonsPanel, Panel):
@@ -528,27 +521,28 @@ class SkySettingsPanel(WorldButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.world.maxwell_render
         
-        l.prop(m, 'sky_type')
+        sub.prop(m, 'sky_type')
         if(m.sky_type == 'CONSTANT'):
-            l.prop(m, 'dome_intensity')
-            l.prop(m, 'dome_zenith')
-            l.prop(m, 'dome_horizon')
-            l.prop(m, 'dome_mid_point')
+            sub.prop(m, 'dome_intensity')
+            sub.prop(m, 'dome_zenith')
+            sub.prop(m, 'dome_horizon')
+            sub.prop(m, 'dome_mid_point')
         else:
-            l.prop(m, 'sky_use_preset')
+            sub.prop(m, 'sky_use_preset')
             if(m.sky_use_preset):
-                l.prop(m, 'sky_preset')
+                sub.prop(m, 'sky_preset')
             else:
-                l.prop(m, 'sky_intensity')
-                l.prop(m, 'sky_planet_refl')
-                l.prop(m, 'sky_ozone')
-                l.prop(m, 'sky_water')
-                l.prop(m, 'sky_turbidity_coeff')
-                l.prop(m, 'sky_wavelength_exp')
-                l.prop(m, 'sky_reflectance')
-                l.prop(m, 'sky_asymmetry')
+                sub.prop(m, 'sky_intensity')
+                sub.prop(m, 'sky_planet_refl')
+                sub.prop(m, 'sky_ozone')
+                sub.prop(m, 'sky_water')
+                sub.prop(m, 'sky_turbidity_coeff')
+                sub.prop(m, 'sky_wavelength_exp')
+                sub.prop(m, 'sky_reflectance')
+                sub.prop(m, 'sky_asymmetry')
 
 
 class SunSettingsPanel(WorldButtonsPanel, Panel):
@@ -563,52 +557,53 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.world.maxwell_render
         
-        l.prop(m, 'sun_lamp_priority')
-        l.separator()
+        sub.prop(m, 'sun_lamp_priority')
+        sub.separator()
         
-        l.prop(m, 'sun_type')
+        sub.prop(m, 'sun_type')
         if(m.sun_type != 'DISABLED'):
-            l.prop(m, 'sun_power')
-            l.prop(m, 'sun_radius_factor')
-            r = l.row()
+            sub.prop(m, 'sun_power')
+            sub.prop(m, 'sun_radius_factor')
+            r = sub.row()
             r.prop(m, 'sun_temp')
             if(m.sun_type == 'CUSTOM'):
                 r.enabled = False
-            r = l.row()
+            r = sub.row()
             r.prop(m, 'sun_color')
             if(m.sun_type == 'PHYSICAL'):
                 r.enabled = False
-            l.separator()
+            sub.separator()
             
-            l.prop(m, 'sun_location_type')
+            sub.prop(m, 'sun_location_type')
             if(m.sun_location_type == 'ANGLES'):
-                l.prop(m, 'sun_angles_zenith')
-                l.prop(m, 'sun_angles_azimuth')
+                sub.prop(m, 'sun_angles_zenith')
+                sub.prop(m, 'sun_angles_azimuth')
             elif(m.sun_location_type == 'DIRECTION'):
-                l.operator('maxwell_render.set_sun', "Set Sun")
-                c = l.column(align=True)
+                sub.operator('maxwell_render.set_sun', "Set Sun")
+                c = sub.column(align=True)
                 c.prop(m, 'sun_dir_x')
                 c.prop(m, 'sun_dir_y')
                 c.prop(m, 'sun_dir_z')
             else:
-                r = l.row(align=True)
+                r = sub.row(align=True)
                 r.prop(m, 'sun_latlong_lat')
                 r.prop(m, 'sun_latlong_lon')
-                l.prop(m, 'sun_date')
-                l.prop(m, 'sun_time')
+                sub.prop(m, 'sun_date')
+                sub.prop(m, 'sun_time')
                 
-                r = l.row()
+                r = sub.row()
                 c = r.column()
                 c.prop(m, 'sun_latlong_gmt')
                 r.prop(m, 'sun_latlong_gmt_auto')
                 if(m.sun_latlong_gmt_auto):
                     c.enabled = False
                 
-                l.operator('maxwell_render.now', "Now")
+                sub.operator('maxwell_render.now', "Now")
                 
-                l.prop(m, 'sun_latlong_ground_rotation')
+                sub.prop(m, 'sun_latlong_ground_rotation')
 
 
 class IBLSettingsPanel(WorldButtonsPanel, Panel):
@@ -623,61 +618,66 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.world.maxwell_render
         
-        l.prop(m, 'ibl_intensity')
-        r = l.row()
+        sub.prop(m, 'ibl_intensity')
+        r = sub.row()
         r.prop(m, 'ibl_interpolation')
         r.prop(m, 'ibl_screen_mapping')
         
-        b = l.box()
-        b.label("Background:")
-        b.prop(m, 'ibl_bg_type')
-        b.prop(m, 'ibl_bg_map')
-        b.prop(m, 'ibl_bg_intensity')
-        r = b.row(align=True)
+        b = sub.box()
+        sb = b.column()
+        sb.label("Background:")
+        sb.prop(m, 'ibl_bg_type')
+        sb.prop(m, 'ibl_bg_map')
+        sb.prop(m, 'ibl_bg_intensity')
+        r = sb.row(align=True)
         r.prop(m, 'ibl_bg_scale_x')
         r.prop(m, 'ibl_bg_scale_y')
-        r = b.row(align=True)
+        r = sb.row(align=True)
         r.prop(m, 'ibl_bg_offset_x')
         r.prop(m, 'ibl_bg_offset_y')
         
-        b = l.box()
-        b.label("Reflection:")
-        b.prop(m, 'ibl_refl_type')
+        b = sub.box()
+        sb = b.column()
+        sb.label("Reflection:")
+        sb.prop(m, 'ibl_refl_type')
         if(m.ibl_refl_type == 'HDR_IMAGE'):
-            b.prop(m, 'ibl_refl_map')
-            b.prop(m, 'ibl_refl_intensity')
-            r = b.row(align=True)
+            sb.prop(m, 'ibl_refl_map')
+            sb.prop(m, 'ibl_refl_intensity')
+            r = sb.row(align=True)
             r.prop(m, 'ibl_refl_scale_x')
             r.prop(m, 'ibl_refl_scale_y')
-            r = b.row(align=True)
+            r = sb.row(align=True)
             r.prop(m, 'ibl_refl_offset_x')
             r.prop(m, 'ibl_refl_offset_y')
         
-        b = l.box()
-        b.label("Refraction:")
-        b.prop(m, 'ibl_refr_type')
+        b = sub.box()
+        sb = b.column()
+        sb.label("Refraction:")
+        sb.prop(m, 'ibl_refr_type')
         if(m.ibl_refr_type == 'HDR_IMAGE'):
-            b.prop(m, 'ibl_refr_map')
-            b.prop(m, 'ibl_refr_intensity')
-            r = b.row(align=True)
+            sb.prop(m, 'ibl_refr_map')
+            sb.prop(m, 'ibl_refr_intensity')
+            r = sb.row(align=True)
             r.prop(m, 'ibl_refr_scale_x')
             r.prop(m, 'ibl_refr_scale_y')
-            r = b.row(align=True)
+            r = sb.row(align=True)
             r.prop(m, 'ibl_refr_offset_x')
             r.prop(m, 'ibl_refr_offset_y')
         
-        b = l.box()
-        b.label("Illumination:")
-        b.prop(m, 'ibl_illum_type')
+        b = sub.box()
+        sb = b.column()
+        sb.label("Illumination:")
+        sb.prop(m, 'ibl_illum_type')
         if(m.ibl_illum_type == 'HDR_IMAGE'):
-            b.prop(m, 'ibl_illum_map')
-            b.prop(m, 'ibl_illum_intensity')
-            r = b.row(align=True)
+            sb.prop(m, 'ibl_illum_map')
+            sb.prop(m, 'ibl_illum_intensity')
+            r = sb.row(align=True)
             r.prop(m, 'ibl_illum_scale_x')
             r.prop(m, 'ibl_illum_scale_y')
-            r = b.row(align=True)
+            r = sb.row(align=True)
             r.prop(m, 'ibl_illum_offset_x')
             r.prop(m, 'ibl_illum_offset_y')
 
@@ -694,9 +694,10 @@ class SunLampPanel(DataButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.object.data.maxwell_render
         
-        l.prop(m, 'override')
+        sub.prop(m, 'override')
 
 
 class CameraOpticsPanel(CameraButtonsPanel, Panel):
@@ -705,32 +706,33 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.camera.maxwell_render
         o = context.camera
         r = context.scene.render
         
-        l.operator('maxwell_render.auto_focus', "Auto Focus")
+        sub.operator('maxwell_render.auto_focus', "Auto Focus")
         
         cam = context.camera
-        l.prop(o, 'dof_object')
+        sub.prop(o, 'dof_object')
         
-        r = l.row()
+        r = sub.row()
         r.enabled = cam.dof_object is None
         r.prop(o, 'dof_distance')
         
-        l.prop(m, 'lens')
-        r = l.row()
+        sub.prop(m, 'lens')
+        r = sub.row()
         r.prop(o, 'lens')
         if(m.lens == 'TYPE_ORTHO_2'):
             r.enabled = False
-        l.prop(m, 'shutter')
-        l.prop(m, 'fstop')
+        sub.prop(m, 'shutter')
+        sub.prop(m, 'fstop')
         if(m.lens == 'TYPE_FISHEYE_3'):
-            l.prop(m, 'fov')
+            sub.prop(m, 'fov')
         if(m.lens == 'TYPE_SPHERICAL_4'):
-            l.prop(m, 'azimuth')
+            sub.prop(m, 'azimuth')
         if(m.lens == 'TYPE_CYLINDRICAL_5'):
-            l.prop(m, 'angle')
+            sub.prop(m, 'angle')
 
 
 class CameraSensorPanel(CameraButtonsPanel, Panel):
@@ -739,31 +741,32 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.camera.maxwell_render
         o = context.camera
         rp = context.scene.render
         
-        r = l.row(align=True)
+        r = sub.row(align=True)
         r.label("Resolution:")
         
         r.prop(rp, 'resolution_x', text="", )
         r.prop(rp, 'resolution_y', text="", )
-        l.prop(rp, 'resolution_percentage')
+        sub.prop(rp, 'resolution_percentage')
         
-        r = l.row(align=True)
+        r = sub.row(align=True)
         r.label("Filmback (mm):")
         r.prop(o, 'sensor_width', text="", )
         r.prop(o, 'sensor_height', text="", )
-        l.prop(o, 'sensor_fit')
+        sub.prop(o, 'sensor_fit')
         
-        c = l.column(align=True)
+        c = sub.column(align=True)
         c.prop(rp, 'pixel_aspect_x')
         c.prop(rp, 'pixel_aspect_y')
         
-        l.prop(m, 'iso')
-        l.prop(m, 'response')
-        l.prop(m, 'screen_region')
-        r = l.row()
+        sub.prop(m, 'iso')
+        sub.prop(m, 'response')
+        sub.prop(m, 'screen_region')
+        r = sub.row()
         c = r.column(align=True)
         c.prop(m, 'screen_region_x')
         c.prop(m, 'screen_region_y')
@@ -772,7 +775,7 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         c.prop(m, 'screen_region_w')
         c.prop(m, 'screen_region_h')
         c.enabled = False
-        r = l.row(align=True)
+        r = sub.row(align=True)
         r.operator("maxwell_render.camera_set_region")
         r.operator("maxwell_render.camera_reset_region")
 
@@ -784,46 +787,47 @@ class CameraOptionsPanel(CameraButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.camera.maxwell_render
         o = context.camera
         r = context.scene.render
         
-        l.label("Diaphragm:")
-        l.prop(m, 'aperture')
-        r = l.row()
+        sub.label("Diaphragm:")
+        sub.prop(m, 'aperture')
+        r = sub.row()
         r.prop(m, 'diaphragm_blades')
         r.prop(m, 'diaphragm_angle')
         if(m.aperture == 'CIRCULAR'):
             r.enabled = False
         
-        l.prop(m, 'custom_bokeh')
-        r = l.row()
+        sub.prop(m, 'custom_bokeh')
+        r = sub.row()
         r.prop(m, 'bokeh_ratio')
         r.prop(m, 'bokeh_angle')
         if(not m.custom_bokeh):
             r.enabled = False
         
-        l.separator()
-        l.label("Rotary Disc Shutter:")
-        r = l.row()
+        sub.separator()
+        sub.label("Rotary Disc Shutter:")
+        r = sub.row()
         r.prop(m, 'shutter_angle')
         r.enabled = False
-        l.prop(m, 'frame_rate')
+        sub.prop(m, 'frame_rate')
         
-        l.separator()
-        l.label("Z-clip Planes:")
-        l.prop(m, 'zclip')
-        r = l.row(align=True)
+        sub.separator()
+        sub.label("Z-clip Planes:")
+        sub.prop(m, 'zclip')
+        r = sub.row(align=True)
         r.prop(o, 'clip_start')
         r.prop(o, 'clip_end')
         
-        l.separator()
-        l.label("Shift Lens:")
-        r = l.row(align=True)
+        sub.separator()
+        sub.label("Shift Lens:")
+        r = sub.row(align=True)
         r.prop(o, 'shift_x')
         r.prop(o, 'shift_y')
         
-        l.prop(m, 'hide')
+        sub.prop(m, 'hide')
 
 
 class ObjectPanel(ObjectButtonsPanel, Panel):
@@ -839,12 +843,15 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.object.maxwell_render
-        l.prop(m, 'hide')
-        l.prop(m, 'opacity')
-        l.prop(m, 'object_id')
-        l.label("Hidden from:")
-        s = l.split(percentage=0.5)
+        
+        sub.prop(m, 'hide')
+        sub.prop(m, 'opacity')
+        r = sub.row()
+        r.prop(m, 'object_id')
+        sub.label("Hidden from:")
+        s = sub.split(percentage=0.5)
         c = s.column()
         c.prop(m, 'hidden_camera')
         c.prop(m, 'hidden_camera_in_shadow_channel')
@@ -901,11 +908,12 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.material.maxwell_render
-        l.prop(m, 'mxm_file')
-        l.prop(m, 'embed')
+        sub.prop(m, 'mxm_file')
+        sub.prop(m, 'embed')
         
-        r = l.row(align=True)
+        r = sub.row(align=True)
         if(m.mxm_file == ''):
             r.operator('maxwell_render.create_material').backface = False
         else:
@@ -919,11 +927,12 @@ class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         m = context.object.maxwell_render
-        l.prop(m, 'backface_material_file')
-        l.prop(m, 'backface_material_embed')
+        sub.prop(m, 'backface_material_file')
+        sub.prop(m, 'backface_material_embed')
         
-        r = l.row(align=True)
+        r = sub.row(align=True)
         if(m.backface_material_file == ''):
             r.operator('maxwell_render.create_material').backface = True
         else:
@@ -1074,6 +1083,7 @@ class ParticlesPanel(ParticleButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         
         o = context.object
         p = context.particle_system
@@ -1082,7 +1092,8 @@ class ParticlesPanel(ParticleButtonsPanel, Panel):
         
         m = context.particle_system.settings.maxwell_render
         
-        l.prop(m, 'use', expand=True, )
+        r = sub.row()
+        r.prop(m, 'use', expand=True, )
 
 
 class GrassExtPanel(ParticleButtonsPanel, Panel):
@@ -1111,6 +1122,7 @@ class GrassExtPanel(ParticleButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         
         o = context.object
         p = context.particle_system
@@ -1120,91 +1132,91 @@ class GrassExtPanel(ParticleButtonsPanel, Panel):
         ps = context.particle_system.settings
         m = context.particle_system.settings.maxwell_grass_extension
         
-        l.label("Primitive:")
-        s = l.split(percentage=0.8)
+        sub.label("Primitive:")
+        s = sub.split(percentage=0.8)
         c = s.column()
         c.prop(m, 'material')
         c = s.column()
         c.prop(m, 'material_embed', text='Embed', )
         
-        s = l.split(percentage=0.8)
+        s = sub.split(percentage=0.8)
         c = s.column()
         c.prop(m, 'backface_material')
         c = s.column()
         c.prop(m, 'material_backface_embed', text='Embed', )
         
-        l.prop(m, 'points_per_blade')
-        r = l.row()
+        sub.prop(m, 'points_per_blade')
+        r = sub.row()
         r.label("Primitive Type:")
         r.prop(m, 'primitive_type', expand=True, )
-        l.separator()
+        sub.separator()
         
-        l.label("Grass Density:")
-        l.prop(m, 'density')
-        r = l.row()
+        sub.label("Grass Density:")
+        sub.prop(m, 'density')
+        r = sub.row()
         r.prop_search(m, 'density_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop(m, 'seed')
-        l.separator()
+        sub.separator()
         
-        l.label("Blade Length:")
-        l.prop(m, 'length')
-        r = l.row()
+        sub.label("Blade Length:")
+        sub.prop(m, 'length')
+        r = sub.row()
         r.prop_search(m, 'length_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop(m, 'length_variation')
-        l.separator()
+        sub.separator()
         
-        l.label("Width:")
-        l.prop(m, 'root_width')
-        l.prop(m, 'tip_width')
-        l.separator()
+        sub.label("Width:")
+        sub.prop(m, 'root_width')
+        sub.prop(m, 'tip_width')
+        sub.separator()
         
-        l.label("Angle:")
-        l.prop(m, 'direction_type')
-        l.prop(m, 'initial_angle')
-        r = l.row()
+        sub.label("Angle:")
+        sub.prop(m, 'direction_type')
+        sub.prop(m, 'initial_angle')
+        r = sub.row()
         r.prop_search(m, 'initial_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop(m, 'initial_angle_variation')
-        l.separator()
+        sub.separator()
         
-        l.label("Bend:")
-        l.prop(m, 'start_bend')
-        r = l.row()
+        sub.label("Bend:")
+        sub.prop(m, 'start_bend')
+        r = sub.row()
         r.prop_search(m, 'start_bend_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop(m, 'start_bend_variation')
         
-        l.prop(m, 'bend_radius')
-        r = l.row()
+        sub.prop(m, 'bend_radius')
+        r = sub.row()
         r.prop_search(m, 'bend_radius_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop(m, 'bend_radius_variation')
         
-        l.prop(m, 'bend_angle')
-        r = l.row()
+        sub.prop(m, 'bend_angle')
+        r = sub.row()
         r.prop_search(m, 'bend_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop(m, 'bend_angle_variation')
-        l.separator()
+        sub.separator()
         
-        l.label("Cut Off:")
-        l.prop(m, 'cut_off')
-        r = l.row()
+        sub.label("Cut Off:")
+        sub.prop(m, 'cut_off')
+        r = sub.row()
         r.prop_search(m, 'cut_off_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop(m, 'cut_off_variation')
-        l.separator()
+        sub.separator()
         
-        l.prop(m, 'lod')
-        r = l.row()
+        sub.prop(m, 'lod')
+        r = sub.row()
         r.prop(m, 'lod_min_distance')
         r.prop(m, 'lod_max_distance')
         if(not m.lod):
             r.enabled = False
-        r = l.row()
+        r = sub.row()
         r.prop(m, 'lod_max_distance_density')
         if(not m.lod):
             r.enabled = False
-        l.separator()
+        sub.separator()
         
-        l.label("Display:")
-        l.prop(m, 'display_percent')
-        l.prop(m, 'display_max_blades')
+        sub.label("Display:")
+        sub.prop(m, 'display_percent')
+        sub.prop(m, 'display_max_blades')
 
 
 class HairExtPanel(ParticleButtonsPanel, Panel):
@@ -1233,6 +1245,7 @@ class HairExtPanel(ParticleButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         
         o = context.object
         p = context.particle_system
@@ -1241,7 +1254,7 @@ class HairExtPanel(ParticleButtonsPanel, Panel):
         
         # m = context.particle_system.settings.maxwell_hair_extension
         
-        l.label("Not implemented yet..", icon='ERROR', )
+        sub.label("Not implemented yet..", icon='ERROR', )
 
 
 class ParticlesExtPanel(ParticleButtonsPanel, Panel):
@@ -1270,6 +1283,7 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         
         o = context.object
         p = context.particle_system
@@ -1278,20 +1292,21 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
         
         m = context.particle_system.settings.maxwell_particles_extension
         
-        l.label("Object Properties:")
-        s = l.split(percentage=0.7)
+        sub.label("Object Properties:")
+        s = sub.split(percentage=0.7)
         c = s.column()
         c.prop(m, 'material_file')
         c = s.column()
         c.prop(m, 'material_embed', text='Embed', )
-        l.separator()
-        l.prop(m, 'hide')
-        l.prop(m, 'hide_parent')
-        l.prop(m, 'opacity')
-        l.prop(m, 'object_id')
-        l.separator()
-        l.label("Hidden from:")
-        s = l.split(percentage=0.5)
+        sub.separator()
+        sub.prop(m, 'hide')
+        sub.prop(m, 'hide_parent')
+        sub.prop(m, 'opacity')
+        r = sub.row()
+        r.prop(m, 'object_id')
+        sub.separator()
+        sub.label("Hidden from:")
+        s = sub.split(percentage=0.5)
         c = s.column()
         c.prop(m, 'hidden_camera')
         c.prop(m, 'hidden_camera_in_shadow_channel')
@@ -1299,30 +1314,30 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
         c = s.column()
         c.prop(m, 'hidden_reflections_refractions')
         c.prop(m, 'hidden_zclip_planes')
-        l.separator()
+        sub.separator()
         
-        l.label("Sequence:")
-        l.prop(m, 'bin_filename')
-        l.prop(m, 'bin_radius_multiplier')
-        l.prop(m, 'bin_motion_blur_multiplier')
-        l.prop(m, 'bin_shutter_speed')
-        l.prop(m, 'bin_load_particles')
-        l.prop(m, 'bin_axis_system')
-        l.prop(m, 'bin_frame_number')
-        l.prop(m, 'bin_fps')
-        l.separator()
+        sub.label("Sequence:")
+        sub.prop(m, 'bin_filename')
+        sub.prop(m, 'bin_radius_multiplier')
+        sub.prop(m, 'bin_motion_blur_multiplier')
+        sub.prop(m, 'bin_shutter_speed')
+        sub.prop(m, 'bin_load_particles')
+        sub.prop(m, 'bin_axis_system')
+        sub.prop(m, 'bin_frame_number')
+        sub.prop(m, 'bin_fps')
+        sub.separator()
         
-        l.prop(m, 'bin_advanced')
+        sub.prop(m, 'bin_advanced')
         
         if(m.bin_advanced):
-            l.label("Multipoint:")
-            l.prop(m, 'bin_extra_create_np_pp')
-            l.prop(m, 'bin_extra_dispersion')
-            l.prop(m, 'bin_extra_deformation')
-            l.separator()
+            sub.label("Multipoint:")
+            sub.prop(m, 'bin_extra_create_np_pp')
+            sub.prop(m, 'bin_extra_dispersion')
+            sub.prop(m, 'bin_extra_deformation')
+            sub.separator()
             
-            l.label("Extra Arrays Loading:")
-            s = l.split(percentage=0.5)
+            sub.label("Extra Arrays Loading:")
+            s = sub.split(percentage=0.5)
             c = s.column()
             c.prop(m, 'bin_load_force')
             c.prop(m, 'bin_load_vorticity')
@@ -1338,45 +1353,45 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
             c.prop(m, 'bin_load_mass')
             c.prop(m, 'bin_load_temperature')
             c.prop(m, 'bin_load_id')
-            l.separator()
+            sub.separator()
             
-            l.label("Magnitude Normalizing Values:")
-            s = l.split(percentage=0.5)
+            sub.label("Magnitude Normalizing Values:")
+            s = sub.split(percentage=0.5)
             c = s.column(align=True)
             c.prop(m, 'bin_min_force')
             c.prop(m, 'bin_max_force')
             c = s.column(align=True)
             c.prop(m, 'bin_min_vorticity')
             c.prop(m, 'bin_max_vorticity')
-            s = l.split(percentage=0.5)
+            s = sub.split(percentage=0.5)
             c = s.column(align=True)
             c.prop(m, 'bin_min_nneighbors')
             c.prop(m, 'bin_max_nneighbors')
             c = s.column(align=True)
             c.prop(m, 'bin_min_age')
             c.prop(m, 'bin_max_age')
-            s = l.split(percentage=0.5)
+            s = sub.split(percentage=0.5)
             c = s.column(align=True)
             c.prop(m, 'bin_min_isolation_time')
             c.prop(m, 'bin_max_isolation_time')
             c = s.column(align=True)
             c.prop(m, 'bin_min_viscosity')
             c.prop(m, 'bin_max_viscosity')
-            s = l.split(percentage=0.5)
+            s = sub.split(percentage=0.5)
             c = s.column(align=True)
             c.prop(m, 'bin_min_density')
             c.prop(m, 'bin_max_density')
             c = s.column(align=True)
             c.prop(m, 'bin_min_pressure')
             c.prop(m, 'bin_max_pressure')
-            s = l.split(percentage=0.5)
+            s = sub.split(percentage=0.5)
             c = s.column(align=True)
             c.prop(m, 'bin_min_mass')
             c.prop(m, 'bin_max_mass')
             c = s.column(align=True)
             c.prop(m, 'bin_min_temperature')
             c.prop(m, 'bin_max_temperature')
-            s = l.split(percentage=0.5)
+            s = sub.split(percentage=0.5)
             c = s.column(align=True)
             c.prop(m, 'bin_min_velocity')
             c.prop(m, 'bin_max_velocity')
@@ -1408,6 +1423,7 @@ class MesherExtPanel(ParticleButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         
         o = context.object
         p = context.particle_system
@@ -1416,7 +1432,7 @@ class MesherExtPanel(ParticleButtonsPanel, Panel):
         
         # m = context.particle_system.settings.maxwell_mesher_extension
         
-        l.label("Not implemented yet..", icon='ERROR', )
+        sub.label("Not implemented yet..", icon='ERROR', )
 
 
 class ScatterExtPanel(ParticleButtonsPanel, Panel):
@@ -1445,6 +1461,7 @@ class ScatterExtPanel(ParticleButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
+        sub = l.column()
         
         o = context.object
         p = context.particle_system
@@ -1453,4 +1470,4 @@ class ScatterExtPanel(ParticleButtonsPanel, Panel):
         
         # m = context.particle_system.settings.maxwell_scatter_extension
         
-        l.label("Not implemented yet..", icon='ERROR', )
+        sub.label("Not implemented yet..", icon='ERROR', )
