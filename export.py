@@ -21,25 +21,6 @@ import math
 import shlex
 import subprocess
 import platform
-
-'''
-# http://blender.stackexchange.com/a/7670
-# uuid module causes an error messagebox on windows.
-# using a dirty workaround to preload uuid without ctypes,
-# until blender gets compiled with vs2013
-def uuid_workaround():
-    import platform
-    if platform.system() == "Windows":
-        import ctypes
-        CDLL = ctypes.CDLL
-        ctypes.CDLL = None
-        import uuid
-        ctypes.CDLL = CDLL
-
-
-uuid_workaround()
-'''
-
 import uuid
 import shutil
 import struct
@@ -76,27 +57,14 @@ class MXSExport():
         use_instances: if True all multi user meshes and duplis are exported as instances
         keep_intermediates: if True, temp files and directory will not be removed
         """
-        # # python 3.2 bin path, as you can see, only Mac OS X is supported now..
-        # self.PY = '/Library/Frameworks/Python.framework/Versions/3.2/bin/python3.2'
-        # # if pymaxwell is installed, these two files must be present
-        # self.PYMAXWELL_SO = '/Library/Frameworks/Python.framework/Versions/3.2/lib/python3.2/site-packages/_pymaxwell.so'
-        # self.PYMAXWELL_PY = '/Library/Frameworks/Python.framework/Versions/3.2/lib/python3.2/site-packages/pymaxwell.py'
-        
-        # # python 3.4 bin path, as you can see, only Mac OS X is supported now..
-        # self.PY = '/Library/Frameworks/Python.framework/Versions/3.4/bin/python3.4'
-        # # if pymaxwell is installed, these two files must be present
-        # self.PYMAXWELL_SO = '/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/_pymaxwell.so'
-        # self.PYMAXWELL_PY = '/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/pymaxwell.py'
-        
         s = platform.system()
         if(s == 'Darwin'):
             self.PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
             self.PYMAXWELL_SO = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', '_pymaxwell.so', ))
             self.PYMAXWELL_PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', 'pymaxwell.py', ))
         elif(s == 'Linux'):
-            # from distutils.sysconfig import get_python_lib
-            # get_python_lib()
-            # self.PY = '/usr/bin/python3.4'
+            # import site
+            # site.getsitepackages()
             self.PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'python3.4', ))
             self.PYMAXWELL_SO = os.path.join('/usr/local/lib/python3.4/site-packages', '_pymaxwell.so', )
             self.PYMAXWELL_PY = os.path.join('/usr/local/lib/python3.4/site-packages', 'pymaxwell.py', )
@@ -104,14 +72,6 @@ class MXSExport():
             pass
         else:
             raise OSError("Unknown platform: {}.".format(s))
-        
-        # # export template
-        # if(MAXWELL_VERSION == 2):
-        #     self.TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
-        # elif(MAXWELL_VERSION == 3):
-        #     self.TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs3.py")
-        # else:
-        #     raise ValueError("Unsupported Maxwell Render version: '{}'".format(MAXWELL_VERSION))
         
         # export template
         self.TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
@@ -367,30 +327,6 @@ class MXSExport():
         for o in h:
             walk(o)
         
-        '''
-        # maybe is better to swap all instances to empties, and export everything
-        # all instances became empties.. this way i got lots of garbage, but correct
-        # maybe better to remove empty hierarchy branches after then trying to sort it out now..
-        instances = []
-        
-        def walk(o):
-            for c in o['children']:
-                walk(c)
-            
-            if(o['export_type'] == 'INSTANCE' and o['export'] is True):
-                # rewrite tree in place, store instance copies
-                i = {}
-                for k, v in o.items():
-                    i[k] = v
-                i['parent'] = None
-                instances.append(i)
-                o['export_type'] = 'EMPTY'
-                o['mesh'] = None
-        
-        for o in h:
-            walk(o)
-        '''
-        
         # mark to remove all redundant empties
         def check_renderables_in_tree(oo):
             ov = []
@@ -543,29 +479,6 @@ class MXSExport():
                                  'type': 'MESH', }
                             self.duplicates.append(d)
                     ob.dupli_list_clear()
-        
-        # # and sun..
-        # def get_sun(suns):
-        #     # if(len(suns) == 0):
-        #     #     self.sun = None
-        #     # elif(len(suns) == 1):
-        #     if(len(suns) == 0):
-        #         return None
-        #     if(len(suns) == 1):
-        #         return suns[0]
-        #     else:
-        #         log("more than one sun in scene", 1, LogStyles.WARNING)
-        #         nm = []
-        #         for o in suns:
-        #             nm.append(o['object'].name)
-        #         snm = sorted(nm)
-        #         n = snm[0]
-        #         for o in suns:
-        #             if(o['object'].name == n):
-        #                 log("using {0} as sun".format(n), 1, LogStyles.WARNING)
-        #                 return o
-        #
-        # self.sun = get_sun(suns)
         
         # import pprint
         # pp = pprint.PrettyPrinter(indent=4)
@@ -1404,8 +1317,6 @@ class MXSExport():
             if(ob.parent):
                 d['parent'] = ob.parent.name
             
-            # d = self._object_transform(ob, d)
-            # b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
             if(ob.parent_type == 'BONE'):
                 oamw = ob.matrix_world.copy()
                 apmw = ob.parent.matrix_world.copy()
