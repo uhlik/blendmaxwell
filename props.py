@@ -449,7 +449,7 @@ class ObjectProperties(PropertyGroup):
     backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, )
     backface_material_file = StringProperty(name="Backface MXM File", default="", subtype='FILE_PATH', )
     
-    hide = BoolProperty(name="Hide (in Maxwell Studio)", default=False, )
+    hide = BoolProperty(name="Hide From Render", default=False, )
     
     @classmethod
     def register(cls):
@@ -557,8 +557,8 @@ class GrassExtProperties(PropertyGroup):
     length_map = StringProperty(name="Length Map", default="", )
     length_variation = FloatProperty(name="Length Variation (%)", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     
-    root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.1, max=100000.0, precision=3, )
-    tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.1, max=100000.0, precision=3, )
+    root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.00001, max=100000.0, precision=3, )
+    tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.00001, max=100000.0, precision=3, )
     
     direction_type = EnumProperty(name="Direction Type", items=[('0', "Polygon Normal", ""), ('1', "World Z", "")], default='0', )
     
@@ -614,7 +614,7 @@ class ParticlesExtProperties(PropertyGroup):
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
-    hide = BoolProperty(name="Hide (in Maxwell Studio)", default=False, )
+    hide = BoolProperty(name="Hide From Render", default=False, )
     hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=True, )
     
     bin_filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
@@ -677,6 +677,32 @@ class ParticlesExtProperties(PropertyGroup):
 
 
 class HairExtProperties(PropertyGroup):
+    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    material_backface_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    
+    opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
+    hidden_camera = BoolProperty(name="Camera", default=False, )
+    hidden_camera_in_shadow_channel = BoolProperty(name="Camera In Shadow Channel", default=False, )
+    hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
+    hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
+    hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
+    object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    hide = BoolProperty(name="Hide From Render", default=False, )
+    hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=True, )
+    
+    hair_type = EnumProperty(name="Hair Type", items=[('HAIR', "Hair", ""), ('GRASS', "Grass", ""), ], default='HAIR', )
+    
+    hair_root_radius = FloatProperty(name="Root Radius (mm)", default=0.1, min=0.00001, max=100000.0, precision=3, )
+    hair_tip_radius = FloatProperty(name="Tip Radius (mm)", default=0.05, min=0.00001, max=100000.0, precision=3, )
+    grass_root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.00001, max=100000.0, precision=3, )
+    grass_tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.00001, max=100000.0, precision=3, )
+    
+    display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
+    display_max_blades = IntProperty(name="Display Max. Blades", default=1000, min=0, max=100000, )
+    display_max_hairs = IntProperty(name="Display Max. Hairs", default=1000, min=0, max=100000, )
+    
     @classmethod
     def register(cls):
         bpy.types.ParticleSettings.maxwell_hair_extension = PointerProperty(type=cls)

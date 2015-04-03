@@ -296,12 +296,12 @@ class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
         s = sub.split()
         c = s.column()
         c.prop(scene, "layers", text="Viewport Layers")
-        # if(m.render_use_layers == 'RENDER'):
-        #     c.enabled = False
+        if(m.render_use_layers == 'RENDER'):
+            c.active = False
         c = s.column()
         c.prop(rl, "layers", text="Render Layers")
-        # if(m.render_use_layers == 'VIEWPORT'):
-        #     c.enabled = False
+        if(m.render_use_layers == 'VIEWPORT'):
+            c.active = False
 
 
 class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
@@ -1252,9 +1252,64 @@ class HairExtPanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        # m = context.particle_system.settings.maxwell_hair_extension
+        m = context.particle_system.settings.maxwell_hair_extension
         
-        sub.label("Not implemented yet..", icon='ERROR', )
+        # sub.label("Not implemented yet..", icon='ERROR', )
+        
+        sub.label("Object Properties:")
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'material')
+        c = s.column()
+        c.prop(m, 'material_embed', text='Embed', )
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'backface_material')
+        c = s.column()
+        c.prop(m, 'material_backface_embed', text='Embed', )
+        
+        sub.separator()
+        
+        sub.prop(m, 'hide')
+        sub.prop(m, 'hide_parent')
+        sub.prop(m, 'opacity')
+        r = sub.row()
+        r.prop(m, 'object_id')
+        sub.separator()
+        
+        sub.label("Hidden from:")
+        s = sub.split(percentage=0.5)
+        c = s.column()
+        c.prop(m, 'hidden_camera')
+        c.prop(m, 'hidden_camera_in_shadow_channel')
+        c.prop(m, 'hidden_global_illumination')
+        c = s.column()
+        c.prop(m, 'hidden_reflections_refractions')
+        c.prop(m, 'hidden_zclip_planes')
+        sub.separator()
+        
+        sub.label("Hair Properties:")
+        r = sub.row()
+        r.prop(m, 'hair_type', expand=True, )
+        sub.separator()
+        
+        if(m.hair_type == 'GRASS'):
+            c = sub.column(align=True)
+            c.prop(m, 'grass_root_width')
+            c.prop(m, 'grass_tip_width')
+        else:
+            c = sub.column(align=True)
+            c.prop(m, 'hair_root_radius')
+            c.prop(m, 'hair_tip_radius')
+        
+        sub.separator()
+        sub.prop(m, 'display_percent')
+        if(m.hair_type == 'GRASS'):
+            sub.prop(m, 'display_max_blades')
+        else:
+            sub.prop(m, 'display_max_hairs')
 
 
 class ParticlesExtPanel(ParticleButtonsPanel, Panel):

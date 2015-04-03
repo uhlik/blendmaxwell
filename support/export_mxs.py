@@ -906,9 +906,56 @@ def grass(d, s):
     o.applyGeometryModifierExtension(p)
 
 
+def hair(d, s):
+    m = CextensionManager.instance()
+    m.loadAllExtensions()
+    
+    if(d['extension'] == 'MaxwellHair'):
+        e = m.createDefaultGeometryProceduralExtension('MaxwellHair')
+    if(d['extension'] == 'MGrassP'):
+        e = m.createDefaultGeometryProceduralExtension('MGrassP')
+    
+    p = e.getExtensionData()
+    p.setByteArray('HAIR_MAJOR_VER', d['data']['HAIR_MAJOR_VER'])
+    p.setByteArray('HAIR_MINOR_VER', d['data']['HAIR_MINOR_VER'])
+    p.setByteArray('HAIR_FLAG_ROOT_UVS', d['data']['HAIR_FLAG_ROOT_UVS'])
+    p.setByteArray('HAIR_GUIDES_COUNT', d['data']['HAIR_GUIDES_COUNT'])
+    p.setByteArray('HAIR_GUIDES_POINT_COUNT', d['data']['HAIR_GUIDES_POINT_COUNT'])
+    
+    c = Cbase()
+    c.origin = Cvector(0.0, 0.0, 0.0)
+    c.xAxis = Cvector(1.0, 0.0, 0.0)
+    c.yAxis = Cvector(0.0, 1.0, 0.0)
+    c.zAxis = Cvector(0.0, 0.0, 1.0)
+    p.setFloatArray('HAIR_POINTS', d['data']['HAIR_POINTS'], c)
+    p.setFloatArray('HAIR_NORMALS', d['data']['HAIR_NORMALS'], c)
+    
+    p.setUInt('Display Percent', d['display_percent'])
+    if(d['extension'] == 'MaxwellHair'):
+        p.setUInt('Display Max. Hairs', d['display_max_hairs'])
+        p.setDouble('Root Radius', d['hair_root_radius'])
+        p.setDouble('Tip Radius', d['hair_tip_radius'])
+    if(d['extension'] == 'MGrassP'):
+        p.setUInt('Display Max. Hairs', d['display_max_blades'])
+        p.setDouble('Root Radius', d['grass_root_width'])
+        p.setDouble('Tip Radius', d['grass_tip_width'])
+    
+    o = s.createGeometryProceduralObject(d['name'], p)
+    
+    if(d['material'] != ""):
+        mat = material(d['material'], s, d['material_embed'])
+        o.setMaterial(mat)
+    if(d['backface_material'] != ""):
+        bm = material(d['backface_material'][0], s, d['backface_material'][1])
+        o.setBackfaceMaterial(bm)
+    
+    base_and_pivot(o, d)
+    object_props(o, d)
+
+
 def hierarchy(d, s):
     log("setting object hierarchy..", 2)
-    object_types = ['EMPTY', 'MESH', 'INSTANCE', 'PARTICLES', ]
+    object_types = ['EMPTY', 'MESH', 'INSTANCE', 'PARTICLES', 'HAIR', ]
     exclude = ['SCENE', 'ENVIRONMENT', 'GRASS', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types and d[i]['type'] not in exclude):
@@ -917,8 +964,9 @@ def hierarchy(d, s):
                 p = s.getObject(d[i]['parent'])
                 ch.setParent(p)
     
+    object_types = ['PARTICLES', 'HAIR', ]
     for i in range(len(d)):
-        if(d[i]['type'] == 'PARTICLES'):
+        if(d[i]['type'] in object_types):
             if(d[i]['parent'] is not None):
                 if(d[i]['hide_parent']):
                     p = s.getObject(d[i]['parent'])
@@ -1092,6 +1140,8 @@ def main(args):
             particles(d, mxs)
         elif(d['type'] == 'GRASS'):
             grass(d, mxs)
+        elif(d['type'] == 'HAIR'):
+            hair(d, mxs)
         elif(d['type'] == 'WIREFRAME_MATERIAL'):
             mat = wireframe_material(d, mxs)
             m = {'name': d['name'], 'data': mat, }

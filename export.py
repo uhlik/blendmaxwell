@@ -1749,6 +1749,40 @@ class MXSExport():
                                  'name': "{}-{}".format(o.name, ps.name),
                                  'parent': o.name, }
                             self.particles.append(d)
+                    elif(ps.settings.maxwell_render.use == 'HAIR'):
+                        parent = o.name
+                        p = verify_parent(parent)
+                        if(not p):
+                            log("Hair '{0}' container object '{1}' is not renderable and thus not exported. Hair will not be parented.".format(ps.name, o.name), 1, LogStyles.WARNING, )
+                            parent = None
+                        
+                        try:
+                            mx = ps.settings.maxwell_render
+                        except:
+                            log("Particles cannot be exported without 'Maxwell Render' addon enabled..", 1, LogStyles.WARNING, )
+                            continue
+                        
+                        renderable = False
+                        for om in self.meshes:
+                            if(om['object'] == o):
+                                if(om['export']):
+                                    renderable = True
+                                    break
+                        show_render = False
+                        for mo in o.modifiers:
+                            if(mo.type == 'PARTICLE_SYSTEM'):
+                                if(mo.particle_system == ps):
+                                    if(mo.show_render is True):
+                                        show_render = True
+                        
+                        if(renderable and show_render):
+                            d = {'props': ps.settings.maxwell_hair_extension,
+                                 'matrix': Matrix(),
+                                 'type': ps.settings.maxwell_render.use,
+                                 'ps': ps,
+                                 'name': "{}-{}".format(o.name, ps.name),
+                                 'parent': parent, }
+                            self.particles.append(d)
                     else:
                         pass
         
@@ -1791,6 +1825,11 @@ class MXSExport():
             m = dp['props']
             ps = dp['ps']
             if(dp['type'] == 'PARTICLES'):
+                material_file = bpy.path.abspath(m.material_file)
+                if(material_file != "" and not os.path.exists(material_file)):
+                    log("{1}: mxm ('{0}') does not exist.".format(material_file, self.__class__.__name__), 2, LogStyles.WARNING, )
+                    material_file = ""
+                
                 q = {'bin_filename': bpy.path.abspath(m.bin_filename),
                      'bin_radius_multiplier': m.bin_radius_multiplier, 'bin_motion_blur_multiplier': m.bin_motion_blur_multiplier, 'bin_shutter_speed': m.bin_shutter_speed,
                      'bin_load_particles': m.bin_load_particles, 'bin_axis_system': int(m.bin_axis_system[-1:]), 'bin_frame_number': m.bin_frame_number, 'bin_fps': m.bin_fps,
@@ -1809,11 +1848,27 @@ class MXSExport():
                      'opacity': m.opacity, 'hidden_camera': m.hidden_camera, 'hidden_camera_in_shadow_channel': m.hidden_camera_in_shadow_channel,
                      'hidden_global_illumination': m.hidden_global_illumination, 'hidden_reflections_refractions': m.hidden_reflections_refractions,
                      'hidden_zclip_planes': m.hidden_zclip_planes, 'object_id': self._color_to_rgb8(m.object_id),
-                     'name': dp['name'], 'parent': dp['parent'], 'material': bpy.path.abspath(m.material_file), 'material_embed': m.material_embed,
+                     'name': dp['name'], 'parent': dp['parent'],
+                     
+                     'material': material_file,
+                     'material_embed': m.material_embed,
+                     
                      'base': b, 'pivot': p, 'matrix': None, 'hide': m.hide, 'hide_parent': m.hide_parent, 'type': 'PARTICLES', }
             elif(dp['type'] == 'GRASS'):
-                q = {'material': bpy.path.abspath(m.material), 'material_embed': m.material_embed,
-                     'backface_material': bpy.path.abspath(m.backface_material), 'material_backface_embed': m.material_backface_embed,
+                material = bpy.path.abspath(m.material)
+                if(material != "" and not os.path.exists(material)):
+                    log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
+                    material = ""
+                backface_material = bpy.path.abspath(m.backface_material)
+                if(backface_material != "" and not os.path.exists(backface_material)):
+                    log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
+                    material = ""
+                
+                q = {'material': material,
+                     'material_embed': m.material_embed,
+                     'backface_material': backface_material,
+                     'material_backface_embed': m.material_backface_embed,
+                     
                      'density': int(m.density), 'density_map': texture_to_data(m.density_map, ps),
                      'length': m.length, 'length_map': texture_to_data(m.length_map, ps), 'length_variation': m.length_variation,
                      'root_width': m.root_width, 'tip_width': m.tip_width,
@@ -1844,6 +1899,71 @@ class MXSExport():
                      
                      'object': dp['parent'],
                      'type': 'GRASS', }
+            if(dp['type'] == 'HAIR'):
+                material = bpy.path.abspath(m.material)
+                if(material != "" and not os.path.exists(material)):
+                    log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
+                    material = ""
+                backface_material = bpy.path.abspath(m.backface_material)
+                if(backface_material != "" and not os.path.exists(backface_material)):
+                    log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
+                    material = ""
+                
+                q = {'material': m.material,
+                     'material_embed': m.material_embed,
+                     'backface_material': m.backface_material,
+                     'material_backface_embed': m.material_backface_embed,
+                     
+                     'opacity': m.opacity,
+                     'hidden_camera': m.hidden_camera,
+                     'hidden_camera_in_shadow_channel': m.hidden_camera_in_shadow_channel,
+                     'hidden_global_illumination': m.hidden_global_illumination,
+                     'hidden_reflections_refractions': m.hidden_reflections_refractions,
+                     'hidden_zclip_planes': m.hidden_zclip_planes,
+                     'object_id': self._color_to_rgb8(m.object_id),
+                     'hide': m.hide,
+                     'hide_parent': m.hide_parent,
+                     'name': dp['name'],
+                     'parent': dp['parent'],
+                     'base': b,
+                     'pivot': p,
+                     'matrix': None,
+                     
+                     'display_percent': int(m.display_percent),
+                     
+                     'type': 'HAIR', }
+                if(m.hair_type == 'GRASS'):
+                    q['extension'] = 'MGrassP'
+                    
+                    q['grass_root_width'] = m.grass_root_width / 1000
+                    q['grass_tip_width'] = m.grass_tip_width / 1000
+                    q['display_max_blades'] = m.display_max_blades
+                else:
+                    q['extension'] = 'MaxwellHair'
+                    
+                    q['hair_root_radius'] = m.hair_root_radius / 1000
+                    q['hair_tip_radius'] = m.hair_tip_radius / 1000
+                    q['display_max_hairs'] = m.display_max_hairs
+                
+                mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+                hair_points = []
+                for p in ps.particles:
+                    for k in p.hair_keys:
+                        v = k.co.copy()
+                        v = mat * v
+                        hair_points.append(v.x)
+                        hair_points.append(v.y)
+                        hair_points.append(v.z)
+                
+                data = {'HAIR_MAJOR_VER': [1,0,0,0],
+                        'HAIR_MINOR_VER': [0,0,0,0],
+                        'HAIR_FLAG_ROOT_UVS': [0],
+                        'HAIR_GUIDES_COUNT': [len(ps.particles)],
+                        'HAIR_GUIDES_POINT_COUNT': [ps.settings.hair_step + 1],
+                        'HAIR_POINTS': hair_points,
+                        'HAIR_NORMALS': [1.0], }
+                q['data'] = data
+                
             else:
                 raise TypeError("Unsupported particles type: {}".format(dp['type']))
             
