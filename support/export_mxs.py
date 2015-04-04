@@ -419,6 +419,28 @@ def mesh(d, s):
         o.setTriangleUVW(t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], )
     base_and_pivot(o, d)
     object_props(o, d)
+    
+    if(d['subdiv_ext'] is not None):
+        # 0: ('Subdivision Level', [2], 0, 99, '1 UINT', 4, 1, True)
+        # 1: ('Subdivision Scheme', [0], 0, 2, '1 UINT', 4, 1, True)
+        # 2: ('Interpolation', [2], 0, 3, '1 UINT', 4, 1, True)
+        # 3: ('Crease', [0.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
+        # 4: ('Smooth Angle', [90.0], 0.0, 360.0, '3 FLOAT', 4, 1, True)
+        # 5: ('EXTENSION_NAME', 'SubdivisionModifier', '', '', '5 STRING', 1, 20, True)
+        # 6: ('EXTENSION_VERSION', [1], 0, 1000000, '1 UINT', 4, 1, True)
+        # 7: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
+        m = CextensionManager.instance()
+        m.loadAllExtensions()
+        e = m.createDefaultGeometryModifierExtension('SubdivisionModifier')
+        p = e.getExtensionData()
+        e = d['subdiv_ext']
+        p.setUInt('Subdivision Level', e[0])
+        p.setUInt('Subdivision Scheme', e[1])
+        p.setUInt('Interpolation', e[2])
+        p.setFloat('Crease', e[3])
+        p.setFloat('Smooth Angle', e[4])
+        o.applyGeometryModifierExtension(p)
+    
     return o
 
 

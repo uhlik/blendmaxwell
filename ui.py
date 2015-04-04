@@ -832,7 +832,7 @@ class CameraOptionsPanel(CameraButtonsPanel, Panel):
 
 class ObjectPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Object"
+    bl_label = "Maxwell Object"
     
     @classmethod
     def poll(cls, context):
@@ -859,6 +859,40 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         c = s.column()
         c.prop(m, 'hidden_reflections_refractions')
         c.prop(m, 'hidden_zclip_planes')
+
+
+class ObjectModifiersPanel(ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Object Modifiers"
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        l = self.layout
+        
+        sub = l.column()
+        
+        b = sub.box()
+        subd = context.object.maxwell_subdivision_extension
+        b.prop(subd, 'enabled')
+        if(subd.enabled):
+            b.prop(subd, 'level')
+            r = b.row()
+            r.prop(subd, 'scheme', expand=True)
+            b.prop(subd, 'interpolation')
+            b.prop(subd, 'crease')
+            b.prop(subd, 'smooth')
+        
+        b = sub.box()
+        scat = context.object.maxwell_scatter_extension
+        b.prop(scat, 'enabled')
+        if(scat.enabled):
+            b.label("Not implemented yet..", icon='ERROR', )
 
 
 class MaterialsPanel(MaterialButtonsPanel, Panel):

@@ -1473,6 +1473,12 @@ class MXSExport():
         # print(md)
         # raise Exception()
         
+        sd = ob.maxwell_subdivision_extension
+        if(sd.enabled):
+            d['subdiv_ext'] = [int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), ]
+        else:
+            d['subdiv_ext'] = None
+        
         return d, md
     
     def _meshes(self):

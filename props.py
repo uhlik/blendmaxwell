@@ -739,6 +739,8 @@ class ClonerExtProperties(PropertyGroup):
 
 
 class ScatterExtProperties(PropertyGroup):
+    enabled = BoolProperty(name="Maxwell Scatter", default=False, )
+    
     @classmethod
     def register(cls):
         bpy.types.Object.maxwell_scatter_extension = PointerProperty(type=cls)
@@ -749,6 +751,7 @@ class ScatterExtProperties(PropertyGroup):
 
 
 class SubdivisionExtProperties(PropertyGroup):
+    enabled = BoolProperty(name="Subdivision Modifier", default=False, )
     level = IntProperty(name="Subdivision Level", default=2, min=0, max=99, )
     scheme = EnumProperty(name="Subdivision Scheme", items=[('0', "Catmull-Clark", ""), ('1', "Loop", "")], default='0', )
     interpolation = EnumProperty(name="UV Interpolation", items=[('0', "None", ""), ('1', "Edges", ""), ('2', "Edges And Corners", ""), ('3', "Sharp", "")], default='2', )
