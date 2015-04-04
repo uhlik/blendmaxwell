@@ -861,9 +861,9 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'hidden_zclip_planes')
 
 
-class ObjectModifiersPanel(ObjectButtonsPanel, Panel):
+class ObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Object Modifiers"
+    bl_label = "Maxwell Subdivision Modifier"
     
     @classmethod
     def poll(cls, context):
@@ -872,27 +872,100 @@ class ObjectModifiersPanel(ObjectButtonsPanel, Panel):
         ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
         return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
     
+    def draw_header(self, context):
+        m = context.object.maxwell_subdivision_extension
+        self.layout.prop(m, "enabled", text="")
+    
     def draw(self, context):
         l = self.layout
-        
+        m = context.object.maxwell_subdivision_extension
         sub = l.column()
+        if(not m.enabled):
+            sub.active = False
+        sub.prop(m, 'level')
+        r = sub.row()
+        r.prop(m, 'scheme', expand=True)
+        sub.prop(m, 'interpolation')
+        sub.prop(m, 'crease')
+        sub.prop(m, 'smooth')
+
+
+class ObjectScatterPanel(ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Scatter Modifier"
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
+    
+    def draw_header(self, context):
+        m = context.object.maxwell_scatter_extension
+        self.layout.prop(m, "enabled", text="")
+    
+    def draw(self, context):
+        l = self.layout
+        m = context.object.maxwell_scatter_extension
+        sub = l.column()
+        if(not m.enabled):
+            sub.active = False
         
-        b = sub.box()
-        subd = context.object.maxwell_subdivision_extension
-        b.prop(subd, 'enabled')
-        if(subd.enabled):
-            b.prop(subd, 'level')
-            r = b.row()
-            r.prop(subd, 'scheme', expand=True)
-            b.prop(subd, 'interpolation')
-            b.prop(subd, 'crease')
-            b.prop(subd, 'smooth')
+        c = sub.column()
+        c.label("Primitive:")
+        c.prop_search(m, "scatter_object", context.scene, "objects")
+        c.prop(m, 'inherit_objectid')
+        c.separator()
         
-        b = sub.box()
-        scat = context.object.maxwell_scatter_extension
-        b.prop(scat, 'enabled')
-        if(scat.enabled):
-            b.label("Not implemented yet..", icon='ERROR', )
+        c = sub.column()
+        c.label("Scatter Density:")
+        c.prop(m, 'density')
+        c = sub.column()
+        c.prop_search(m, 'density_map', bpy.data, 'textures', icon='TEXTURE')
+        c = sub.column()
+        c.prop(m, 'seed')
+        
+        c = sub.column(align=True)
+        c.label("Scale:")
+        c.prop(m, 'scale_x')
+        c.prop(m, 'scale_y')
+        c.prop(m, 'scale_z')
+        c.separator()
+        c.prop_search(m, 'scale_map', bpy.data, 'textures', icon='TEXTURE')
+        c.label("Scale Variation:")
+        c.prop(m, 'scale_variation_x')
+        c.prop(m, 'scale_variation_y')
+        c.prop(m, 'scale_variation_z')
+        
+        c = sub.column(align=True)
+        c.label("Rotation:")
+        c.prop(m, 'rotation_x')
+        c.prop(m, 'rotation_y')
+        c.prop(m, 'rotation_z')
+        c.separator()
+        c.prop_search(m, 'rotation_map', bpy.data, 'textures', icon='TEXTURE')
+        c.label("Rotation Variation:")
+        c.prop(m, 'rotation_variation_x')
+        c.prop(m, 'rotation_variation_y')
+        c.prop(m, 'rotation_variation_z')
+        
+        c = sub.column()
+        c.prop(m, 'lod')
+        r = c.row()
+        r.prop(m, 'lod_min_distance')
+        r.prop(m, 'lod_max_distance')
+        if(not m.lod):
+            r.enabled = False
+        r = c.row()
+        r.prop(m, 'lod_max_distance_density')
+        if(not m.lod):
+            r.enabled = False
+        
+        c = sub.column()
+        c.label("Display:")
+        c.prop(m, 'display_percent')
+        c.prop(m, 'display_max_blades')
 
 
 class MaterialsPanel(MaterialButtonsPanel, Panel):
@@ -1600,9 +1673,9 @@ class MesherExtPanel(ParticleButtonsPanel, Panel):
         sub.label("Not implemented yet..", icon='ERROR', )
 
 
-class ScatterExtPanel(ParticleButtonsPanel, Panel):
+class ClonerExtPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Scatter"
+    bl_label = "Maxwell Cloner"
     
     @classmethod
     def poll(cls, context):
@@ -1619,7 +1692,7 @@ class ScatterExtPanel(ParticleButtonsPanel, Panel):
             return False
         
         m = context.particle_system.settings.maxwell_render
-        if(m.use != 'SCATTER'):
+        if(m.use != 'CLONER'):
             return False
         
         return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
@@ -1633,6 +1706,6 @@ class ScatterExtPanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        # m = context.particle_system.settings.maxwell_scatter_extension
+        # m = context.particle_system.settings.maxwell_cloner_extension
         
         sub.label("Not implemented yet..", icon='ERROR', )

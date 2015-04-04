@@ -1473,11 +1473,72 @@ class MXSExport():
         # print(md)
         # raise Exception()
         
+        def texture_to_data(name):
+            tex = None
+            for t in bpy.data.textures:
+                if(t.type == 'IMAGE'):
+                    if(t.name == name):
+                        tex = t
+            
+            d = {'type': 'IMAGE',
+                 'path': "",
+                 'channel': 0,
+                 'use_override_map': False,
+                 'tile_method_type': [True, True],
+                 'tile_method_units': 0,
+                 'repeat': [1.0, 1.0],
+                 'mirror': [False, False],
+                 'offset': [0.0, 0.0],
+                 'rotation': 0.0,
+                 'invert': False,
+                 'alpha_only': False,
+                 'interpolation': False,
+                 'brightness': 0.0,
+                 'contrast': 0.0,
+                 'saturation': 0.0,
+                 'hue': 0.0,
+                 'rgb_clamp': [0.0, 255.0], }
+            if(tex is not None):
+                d['path'] = bpy.path.abspath(tex.image.filepath),
+                return d
+            return None
+        
         sd = ob.maxwell_subdivision_extension
         if(sd.enabled):
             d['subdiv_ext'] = [int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), ]
         else:
             d['subdiv_ext'] = None
+        
+        sc = ob.maxwell_scatter_extension
+        if(sc.enabled):
+            d['scatter_ext'] = {'scatter_object': sc.scatter_object,
+                                'inherit_objectid': sc.inherit_objectid,
+                                'density': sc.density,
+                                'density_map': texture_to_data(sc.density_map),
+                                'seed': int(sc.seed),
+                                'scale_x': sc.scale_x,
+                                'scale_y': sc.scale_y,
+                                'scale_z': sc.scale_z,
+                                'scale_map': texture_to_data(sc.scale_map),
+                                'scale_variation_x': sc.scale_variation_x,
+                                'scale_variation_y': sc.scale_variation_y,
+                                'scale_variation_z': sc.scale_variation_z,
+                                'rotation_x': math.degrees(sc.rotation_x),
+                                'rotation_y': math.degrees(sc.rotation_y),
+                                'rotation_z': math.degrees(sc.rotation_z),
+                                'rotation_map': texture_to_data(sc.rotation_map),
+                                'rotation_variation_x': sc.rotation_variation_x,
+                                'rotation_variation_y': sc.rotation_variation_y,
+                                'rotation_variation_z': sc.rotation_variation_z,
+                                'rotation_direction': int(sc.rotation_direction),
+                                'lod': sc.lod,
+                                'lod_min_distance': sc.lod_min_distance,
+                                'lod_max_distance': sc.lod_max_distance,
+                                'lod_max_distance_density': sc.lod_max_distance_density,
+                                'display_percent': int(sc.display_percent),
+                                'display_max_blades': int(sc.display_max_blades), }
+        else:
+            d['scatter_ext'] = None
         
         return d, md
     
