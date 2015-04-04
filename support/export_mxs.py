@@ -412,7 +412,7 @@ def mesh(d, s):
     
     if(len(d['backface_material']) > 0):
         if(d['backface_material'][0] != ""):
-            bm = material(d['backface_material'][0], s, d['backface_material'][1])
+            bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
             o.setBackfaceMaterial(bm)
     
     for t in m['f_setTriangleUVW']:
@@ -435,7 +435,7 @@ def instance(d, s):
         pass
     if(len(d['backface_material']) > 0):
         if(d['backface_material'][0] != ""):
-            bm = material(d['backface_material'][0], s, d['backface_material'][1])
+            bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
             o.setBackfaceMaterial(bm)
     
     base_and_pivot(o, d)
@@ -795,8 +795,15 @@ def particles(d, s):
     
     o = s.createGeometryProceduralObject(d['name'], params)
     
-    mat = material(d['material'], s, d['material_embed'])
-    o.setMaterial(mat)
+    # mat = material(d['material'], s, d['material_embed'])
+    # o.setMaterial(mat)
+    
+    if(d['material'] != ""):
+        mat = material(d['material'], s, d['material_embed'])
+        o.setMaterial(mat)
+    if(d['backface_material'] != ""):
+        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
+        o.setBackfaceMaterial(bm)
     
     base_and_pivot(o, d)
     object_props(o, d)
@@ -852,7 +859,7 @@ def grass(d, s):
         p.setString('Material', mat.getName())
     
     if(d['backface_material'] != ""):
-        bmat = material(d['backface_material'], s, d['material_backface_embed'])
+        bmat = material(d['backface_material'], s, d['backface_material_embed'])
         p.setString('Double Sided Material', bmat.getName())
     
     p.setUInt('Density', d['density'])
@@ -919,8 +926,14 @@ def hair(d, s):
     p.setByteArray('HAIR_MAJOR_VER', d['data']['HAIR_MAJOR_VER'])
     p.setByteArray('HAIR_MINOR_VER', d['data']['HAIR_MINOR_VER'])
     p.setByteArray('HAIR_FLAG_ROOT_UVS', d['data']['HAIR_FLAG_ROOT_UVS'])
-    p.setByteArray('HAIR_GUIDES_COUNT', d['data']['HAIR_GUIDES_COUNT'])
-    p.setByteArray('HAIR_GUIDES_POINT_COUNT', d['data']['HAIR_GUIDES_POINT_COUNT'])
+    
+    # p.setByteArray('HAIR_GUIDES_COUNT', d['data']['HAIR_GUIDES_COUNT'])
+    m = memoryview(struct.pack("I", d['data']['HAIR_GUIDES_COUNT'][0])).tolist()
+    p.setByteArray('HAIR_GUIDES_COUNT', m)
+    
+    # p.setByteArray('HAIR_GUIDES_POINT_COUNT', d['data']['HAIR_GUIDES_POINT_COUNT'])
+    m = memoryview(struct.pack("I", d['data']['HAIR_GUIDES_POINT_COUNT'][0])).tolist()
+    p.setByteArray('HAIR_GUIDES_POINT_COUNT', m)
     
     c = Cbase()
     c.origin = Cvector(0.0, 0.0, 0.0)
@@ -940,13 +953,28 @@ def hair(d, s):
         p.setDouble('Root Radius', d['grass_root_width'])
         p.setDouble('Tip Radius', d['grass_tip_width'])
     
+    # # for i in range(p.getNumItems()):
+    # #     print(p.getByIndex(i))
+    #
+    # # print(p.getByName('HAIR_GUIDES_COUNT')[0])
+    # # print(p.getByName('HAIR_GUIDES_POINT_COUNT')[0])
+    # print()
+    # print(d['data']['HAIR_GUIDES_COUNT'][0])
+    # print(d['data']['HAIR_GUIDES_COUNT'][0] * d['data']['HAIR_GUIDES_POINT_COUNT'][0] * 3)
+    # print(p.getByName('HAIR_GUIDES_COUNT'))
+    # print(p.getByName('HAIR_GUIDES_POINT_COUNT'))
+    # # print(p.getByName('HAIR_GUIDES_COUNT')[0][0] * p.getByName('HAIR_GUIDES_POINT_COUNT')[0][0] * 3)
+    # print(len(p.getByName('HAIR_POINTS')[0]))
+    # # print(p.getByName('HAIR_NORMALS')[0])
+    # print()
+    
     o = s.createGeometryProceduralObject(d['name'], p)
     
     if(d['material'] != ""):
         mat = material(d['material'], s, d['material_embed'])
         o.setMaterial(mat)
     if(d['backface_material'] != ""):
-        bm = material(d['backface_material'][0], s, d['backface_material'][1])
+        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
         o.setBackfaceMaterial(bm)
     
     base_and_pivot(o, d)

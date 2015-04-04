@@ -119,3 +119,13 @@ def shift_vert_along_normal(tco, tno, v):
 def distance_vectors(a, b, ):
     """Distance between two 3d Vectors"""
     return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2) ** 0.5
+
+
+def real_length_to_relative(matrix, length):
+    """From matrix_world and desired real size length in meters, calculate relative length
+    without matrix applied. Apply matrix, and you will get desired length."""
+    l, r, s = matrix.decompose()
+    ms = Matrix.Scale(s.x, 4)
+    l = Vector((length, 0, 0))
+    v = ms.inverted() * l
+    return v.x

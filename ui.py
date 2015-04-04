@@ -1143,7 +1143,7 @@ class GrassExtPanel(ParticleButtonsPanel, Panel):
         c = s.column()
         c.prop(m, 'backface_material')
         c = s.column()
-        c.prop(m, 'material_backface_embed', text='Embed', )
+        c.prop(m, 'backface_material_embed', text='Embed', )
         
         sub.prop(m, 'points_per_blade')
         r = sub.row()
@@ -1219,9 +1219,85 @@ class GrassExtPanel(ParticleButtonsPanel, Panel):
         sub.prop(m, 'display_max_blades')
 
 
+class ParticlesExtObjectPanel(ParticleButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Particles Object"
+    
+    @classmethod
+    def poll(cls, context):
+        psys = context.particle_system
+        engine = context.scene.render.engine
+        settings = 0
+        
+        if psys:
+            settings = psys.settings
+        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
+            settings = context.space_data.pin_id
+        
+        if not settings:
+            return False
+        
+        m = context.particle_system.settings.maxwell_render
+        # if(m.use == 'HAIR' or m.use == 'PARTICLES'):
+        #     return True
+        
+        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES) and (m.use == 'HAIR' or m.use == 'PARTICLES')
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        
+        o = context.object
+        p = context.particle_system
+        if(p is None):
+            return
+        
+        mm = context.particle_system.settings.maxwell_render
+        if(mm.use == 'HAIR'):
+            m = context.particle_system.settings.maxwell_hair_extension
+        elif(mm.use == 'PARTICLES'):
+            m = context.particle_system.settings.maxwell_particles_extension
+        else:
+            return
+        
+        # sub.label("Object Properties:")
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'material')
+        c = s.column()
+        c.prop(m, 'material_embed', text='Embed', )
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'backface_material')
+        c = s.column()
+        c.prop(m, 'backface_material_embed', text='Embed', )
+        
+        sub.separator()
+        
+        sub.prop(m, 'hide')
+        sub.prop(m, 'hide_parent')
+        sub.prop(m, 'opacity')
+        r = sub.row()
+        r.prop(m, 'object_id')
+        sub.separator()
+        
+        sub.label("Hidden from:")
+        s = sub.split(percentage=0.5)
+        c = s.column()
+        c.prop(m, 'hidden_camera')
+        c.prop(m, 'hidden_camera_in_shadow_channel')
+        c.prop(m, 'hidden_global_illumination')
+        c = s.column()
+        c.prop(m, 'hidden_reflections_refractions')
+        c.prop(m, 'hidden_zclip_planes')
+        sub.separator()
+
+
 class HairExtPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Hair"
+    bl_label = "Maxwell Hair Properties"
     
     @classmethod
     def poll(cls, context):
@@ -1256,41 +1332,41 @@ class HairExtPanel(ParticleButtonsPanel, Panel):
         
         # sub.label("Not implemented yet..", icon='ERROR', )
         
-        sub.label("Object Properties:")
+        # sub.label("Object Properties:")
+        #
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'material')
+        # c = s.column()
+        # c.prop(m, 'material_embed', text='Embed', )
+        #
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'backface_material')
+        # c = s.column()
+        # c.prop(m, 'backface_material_embed', text='Embed', )
+        #
+        # sub.separator()
+        #
+        # sub.prop(m, 'hide')
+        # sub.prop(m, 'hide_parent')
+        # sub.prop(m, 'opacity')
+        # r = sub.row()
+        # r.prop(m, 'object_id')
+        # sub.separator()
+        #
+        # sub.label("Hidden from:")
+        # s = sub.split(percentage=0.5)
+        # c = s.column()
+        # c.prop(m, 'hidden_camera')
+        # c.prop(m, 'hidden_camera_in_shadow_channel')
+        # c.prop(m, 'hidden_global_illumination')
+        # c = s.column()
+        # c.prop(m, 'hidden_reflections_refractions')
+        # c.prop(m, 'hidden_zclip_planes')
+        # sub.separator()
         
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'material')
-        c = s.column()
-        c.prop(m, 'material_embed', text='Embed', )
-        
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'backface_material')
-        c = s.column()
-        c.prop(m, 'material_backface_embed', text='Embed', )
-        
-        sub.separator()
-        
-        sub.prop(m, 'hide')
-        sub.prop(m, 'hide_parent')
-        sub.prop(m, 'opacity')
-        r = sub.row()
-        r.prop(m, 'object_id')
-        sub.separator()
-        
-        sub.label("Hidden from:")
-        s = sub.split(percentage=0.5)
-        c = s.column()
-        c.prop(m, 'hidden_camera')
-        c.prop(m, 'hidden_camera_in_shadow_channel')
-        c.prop(m, 'hidden_global_illumination')
-        c = s.column()
-        c.prop(m, 'hidden_reflections_refractions')
-        c.prop(m, 'hidden_zclip_planes')
-        sub.separator()
-        
-        sub.label("Hair Properties:")
+        # sub.label("Hair Properties:")
         r = sub.row()
         r.prop(m, 'hair_type', expand=True, )
         sub.separator()
@@ -1314,7 +1390,7 @@ class HairExtPanel(ParticleButtonsPanel, Panel):
 
 class ParticlesExtPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Particles"
+    bl_label = "Maxwell Particles Properties"
     
     @classmethod
     def poll(cls, context):
@@ -1347,31 +1423,31 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
         
         m = context.particle_system.settings.maxwell_particles_extension
         
-        sub.label("Object Properties:")
-        s = sub.split(percentage=0.7)
-        c = s.column()
-        c.prop(m, 'material_file')
-        c = s.column()
-        c.prop(m, 'material_embed', text='Embed', )
-        sub.separator()
-        sub.prop(m, 'hide')
-        sub.prop(m, 'hide_parent')
-        sub.prop(m, 'opacity')
-        r = sub.row()
-        r.prop(m, 'object_id')
-        sub.separator()
-        sub.label("Hidden from:")
-        s = sub.split(percentage=0.5)
-        c = s.column()
-        c.prop(m, 'hidden_camera')
-        c.prop(m, 'hidden_camera_in_shadow_channel')
-        c.prop(m, 'hidden_global_illumination')
-        c = s.column()
-        c.prop(m, 'hidden_reflections_refractions')
-        c.prop(m, 'hidden_zclip_planes')
-        sub.separator()
+        # sub.label("Object Properties:")
+        # s = sub.split(percentage=0.7)
+        # c = s.column()
+        # c.prop(m, 'material_file')
+        # c = s.column()
+        # c.prop(m, 'material_embed', text='Embed', )
+        # sub.separator()
+        # sub.prop(m, 'hide')
+        # sub.prop(m, 'hide_parent')
+        # sub.prop(m, 'opacity')
+        # r = sub.row()
+        # r.prop(m, 'object_id')
+        # sub.separator()
+        # sub.label("Hidden from:")
+        # s = sub.split(percentage=0.5)
+        # c = s.column()
+        # c.prop(m, 'hidden_camera')
+        # c.prop(m, 'hidden_camera_in_shadow_channel')
+        # c.prop(m, 'hidden_global_illumination')
+        # c = s.column()
+        # c.prop(m, 'hidden_reflections_refractions')
+        # c.prop(m, 'hidden_zclip_planes')
+        # sub.separator()
         
-        sub.label("Sequence:")
+        # sub.label("Sequence:")
         sub.prop(m, 'bin_filename')
         sub.prop(m, 'bin_radius_multiplier')
         sub.prop(m, 'bin_motion_blur_multiplier')

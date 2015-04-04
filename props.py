@@ -548,7 +548,7 @@ class GrassExtProperties(PropertyGroup):
     material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
     material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    material_backface_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     
     density = IntProperty(name="Density (blades/m2)", default=3000, min=0, max=100000000, )
     density_map = StringProperty(name="Density Map", default="", )
@@ -604,8 +604,14 @@ class GrassExtProperties(PropertyGroup):
 
 
 class ParticlesExtProperties(PropertyGroup):
-    material_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', )
-    material_embed = BoolProperty(name="Embed Into Scene", default=True, )
+    # material_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', )
+    # material_embed = BoolProperty(name="Embed Into Scene", default=True, )
+    
+    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    
     opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
     hidden_camera = BoolProperty(name="Camera", default=False, )
     hidden_camera_in_shadow_channel = BoolProperty(name="Camera In Shadow Channel", default=False, )
@@ -615,7 +621,7 @@ class ParticlesExtProperties(PropertyGroup):
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
     hide = BoolProperty(name="Hide From Render", default=False, )
-    hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=True, )
+    hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
     bin_filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
     bin_radius_multiplier = FloatProperty(name="Radius Multiplier", default=1.0, min=0.000001, max=1000000.0, step=3, precision=6, )
@@ -680,7 +686,7 @@ class HairExtProperties(PropertyGroup):
     material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
     material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    material_backface_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     
     opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
     hidden_camera = BoolProperty(name="Camera", default=False, )
@@ -690,14 +696,14 @@ class HairExtProperties(PropertyGroup):
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     hide = BoolProperty(name="Hide From Render", default=False, )
-    hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=True, )
+    hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
     hair_type = EnumProperty(name="Hair Type", items=[('HAIR', "Hair", ""), ('GRASS', "Grass", ""), ], default='HAIR', )
     
-    hair_root_radius = FloatProperty(name="Root Radius (mm)", default=0.1, min=0.00001, max=100000.0, precision=3, )
-    hair_tip_radius = FloatProperty(name="Tip Radius (mm)", default=0.05, min=0.00001, max=100000.0, precision=3, )
-    grass_root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.00001, max=100000.0, precision=3, )
-    grass_tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.00001, max=100000.0, precision=3, )
+    hair_root_radius = FloatProperty(name="Root Radius (mm)", default=0.1, min=0.001, max=100000.0, precision=3, )
+    hair_tip_radius = FloatProperty(name="Tip Radius (mm)", default=0.05, min=0.001, max=100000.0, precision=3, )
+    grass_root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.001, max=100000.0, precision=3, )
+    grass_tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.001, max=100000.0, precision=3, )
     
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max_blades = IntProperty(name="Display Max. Blades", default=1000, min=0, max=100000, )
