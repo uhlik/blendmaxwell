@@ -59,16 +59,19 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         m = context.scene.maxwell_render
         sub = l.column()
         
+        r = sub.row()
+        r0 = r.row()
+        r0.prop(m, 'export_overwrite')
+        if(m.export_incremental):
+            r0.enabled = False
+        r1 = r.row()
+        r1.prop(m, 'export_incremental')
+        sub.separator()
+        
         sub.label("Workflow:")
         sub.prop(m, 'export_open_with')
         sub.prop(m, 'instance_app')
-        
         sub.separator()
-        r = sub.row()
-        r.prop(m, 'export_overwrite')
-        if(m.export_incremental):
-            r.enabled = False
-        sub.prop(m, 'export_incremental')
         
         sub.label("Options:")
         sub.prop(m, 'export_use_instances')
@@ -129,9 +132,22 @@ class SceneOptionsPanel(RenderButtonsPanel, Panel):
         
         sub.prop(m, 'scene_time')
         sub.prop(m, 'scene_sampling_level')
-        r = sub.row()
-        r.prop(m, 'scene_multilight')
+        
+        # r = sub.row()
+        # s = r.split(percentage=0.62)
+        # c = s.column()
+        # c.prop(m, 'scene_multilight')
+        # c = s.column()
+        # c.prop(m, 'scene_multilight_type', text="", )
+        
+        s = sub.split(percentage=0.2)
+        c = s.column()
+        c.label("Multilight:")
+        c = s.column()
+        r = c.row()
+        r.prop(m, 'scene_multilight', text="", )
         r.prop(m, 'scene_multilight_type', text="", )
+        
         r = sub.row()
         r.prop(m, 'scene_cpu_threads')
         # r.prop(m, 'scene_priority')
@@ -243,24 +259,30 @@ class SimulensOptionsPanel(RenderButtonsPanel, Panel):
         
         sub.prop(m, 'simulens_aperture_map')
         sub.prop(m, 'simulens_obstacle_map')
-        r = sub.row()
-        r.prop(m, 'simulens_diffraction')
-        r.prop(m, 'simulens_diffraction_value', text="", )
-        r = sub.row()
-        s = r.split(percentage=0.5)
+        
+        s = sub.split(percentage=0.35)
         c = s.column()
-        s2 = c.split(percentage=0.075)
-        c2 = s2.column()
-        c2 = s2.column()
-        c2.label('Frequency')
+        c.prop(m, 'simulens_diffraction')
+        c = s.column()
+        c.prop(m, 'simulens_diffraction_value', text="", )
+        
+        s = sub.split(percentage=0.35)
+        c = s.column()
+        c.label('Frequency')
         c = s.column()
         c.prop(m, 'simulens_frequency', text="", )
-        r = sub.row()
-        r.prop(m, 'simulens_scattering')
-        r.prop(m, 'simulens_scattering_value', text="", )
-        r = sub.row()
-        r.prop(m, 'simulens_devignetting')
-        r.prop(m, 'simulens_devignetting_value', text="", )
+        
+        s = sub.split(percentage=0.35)
+        c = s.column()
+        c.prop(m, 'simulens_scattering')
+        c = s.column()
+        c.prop(m, 'simulens_scattering_value', text="", )
+        
+        s = sub.split(percentage=0.35)
+        c = s.column()
+        c.prop(m, 'simulens_devignetting')
+        c = s.column()
+        c.prop(m, 'simulens_devignetting_value', text="", )
 
 
 class IllumCausticsOptionsPanel(RenderButtonsPanel, Panel):
@@ -568,6 +590,7 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
             sub.prop(m, 'sun_power')
             sub.prop(m, 'sun_radius_factor')
             r = sub.row()
+            sub.separator()
             r.prop(m, 'sun_temp')
             if(m.sun_type == 'CUSTOM'):
                 r.enabled = False

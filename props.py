@@ -209,7 +209,7 @@ class SceneProperties(PropertyGroup):
     tone_gamma = FloatProperty(name="Monitor Gamma", default=2.20, min=0.10, max=3.50, precision=2, description="Image gamma value", )
     tone_sharpness = BoolProperty(name="Sharpness", default=False, description="Image sharpness", )
     tone_sharpness_value = FloatProperty(name="Sharpness", default=60.0, min=0.0, max=100.0, precision=2, description="Image sharpness value", )
-    tone_whitepoint = FloatProperty(name="White Point", default=6500.0, min=2000.0, max=20000.0, precision=1, description="", )
+    tone_whitepoint = FloatProperty(name="White Point (K)", default=6500.0, min=2000.0, max=20000.0, precision=1, description="", )
     tone_tint = FloatProperty(name="Tint", default=0.0, min=-100.0, max=100.0, precision=1, description="", )
     
     simulens_aperture_map = StringProperty(name="Aperture Map", default="", subtype='FILE_PATH', description="Path to aperture map", )
@@ -219,7 +219,7 @@ class SceneProperties(PropertyGroup):
     simulens_frequency = FloatProperty(name="Frequency", default=50.0, min=0.0, max=2500.0, precision=2, description="Lens frequency value", )
     simulens_scattering = BoolProperty(name="Scattering", default=False, description="Use lens scattering", )
     simulens_scattering_value = FloatProperty(name="Scattering Value", default=0.0, min=0.0, max=2500.0, precision=2, description="Lens scattering value", )
-    simulens_devignetting = BoolProperty(name="Devigneting", default=False, description="Use lens devignetting", )
+    simulens_devignetting = BoolProperty(name="Devigneting (%)", default=False, description="Use lens devignetting", )
     simulens_devignetting_value = FloatProperty(name="Devigneting", default=0.0, min=-100.0, max=100.0, precision=2, description="Lens devignetting value", )
     
     illum_caustics_illumination = EnumProperty(name="Illumination", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Illumination", )
@@ -253,7 +253,7 @@ class SceneProperties(PropertyGroup):
     export_clay_mat_reflectance_90 = FloatVectorProperty(name="Clay Reflectance 90", default=(230 / 255, 230 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', description="Clay reflectance 90 color", )
     export_clay_mat_roughness = FloatProperty(name="Clay Roughness", default=97.0, min=0.0, max=100.0, step=3, precision=2, subtype='PERCENTAGE', description="Clay roughness value", )
     
-    export_overwrite = BoolProperty(name="Overwrite Existing Scene", default=True, description="", )
+    export_overwrite = BoolProperty(name="Overwrite Existing", default=True, description="", )
     export_incremental = BoolProperty(name="Incremental", default=False, description="Always export a new file", )
     
     # export_log = StringProperty(name="Export Log String", default="", )
