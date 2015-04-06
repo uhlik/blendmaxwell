@@ -2030,22 +2030,6 @@ class MXSExport():
                     log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
                     material = ""
                 
-                # b, p = self._matrix_to_base_and_pivot(Matrix())
-                
-                # om = o.matrix_world.copy()
-                # om.invert()
-                # mat = Matrix() * om
-                # b, p = self._matrix_to_base_and_pivot(mat)
-                
-                # b, p = self._matrix_to_base_and_pivot(o.matrix_world)
-                
-                # om = o.matrix_world.copy()
-                # mat = om * Matrix()
-                # b, p = self._matrix_to_base_and_pivot(mat)
-                
-                # mwi = o.matrix_local.copy().inverted()
-                # b, p = self._matrix_to_base_and_pivot(mwi * Matrix())
-                
                 b, p = self._matrix_to_base_and_pivot(Matrix())
                 
                 q = {'material': m.material, 'material_embed': m.material_embed,
@@ -2068,26 +2052,8 @@ class MXSExport():
                     q['hair_root_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_root_radius) / 1000
                     q['hair_tip_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_tip_radius) / 1000
                     q['display_max_hairs'] = m.display_max_hairs
-                    
                 
                 mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
-                hair_points = []
-                
-                for p in ps.particles:
-                    for k in p.hair_keys:
-                        v = k.co.copy()
-                        v = mat * v
-                        hair_points.append(v.x)
-                        hair_points.append(v.y)
-                        hair_points.append(v.z)
-                data = {'HAIR_MAJOR_VER': [1, 0, 0, 0],
-                        'HAIR_MINOR_VER': [0, 0, 0, 0],
-                        'HAIR_FLAG_ROOT_UVS': [0],
-                        'HAIR_GUIDES_COUNT': [len(ps.particles)],
-                        'HAIR_GUIDES_POINT_COUNT': [ps.settings.hair_step + 1],
-                        'HAIR_POINTS': hair_points,
-                        'HAIR_NORMALS': [1.0], }
-                
                 ps.set_resolution(self.context.scene, o, 'RENDER')
                 steps = 2 ** ps.settings.render_step
                 num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
@@ -2098,14 +2064,18 @@ class MXSExport():
                         v = mat * co
                         locs.extend([v.x, v.y, v.z])
                 ps.set_resolution(self.context.scene, o, 'PREVIEW')
+                data = {'HAIR_MAJOR_VER': [1, 0, 0, 0],
+                        'HAIR_MINOR_VER': [0, 0, 0, 0],
+                        'HAIR_FLAG_ROOT_UVS': [0],
+                        'HAIR_GUIDES_COUNT': [num_curves],
+                        'HAIR_GUIDES_POINT_COUNT': [steps],
+                        'HAIR_POINTS': locs,
+                        'HAIR_NORMALS': [1.0], }
                 
-                # data = {'HAIR_MAJOR_VER': [1,0,0,0],
-                #         'HAIR_MINOR_VER': [0,0,0,0],
-                #         'HAIR_FLAG_ROOT_UVS': [0],
-                #         'HAIR_GUIDES_COUNT': [len(ps.particles)],
-                #         'HAIR_GUIDES_POINT_COUNT': [steps],
-                #         'HAIR_POINTS': locs,
-                #         'HAIR_NORMALS': [1.0], }
+                # print(data['HAIR_GUIDES_COUNT'])
+                # print(data['HAIR_GUIDES_POINT_COUNT'])
+                # print(len(data['HAIR_POINTS']))
+                # print(len(data['HAIR_POINTS']) == (num_curves * steps * 3))
                 
                 q['data'] = data
                 
