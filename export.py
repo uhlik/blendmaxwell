@@ -214,14 +214,30 @@ class MXSExport():
         def check_visibility(o):
             """Objects which are in visible layers and have hide_render: False are considered visible,
                objects which are only hidden from viewport are renderable, therefore visible."""
-            if(mx.render_use_layers == 'RENDER'):
-                for i, l in enumerate(o.layers):
-                    if(render_layers[i] is True and l is True and o.hide_render is False):
-                        return True
-            else:
-                for i, l in enumerate(o.layers):
-                    if(layers[i] is True and l is True and o.hide_render is False):
-                        return True
+            # if(mx.render_use_layers == 'RENDER'):
+            #     for i, l in enumerate(o.layers):
+            #         if(render_layers[i] is True and l is True and o.hide_render is False):
+            #             return True
+            # else:
+            #     for i, l in enumerate(o.layers):
+            #         if(layers[i] is True and l is True and o.hide_render is False):
+            #             return True
+            
+            if(o.hide_render is True):
+                return False
+            
+            s = None
+            r = None
+            for i, l in enumerate(o.layers):
+                if(layers[i] is True and l is True):
+                    s = True
+                    break
+            for i, l in enumerate(o.layers):
+                if(render_layers[i] is True and l is True):
+                    r = True
+                    break
+            if(s and r):
+                return True
             return False
         
         # export type

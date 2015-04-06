@@ -309,7 +309,7 @@ class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
         sub = l.column()
         m = context.scene.maxwell_render
         
-        sub.prop(m, "render_use_layers")
+        # sub.prop(m, "render_use_layers")
         
         scene = context.scene
         rd = scene.render
@@ -317,13 +317,16 @@ class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
         
         s = sub.split()
         c = s.column()
-        c.prop(scene, "layers", text="Viewport Layers")
-        if(m.render_use_layers == 'RENDER'):
-            c.active = False
+        # c.prop(scene, "layers", text="Viewport Layers")
+        c.prop(scene, "layers", text="Scene")
+        # if(m.render_use_layers == 'RENDER'):
+        #     c.active = False
         c = s.column()
-        c.prop(rl, "layers", text="Render Layers")
-        if(m.render_use_layers == 'VIEWPORT'):
-            c.active = False
+        # c.prop(rl, "layers", text="Render Layers")
+        c.prop(rl, "layers", text="Layer")
+        # if(m.render_use_layers == 'VIEWPORT'):
+        #     c.active = False
+        c.separator()
 
 
 class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):

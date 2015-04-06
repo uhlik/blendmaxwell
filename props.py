@@ -147,7 +147,7 @@ class SceneProperties(PropertyGroup):
     globals_diplacement = BoolProperty(name="Displacement", default=True, description="Global enable/disable displacement", )
     globals_dispersion = BoolProperty(name="Dispersion", default=True, description="Global enable/disable dispaersion", )
     
-    render_use_layers = EnumProperty(name="Export layers", items=[('VIEWPORT', "Viewport Layers", ""), ('RENDER', "Render Layers", ""), ], default='VIEWPORT', description="Export objects from scene or render layers", )
+    # render_use_layers = EnumProperty(name="Export layers", items=[('VIEWPORT', "Viewport Layers", ""), ('RENDER', "Render Layers", ""), ], default='VIEWPORT', description="Export objects from scene or render layers", )
     
     channels_output_mode = EnumProperty(name="Output Mode", items=[('SEPARATE_0', "Separate", ""), ('EMBEDDED_1', "Embedded", "")], default='SEPARATE_0', )
     channels_render = BoolProperty(name="Render", default=True, )
