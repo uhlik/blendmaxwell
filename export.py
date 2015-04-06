@@ -35,6 +35,7 @@ from .log import log, LogStyles, LOG_FILE_PATH
 from . import progress
 from . import utils
 from . import maths
+from . import rfbin
 
 
 def prefs():
@@ -47,9 +48,6 @@ class MXSExport():
     """Maxwell Render (.mxs) scene export
     Docs:
     """
-    # TODO particle system and group duplicates
-    # TODO new docs
-    
     def __init__(self, context, mxs_path, use_instances=True, keep_intermediates=False, ):
         """
         context: bpy.context
@@ -1786,6 +1784,7 @@ class MXSExport():
                                  'type': ps.settings.maxwell_render.use,
                                  'ps': ps,
                                  'name': "{}-{}".format(o.name, ps.name),
+                                 'pmatrix': o.matrix_local,
                                  'parent': parent, }
                             self.particles.append(d)
                     elif(ps.settings.maxwell_render.use == 'GRASS'):
@@ -1893,10 +1892,6 @@ class MXSExport():
             ps = dp['ps']
             
             if(dp['type'] == 'PARTICLES'):
-                # material_file = bpy.path.abspath(m.material_file)
-                # if(material_file != "" and not os.path.exists(material_file)):
-                #     log("{1}: mxm ('{0}') does not exist.".format(material_file, self.__class__.__name__), 2, LogStyles.WARNING, )
-                #     material_file = ""
                 material = bpy.path.abspath(m.material)
                 if(material != "" and not os.path.exists(material)):
                     log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
@@ -1905,6 +1900,54 @@ class MXSExport():
                 if(backface_material != "" and not os.path.exists(backface_material)):
                     log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
                     material = ""
+                
+                if(m.source == 'BLENDER_PARTICLES'):
+                    if(len(ps.particles) == 0):
+                        msg = "particle system {} has no particles".format(ps.name)
+                        raise ValueError(msg)
+                    ok = False
+                    for part in ps.particles:
+                        if(part.alive_state == "ALIVE"):
+                            ok = True
+                            break
+                    if(ok is False):
+                        msg = "particle system {} has no 'ALIVE' particles".format(ps.name)
+                        raise ValueError(msg)
+                    locs = []
+                    vels = []
+                    mat = dp['pmatrix'].copy()
+                    mat.invert()
+                    for part in ps.particles:
+                        if(part.alive_state == "ALIVE"):
+                            l = part.location.copy()
+                            l = mat * l
+                            locs.append(l.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
+                            if(m.bl_use_velocity):
+                                v = part.velocity.copy()
+                                v = mat * v
+                                vels.append(v.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
+                            else:
+                                vels.append((0.0, 0.0, 0.0) + (0.0, 0.0, 0.0, 0, 0, 0))
+                    locs = maths.apply_matrix_for_realflow_bin_export(locs)
+                    vels = maths.apply_matrix_for_realflow_bin_export(vels)
+                    particles = []
+                    for i, ploc in enumerate(locs):
+                        particles.append(rfbin.RFBinParticle(pid=i, position=ploc[:3], velocity=vels[i][:3]))
+                    
+                    if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
+                        raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
+                    
+                    cf = self.context.scene.frame_current
+                    prms = {'directory': bpy.path.abspath(m.bin_directory),
+                            'name': "{}.bin".format(dp['name']),
+                            'frame': cf,
+                            'particles': particles,
+                            'fps': self.context.scene.render.fps,
+                            'size': m.bl_size, }
+                    rfbw = rfbin.RFBinWriter(**prms)
+                    m.bin_filename = rfbw.path
+                else:
+                    pass
                 
                 q = {'bin_filename': bpy.path.abspath(m.bin_filename),
                      'bin_radius_multiplier': m.bin_radius_multiplier, 'bin_motion_blur_multiplier': m.bin_motion_blur_multiplier, 'bin_shutter_speed': m.bin_shutter_speed,
@@ -1925,9 +1968,6 @@ class MXSExport():
                      'hidden_global_illumination': m.hidden_global_illumination, 'hidden_reflections_refractions': m.hidden_reflections_refractions,
                      'hidden_zclip_planes': m.hidden_zclip_planes, 'object_id': self._color_to_rgb8(m.object_id),
                      'name': dp['name'], 'parent': dp['parent'],
-                     
-                     # 'material': material_file,
-                     # 'material_embed': m.material_embed,
                      
                      'material': material,
                      'material_embed': m.material_embed,

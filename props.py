@@ -623,6 +623,12 @@ class ParticlesExtProperties(PropertyGroup):
     hide = BoolProperty(name="Hide From Render", default=False, )
     hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
+    source = EnumProperty(name="Source", items=[('BLENDER_PARTICLES', "Blender Particles", ""), ('EXTERNAL_BIN', "External Bin", "")], default='BLENDER_PARTICLES', )
+    bin_directory = StringProperty(name=".bin Output Directory", default="//", subtype='DIR_PATH', description="Output directory for .bin file(s)", )
+    bin_overwrite = BoolProperty(name="Overwrite Existing", default=True, )
+    bl_use_velocity = BoolProperty(name="Particle Velocity", default=True, )
+    bl_size = FloatProperty(name="Size", default=0.1, min=0.000001, max=1000000.0, step=3, precision=6, )
+    
     bin_filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
     bin_radius_multiplier = FloatProperty(name="Radius Multiplier", default=1.0, min=0.000001, max=1000000.0, step=3, precision=6, )
     bin_motion_blur_multiplier = FloatProperty(name="Motion Blur Multiplier", default=1.0, min=0.000001, max=1000000.0, step=3, precision=6, )

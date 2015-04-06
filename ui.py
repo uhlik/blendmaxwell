@@ -1577,8 +1577,18 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
         # c.prop(m, 'hidden_zclip_planes')
         # sub.separator()
         
+        r = sub.row()
+        r.prop(m, 'source', expand=True)
+        if(m.source == 'EXTERNAL_BIN'):
+            sub.prop(m, 'bin_filename')
+        else:
+            sub.prop(m, 'bl_use_velocity')
+            sub.prop(m, 'bl_size')
+            sub.prop(m, 'bin_directory')
+            sub.prop(m, 'bin_overwrite')
+        
         # sub.label("Sequence:")
-        sub.prop(m, 'bin_filename')
+        
         sub.prop(m, 'bin_radius_multiplier')
         sub.prop(m, 'bin_motion_blur_multiplier')
         sub.prop(m, 'bin_shutter_speed')
