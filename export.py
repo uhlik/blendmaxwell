@@ -2054,6 +2054,7 @@ class MXSExport():
                     q['display_max_hairs'] = m.display_max_hairs
                 
                 mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+                transform = o.matrix_local.inverted()
                 ps.set_resolution(self.context.scene, o, 'RENDER')
                 steps = 2 ** ps.settings.render_step
                 num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
@@ -2061,7 +2062,8 @@ class MXSExport():
                 for p in range(0, num_curves):
                     for step in range(0, steps):
                         co = ps.co_hair(o, p, step)
-                        v = mat * co
+                        v = transform * co
+                        v = mat * v
                         locs.extend([v.x, v.y, v.z])
                 ps.set_resolution(self.context.scene, o, 'PREVIEW')
                 data = {'HAIR_MAJOR_VER': [1, 0, 0, 0],
