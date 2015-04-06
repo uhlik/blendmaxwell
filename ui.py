@@ -1098,11 +1098,9 @@ class TexturePanel(TextureButtonsPanel, Panel):
         if(tex is None):
             l.active = False
         
-        
         # s = l.split(percentage=0.25)
         # s.label("Path:")
         # s.prop(m, 'path', text="", )
-        
         
         # l.prop_search(m, 'path', tex, 'image', text="")
         # l.prop_search(m, "path", bpy.data, "images")

@@ -1939,7 +1939,7 @@ class MXSExport():
                     
                     cf = self.context.scene.frame_current
                     prms = {'directory': bpy.path.abspath(m.bin_directory),
-                            'name': "{}.bin".format(dp['name']),
+                            'name': "{}".format(dp['name']),
                             'frame': cf,
                             'particles': particles,
                             'fps': self.context.scene.render.fps,
@@ -2079,8 +2079,8 @@ class MXSExport():
                         hair_points.append(v.x)
                         hair_points.append(v.y)
                         hair_points.append(v.z)
-                data = {'HAIR_MAJOR_VER': [1,0,0,0],
-                        'HAIR_MINOR_VER': [0,0,0,0],
+                data = {'HAIR_MAJOR_VER': [1, 0, 0, 0],
+                        'HAIR_MINOR_VER': [0, 0, 0, 0],
                         'HAIR_FLAG_ROOT_UVS': [0],
                         'HAIR_GUIDES_COUNT': [len(ps.particles)],
                         'HAIR_GUIDES_POINT_COUNT': [ps.settings.hair_step + 1],
