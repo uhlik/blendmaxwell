@@ -2032,8 +2032,8 @@ class MXSExport():
                 
                 b, p = self._matrix_to_base_and_pivot(Matrix())
                 
-                q = {'material': m.material, 'material_embed': m.material_embed,
-                     'backface_material': m.backface_material, 'backface_material_embed': m.backface_material_embed,
+                q = {'material': material, 'material_embed': m.material_embed,
+                     'backface_material': backface_material, 'backface_material_embed': m.backface_material_embed,
                      'opacity': m.opacity, 'hidden_camera': m.hidden_camera, 'hidden_camera_in_shadow_channel': m.hidden_camera_in_shadow_channel,
                      'hidden_global_illumination': m.hidden_global_illumination, 'hidden_reflections_refractions': m.hidden_reflections_refractions,
                      'hidden_zclip_planes': m.hidden_zclip_planes, 'object_id': self._color_to_rgb8(m.object_id), 'hide': m.hide,
