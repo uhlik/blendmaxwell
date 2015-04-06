@@ -2060,14 +2060,15 @@ class MXSExport():
                      'type': 'HAIR', }
                 if(m.hair_type == 'GRASS'):
                     q['extension'] = 'MGrassP'
-                    q['grass_root_width'] = maths.real_length_to_relative(o.matrix_world, m.grass_root_width)
-                    q['grass_tip_width'] = maths.real_length_to_relative(o.matrix_world, m.grass_tip_width)
+                    q['grass_root_width'] = maths.real_length_to_relative(o.matrix_world, m.grass_root_width) / 1000
+                    q['grass_tip_width'] = maths.real_length_to_relative(o.matrix_world, m.grass_tip_width) / 1000
                     q['display_max_blades'] = m.display_max_blades
                 else:
                     q['extension'] = 'MaxwellHair'
-                    q['hair_root_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_root_radius)
-                    q['hair_tip_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_tip_radius)
+                    q['hair_root_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_root_radius) / 1000
+                    q['hair_tip_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_tip_radius) / 1000
                     q['display_max_hairs'] = m.display_max_hairs
+                    
                 
                 mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
                 hair_points = []
