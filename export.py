@@ -2071,9 +2071,12 @@ class MXSExport():
                     q['hair_tip_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_tip_radius) / 1000
                     q['display_max_hairs'] = m.display_max_hairs
                 
-                mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
-                transform = o.matrix_local.inverted()
+                o = bpy.data.objects[q['parent']]
                 ps.set_resolution(self.context.scene, o, 'RENDER')
+                
+                mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+                transform = o.matrix_world.inverted()
+                
                 steps = 2 ** ps.settings.render_step
                 num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
                 locs = []
@@ -2083,6 +2086,7 @@ class MXSExport():
                         v = transform * co
                         v = mat * v
                         locs.extend([v.x, v.y, v.z])
+                
                 ps.set_resolution(self.context.scene, o, 'PREVIEW')
                 
                 p = os.path.join(self.tmp_dir, "{0}.binhair".format(q['name']))
