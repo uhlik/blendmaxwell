@@ -19,7 +19,7 @@
 bl_info = {"name": "Maxwell Render",
            "description": "Maxwell Render integration",
            "author": "Jakub Uhlik",
-           "version": (0, 1, 5),
+           "version": (0, 1, 6),
            "blender": (2, 74, 0),
            "location": "Info header > render engine menu",
            "warning": "Currently only Mac OS X is fully supported",
@@ -155,3 +155,6 @@ def unregister():
 
 if __name__ == "__main__":
     register()
+    
+    # oh, btw, run this from time to time..
+    # pep8 --ignore=W293,E501 .

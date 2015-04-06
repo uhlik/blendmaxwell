@@ -14,7 +14,7 @@
 * UI as close to Maxwell Studio as possible
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
-* Mesh objects using the same mesh data are exported as instances
+* Mesh objects using the same mesh data are exported as instances (optional)
 * Dupli verts and faces
 * Multiple UV channels
 * Material assignment (including backface materials) and multiple materials per object
@@ -22,9 +22,9 @@
 * Cameras
 * Render parameters
 * All render channels including Custom Alphas
-* Environment parameters
+* Environment parameters (Sun can be optionally set by Sun lamp)
 * Object parameters
-* Maxwell Particles with Realflow .bin, currently without animation support
+* Maxwell Extensions: Particles, Grass, Hair, Scatter, Subdivision
 * Wireframe scene export (all edges are converted to instanced cylinder of user defined radius)
 
 ![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
@@ -48,6 +48,7 @@
 
 changelog:
 
+* 0.1.6 added: maxwell hair, subdivision, scatter and particles export as realflow bin, fixed: render shortcuts, ui spaceing
 * 0.1.5 added: maxwell grass modifier, incremental export, minor ui tweaks and additions, launch multiple instances of maxwell and studio, fixed: material placeholders on triangle groups, maxwell particles transformation, error reporting
 * 0.1.4 added: render layers panel, fixed: path handling, instance bases on hidden layers and many more
 * 0.1.3 first release
