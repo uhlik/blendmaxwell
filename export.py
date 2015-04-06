@@ -25,6 +25,7 @@ import uuid
 import shutil
 import struct
 import json
+import sys
 
 import bpy
 from mathutils import Matrix, Vector
@@ -104,6 +105,7 @@ class MXSExport():
             os.makedirs(self.tmp_dir)
         
         self.mesh_data_paths = []
+        self.hair_data_paths = []
         self.scene_data_name = "{0}-{1}.json".format(n, self.uuid)
         self.script_name = "{0}-{1}.py".format(n, self.uuid)
         
@@ -2066,12 +2068,18 @@ class MXSExport():
                         v = mat * v
                         locs.extend([v.x, v.y, v.z])
                 ps.set_resolution(self.context.scene, o, 'PREVIEW')
+                
+                p = os.path.join(self.tmp_dir, "{0}.binhair".format(q['name']))
+                w = MXSBinHairWriter(p, locs)
+                q['hair_data_path'] = p
+                self.hair_data_paths.append(p)
+                
                 data = {'HAIR_MAJOR_VER': [1, 0, 0, 0],
                         'HAIR_MINOR_VER': [0, 0, 0, 0],
                         'HAIR_FLAG_ROOT_UVS': [0],
                         'HAIR_GUIDES_COUNT': [num_curves],
                         'HAIR_GUIDES_POINT_COUNT': [steps],
-                        'HAIR_POINTS': locs,
+                        # 'HAIR_POINTS': locs,
                         'HAIR_NORMALS': [1.0], }
                 
                 # print(data['HAIR_GUIDES_COUNT'])
@@ -2169,6 +2177,10 @@ class MXSExport():
         if(hasattr(self, 'wire_base_data')):
             rm(self.wire_base_data)
             for p in self.wire_data_paths:
+                rm(p)
+        
+        if(hasattr(self, 'hair_data_paths')):
+            for p in self.hair_data_paths:
                 rm(p)
         
         if(os.path.exists(self.tmp_dir)):
@@ -2597,3 +2609,67 @@ class MXSBinMeshReader():
                      'name': str(self.name),
                      'v_setNormal': self.vertices_normals[:],
                      'v_setVertex': self.vertices[:], }
+
+
+class MXSBinHairWriter():
+    def __init__(self, path, data):
+        d = data
+        o = "@"
+        with open("{0}.tmp".format(path), 'wb') as f:
+            p = struct.pack
+            fw = f.write
+            # header
+            fw(p(o + "7s", 'BINHAIR'.encode('utf-8')))
+            fw(p(o + "?", False))
+            # number of floats
+            n = len(d)
+            fw(p(o + "i", n))
+            # floats
+            fw(p(o + "{}d".format(n), *d))
+            # end
+            fw(p(o + "?", False))
+        if(os.path.exists(path)):
+            os.remove(path)
+        shutil.move("{0}.tmp".format(path), path)
+        self.path = path
+
+
+class MXSBinHairReader():
+    def __init__(self, path):
+        self.offset = 0
+        with open(path, "rb") as bf:
+            self.bindata = bf.read()
+        
+        def r(f):
+            d = struct.unpack_from(f, self.bindata, self.offset)
+            self.offset += struct.calcsize(f)
+            return d
+        
+        # endianness?
+        signature = 23161492825065794
+        l = r("<q")[0]
+        self.offset = 0
+        b = r(">q")[0]
+        self.offset = 0
+        if(l == signature):
+            if(sys.byteorder != "little"):
+                raise RuntimeError()
+            self.order = "<"
+        elif(b == signature):
+            if(sys.byteorder != "big"):
+                raise RuntimeError()
+            self.order = ">"
+        else:
+            raise AssertionError("{}: not a MXSBinHair file".format(self.__class__.__name__))
+        o = self.order
+        # magic
+        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
+        if(self.magic != 'BINHAIR'):
+            raise RuntimeError()
+        _ = r(o + "?")
+        # number floats
+        self.num = r(o + "i")[0]
+        self.data = r(o + "{}d".format(self.num))
+        e = r(o + "?")
+        if(self.offset != len(self.bindata)):
+            raise RuntimeError("expected EOF")

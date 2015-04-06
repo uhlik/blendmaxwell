@@ -144,6 +144,47 @@ class MXSBinMeshReader():
                      'v_setVertex': self.vertices[:], }
 
 
+class MXSBinHairReader():
+    def __init__(self, path):
+        self.offset = 0
+        with open(path, "rb") as bf:
+            self.bindata = bf.read()
+        
+        def r(f):
+            d = struct.unpack_from(f, self.bindata, self.offset)
+            self.offset += struct.calcsize(f)
+            return d
+        
+        # endianness?
+        signature = 23161492825065794
+        l = r("<q")[0]
+        self.offset = 0
+        b = r(">q")[0]
+        self.offset = 0
+        if(l == signature):
+            if(sys.byteorder != "little"):
+                raise RuntimeError()
+            self.order = "<"
+        elif(b == signature):
+            if(sys.byteorder != "big"):
+                raise RuntimeError()
+            self.order = ">"
+        else:
+            raise AssertionError("{}: not a MXSBinHair file".format(self.__class__.__name__))
+        o = self.order
+        # magic
+        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
+        if(self.magic != 'BINHAIR'):
+            raise RuntimeError()
+        _ = r(o + "?")
+        # number floats
+        self.num = r(o + "i")[0]
+        self.data = r(o + "{}d".format(self.num))
+        e = r(o + "?")
+        if(self.offset != len(self.bindata)):
+            raise RuntimeError("expected EOF")
+
+
 class PercentDone():
     def __init__(self, total, prefix="> ", indent=0):
         self.current = 0
@@ -1059,7 +1100,12 @@ def hair(d, s):
     c.xAxis = Cvector(1.0, 0.0, 0.0)
     c.yAxis = Cvector(0.0, 1.0, 0.0)
     c.zAxis = Cvector(0.0, 0.0, 1.0)
-    p.setFloatArray('HAIR_POINTS', d['data']['HAIR_POINTS'], c)
+    
+    bhp = d['hair_data_path']
+    r = MXSBinHairReader(bhp)
+    p.setFloatArray('HAIR_POINTS', list(r.data), c)
+    
+    # p.setFloatArray('HAIR_POINTS', d['data']['HAIR_POINTS'], c)
     p.setFloatArray('HAIR_NORMALS', d['data']['HAIR_NORMALS'], c)
     
     p.setUInt('Display Percent', d['display_percent'])
