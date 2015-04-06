@@ -432,7 +432,7 @@ class OpenMXS(Operator):
                 if(self.instance_app):
                     # command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
                     app = os.path.join(app, "Contents/MacOS/Maxwell")
-                    command_line = '{0} -mxs:{}'.format(shlex.quote(app), shlex.quote(p))
+                    command_line = '{0} -mxs:{1}'.format(shlex.quote(app), shlex.quote(p))
                 else:
                     command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
                 args = shlex.split(command_line)
