@@ -58,6 +58,19 @@ class MaxwellRenderExportEngine(RenderEngine):
             self.report({'ERROR'}, "Export directory is not writeable.")
             return
         
+        # set some workflow stuff..
+        if(self.is_animation):
+            m.exporting_animation_now = True
+        else:
+            m.exporting_animation_now = False
+        if(scene.frame_start == scene.frame_current):
+            m.exporting_animation_first_frame = True
+        else:
+            m.exporting_animation_first_frame = False
+        m.private_image = m.output_image
+        m.private_mxi = m.output_mxi
+        m.exporting_animation_frame_number = scene.frame_current
+        
         h, t = os.path.split(bp)
         n, e = os.path.splitext(t)
         if(m.exporting_animation_now and not m.exporting_animation_first_frame):
@@ -114,6 +127,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                     # m.exporting_animation_now = False
                     # m.exporting_animation_frame_number = 1
                     # m.exporting_animation_first_frame = True
+                    self.reset_workflow(scene)
                     self.report({'ERROR'}, "Scene file already exist in Output directory.")
                     return
         else:
@@ -143,6 +157,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                 # check and raise error if mxs exists, if not continue
                 p = os.path.join(ed, "{}{}{}.mxs".format(mxs_name, mxs_increment, mxs_suffix))
                 if(os.path.exists(p) and not m.export_overwrite):
+                    self.reset_workflow(scene)
                     self.report({'ERROR'}, "Scene file already exist in Output directory.")
                     return
         
@@ -163,6 +178,8 @@ class MaxwellRenderExportEngine(RenderEngine):
                 pass
             else:
                 self.render_scene(scene)
+                m.output_image = m.private_image
+                m.output_mxi = m.private_mxi
         except Exception as ex:
             import traceback
             m = traceback.format_exc()
@@ -175,6 +192,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             # log("".join(lines))
             
             # self.report({'ERROR'}, '{}'.format(ex))
+            self.reset_workflow(scene)
             self.report({'ERROR'}, m)
     
     def render_scene(self, scene):
@@ -282,3 +300,16 @@ class MaxwellRenderExportEngine(RenderEngine):
         l = r.layers[0]
         l.rect = b
         self.end_result(r)
+    
+    def reset_workflow(self, scene):
+        m = scene.maxwell_render
+        m.exporting_animation_now = False
+        m.exporting_animation_frame_number = 1
+        m.exporting_animation_first_frame = True
+        m.private_name = ""
+        m.private_increment = ""
+        m.private_suffix = ""
+        m.private_path = ""
+        m.private_basepath = ""
+        m.private_image = ""
+        m.private_mxi = ""

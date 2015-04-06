@@ -43,8 +43,8 @@ class ExportPanel(RenderButtonsPanel, Panel):
         sub = l.column()
         
         r = sub.row(align=True)
-        r.operator("maxwell_render.render_export")
-        r.operator("maxwell_render.animation_export")
+        r.operator("render.render", text="Render", icon='RENDER_STILL')
+        r.operator("render.render", text="Animation", icon='RENDER_ANIMATION').animation = True
         
         sub.label("Scene Export Directory:")
         sub.prop(m, 'export_output_directory', text="")
