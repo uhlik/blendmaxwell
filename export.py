@@ -2086,8 +2086,36 @@ class MXSExport():
                         v = transform * co
                         v = mat * v
                         locs.extend([v.x, v.y, v.z])
-                
+
                 ps.set_resolution(self.context.scene, o, 'PREVIEW')
+                
+                # steps = 2 ** ps.settings.render_step
+                # num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
+                # points = []
+                # for p in range(0, num_curves):
+                #     seg_length = 1.0
+                #
+                #     for step in range(0, steps):
+                #         co = ps.co_hair(o, p, step)
+                #
+                #         # get distance between last and this point
+                #         if(step > 0):
+                #             seg_length = (co - o.matrix_world * points[len(points) - 1]).length_squared
+                #
+                #         if not (co.length_squared == 0 or seg_length == 0):
+                #             # if it is not zero append as new point
+                #             v = transform * co
+                #             v = mat * v
+                #             points.append(v)
+                #         else:
+                #             # else just use last point
+                #             points.append(points[len(points) - 1].copy())
+                #
+                # ps.set_resolution(self.context.scene, o, 'PREVIEW')
+                #
+                # locs = []
+                # for v in points:
+                #     locs.extend([v.x, v.y, v.z])
                 
                 p = os.path.join(self.tmp_dir, "{0}.binhair".format(q['name']))
                 w = MXSBinHairWriter(p, locs)
