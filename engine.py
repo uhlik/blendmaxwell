@@ -18,11 +18,13 @@
 
 import os
 import re
+import time
+import datetime
 
 import bpy
 from bpy.types import RenderEngine
 
-from .log import log, LOG_FILE_PATH
+from .log import log, LogStyles, LOG_FILE_PATH
 from . import progress
 from . import export
 from . import ops
@@ -33,7 +35,11 @@ class MaxwellRenderExportEngine(RenderEngine):
     bl_label = 'Maxwell Render'
     bl_use_preview = True
     
+    _t = None
+    
     def render(self, scene):
+        self._t = time.time()
+        
         m = scene.maxwell_render
         
         bp = bpy.path.abspath(bpy.context.blend_data.filepath)
@@ -194,6 +200,9 @@ class MaxwellRenderExportEngine(RenderEngine):
             # self.report({'ERROR'}, '{}'.format(ex))
             self.reset_workflow(scene)
             self.report({'ERROR'}, m)
+        
+        _d = datetime.timedelta(seconds=time.time() - self._t)
+        log("export completed in {0}".format(_d), 1, LogStyles.MESSAGE)
     
     def render_scene(self, scene):
         progress.set_default_progress_reporting(progress.PROGRESS_BAR)
