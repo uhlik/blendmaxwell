@@ -2071,6 +2071,7 @@ class MXSExport():
                     q['hair_tip_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_tip_radius) / 1000
                     q['display_max_hairs'] = m.display_max_hairs
                 
+                '''
                 o = bpy.data.objects[q['parent']]
                 ps.set_resolution(self.context.scene, o, 'RENDER')
                 
@@ -2086,36 +2087,54 @@ class MXSExport():
                         v = transform * co
                         v = mat * v
                         locs.extend([v.x, v.y, v.z])
-
+                
+                ps.set_resolution(self.context.scene, o, 'PREVIEW')
+                '''
+                
+                # get fresh object reference
+                # FIXME why the it has been somewhere lost??? remove this line will result in segmentation fault
+                o = bpy.data.objects[q['parent']]
+                ps.set_resolution(self.context.scene, o, 'RENDER')
+                
+                mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+                transform = o.matrix_world.inverted()
+                omw = o.matrix_world
+                
+                steps = 2 ** ps.settings.render_step
+                num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
+                points = []
+                for p in range(0, num_curves):
+                    seg_length = 1.0
+                    curve = []
+                    
+                    for step in range(0, steps):
+                        co = ps.co_hair(o, p, step)
+                        
+                        # get distance between last and this point
+                        if(step > 0):
+                            seg_length = (co - omw * curve[len(curve) - 1]).length_squared
+                        
+                        if not (co.length_squared == 0 or seg_length == 0):
+                            # if it is not zero append as new point
+                            v = transform * co
+                            v = mat * v
+                            curve.append(v)
+                    
+                    points.append(curve)
+                
                 ps.set_resolution(self.context.scene, o, 'PREVIEW')
                 
-                # steps = 2 ** ps.settings.render_step
-                # num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
-                # points = []
-                # for p in range(0, num_curves):
-                #     seg_length = 1.0
-                #
-                #     for step in range(0, steps):
-                #         co = ps.co_hair(o, p, step)
-                #
-                #         # get distance between last and this point
-                #         if(step > 0):
-                #             seg_length = (co - o.matrix_world * points[len(points) - 1]).length_squared
-                #
-                #         if not (co.length_squared == 0 or seg_length == 0):
-                #             # if it is not zero append as new point
-                #             v = transform * co
-                #             v = mat * v
-                #             points.append(v)
-                #         else:
-                #             # else just use last point
-                #             points.append(points[len(points) - 1].copy())
-                #
-                # ps.set_resolution(self.context.scene, o, 'PREVIEW')
-                #
-                # locs = []
-                # for v in points:
-                #     locs.extend([v.x, v.y, v.z])
+                # fill gaps with last location, confirm it has no negative effect in rendering..
+                for l in points:
+                    if(len(l) < steps):
+                        e = [l[-1]] * (steps - len(l))
+                        l.extend(e)
+                # flatten curves
+                points = [v for l in points for v in l]
+                # 3 float tuples from vectors
+                points = [v.to_tuple() for v in points]
+                # just list of floats
+                locs = [v for l in points for v in l]
                 
                 p = os.path.join(self.tmp_dir, "{0}.binhair".format(q['name']))
                 w = MXSBinHairWriter(p, locs)
