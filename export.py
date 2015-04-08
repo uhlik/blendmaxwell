@@ -259,11 +259,25 @@ class MXSExport():
                     else:
                         if(len(o.data.polygons) > 0):
                             t = 'MESH'
+                        else:
+                            # case when object has no polygons, but with modifiers applied it will have..
+                            me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                            if(len(me.polygons) > 0):
+                                t = 'MESH'
+                                # remove mesh, was created only for testing..
+                                bpy.data.meshes.remove(me)
                         # else:
                         #     t = 'EMPTY'
                 else:
                     if(len(o.data.polygons) > 0):
                         t = 'MESH'
+                    else:
+                        # case when object has no polygons, but with modifiers applied it will have..
+                        me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                        if(len(me.polygons) > 0):
+                            t = 'MESH'
+                            # remove mesh, was created only for testing..
+                            bpy.data.meshes.remove(me)
                     # else:
                     #     t = 'EMPTY'
             elif(o.type == 'EMPTY'):
