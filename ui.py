@@ -872,7 +872,26 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         sub = l.column()
         m = context.object.maxwell_render
         
+        def base(ob):
+            group = []
+            for o in bpy.data.objects:
+                if(o.data is not None):
+                    if(o.data.users > 1 and o.data == ob.data):
+                        group.append(o)
+            nms = [o.name for o in group]
+            ls = sorted(nms)
+            if(len(ls) > 0):
+                return ls[0]
+        
+        b = base(context.object)
+        r = sub.row()
+        r.prop(m, 'override_instance', text="Override Instancing{}".format(" of '{}'".format(b) if b is not None else ""), )
+        if(b is None):
+            r.active = False
+        
         sub.prop(m, 'hide')
+        sub.separator()
+        
         sub.prop(m, 'opacity')
         r = sub.row()
         r.prop(m, 'object_id')

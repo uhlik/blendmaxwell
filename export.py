@@ -440,7 +440,7 @@ class MXSExport():
         self.empties = empties
         self.cameras = cameras
         
-        # no visible camera, try to get active camera, if even that is missing, export no camera at all..
+        # no visible camera
         if(len(self.cameras) == 0):
             log("No visible and active camera in scene!", 2, LogStyles.WARNING)
             log("Trying to find hidden active camera..", 3, LogStyles.WARNING)
@@ -525,8 +525,18 @@ class MXSExport():
                 self.bases.append(o)
                 self.instances.remove(o)
         
+        # overriden instances
+        instances2 = self.instances[:]
+        for o in instances2:
+            m = o['object'].maxwell_render
+            if(m.override_instance):
+                o['export_type'] = 'MESH'
+                o['override_instance'] = o['object'].data
+                self.meshes.append(o)
+                self.instances.remove(o)
+        
         # ----------------------------------------------------------------------------------
-        # everything above this line is pure magic, below is just standard code
+        # (everything above this line is pure magic, below is just standard code)
         
         # import pprint
         # pp = pprint.PrettyPrinter(indent=4)
@@ -1576,10 +1586,26 @@ class MXSExport():
         """Loop over all mesh objects and prepare data for pymaxwell."""
         for o in self.meshes:
             log("{0}".format(o['object'].name), 2)
-            d, md = self._mesh_to_data(o)
             
-            p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-            w = MXSBinMeshWriter(p, md, d['num_positions_per_vertex'])
+            is_overriden_instance = False
+            try:
+                o['override_instance']
+                is_overriden_instance = True
+            except:
+                pass
+            
+            if(is_overriden_instance):
+                o['object'].data = o['object'].data.copy() 
+                d, md = self._mesh_to_data(o)
+                p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
+                w = MXSBinMeshWriter(p, md, d['num_positions_per_vertex'])
+                rm = o['object'].data
+                o['object'].data = o['override_instance']
+                bpy.data.meshes.remove(rm)
+            else:
+                d, md = self._mesh_to_data(o)
+                p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
+                w = MXSBinMeshWriter(p, md, d['num_positions_per_vertex'])
             
             self.mesh_data_paths.append(p)
             d['mesh_data_path'] = p

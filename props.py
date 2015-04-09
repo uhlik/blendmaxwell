@@ -450,6 +450,7 @@ class ObjectProperties(PropertyGroup):
     backface_material_file = StringProperty(name="Backface MXM File", default="", subtype='FILE_PATH', )
     
     hide = BoolProperty(name="Hide From Render", default=False, )
+    override_instance = BoolProperty(name="Override Instancing", default=False, )
     
     @classmethod
     def register(cls):
