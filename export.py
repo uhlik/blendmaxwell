@@ -510,13 +510,6 @@ class MXSExport():
                             self.duplicates.append(d)
                     ob.dupli_list_clear()
         
-        # import pprint
-        # pp = pprint.PrettyPrinter(indent=4)
-        # pp.pprint(h)
-        
-        # print("-" * 100)
-        # raise Exception()
-        
         # find instances without base and change first one to base, quick and dirty..
         # this case happens when object (by name chosen as base) is on hidden layer and marked to be not exported
         # also, hope this is the last change of this nasty piece of code..
@@ -525,8 +518,8 @@ class MXSExport():
                 if(bo['mesh'].name == mnm):
                     return bo['object'].name
         
-        bdb = {}
-        for o in self.instances:
+        instances2 = self.instances[:]
+        for o in instances2:
             if(find_base_object_name(o['mesh'].name) is None):
                 o['export_type'] = 'BASE_INSTANCE'
                 self.bases.append(o)
@@ -534,6 +527,13 @@ class MXSExport():
         
         # ----------------------------------------------------------------------------------
         # everything above this line is pure magic, below is just standard code
+        
+        # import pprint
+        # pp = pprint.PrettyPrinter(indent=4)
+        # pp.pprint(h)
+        
+        # print("-" * 100)
+        # raise Exception()
         
         return h
     
