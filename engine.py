@@ -206,6 +206,7 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     def render_scene(self, scene):
         progress.set_default_progress_reporting(progress.PROGRESS_BAR)
+        progress.ENABLED = False
         
         m = scene.maxwell_render
         p = m.private_path

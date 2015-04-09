@@ -113,10 +113,10 @@ class ProgressBase():
         if(not self._enabled):
             return
         if(ENABLED is False):
-            self._enabled = False
-            f = "{0}{1}{2}{3}{4}"
-            m = "[pretend to see a progress bar here..]"
-            sys.stdout.write("{0}\n".format(f).format(self._tab * self._indent, LogStyles.NORMAL, self._prefix, m, LogStyles.END))
+            # self._enabled = False
+            # f = "{0}{1}{2}{3}{4}"
+            # m = "[pretend to see a progress bar here..]"
+            # sys.stdout.write("{0}\n".format(f).format(self._tab * self._indent, LogStyles.NORMAL, self._prefix, m, LogStyles.END))
             return
         
         if(self._progress == 0.0 and self._once is False):

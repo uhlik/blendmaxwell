@@ -18,36 +18,36 @@
 
 import os
 import re
-import logging
+# import logging
 
 
 LOG_FILE_PATH = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log.txt'))
-with open(LOG_FILE_PATH, 'w', encoding='utf-8', ):
+with open(LOG_FILE_PATH, mode='w', encoding='utf-8', ):
     # clear log file..
     pass
 
 LOG_CONVERT = re.compile("\033\[[0-9;]+m")
-LEVEL = logging.NOTSET
-
-
-class LogFileFormatter(logging.Formatter):
-    def format(self, record):
-        return re.sub(LOG_CONVERT, '', record.msg)
-
-
-logger = logging.getLogger("Maxwell Render")
-logger.setLevel(LEVEL)
-logger.propagate = False
-fh = logging.FileHandler(LOG_FILE_PATH)
-fh.setLevel(LEVEL)
-ch = logging.StreamHandler()
-ch.setLevel(LEVEL)
-ch.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
-fh.setFormatter(LogFileFormatter())
-if(len(logger.handlers) == 0):
-    # "Reload scripts" (F8) causes handlers to be added again and duplicates output.. this fixes it
-    logger.addHandler(ch)
-    logger.addHandler(fh)
+# LEVEL = logging.NOTSET
+#
+#
+# class LogFileFormatter(logging.Formatter):
+#     def format(self, record):
+#         return re.sub(LOG_CONVERT, '', record.msg)
+#
+#
+# logger = logging.getLogger("Maxwell Render")
+# logger.setLevel(LEVEL)
+# logger.propagate = False
+# fh = logging.FileHandler(LOG_FILE_PATH)
+# fh.setLevel(LEVEL)
+# ch = logging.StreamHandler()
+# ch.setLevel(LEVEL)
+# ch.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
+# fh.setFormatter(LogFileFormatter())
+# if(len(logger.handlers) == 0):
+#     # "Reload scripts" (F8) causes handlers to be added again and duplicates output.. this fixes it
+#     logger.addHandler(ch)
+#     logger.addHandler(fh)
 
 
 class LogStyles:
@@ -71,7 +71,10 @@ def log(msg="", indent=0, style=LogStyles.NORMAL, instance=None, prefix="> ", ):
     m = "{0}{1}{2}{3}{4}{5}".format("    " * indent, style, prefix, inst, msg, LogStyles.END)
     
     # print(m)
-    logger.info(m)
+    # logger.info(m)
+    print(m)
+    with open(LOG_FILE_PATH, mode='a', encoding='utf-8', ) as f:
+        f.write("{}{}".format(re.sub(LOG_CONVERT, '', m), LogStyles.EOL))
 
 
 def log_args(locals, self, header="arguments: ", indent=1, style=LogStyles.NORMAL, prefix="> ", ):

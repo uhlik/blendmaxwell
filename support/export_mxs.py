@@ -28,21 +28,27 @@ import struct
 import shutil
 import math
 import datetime
-import logging
+# import logging
 import os
 
 from pymaxwell import *
 
 
-logger = None
+# logger = None
 quiet = False
+LOG_FILE_PATH = None
 
 
 def log(msg, indent=0):
     if(quiet):
         return
     # print("{0}> {1}".format("    " * indent, msg))
-    logger.info("{0}> {1}".format("    " * indent, msg))
+    # logger.info("{0}> {1}".format("    " * indent, msg))
+    m = "{0}> {1}".format("    " * indent, msg)
+    print(m)
+    if(LOG_FILE_PATH is not None):
+        with open(LOG_FILE_PATH, mode='a', encoding='utf-8', ) as f:
+            f.write("{}{}".format(m, "\n"))
 
 
 class MXSBinMeshReader():
@@ -209,7 +215,11 @@ class PercentDone():
         if(self.percent >= 100 or self.total == self.current):
             sys.stdout.write(self.r)
             # sys.stdout.write("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n))
-            logger.info("{0}{1}{2}%".format(self.t * self.indent, self.prefix, 100))
+            # logger.info("{0}{1}{2}%".format(self.t * self.indent, self.prefix, 100))
+            sys.stdout.write("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n))
+            if(LOG_FILE_PATH is not None):
+                with open(LOG_FILE_PATH, mode='a', encoding='utf-8', ) as f:
+                    f.write("{}".format("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n)))
 
 
 class Materials():
@@ -1417,23 +1427,29 @@ if __name__ == "__main__":
     
     quiet = args.quiet
     
-    logger = logging.getLogger()
-    logger.setLevel(logging.NOTSET)
-    fh = logging.FileHandler(args.log_file)
-    fh.setLevel(logging.NOTSET)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.NOTSET)
-    ch.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
-    fh.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
-    logger.addHandler(ch)
-    logger.addHandler(fh)
+    # logger = logging.getLogger()
+    # logger.setLevel(logging.NOTSET)
+    # fh = logging.FileHandler(args.log_file)
+    LOG_FILE_PATH = args.log_file
+    # fh.setLevel(logging.NOTSET)
+    # ch = logging.StreamHandler()
+    # ch.setLevel(logging.NOTSET)
+    # ch.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
+    # fh.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
+    # logger.addHandler(ch)
+    # logger.addHandler(fh)
     
     try:
         main(args)
     except Exception as e:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        sys.stdout.write("".join(lines))
+        # exc_type, exc_value, exc_traceback = sys.exc_info()
+        # lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        # sys.stdout.write("".join(lines))
+        
+        import traceback
+        m = traceback.format_exc()
+        log(m)
+        
         # log("".join(lines))
         sys.exit(1)
     sys.exit(0)
