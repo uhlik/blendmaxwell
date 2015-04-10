@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from bpy.types import Panel
+from bpy.types import Panel, Menu
 from mathutils import Matrix, Vector
 
 from bl_ui.properties_data_camera import CameraButtonsPanel
@@ -129,6 +129,13 @@ class SceneOptionsPanel(RenderButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.scene.maxwell_render
+        
+        c = sub.column_flow(align=True)
+        r = c.row(align=True)
+        r.menu("Render_presets", text=bpy.types.Render_presets.bl_label)
+        r.operator("maxwell_render.render_preset_add", text="", icon='ZOOMIN')
+        r.operator("maxwell_render.render_preset_add", text="", icon='ZOOMOUT').remove_active = True
+        sub.separator()
         
         sub.prop(m, 'scene_time')
         sub.prop(m, 'scene_sampling_level')
@@ -338,6 +345,13 @@ class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
         sub = l.column()
         m = context.scene.maxwell_render
         
+        c = sub.column_flow(align=True)
+        r = c.row(align=True)
+        r.menu("Channels_presets", text=bpy.types.Channels_presets.bl_label)
+        r.operator("maxwell_render.channels_preset_add", text="", icon='ZOOMIN')
+        r.operator("maxwell_render.channels_preset_add", text="", icon='ZOOMOUT').remove_active = True
+        sub.separator()
+        
         sub.prop(m, 'channels_output_mode')
         
         r = sub.row()
@@ -530,6 +544,13 @@ class EnvironmentPanel(WorldButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.world.maxwell_render
+        
+        c = sub.column_flow(align=True)
+        r = c.row(align=True)
+        r.menu("Environment_presets", text=bpy.types.Environment_presets.bl_label)
+        r.operator("maxwell_render.environment_preset_add", text="", icon='ZOOMIN')
+        r.operator("maxwell_render.environment_preset_add", text="", icon='ZOOMOUT').remove_active = True
+        sub.separator()
         
         sub.prop(m, 'env_type', text="", )
 
@@ -724,6 +745,21 @@ class SunLampPanel(DataButtonsPanel, Panel):
         m = context.object.data.maxwell_render
         
         sub.prop(m, 'override')
+
+
+class CameraPresetsPanel(CameraButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Camera Presets"
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        
+        c = sub.column_flow(align=True)
+        r = c.row(align=True)
+        r.menu("Camera_presets", text=bpy.types.Camera_presets.bl_label)
+        r.operator("maxwell_render.camera_preset_add", text="", icon='ZOOMIN')
+        r.operator("maxwell_render.camera_preset_add", text="", icon='ZOOMOUT').remove_active = True
 
 
 class CameraOpticsPanel(CameraButtonsPanel, Panel):
@@ -1762,3 +1798,43 @@ class ClonerExtPanel(ParticleButtonsPanel, Panel):
         # m = context.particle_system.settings.maxwell_cloner_extension
         
         sub.label("Not implemented yet..", icon='ERROR', )
+
+
+class Render_presets(Menu):
+    '''Presets for render options.'''
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Render Presets"
+    bl_idname = "Render_presets"
+    preset_subdir = "maxwell_render/render"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Channels_presets(Menu):
+    '''Presets for channels settings.'''
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Channels Presets"
+    bl_idname = "Channels_presets"
+    preset_subdir = "maxwell_render/channels"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Environment_presets(Menu):
+    '''Presets for environment settings.'''
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Environment Presets"
+    bl_idname = "Environment_presets"
+    preset_subdir = "maxwell_render/environment"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Camera_presets(Menu):
+    '''Presets for camera settings.'''
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Camera Presets"
+    bl_idname = "Camera_presets"
+    preset_subdir = "maxwell_render/camera"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset

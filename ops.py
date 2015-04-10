@@ -25,6 +25,7 @@ import bpy
 from bpy.props import BoolProperty, StringProperty, EnumProperty
 from bpy.types import Operator
 from mathutils import Vector
+from bl_operators.presets import AddPresetBase
 
 from . import maths
 
@@ -378,3 +379,76 @@ class OpenMXS(Operator):
             return {'CANCELLED'}
         
         return {'FINISHED'}
+
+
+class Render_preset_add(AddPresetBase, Operator):
+    """Add a new render preset."""
+    bl_idname = 'maxwell_render.render_preset_add'
+    bl_label = 'Add/Remove Render Preset'
+    preset_menu = 'Render_presets'
+    preset_subdir = 'maxwell_render/render'
+    preset_defines = ["m = bpy.context.scene.maxwell_render", ]
+    preset_values = ["m.scene_time", "m.scene_sampling_level", "m.scene_multilight", "m.scene_multilight_type", "m.scene_cpu_threads",
+                     "m.scene_quality", "m.output_depth", "m.output_image_enabled", "m.output_mxi_enabled", "m.materials_override",
+                     "m.materials_override_path", "m.materials_search_path", "m.materials_directory", "m.globals_motion_blur",
+                     "m.globals_diplacement", "m.globals_dispersion", "m.tone_color_space", "m.tone_burn", "m.tone_gamma",
+                     "m.tone_sharpness", "m.tone_sharpness_value", "m.tone_whitepoint", "m.tone_tint", "m.simulens_aperture_map",
+                     "m.simulens_obstacle_map", "m.simulens_diffraction", "m.simulens_diffraction_value", "m.simulens_frequency",
+                     "m.simulens_scattering", "m.simulens_scattering_value", "m.simulens_devignetting", "m.simulens_devignetting_value",
+                     "m.illum_caustics_illumination", "m.illum_caustics_refl_caustics", "m.illum_caustics_refr_caustics", ]
+
+
+class Channels_preset_add(AddPresetBase, Operator):
+    """Add a new channels preset."""
+    bl_idname = 'maxwell_render.channels_preset_add'
+    bl_label = 'Add/Remove Channels Preset'
+    preset_menu = 'Channels_presets'
+    preset_subdir = 'maxwell_render/channels'
+    preset_defines = ["m = bpy.context.scene.maxwell_render", ]
+    preset_values = ["m.channels_output_mode", "m.channels_render", "m.channels_render_type", "m.channels_alpha", "m.channels_alpha_file",
+                     "m.channels_alpha_opaque", "m.channels_z_buffer", "m.channels_z_buffer_file", "m.channels_z_buffer_near",
+                     "m.channels_z_buffer_far", "m.channels_shadow", "m.channels_shadow_file", "m.channels_material_id",
+                     "m.channels_material_id_file", "m.channels_object_id", "m.channels_object_id_file", "m.channels_motion_vector",
+                     "m.channels_motion_vector_file", "m.channels_roughness", "m.channels_roughness_file", "m.channels_fresnel",
+                     "m.channels_fresnel_file", "m.channels_normals", "m.channels_normals_file", "m.channels_normals_space",
+                     "m.channels_position", "m.channels_position_file", "m.channels_position_space", "m.channels_deep",
+                     "m.channels_deep_file", "m.channels_deep_type", "m.channels_deep_min_dist", "m.channels_deep_max_samples",
+                     "m.channels_uv", "m.channels_uv_file", "m.channels_custom_alpha", "m.channels_custom_alpha_file", ]
+
+
+class Environment_preset_add(AddPresetBase, Operator):
+    """Add a new environment preset."""
+    bl_idname = 'maxwell_render.environment_preset_add'
+    bl_label = 'Add/Remove Environment Preset'
+    preset_menu = 'Environment_presets'
+    preset_subdir = 'maxwell_render/environment'
+    preset_defines = ["m = bpy.context.world.maxwell_render", ]
+    preset_values = ["m.env_type", "m.sky_type", "m.sky_use_preset", "m.sky_preset", "m.sky_intensity", "m.sky_planet_refl", "m.sky_ozone",
+                     "m.sky_water", "m.sky_turbidity_coeff", "m.sky_wavelength_exp", "m.sky_reflectance", "m.sky_asymmetry", "m.dome_intensity",
+                     "m.dome_zenith", "m.dome_horizon", "m.dome_mid_point", "m.sun_lamp_priority", "m.sun_type", "m.sun_power",
+                     "m.sun_radius_factor", "m.sun_temp", "m.sun_color", "m.sun_location_type", "m.sun_latlong_lat", "m.sun_latlong_lon",
+                     "m.sun_date", "m.sun_time", "m.sun_latlong_gmt", "m.sun_latlong_gmt_auto", "m.sun_latlong_ground_rotation",
+                     "m.sun_angles_zenith", "m.sun_angles_azimuth", "m.sun_dir_x", "m.sun_dir_y", "m.sun_dir_z", "m.ibl_intensity",
+                     "m.ibl_interpolation", "m.ibl_screen_mapping", "m.ibl_bg_type", "m.ibl_bg_map", "m.ibl_bg_intensity", "m.ibl_bg_scale_x",
+                     "m.ibl_bg_scale_y", "m.ibl_bg_offset_x", "m.ibl_bg_offset_y", "m.ibl_refl_type", "m.ibl_refl_map", "m.ibl_refl_intensity",
+                     "m.ibl_refl_scale_x", "m.ibl_refl_scale_y", "m.ibl_refl_offset_x", "m.ibl_refl_offset_y", "m.ibl_refr_type", "m.ibl_refr_map",
+                     "m.ibl_refr_intensity", "m.ibl_refr_scale_x", "m.ibl_refr_scale_y", "m.ibl_refr_offset_x", "m.ibl_refr_offset_y",
+                     "m.ibl_illum_type", "m.ibl_illum_map", "m.ibl_illum_intensity", "m.ibl_illum_scale_x", "m.ibl_illum_scale_y",
+                     "m.ibl_illum_offset_x", "m.ibl_illum_offset_y", ]
+
+
+class Camera_preset_add(AddPresetBase, Operator):
+    """Add a new camera preset."""
+    bl_idname = 'maxwell_render.camera_preset_add'
+    bl_label = 'Add/Remove Camera Preset'
+    preset_menu = 'Camera_presets'
+    preset_subdir = 'maxwell_render/camera'
+    preset_defines = ["m = bpy.context.camera.maxwell_render", "o = bpy.context.camera", "r = bpy.context.scene.render", ]
+    preset_values = ["m.lens", "m.shutter", "m.fstop", "m.fov", "m.azimuth", "m.angle", "m.iso", "m.screen_region", "m.screen_region_x",
+                     "m.screen_region_y", "m.screen_region_w", "m.screen_region_h", "m.aperture", "m.diaphragm_blades", "m.diaphragm_angle",
+                     "m.custom_bokeh", "m.bokeh_ratio", "m.bokeh_angle", "m.shutter_angle", "m.frame_rate", "m.zclip", "m.hide", "m.response",
+                     
+                     "o.dof_distance", "o.lens", "o.sensor_width", "o.sensor_height", "o.sensor_fit", "o.clip_start",
+                     "o.clip_end", "o.shift_x", "o.shift_y",
+                     
+                     "r.resolution_x", "r.resolution_y", "r.resolution_percentage", "r.pixel_aspect_x", "r.pixel_aspect_y", ]
