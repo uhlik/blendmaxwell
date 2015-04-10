@@ -928,7 +928,7 @@ class MXSExport():
                                 return o
                 
                 sun = get_sun(suns)
-                if(suns is None):
+                if(sun is None):
                     log("'Sun Lamp Priority' is True, but there is not Sun object in scene. Using World settings..", 1, LogStyles.WARNING)
                     env['sun_lamp_priority'] = False
                 else:
