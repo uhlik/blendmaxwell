@@ -20,7 +20,6 @@ import os
 import math
 import shlex
 import subprocess
-import platform
 import uuid
 import shutil
 import struct
@@ -32,17 +31,12 @@ from mathutils import Matrix, Vector
 from bpy_extras import io_utils
 import bmesh
 
-from .log import log, LogStyles, LOG_FILE_PATH
+from .log import log, LogStyles
 from . import progress
 from . import utils
 from . import maths
+from . import system
 from . import rfbin
-
-
-def prefs():
-    a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
-    p = bpy.context.user_preferences.addons[a].preferences
-    return p
 
 
 class MXSExport():
@@ -56,30 +50,14 @@ class MXSExport():
         use_instances: if True all multi user meshes and duplis are exported as instances
         keep_intermediates: if True, temp files and directory will not be removed
         """
-        s = platform.system()
-        if(s == 'Darwin'):
-            self.PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
-            self.PYMAXWELL_SO = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', '_pymaxwell.so', ))
-            self.PYMAXWELL_PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', 'pymaxwell.py', ))
-        elif(s == 'Linux'):
-            # import site
-            # site.getsitepackages()
-            self.PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'python3.4', ))
-            self.PYMAXWELL_SO = os.path.join('/usr/local/lib/python3.4/site-packages', '_pymaxwell.so', )
-            self.PYMAXWELL_PY = os.path.join('/usr/local/lib/python3.4/site-packages', 'pymaxwell.py', )
-        elif(s == 'Windows'):
-            pass
-        else:
-            raise OSError("Unknown platform: {}.".format(s))
+        # check for pymaxwell
+        system.check_for_pymaxwell()
         
-        # export template
+        # check for template
         self.TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
-        
-        # lets check for it
-        ok = (os.path.exists(self.PY) and os.path.exists(self.PYMAXWELL_SO) and os.path.exists(self.PYMAXWELL_PY) and os.path.exists(self.TEMPLATE))
-        if(not ok):
-            log("{}: ERROR: python 3.4 with pymaxwell seems not to be installed, or support directory is missing..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
-            return
+        if(not os.path.exists(self.TEMPLATE)):
+            log("{}: ERROR: support directory is missing..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
+            raise OSError("support directory is missing..")
         
         self.context = context
         self.mxs_path = os.path.realpath(mxs_path)
@@ -1595,7 +1573,7 @@ class MXSExport():
                 pass
             
             if(is_overriden_instance):
-                o['object'].data = o['object'].data.copy() 
+                o['object'].data = o['object'].data.copy()
                 d, md = self._mesh_to_data(o)
                 p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
                 w = MXSBinMeshWriter(p, md, d['num_positions_per_vertex'])
@@ -2213,54 +2191,7 @@ class MXSExport():
             # write template to a new file
             f.write(code)
         
-        s = platform.system()
-        if(s == 'Darwin' or s == 'Linux'):
-            switches = ''
-            if(append):
-                switches += '-a'
-            # if(particles):
-            #     if(switches != ''):
-            #         switches += ' '
-            #     switches += '-p'
-            if(instancer):
-                if(switches != ''):
-                    switches += ' '
-                switches += '-i'
-            if(wireframe):
-                if(switches != ''):
-                    switches += ' '
-                switches += '-w'
-            
-            # if(QUIET):
-            #     if(switches != ''):
-            #         switches += ' '
-            #     switches += '-q'
-            
-            if(switches != ''):
-                command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(self.PY),
-                                                                shlex.quote(self.script_path),
-                                                                switches,
-                                                                shlex.quote(LOG_FILE_PATH),
-                                                                shlex.quote(self.scene_data_path),
-                                                                shlex.quote(self.mxs_path), )
-            else:
-                command_line = "{0} {1} {2} {3} {4}".format(shlex.quote(self.PY),
-                                                            shlex.quote(self.script_path),
-                                                            shlex.quote(LOG_FILE_PATH),
-                                                            shlex.quote(self.scene_data_path),
-                                                            shlex.quote(self.mxs_path), )
-            
-            log("command:", 2)
-            log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
-            args = shlex.split(command_line, )
-            o = subprocess.call(args, )
-            if(o != 0):
-                log("error in {0}".format(self.script_path), 0, LogStyles.ERROR, )
-                raise Exception("error in {0}".format(self.script_path))
-        elif(s == 'Windows'):
-            pass
-        else:
-            raise OSError("Unknown platform: {}.".format(s))
+        system.python34_run_script_helper(self.script_path, self.scene_data_path, self.mxs_path, append, instancer, wireframe, )
     
     def _cleanup(self):
         """Remove all intermediate products."""

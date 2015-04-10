@@ -32,6 +32,7 @@ if "bpy" in locals():
     import imp
     imp.reload(log)
     imp.reload(progress)
+    imp.reload(system)
     imp.reload(maths)
     imp.reload(utils)
     imp.reload(engine)
@@ -42,6 +43,7 @@ if "bpy" in locals():
 else:
     from . import log
     from . import progress
+    from . import system
     from . import maths
     from . import utils
     from . import engine
@@ -53,6 +55,7 @@ else:
 
 import os
 import platform
+
 import bpy
 from bpy.props import StringProperty
 
@@ -96,27 +99,37 @@ def get_all_panels():
 
 
 def register():
-    s = platform.system()
-    if(s == 'Windows'):
-        raise OSError("Windows are not supported at the moment..")
-    
     # bpy.utils.register_module(__name__, verbose=True)
     bpy.utils.register_module(__name__)
     
+    # get preferences
     a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
     p = bpy.context.user_preferences.addons[a].preferences
-    if(p.python34_path == '' or p.maxwell_path == ''):
-        s = platform.system()
+    s = platform.system()
+    if(p.python34_path == ''):
         if(s == 'Darwin'):
-            p.python34_path = '/Library/Frameworks/Python.framework/Versions/3.4/'
-            p.maxwell_path = '/Applications/Maxwell 3/'
+            py = '/Library/Frameworks/Python.framework/Versions/3.4/'
         elif(s == 'Linux'):
-            p.python34_path = '/usr/bin/'
-            p.maxwell_path = os.environ.get("MAXWELL3_ROOT")
+            py = '/usr/bin/'
         elif(s == 'Windows'):
-            pass
+            raise OSError("Windows are not supported at the moment..")
         else:
             raise OSError("Unknown platform: {}.".format(s))
+        p.python34_path = py
+    else:
+        # user set something, leave it as it is
+        pass
+    
+    if(p.maxwell_path == ''):
+        if(s == 'Darwin'):
+            mx = '/Applications/Maxwell 3/'
+        elif(s == 'Linux'):
+            mx = os.environ.get("MAXWELL3_ROOT")
+        elif(s == 'Windows'):
+            raise OSError("Windows are not supported at the moment..")
+        else:
+            raise OSError("Unknown platform: {}.".format(s))
+        p.maxwell_path = mx
     else:
         # user set something, leave it as it is
         pass

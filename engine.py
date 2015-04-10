@@ -28,6 +28,7 @@ from .log import log, LogStyles, LOG_FILE_PATH
 from . import progress
 from . import export
 from . import ops
+from . import system
 
 
 class MaxwellRenderExportEngine(RenderEngine):
@@ -38,6 +39,9 @@ class MaxwellRenderExportEngine(RenderEngine):
     _t = None
     
     def render(self, scene):
+        if(self.is_preview):
+            return
+        
         self._t = time.time()
         
         m = scene.maxwell_render
@@ -281,23 +285,8 @@ class MaxwellRenderExportEngine(RenderEngine):
             ex = export.MXSExport(**d)
         
         if((m.exporting_animation_now and scene.frame_current == scene.frame_end) or not m.exporting_animation_now):
-            ls = []
-            with open(LOG_FILE_PATH, 'r', encoding='utf-8', ) as f:
-                ls = f.readlines()
-            m.export_log = "".join(ls)
             if(m.export_log_open):
-                import platform
-                import subprocess
-                import shlex
-                pl = platform.system()
-                if(pl == 'Darwin'):
-                    os.system("open {}".format(shlex.quote(LOG_FILE_PATH)))
-                elif(pl == 'Linux'):
-                    subprocess.call(["xdg-open", shlex.quote(LOG_FILE_PATH)])
-                elif(pl == 'Windows'):
-                    os.system("start {}".format(shlex.quote(LOG_FILE_PATH)))
-                else:
-                    pass
+                system.open_file_in_default_application(LOG_FILE_PATH)
         
         # open in..
         if(ex is not None and not m.exporting_animation_now):

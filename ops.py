@@ -19,7 +19,6 @@
 import os
 import shlex
 import subprocess
-import platform
 
 import bpy
 from bpy.props import BoolProperty, StringProperty, EnumProperty
@@ -28,12 +27,7 @@ from mathutils import Vector
 from bl_operators.presets import AddPresetBase
 
 from . import maths
-
-
-def prefs():
-    a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
-    p = bpy.context.user_preferences.addons[a].preferences
-    return p
+from . import system
 
 
 class EnvironmentSetSun(Operator):
@@ -225,23 +219,7 @@ class CreateMaterial(Operator):
             self.report({'ERROR'}, "Directory is not writeable")
             return {'CANCELLED'}
         
-        s = platform.system()
-        if(s == 'Darwin'):
-            app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Mxed.app', 'Contents', 'MacOS', 'Mxed', )))
-            command_line = "{0} -new:'{1}'".format(app, p, )
-            args = shlex.split(command_line, )
-            process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-        elif(s == 'Linux'):
-            # app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'mxed', )))
-            # command_line = "nohup {0} -new:'{1}'".format(app, p, )
-            # args = shlex.split(command_line, )
-            # process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-            pass
-        elif(s == 'Windows'):
-            pass
-        else:
-            self.report({'ERROR'}, "Unknown platform")
-            return {'CANCELLED'}
+        system.mxed_create_material_helper(p)
         
         if(self.backface):
             context.object.maxwell_render.backface_material_file = bpy.path.relpath(self.filepath)
@@ -288,23 +266,7 @@ class EditMaterial(Operator):
             self.report({'ERROR'}, "Directory is not writeable")
             return {'CANCELLED'}
         
-        s = platform.system()
-        if(s == 'Darwin'):
-            app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Mxed.app', 'Contents', 'MacOS', 'Mxed', )))
-            command_line = "{0} -mxm:'{1}'".format(app, p, )
-            args = shlex.split(command_line, )
-            p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-        elif(s == 'Linux'):
-            # app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'mxed', )))
-            # command_line = "nohup {0} -mxm:'{1}'".format(app, p, )
-            # args = shlex.split(command_line, )
-            # p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-            pass
-        elif(s == 'Windows'):
-            pass
-        else:
-            self.report({'ERROR'}, "Unknown platform")
-            return {'CANCELLED'}
+        system.mxed_edit_material_helper(p)
         
         return {'FINISHED'}
 
@@ -337,45 +299,12 @@ class OpenMXS(Operator):
             self.report({'ERROR'}, "Extension is not .mxs")
             return {'CANCELLED'}
         
-        s = platform.system()
-        if(s == 'Darwin'):
-            if(self.application == 'STUDIO'):
-                app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Studio.app', ))
-                if(self.instance_app):
-                    # command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
-                    app = os.path.join(app, "Contents/MacOS/Studio")
-                    command_line = '{0} -mxs:{1}'.format(shlex.quote(app), shlex.quote(p))
-                else:
-                    command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
-                args = shlex.split(command_line)
-                p = subprocess.Popen(args)
-            elif(self.application == 'MAXWELL'):
-                app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Maxwell.app', ))
-                if(self.instance_app):
-                    # command_line = 'open -n -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
-                    app = os.path.join(app, "Contents/MacOS/Maxwell")
-                    command_line = '{0} -mxs:{1}'.format(shlex.quote(app), shlex.quote(p))
-                else:
-                    command_line = 'open -a {0} {1}'.format(shlex.quote(app), shlex.quote(p))
-                args = shlex.split(command_line)
-                p = subprocess.Popen(args)
-            else:
-                self.report({'ERROR'}, "Unknown application")
-                return {'CANCELLED'}
-        elif(s == 'Linux'):
-            # subprocess.Popen(['xdg-open', p], )
-            
-            # app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio', ))
-            # command_line = 'nohup {0} {1}'.format(shlex.quote(app), shlex.quote(p))
-            # args = shlex.split(command_line)
-            # p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-            pass
-        elif(s == 'Windows'):
-            # app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio.exe', ))
-            # os.startfile(os.path.normpath(p))
-            pass
+        if(self.application == 'STUDIO'):
+            system.studio_open_mxs_helper(p, self.instance_app)
+        elif(self.application == 'MAXWELL'):
+            system.maxwell_open_mxs_helper(p, self.instance_app)
         else:
-            self.report({'ERROR'}, "Unknown platform")
+            self.report({'ERROR'}, "Unknown application")
             return {'CANCELLED'}
         
         return {'FINISHED'}
