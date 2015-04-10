@@ -27,6 +27,24 @@ from .log import log, LogStyles, LOG_FILE_PATH
 
 
 PLATFORM = platform.system()
+WRITER = None
+
+
+class MXSWriter():
+    def __init__(self):
+        pass
+
+
+if(PLATFORM == 'Darwin'):
+    pass
+elif(PLATFORM == 'Linux'):
+    import pymaxwell
+    WRITER = MXSWriter()
+elif(PLATFORM == 'Windows'):
+    import pymaxwell
+    WRITER = MXSWriter()
+else:
+    raise OSError("Unknown platform: {}.".format(PLATFORM))
 
 
 def prefs():
@@ -50,7 +68,7 @@ def check_for_pymaxwell():
     elif(PLATFORM == 'Windows'):
         pass
     else:
-        raise OSError("Unknown platform: {}.".format(s))
+        raise OSError("Unknown platform: {}.".format(PLATFORM))
     
     ok = (os.path.exists(PY) and os.path.exists(PYMAXWELL_SO) and os.path.exists(PYMAXWELL_PY))
     if(ok):
@@ -211,4 +229,4 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, i
     elif(s == 'Windows'):
         pass
     else:
-        raise OSError("Unknown platform: {}.".format(s))
+        raise OSError("Unknown platform: {}.".format(PLATFORM))
