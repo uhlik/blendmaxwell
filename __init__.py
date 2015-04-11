@@ -33,6 +33,8 @@ if "bpy" in locals():
     imp.reload(log)
     imp.reload(progress)
     imp.reload(system)
+    imp.reload(rfbin)
+    imp.reload(mxs)
     imp.reload(maths)
     imp.reload(utils)
     imp.reload(engine)
@@ -44,6 +46,8 @@ else:
     from . import log
     from . import progress
     from . import system
+    from . import rfbin
+    from . import mxs
     from . import maths
     from . import utils
     from . import engine

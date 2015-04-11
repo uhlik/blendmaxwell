@@ -27,24 +27,6 @@ from .log import log, LogStyles, LOG_FILE_PATH
 
 
 PLATFORM = platform.system()
-WRITER = None
-
-
-class MXSWriter():
-    def __init__(self):
-        pass
-
-
-if(PLATFORM == 'Darwin'):
-    pass
-elif(PLATFORM == 'Linux'):
-    import pymaxwell
-    WRITER = MXSWriter()
-elif(PLATFORM == 'Windows'):
-    import pymaxwell
-    WRITER = MXSWriter()
-else:
-    raise OSError("Unknown platform: {}.".format(PLATFORM))
 
 
 def prefs():
@@ -77,6 +59,15 @@ def check_for_pymaxwell():
     log("{}: ERROR: python 3.4 with pymaxwell seems not to be installed..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
     raise OSError("python 3.4 with pymaxwell seems not to be installed..")
     return False
+
+
+def check_for_template():
+    # check for template
+    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
+    if(not os.path.exists(TEMPLATE)):
+        log("{}: ERROR: support directory is missing..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
+        raise OSError("support directory is missing..")
+    return TEMPLATE
 
 
 def open_file_in_default_application(path):

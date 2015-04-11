@@ -37,6 +37,7 @@ from . import utils
 from . import maths
 from . import system
 from . import rfbin
+from . import mxs
 
 
 class MXSExport():
@@ -50,14 +51,15 @@ class MXSExport():
         use_instances: if True all multi user meshes and duplis are exported as instances
         keep_intermediates: if True, temp files and directory will not be removed
         """
-        # check for pymaxwell
-        system.check_for_pymaxwell()
+        # # check for pymaxwell
+        # system.check_for_pymaxwell()
         
-        # check for template
-        self.TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
-        if(not os.path.exists(self.TEMPLATE)):
-            log("{}: ERROR: support directory is missing..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
-            raise OSError("support directory is missing..")
+        # # check for template
+        # self.TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
+        # if(not os.path.exists(self.TEMPLATE)):
+        #     log("{}: ERROR: support directory is missing..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
+        #     raise OSError("support directory is missing..")
+        self.TEMPLATE = system.check_for_template()
         
         self.context = context
         self.mxs_path = os.path.realpath(mxs_path)
