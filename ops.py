@@ -380,4 +380,5 @@ class Camera_preset_add(AddPresetBase, Operator):
                      "o.dof_distance", "o.lens", "o.sensor_width", "o.sensor_height", "o.sensor_fit", "o.clip_start",
                      "o.clip_end", "o.shift_x", "o.shift_y",
                      
-                     "r.resolution_x", "r.resolution_y", "r.resolution_percentage", "r.pixel_aspect_x", "r.pixel_aspect_y", ]
+                     "r.resolution_x", "r.resolution_y", "r.resolution_percentage", "r.pixel_aspect_x", "r.pixel_aspect_y",
+                     "r.fps", "r.fps_base", ]
