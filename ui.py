@@ -46,6 +46,14 @@ class ExportPanel(RenderButtonsPanel, Panel):
         r.operator("render.render", text="Render", icon='RENDER_STILL')
         r.operator("render.render", text="Animation", icon='RENDER_ANIMATION').animation = True
         
+        rp = context.scene.render
+        sub.separator()
+        s = sub.split(percentage=0.33)
+        s.label(text="Display:")
+        r = s.row(align=True)
+        r.prop(rp, "display_mode", text="")
+        r.prop(rp, "use_lock_interface", icon_only=True)
+        
         sub.label("Scene Export Directory:")
         sub.prop(m, 'export_output_directory', text="")
 
