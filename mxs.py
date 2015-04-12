@@ -26,7 +26,7 @@ if(platform.system() != 'Darwin'):
 
 
 class MXSWriter():
-    def __init__(self, path, append, instancer, wireframe, ):
+    def __init__(self, path, append, instancer=False, wireframe=False, ):
         if(platform.system() == 'Darwin'):
             raise ImportError("No pymaxwell for Mac OS X..")
         
@@ -53,18 +53,25 @@ class MXSWriter():
             # make wireframe base, for later usage
             pass
     
-    def finalize():
+    def finalize(self):
         # active camera, custom alphas, wireframe materials and hierarchy.. all the non standard stuff
         pass
     
-    def write_out():
+    def write_out(self):
         log("saving scene..", 2)
-        ok = mxs.writeMXS(self.path)
+        ok = self.mxs.writeMXS(self.path)
         log("done.", 2)
         return ok
     
-    # objects
-    def base_and_pivot(self, o, d):
+    # materials
+    def material_placeholder(self, s, ):
+        return None
+    
+    def material(self, path, s, embed, ):
+        return None
+    
+    # utils
+    def base_and_pivot(self, o, d, ):
         b = d['base']
         p = d['pivot']
         bb = Cbase()
@@ -79,7 +86,7 @@ class MXSWriter():
         pp.zAxis = Cvector(*p[3])
         o.setBaseAndPivot(bb, pp)
     
-    def object_props(self, o, d):
+    def object_props(self, o, d, ):
         if(d['hidden_camera']):
             o.setHideToCamera(True)
         if(d['hidden_camera_in_shadow_channel']):
@@ -99,7 +106,8 @@ class MXSWriter():
         c.assign(*cc)
         o.setColorID(c)
     
-    def camera(self, d):
+    # objects
+    def camera(self, d, ):
         s = self.mxs
         c = s.addCamera(d['name'], d['number_of_steps'], d['shutter'], d['film_width'], d['film_height'], d['iso'],
                         d['aperture'], d['diaphragm_angle'], d['diaphragm_blades'], d['frame_rate'],
@@ -139,14 +147,14 @@ class MXSWriter():
             c.setActive()
         return c
     
-    def empty(self, d):
+    def empty(self, d, ):
         s = self.mxs
         o = s.createMesh(d['name'], 0, 0, 0, 0,)
-        base_and_pivot(o, d)
-        object_props(o, d)
+        self.base_and_pivot(o, d)
+        self.object_props(o, d)
         return o
     
-    def mesh(self, d, m):
+    def mesh(self, d, m, ):
         s = self.mxs
         
         o = s.createMesh(d['name'], d['num_vertexes'], d['num_normals'], d['num_triangles'], d['num_positions_per_vertex'], )
@@ -174,9 +182,9 @@ class MXSWriter():
             for mi in range(d['num_materials']):
                 if(d['materials'][mi][1] == ""):
                     # multi material, but none assigned.. to keep triangle group, create and assign blank material
-                    mat = material_placeholder(s)
+                    mat = self.material_placeholder(s)
                 else:
-                    mat = material(d['materials'][mi][1], s, d['materials'][mi][0])
+                    mat = self.material(d['materials'][mi][1], s, d['materials'][mi][0])
                 mats.append(mat)
             for t, ma in m['f_setTriangleMaterial']:
                 o.setTriangleMaterial(t, mats[ma])
@@ -189,7 +197,7 @@ class MXSWriter():
             if(d['materials'][0][1] == ""):
                 mat = None
             else:
-                mat = material(d['materials'][0][1], s, d['materials'][0][0])
+                mat = self.material(d['materials'][0][1], s, d['materials'][0][0])
             # # this is causing error: Object [...] is not an emitter but has triangles with an emitter material applied to it
             # # details here: http://support.nextlimit.com/display/knfaq/Render+error+messages
             # # what is probably happening is, if setTriangleMaterial is used even with the same material on all triangles
@@ -205,7 +213,7 @@ class MXSWriter():
         
         if(len(d['backface_material']) > 0):
             if(d['backface_material'][0] != ""):
-                bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
+                bm = self.material(d['backface_material'][0], s, d['backface_material_embed'][1])
                 o.setBackfaceMaterial(bm)
         
         for t in m['f_setTriangleUVW']:
@@ -292,28 +300,34 @@ class MXSWriter():
         
         return o
     
-    def instance(self, d):
+    def instance(self, d, ):
         s = self.mxs
         bo = s.getObject(d['instanced'])
         o = s.createInstancement(d['name'], bo)
         if(d['num_materials'] == 1):
             # instance with different material is possible
-            m = material(d['materials'][0][1], s, d['materials'][0][0])
-            o.setMaterial(m)
+            m = self.material(d['materials'][0][1], s, d['materials'][0][0])
+            if(m is not None):
+                o.setMaterial(m)
         else:
             # multi material instances cannot be changed (i think)
             # and just skip instances without material
             pass
         if(len(d['backface_material']) > 0):
             if(d['backface_material'][0] != ""):
-                bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
-                o.setBackfaceMaterial(bm)
+                bm = self.material(d['backface_material'][0], s, d['backface_material_embed'][1])
+                if(bm is not None):
+                    o.setBackfaceMaterial(bm)
         
         self.base_and_pivot(o, d)
         self.object_props(o, d)
         return o
     
-    def particles(self, d):
+    def duplicate(self, d, ):
+        o = self.instance(d)
+        return o
+    
+    def particles(self, d, ):
         ext = self.mgr.createDefaultGeometryProceduralExtension('MaxwellParticles')
         params = ext.getExtensionData()
         
@@ -367,17 +381,17 @@ class MXSWriter():
         o = s.createGeometryProceduralObject(d['name'], params)
         
         if(d['material'] != ""):
-            mat = material(d['material'], s, d['material_embed'])
+            mat = self.material(d['material'], s, d['material_embed'])
             o.setMaterial(mat)
         if(d['backface_material'] != ""):
-            bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
+            bm = self.material(d['backface_material'][0], s, d['backface_material_embed'][1])
             o.setBackfaceMaterial(bm)
         
         self.base_and_pivot(o, d)
         self.object_props(o, d)
         return o
     
-    def grass(self, d):
+    def grass(self, d, ):
         e = self.mgr.createDefaultGeometryModifierExtension('MaxwellGrass')
         p = e.getExtensionData()
         
@@ -410,10 +424,10 @@ class MXSWriter():
             mp.setFloat('CtextureMap.useGlobalMap', d['use_override_map'])
         
         if(d['material'] != ""):
-            mat = material(d['material'], s, d['material_embed'])
+            mat = self.material(d['material'], s, d['material_embed'])
             p.setString('Material', mat.getName())
         if(d['backface_material'] != ""):
-            bmat = material(d['backface_material'], s, d['backface_material_embed'])
+            bmat = self.material(d['backface_material'], s, d['backface_material_embed'])
             p.setString('Double Sided Material', bmat.getName())
         
         p.setUInt('Density', d['density'])
@@ -467,7 +481,7 @@ class MXSWriter():
         o.applyGeometryModifierExtension(p)
         return o
     
-    def hair(self, d):
+    def hair(self, d, ):
         if(d['extension'] == 'MaxwellHair'):
             e = self.mgr.createDefaultGeometryProceduralExtension('MaxwellHair')
         if(d['extension'] == 'MGrassP'):
@@ -527,21 +541,22 @@ class MXSWriter():
         o = s.createGeometryProceduralObject(d['name'], p)
         
         if(d['material'] != ""):
-            mat = material(d['material'], s, d['material_embed'])
+            mat = self.material(d['material'], s, d['material_embed'])
             o.setMaterial(mat)
         if(d['backface_material'] != ""):
-            bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
+            bm = self.material(d['backface_material'][0], s, d['backface_material_embed'][1])
             o.setBackfaceMaterial(bm)
         
         self.base_and_pivot(o, d)
         self.object_props(o, d)
         return o
     
-    def wireframe(self, d, md):
+    def wireframe(self, d, md, ):
         pass
     
     # settings
-    def hierarchy(self, d):
+    def hierarchy(self, d, ):
+        s = self.mxs
         log("setting object hierarchy..", 2)
         object_types = ['EMPTY', 'MESH', 'INSTANCE', 'PARTICLES', 'HAIR', ]
         exclude = ['SCENE', 'ENVIRONMENT', 'GRASS', ]
@@ -560,7 +575,7 @@ class MXSWriter():
                         p = s.getObject(d[i]['parent'])
                         p.setHide(True)
     
-    def scene(self, d):
+    def scene(self, d, ):
         s = self.mxs
         s.setRenderParameter('ENGINE', d["scene_quality"])
         s.setRenderParameter('NUM THREADS', d["scene_cpu_threads"])
@@ -748,7 +763,7 @@ class MXSWriter():
         if(d["materials_search_path"] != ""):
             s.addSearchingPath(d["materials_search_path"])
     
-    def environment(self, d):
+    def environment(self, d, ):
         s = self.mxs
         env = s.getEnvironment()
         if(d["env_type"] == 'PHYSICAL_SKY'):

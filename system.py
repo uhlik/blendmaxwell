@@ -88,11 +88,10 @@ def mxed_create_material_helper(path):
         args = shlex.split(command_line, )
         process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
     elif(PLATFORM == 'Linux'):
-        # app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'mxed', )))
-        # command_line = "nohup {0} -new:'{1}'".format(app, p, )
-        # args = shlex.split(command_line, )
-        # process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-        pass
+        app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'mxed', )))
+        command_line = "nohup {0} -new:'{1}'".format(app, path, )
+        args = shlex.split(command_line, )
+        process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
     elif(PLATFORM == 'Windows'):
         pass
     else:
@@ -106,11 +105,10 @@ def mxed_edit_material_helper(path):
         args = shlex.split(command_line, )
         p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
     elif(PLATFORM == 'Linux'):
-        # app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'mxed', )))
-        # command_line = "nohup {0} -mxm:'{1}'".format(app, p, )
-        # args = shlex.split(command_line, )
-        # p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-        pass
+        app = shlex.quote(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'mxed', )))
+        command_line = "nohup {0} -mxm:'{1}'".format(app, path, )
+        args = shlex.split(command_line, )
+        p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
     elif(PLATFORM == 'Windows'):
         pass
     else:
@@ -128,13 +126,10 @@ def studio_open_mxs_helper(path, instance):
         args = shlex.split(command_line)
         p = subprocess.Popen(args)
     elif(PLATFORM == 'Linux'):
-        # subprocess.Popen(['xdg-open', p], )
-        
-        # app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio', ))
-        # command_line = 'nohup {0} {1}'.format(shlex.quote(app), shlex.quote(path))
-        # args = shlex.split(command_line)
-        # p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-        pass
+        app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio', ))
+        command_line = 'nohup {0} {1}'.format(shlex.quote(app), shlex.quote(path))
+        args = shlex.split(command_line)
+        p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
     elif(PLATFORM == 'Windows'):
         # app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio.exe', ))
         # os.startfile(os.path.normpath(path))
@@ -154,13 +149,10 @@ def maxwell_open_mxs_helper(path, instance):
         args = shlex.split(command_line)
         p = subprocess.Popen(args)
     elif(PLATFORM == 'Linux'):
-        # subprocess.Popen(['xdg-open', p], )
-        
-        # app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio', ))
-        # command_line = 'nohup {0} {1}'.format(shlex.quote(app), shlex.quote(path))
-        # args = shlex.split(command_line)
-        # p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-        pass
+        app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio', ))
+        command_line = 'nohup {0} {1}'.format(shlex.quote(app), shlex.quote(path))
+        args = shlex.split(command_line)
+        p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
     elif(PLATFORM == 'Windows'):
         # app = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'studio.exe', ))
         # os.startfile(os.path.normpath(path))

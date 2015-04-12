@@ -278,11 +278,21 @@ class MaxwellRenderExportEngine(RenderEngine):
                  'keep_intermediates': m.export_keep_intermediates, }
             ex = export.MXSExportWireframe(**d)
         else:
-            d = {'context': bpy.context,
-                 'mxs_path': p,
-                 'use_instances': m.export_use_instances,
-                 'keep_intermediates': m.export_keep_intermediates, }
-            ex = export.MXSExport(**d)
+            if(system.PLATFORM == 'Darwin'):
+                d = {'context': bpy.context,
+                     'mxs_path': p,
+                     'use_instances': m.export_use_instances,
+                     'keep_intermediates': m.export_keep_intermediates, }
+                ex = export.MXSExport(**d)
+            elif(system.PLATFORM == 'Linux'):
+                d = {'context': bpy.context,
+                     'mxs_path': p,
+                     'use_instances': m.export_use_instances, }
+                ex = export.MXSExport3(**d)
+            elif(system.PLATFORM == 'Windows'):
+                pass
+            else:
+                pass
         
         if((m.exporting_animation_now and scene.frame_current == scene.frame_end) or not m.exporting_animation_now):
             if(m.export_log_open):
