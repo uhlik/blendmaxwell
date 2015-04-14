@@ -900,7 +900,7 @@ class MXSWriter2():
         p.zAxis = Cvector(*pivot[3])
         o.setBaseAndPivot(b, p)
     
-    def object_props(self, o, hide=False, opacity=100, cid=(255, 255, 255), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, ):
+    def set_object_props(self, o, hide=False, opacity=100, cid=(255, 255, 255), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, ):
         if(hide):
             o.setHide(hide)
         if(opacity != 100.0):
@@ -972,8 +972,86 @@ class MXSWriter2():
         pivot   [((3 float), (3 float), (3 float), (3 float))]
         """
         s = self.mxs
-        o = s.createMesh(name, 0, 0, 0, 0,)
-        self.set_base_and_pivot(o, base, pivot)
-        self.set_object_props(o, *object_props)
+        o = s.createMesh(name, 0, 0, 0, 0, )
+        self.set_base_and_pivot(o, base, pivot, )
+        self.set_object_props(o, *object_props, )
+        return o
+    
+    def mesh(self, name, base, pivot, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, object_props, ):
+        """
+        name                string
+        base                [((3 float), (3 float), (3 float), (3 float))]
+        pivot               [((3 float), (3 float), (3 float), (3 float))]
+        num_positions       int
+        vertices            [[(float x, float y, float z), ..., ], [...], ]
+        normals             [[(float x, float y, float z), ..., ], [...], ]
+        triangles           [[(int iv0, int iv1, int iv2, int in0, int in1, int in2, ), ..., ], [...],  ]   # (3x vertex index, 3x normal index)
+        triangle_normals    [[(float x, float y, float z), ..., ], [...], ]
+        uv_channels         [[(float u1, float v1, float w1, float u2, float v2, float w2, float u3, float v3, float w3, ), ..., ], ..., ]      # ordered by uv index and ordered by triangle index
+        """
+        s = self.mxs
+        o = s.createMesh(name, len(vertices), len(normals), len(triangles), num_positions)
+        for i in range(len(uv_channels)):
+            o.addChannelUVW(i)
+        for ip in range(num_positions):
+            verts = vertices[ip]
+            norms = normals[ip]
+            for i, loc in enumerate(verts):
+                o.setVertex(i, ip, Cvector(*loc), )
+                o.setNormal(i, ip, Cvector(*norms[i]), )
+        an = len(normals)
+        for ip in range(num_positions):
+            for i, nor in enumerate(triangle_normals):
+                o.setNormal(an + i, ip, Cvector(*nor), )
+        for i, tri in enumerate(triangles):
+            o.setTriangle(i, *tri, )
+        for iuv, uv in enumerate(uv_channels):
+            for it, t in enumerate(uv):
+                o.setTriangleUVW(it, iuv, *t, )
+        
+        self.set_base_and_pivot(o, base, pivot, )
+        self.set_object_props(o, *object_props, )
+        
+        '''
+        if(d['num_materials'] > 1):
+            # multi material
+            mats = []
+            for mi in range(d['num_materials']):
+                if(d['materials'][mi][1] == ""):
+                    # multi material, but none assigned.. to keep triangle group, create and assign blank material
+                    mat = self.material_placeholder(s)
+                else:
+                    mat = self.material(d['materials'][mi][1], s, d['materials'][mi][0])
+                mats.append(mat)
+            for t, ma in m['f_setTriangleMaterial']:
+                o.setTriangleMaterial(t, mats[ma])
+        elif(d['num_materials'] == 1):
+            # # single material
+            # if(d['materials'][0][1] == ""):
+            #     mat = material_placeholder(s)
+            # else:
+            #     mat = material(d['materials'][0][1], s, d['materials'][0][0])
+            if(d['materials'][0][1] == ""):
+                mat = None
+            else:
+                mat = self.material(d['materials'][0][1], s, d['materials'][0][0])
+            # # this is causing error: Object [...] is not an emitter but has triangles with an emitter material applied to it
+            # # details here: http://support.nextlimit.com/display/knfaq/Render+error+messages
+            # # what is probably happening is, if setTriangleMaterial is used even with the same material on all triangles
+            # # somewhere it is flagged as multi material mesh..
+            # for t, ma in m['f_setTriangleMaterial']:
+            #     o.setTriangleMaterial(t, mat)
+            # # fix
+            if(mat is not None):
+                o.setMaterial(mat)
+        else:
+            # no material
+            pass
+        
+        if(len(d['backface_material']) > 0):
+            if(d['backface_material'][0] != ""):
+                bm = self.material(d['backface_material'][0], s, d['backface_material_embed'][1])
+                o.setBackfaceMaterial(bm)
+        '''
         return o
     
