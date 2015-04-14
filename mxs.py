@@ -861,3 +861,119 @@ class MXSWriter():
                                     d["ibl_illum_offset_y"], )
         else:
             env.setActiveSky('')
+
+
+class MXSWriter2():
+    def __init__(self, path, append, ):
+        if(platform.system() == 'Darwin'):
+            raise ImportError("No pymaxwell for Mac OS X..")
+        
+        log(self.__class__.__name__, 1, LogStyles.MESSAGE, prefix="* ", )
+        
+        self.path = path
+        self.mxs = Cmaxwell(mwcallback)
+        if(append):
+            log("appending to existing scene..", 2, prefix="* ", )
+            self.mxs.readMXS(self.path)
+        else:
+            log("creating new scene..", 2, prefix="* ", )
+        
+        self.mgr = CextensionManager.instance()
+        self.mgr.loadAllExtensions()
+    
+    def write(self):
+        log("saving scene..", 2)
+        ok = self.mxs.writeMXS(self.path)
+        log("done.", 2)
+        return ok
+    
+    def set_base_and_pivot(self, o, base, pivot, ):
+        b = Cbase()
+        b.origin = Cvector(*base[0])
+        b.xAxis = Cvector(*base[1])
+        b.yAxis = Cvector(*base[2])
+        b.zAxis = Cvector(*base[3])
+        p = Cbase()
+        p.origin = Cvector(*pivot[0])
+        p.xAxis = Cvector(*pivot[1])
+        p.yAxis = Cvector(*pivot[2])
+        p.zAxis = Cvector(*pivot[3])
+        o.setBaseAndPivot(b, p)
+    
+    def object_props(self, o, hide=False, opacity=100, cid=(255, 255, 255), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, ):
+        if(hide):
+            o.setHide(hide)
+        if(opacity != 100.0):
+            o.setOpacity(opacity)
+        c = Crgb()
+        c.assign(*[v / 255 for v in cid])
+        o.setColorID(c)
+        if(hcam):
+            o.setHideToCamera(True)
+        if(hcamsc):
+            o.setHideToCameraInShadowsPass(True)
+        if(hgi):
+            o.setHideToGI(True)
+        if(hrr):
+            o.setHideToReflectionsRefractions(True)
+        if(hzcp):
+            o.excludeOfCutPlanes(True)
+    
+    def camera(self, props, steps, active=False, lens_extra=None, response=None, region=None, custom_bokeh=(1.0, 0.0, False), cut_planes=(0.0, 1e7, False), shift_lens=(0.0, 0.0), ):
+        """
+        camera          (string name, int nSteps, float shutter, float filmWidth, float filmHeight, int iso, int diaphragmType, float angle,
+                         int nBlades, float fps, int xRes, int yRes, float pixelAspect, int lensType, int projectionType)
+        steps           [(int iStep, [3 float] origin, [3 float] focalPoint, [3 float] up, float focalLength, float fStop, bool focalLengthNeedCorrection), ..., ]
+        active          bool
+        lens_extra      float
+        response        string
+        region          (float x1, float y1, float x2, float y2, string type)
+        custom_bokeh    (float ratio, float angle, bool enabled)
+        cut_planes      (float near, float far, bool enabled)
+        shift_lens      (float x, float y)
+        """
+        
+        # TODO how to set shutter_angle?
+        
+        s = self.mxs
+        c = s.addCamera(*props)
+        for step in steps:
+            l = list(step[:])
+            l[1] = Cvector(*l[1])
+            l[2] = Cvector(*l[2])
+            l[3] = Cvector(*l[3])
+            c.setStep(*l)
+        
+        # TYPE_THIN_LENS, TYPE_PINHOLE, TYPE_ORTHO
+        if(lens_extra is not None):
+            if(props[13] == TYPE_FISHEYE):
+                c.setFishLensProperties(lens_extra)
+            if(props[13] == TYPE_SPHERICAL):
+                c.setSphericalLensProperties(lens_extra)
+            if(props[13] == TYPE_CYLINDRICAL):
+                c.setCylindricalLensProperties(lens_extra)
+        
+        if(response is not None):
+            c.setCameraResponsePreset(response)
+        c.setCustomBokeh(*custom_bokeh)
+        c.setCutPlanes(*cut_planes)
+        c.setScreenRegion(*shift_lens)
+        if(region is not None):
+            c.setScreenRegion(*region)
+        
+        if(active):
+            c.setActive()
+        return c
+    
+    def empty(self, name, base, pivot, object_props, ):
+        """
+        name    string
+        base    [((3 float), (3 float), (3 float), (3 float))]
+        pivot   [((3 float), (3 float), (3 float), (3 float))]
+        """
+        s = self.mxs
+        o = s.createMesh(name, 0, 0, 0, 0,)
+        self.set_base_and_pivot(o, base, pivot)
+        self.set_object_props(o, *object_props)
+        return o
+    
