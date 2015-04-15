@@ -19,6 +19,7 @@
 import os
 import platform
 import datetime
+import struct
 
 # from .log import log, LogStyles
 
@@ -911,12 +912,16 @@ class MXSWriter2():
         log("done.", 2)
         return ok
     
-    def set_base_and_pivot(self, o, base, pivot, ):
+    def set_base_and_pivot(self, o, base=None, pivot=None, ):
         """Convert float tuples to Cbases and set to object.
         o       CmaxwellObject
-        base    ((3 float), (3 float), (3 float), (3 float))
-        pivot   ((3 float), (3 float), (3 float), (3 float))
+        base    ((3 float), (3 float), (3 float), (3 float)) or None
+        pivot   ((3 float), (3 float), (3 float), (3 float)) or None
         """
+        if(base is None):
+            base = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+        if(pivot is None):
+            pivot = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
         b = Cbase()
         b.origin = Cvector(*base[0])
         b.xAxis = Cvector(*base[1])
@@ -1602,6 +1607,237 @@ class MXSWriter2():
             for n in a['objects']:
                 o = s.getObject(n)
                 o.addToCustomAlpha(a['name'])
+    
+    def hair(self, name, extension, base, pivot, root_radius, tip_radius, data, object_props, display_percent=10, display_max=1000, material=None, backface_material=None, ):
+        """Create hair/grass object.
+        name                string
+        extension           string ('MaxwellHair' ,'MGrassP')
+        base                ((3 float), (3 float), (3 float), (3 float))
+        pivot               ((3 float), (3 float), (3 float), (3 float))
+        root_radius         float
+        tip_radius          float
+        data                dict of extension data
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, )
+        display_percent     int
+        display_max         int
+        material            (string path, bool embed) or None
+        backface_material   (string path, bool embed) or None
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryProceduralExtension(extension)
+        p = e.getExtensionData()
+        p.setByteArray('HAIR_MAJOR_VER', data['HAIR_MAJOR_VER'])
+        p.setByteArray('HAIR_MINOR_VER', data['HAIR_MINOR_VER'])
+        p.setByteArray('HAIR_FLAG_ROOT_UVS', data['HAIR_FLAG_ROOT_UVS'])
+        
+        m = memoryview(struct.pack("I", data['HAIR_GUIDES_COUNT'][0])).tolist()
+        p.setByteArray('HAIR_GUIDES_COUNT', m)
+        m = memoryview(struct.pack("I", data['HAIR_GUIDES_POINT_COUNT'][0])).tolist()
+        p.setByteArray('HAIR_GUIDES_POINT_COUNT', m)
+        
+        c = Cbase()
+        c.origin = Cvector(0.0, 0.0, 0.0)
+        c.xAxis = Cvector(1.0, 0.0, 0.0)
+        c.yAxis = Cvector(0.0, 1.0, 0.0)
+        c.zAxis = Cvector(0.0, 0.0, 1.0)
+        
+        p.setFloatArray('HAIR_POINTS', list(data['HAIR_POINTS']), c)
+        p.setFloatArray('HAIR_NORMALS', list(data['HAIR_NORMALS']), c)
+        
+        p.setUInt('Display Percent', display_percent)
+        if(extension == 'MaxwellHair'):
+            p.setUInt('Display Max. Hairs', display_max)
+            p.setDouble('Root Radius', root_radius)
+            p.setDouble('Tip Radius', tip_radius)
+        if(extension == 'MGrassP'):
+            p.setUInt('Display Max. Hairs', display_max)
+            p.setDouble('Root Radius', root_width)
+            p.setDouble('Tip Radius', tip_width)
+        
+        o = s.createGeometryProceduralObject(name, p)
+        
+        self.set_base_and_pivot(o, base, pivot, )
+        self.set_object_props(o, *object_props)
+        
+        if(material is not None):
+            mat = self.load_material(material)
+            if(mat is not None):
+                o.setMaterial(mat)
+        if(backface_material is not None):
+            mat = self.load_material(backface_material)
+            if(mat is not None):
+                o.setBackfaceMaterial(mat)
+        
+        return o
+    
+    def texture_data_to_mxparams(self, data, mxparams):
+        if(data is None):
+            return
+        # mp.setString('CtextureMap.FileName', d['path'])
+        # hey, seriously.. WTF?
+        mxparams.setString('CtextureMap.FileName', ''.join(data['path']))
+        mxparams.setByte('CtextureMap.uvwChannel', data['channel'])
+        mxparams.setByte('CtextureMap.uIsTiled', data['tile_method_type'][0])
+        mxparams.setByte('CtextureMap.vIsTiled', data['tile_method_type'][1])
+        mxparams.setByte('CtextureMap.uIsMirrored', data['mirror'][0])
+        mxparams.setByte('CtextureMap.vIsMirrored', data['mirror'][1])
+        mxparams.setFloat('CtextureMap.scale.x', data['repeat'][0])
+        mxparams.setFloat('CtextureMap.scale.y', data['repeat'][1])
+        mxparams.setFloat('CtextureMap.offset.x', data['offset'][0])
+        mxparams.setFloat('CtextureMap.offset.y', data['offset'][1])
+        mxparams.setFloat('CtextureMap.rotation', data['rotation'])
+        mxparams.setByte('CtextureMap.invert', data['invert'])
+        mxparams.setByte('CtextureMap.useAbsoluteUnits', data['tile_method_units'])
+        mxparams.setByte('CtextureMap.useAlpha', data['alpha_only'])
+        mxparams.setByte('CtextureMap.typeInterpolation', data['interpolation'])
+        mxparams.setFloat('CtextureMap.saturation', data['saturation'])
+        mxparams.setFloat('CtextureMap.contrast', data['contrast'])
+        mxparams.setFloat('CtextureMap.brightness', data['brightness'])
+        mxparams.setFloat('CtextureMap.hue', data['hue'])
+        mxparams.setFloat('CtextureMap.clampMin', data['rgb_clamp'][0])
+        mxparams.setFloat('CtextureMap.clampMax', data['rgb_clamp'][1])
+        mxparams.setFloat('CtextureMap.useGlobalMap', data['use_override_map'])
+    
+    def grass(self, name, object_name, properties, material=None, backface_material=None, ):
+        """Create grass object modifier extension.
+        name                string
+        object_name         string
+        properties          dict of many, many properties, see code..
+        material            (string path, bool embed) or None
+        backface_material   (string path, bool embed) or None
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellGrass')
+        p = e.getExtensionData()
+        
+        if(material is not None):
+            mat = self.load_material(*material)
+            if(mat is not None):
+                p.setString('Material', mat.getName())
+        if(backface_material is not None):
+            mat = self.load_material(*backface_material)
+            if(mat is not None):
+                p.setString('Double Sided Material', bmat.getName())
+        
+        p.setUInt('Density', properties['density'])
+        
+        mxp = p.getByName('Density Map')[0]
+        self.texture_data_to_mxparams(properties['density_map'], p.getByName('Density Map')[0])
+        
+        p.setFloat('Length', properties['length'])
+        self.texture_data_to_mxparams(properties['length_map'], p.getByName('Length Map')[0])
+        p.setFloat('Length Variation', properties['length_variation'])
+        
+        p.setFloat('Root Width', properties['root_width'])
+        p.setFloat('Tip Width', properties['tip_width'])
+        
+        p.setUInt('Direction Type', properties['direction_type'])
+        
+        p.setFloat('Initial Angle', properties['initial_angle'])
+        p.setFloat('Initial Angle Variation', properties['initial_angle_variation'])
+        self.texture_data_to_mxparams(properties['initial_angle_map'], p.getByName('Initial Angle Map')[0])
+        
+        p.setFloat('Start Bend', properties['start_bend'])
+        p.setFloat('Start Bend Variation', properties['start_bend_variation'])
+        self.texture_data_to_mxparams(properties['start_bend_map'], p.getByName('Start Bend Map')[0])
+        
+        p.setFloat('Bend Radius', properties['bend_radius'])
+        p.setFloat('Bend Radius Variation', properties['bend_radius_variation'])
+        self.texture_data_to_mxparams(properties['bend_radius_map'], p.getByName('Bend Radius Map')[0])
+        
+        p.setFloat('Bend Angle', properties['bend_angle'])
+        p.setFloat('Bend Angle Variation', properties['bend_angle_variation'])
+        self.texture_data_to_mxparams(properties['bend_angle_map'], p.getByName('Bend Angle Map')[0])
+        
+        p.setFloat('Cut Off', properties['cut_off'])
+        p.setFloat('Cut Off Variation', properties['cut_off_variation'])
+        self.texture_data_to_mxparams(properties['cut_off_map'], p.getByName('Cut Off Map')[0])
+        
+        p.setUInt('Points per Blade', properties['points_per_blade'])
+        p.setUInt('Primitive Type', properties['primitive_type'])
+        
+        p.setUInt('Seed', properties['seed'])
+        
+        p.setByte('Enable LOD', properties['lod'])
+        p.setFloat('LOD Min Distance', properties['lod_min_distance'])
+        p.setFloat('LOD Max Distance', properties['lod_max_distance'])
+        p.setFloat('LOD Max Distance Density', properties['lod_max_distance_density'])
+        
+        p.setUInt('Display Percent', properties['display_percent'])
+        p.setUInt('Display Max. Blades', properties['display_max_blades'])
+        
+        o = s.getObject(object_name)
+        o.applyGeometryModifierExtension(p)
+        return o
+    
+    def particles(self, name, properties, base, pivot, object_props, material=None, backface_material=None, ):
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryProceduralExtension('MaxwellParticles')
+        p = e.getExtensionData()
+        d = properties
+        
+        p.setString('FileName', d['filename'])
+        p.setFloat('Radius Factor', d['radius_multiplier'])
+        p.setFloat('MB Factor', d['motion_blur_multiplier'])
+        p.setFloat('Shutter 1/', d['shutter_speed'])
+        p.setFloat('Load particles %', d['load_particles'])
+        p.setUInt('Axis', d['axis_system'])
+        p.setInt('Frame#', d['frame_number'])
+        p.setFloat('fps', d['fps'])
+        p.setInt('Create N particles per particle', d['extra_create_np_pp'])
+        p.setFloat('Extra particles dispersion', d['extra_dispersion'])
+        p.setFloat('Extra particles deformation', d['extra_deformation'])
+        p.setByte('Load particle Force', d['load_force'])
+        p.setByte('Load particle Vorticity', d['load_vorticity'])
+        p.setByte('Load particle Normal', d['load_normal'])
+        p.setByte('Load particle neighbors no.', d['load_neighbors_num'])
+        p.setByte('Load particle UV', d['load_uv'])
+        p.setByte('Load particle Age', d['load_age'])
+        p.setByte('Load particle Isolation Time', d['load_isolation_time'])
+        p.setByte('Load particle Viscosity', d['load_viscosity'])
+        p.setByte('Load particle Density', d['load_density'])
+        p.setByte('Load particle Pressure', d['load_pressure'])
+        p.setByte('Load particle Mass', d['load_mass'])
+        p.setByte('Load particle Temperature', d['load_temperature'])
+        p.setByte('Load particle ID', d['load_id'])
+        p.setFloat('Min Force', d['min_force'])
+        p.setFloat('Max Force', d['max_force'])
+        p.setFloat('Min Vorticity', d['min_vorticity'])
+        p.setFloat('Max Vorticity', d['max_vorticity'])
+        p.setInt('Min Nneighbors', d['min_nneighbors'])
+        p.setInt('Max Nneighbors', d['max_nneighbors'])
+        p.setFloat('Min Age', d['min_age'])
+        p.setFloat('Max Age', d['max_age'])
+        p.setFloat('Min Isolation Time', d['min_isolation_time'])
+        p.setFloat('Max Isolation Time', d['max_isolation_time'])
+        p.setFloat('Min Viscosity', d['min_viscosity'])
+        p.setFloat('Max Viscosity', d['max_viscosity'])
+        p.setFloat('Min Density', d['min_density'])
+        p.setFloat('Max Density', d['max_density'])
+        p.setFloat('Min Pressure', d['min_pressure'])
+        p.setFloat('Max Pressure', d['max_pressure'])
+        p.setFloat('Min Mass', d['min_mass'])
+        p.setFloat('Max Mass', d['max_mass'])
+        p.setFloat('Min Temperature', d['min_temperature'])
+        p.setFloat('Max Temperature', d['max_temperature'])
+        p.setFloat('Min Velocity', d['min_velocity'])
+        p.setFloat('Max Velocity', d['max_velocity'])
+        
+        o = s.createGeometryProceduralObject(name, p)
+        
+        self.set_base_and_pivot(o, base, pivot, )
+        self.set_object_props(o, *object_props)
+        
+        if(material is not None):
+            mat = self.load_material(material)
+            if(mat is not None):
+                o.setMaterial(mat)
+        if(backface_material is not None):
+            mat = self.load_material(backface_material)
+            if(mat is not None):
+                o.setBackfaceMaterial(mat)
+        
+        return o
 
 
 if __name__ == "__main__":
@@ -1685,7 +1921,97 @@ if __name__ == "__main__":
              'backface_material': None, }
         mxs.mesh(**d)
         
-        tree = [("Empty", None), ("Cube", "Empty"), ("Cube.001", "Empty"), ("Cube.002", "Empty"), ("Cube.003", "Empty"), ("Icosphere", "Cube"), ]
+        d = {'name': "Hair",
+             'extension': "MaxwellHair",
+             'base': [[0.0, 0.0, -0.0], [1.0, 0.0, -0.0], [0.0, 1.0, -0.0], [-0.0, -0.0, 1.0]],
+             'pivot': [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+             'root_radius': 0.01,
+             'tip_radius': 0.01,
+             'data': {'HAIR_MAJOR_VER': [1, 0, 0, 0],
+                      'HAIR_FLAG_ROOT_UVS': [0],
+                      'HAIR_POINTS': [-0.08098446577787399, -8.230035319911622e-09, -0.18828126788139343, -0.08161671459674835, 0.006709327921271324, -0.18981792032718658, -0.08219374716281891, 0.013758555985987186,
+                                      -0.1911616176366806, -0.0827208012342453, 0.021131295710802078, -0.19232967495918274, -0.08320312201976776, 0.028811177238821983, -0.19333940744400024, -0.08364595472812653,
+                                      0.03678181767463684, -0.19420813024044037, -0.08405454456806183, 0.045026831328868866, -0.19495317339897156, -0.0844341292977333, 0.05352985858917236, -0.19559183716773987,
+                                      -0.08478996157646179, 0.0622745156288147, -0.19614143669605255, -0.08512728661298752, 0.07124441117048264, -0.19661930203437805, -0.08545134216547012, 0.08042317628860474,
+                                      -0.19704273343086243, -0.08576737344264984, 0.08979444950819016, -0.19742906093597412, -0.0860806256532669, 0.09934180229902267, -0.1977955847978592, -0.08639635145664215,
+                                      0.10904893279075623, -0.19815964996814728, -0.08671978861093521, 0.1188993975520134, -0.19853852689266205, -0.08705617487430573, 0.12887683510780334, -0.19894957542419434,
+                                      0.18669630587100983, 1.2760666134870036e-10, 0.0029192999936640263, 0.1924477517604828, 0.20498400926589966, 0.015546927228569984, 0.16896528005599976, 0.48171451687812805,
+                                      -0.030823545530438423, 0.12152867019176483, 0.675149142742157, -0.12342479825019836, 0.03405354917049408, 0.7854002714157104, -0.31963273882865906, -0.05324919521808624,
+                                      0.7664400339126587, -0.5339993834495544, -0.14240793883800507, 0.7470872402191162, -0.7616661190986633, -0.20505712926387787, 0.6742979884147644, -0.9932375550270081,
+                                      -0.22614668309688568, 0.5240526795387268, -1.2255773544311523, -0.24538792669773102, 0.5746803879737854, -1.3054486513137817, -0.2599891424179077, 0.8179532885551453,
+                                      -1.1948378086090088, -0.2675756812095642, 1.0684677362442017, -1.095952033996582, -0.2970235347747803, 1.2900983095169067, -1.0531044006347656, -0.4159618616104126,
+                                      1.5084326267242432, -1.1486798524856567, -0.4360794425010681, 1.6717115640640259, -1.1217832565307617, -0.3102194666862488, 1.7080762386322021, -0.9249669313430786,
+                                      0.11021610349416733, -1.5439215461654499e-09, -0.03532080724835396, 0.11578115820884705, 0.2092379927635193, -0.02174588106572628, 0.08565031737089157, 0.4760940968990326,
+                                      -0.08518961817026138, 0.024907179176807404, 0.6467247009277344, -0.21202613413333893, -0.06521051377058029, 0.7219012379646301, -0.42971500754356384, -0.13939443230628967,
+                                      0.6633701920509338, -0.6412039399147034, -0.18716225028038025, 0.5538044571876526, -0.8476521968841553, -0.2162693440914154, 0.412445068359375, -1.058916687965393,
+                                      -0.24210676550865173, 0.27128562331199646, -1.29081130027771, -0.2789740264415741, 0.33750325441360474, -1.3906707763671875, -0.31049978733062744, 0.585605263710022,
+                                      -1.3075333833694458, -0.31732693314552307, 0.8292117118835449, -1.205169439315796, -0.32928213477134705, 1.045772671699524, -1.1278631687164307, -0.3991813361644745,
+                                      1.2537394762039185, -1.143176794052124, -0.47000476717948914, 1.51251220703125, -1.1530373096466064, -0.5026390552520752, 1.7350858449935913, -1.131240963935852,
+                                      0.14845618605613708, 1.799134841107275e-09, 0.041159406304359436, 0.1540692150592804, 0.20510773360729218, 0.05359848216176033, 0.12857572734355927, 0.47897017002105713,
+                                      0.003709168639034033, 0.07743366807699203, 0.6673396825790405, -0.09538230299949646, -0.011915743350982666, 0.7733772993087769, -0.2945317327976227, -0.09824696183204651,
+                                      0.7524213194847107, -0.5058798789978027, -0.18836745619773865, 0.7316505312919617, -0.7338322997093201, -0.2527914047241211, 0.6636014580726624, -0.9631161689758301,
+                                      -0.2783769369125366, 0.5201365351676941, -1.2011133432388306, -0.29782241582870483, 0.5676276087760925, -1.2856444120407104, -0.3090299367904663, 0.8042133450508118,
+                                      -1.1723966598510742, -0.31410589814186096, 1.0559749603271484, -1.0676623582839966, -0.338509738445282, 1.2725093364715576, -1.0191138982772827, -0.45558837056159973,
+                                      1.495270013809204, -1.1100883483886719, -0.4824630320072174, 1.661075472831726, -1.092484474182129, -0.3598640263080597, 1.6973611116409302, -0.9003852009773254,
+                                      -0.04274435713887215, 1.799134841107275e-09, 0.041159406304359436, -0.04116692394018173, 0.22080476582050323, 0.04782946780323982, -0.08509949594736099, 0.47232764959335327,
+                                      -0.04565710574388504, -0.16433177888393402, 0.5957497954368591, -0.2163965255022049, -0.2591060996055603, 0.6253291368484497, -0.4542386829853058, -0.3253854513168335,
+                                      0.5362178683280945, -0.6696209907531738, -0.3521300256252289, 0.3904913663864136, -0.8486403822898865, -0.3785335123538971, 0.23515070974826813, -1.0731079578399658,
+                                      -0.415400892496109, 0.14213548600673676, -1.3049039840698242, -0.46083864569664, 0.26801860332489014, -1.3760498762130737, -0.49102020263671875, 0.5394375920295715,
+                                      -1.2767506837844849, -0.4904232919216156, 0.7559590935707092, -1.1783846616744995, -0.5104337334632874, 1.000835657119751, -1.1028550863265991, -0.563571572303772,
+                                      1.2033684253692627, -1.0986595153808594, -0.6362817287445068, 1.4848405122756958, -1.1042433977127075, -0.6612340807914734, 1.691002368927002, -1.074325442314148],
+                      'HAIR_NORMALS': [1.0],
+                      'HAIR_GUIDES_POINT_COUNT': [16],
+                      'HAIR_MINOR_VER': [0, 0, 0, 0],
+                      'HAIR_GUIDES_COUNT': [5], },
+             'object_props': [False, 100, (255, 255, 255), False, False, False, False, False, ],
+             'display_percent': 10,
+             'display_max': 1000,
+             'material': None,
+             'backface_material': None, }
+        mxs.hair(**d)
+        
+        d = {"name": "Grass",
+             "object_name": "Icosphere",
+             'properties': {
+                 "density": 3000, "density_map": {"path": ["/Volumes/internal-2tb/teoplib/tmp/map.tif"], "alpha_only": False, "tile_method_units": 0, "saturation": 0.0, "interpolation": False, "use_override_map": False, "rgb_clamp": [0.0, 255.0], "repeat": [1.0, 1.0], "brightness": 0.0, "invert": False, "rotation": 0.0, "offset": [0.0, 0.0], "hue": 0.0, "channel": 0, "contrast": 0.0, "mirror": [False, False], "tile_method_type": [True, True], "type": "IMAGE"},
+                 "length": 10.0, "length_map": {"path": ["/Volumes/internal-2tb/teoplib/tmp/map.tif"], "alpha_only": False, "tile_method_units": 0, "saturation": 0.0, "interpolation": False, "use_override_map": False, "rgb_clamp": [0.0, 255.0], "repeat": [1.0, 1.0], "brightness": 0.0, "invert": False, "rotation": 0.0, "offset": [0.0, 0.0], "hue": 0.0, "channel": 0, "contrast": 0.0, "mirror": [False, False], "tile_method_type": [True, True], "type": "IMAGE"}, "length_variation": 20.0,
+                 "root_width": 5.0,
+                 "tip_width": 1.0,
+                 "direction_type": 0,
+                 "initial_angle": 79.99999767274336, "initial_angle_map": None, "initial_angle_variation": 25.0,
+                 "start_bend": 40.0, "start_bend_map": None, "start_bend_variation": 25.0,
+                 "bend_radius": 10.0, "bend_radius_map": None, "bend_radius_variation": 25.0,
+                 "bend_angle": 79.99999767274336, "bend_angle_map": None, "bend_angle_variation": 25.0,
+                 "cut_off": 100.0, "cut_off_map": None, "cut_off_variation": 0.0,
+                 "points_per_blade": 8,
+                 "primitive_type": 1,
+                 "seed": 0,
+                 "lod": False, "lod_max_distance": 50.0, "lod_max_distance_density": 10.0, "lod_min_distance": 10.0,
+                 "display_max_blades": 1000, "display_percent": 10, },
+             "material": ("/Volumes/internal-2tb/teoplib/tmp/test_objects/plastic.mxm", False),
+             "backface_material": None, }
+        mxs.grass(**d)
+        
+        d = {"name": "Particles",
+             'properties': {"axis_system": 0,
+                            "extra_create_np_pp": 0, "extra_deformation": 0.0, "extra_dispersion": 0.0,
+                            "filename": "/Volumes/internal-2tb/teoplib/tmp/Particle_Test_01.bin",
+                            "fps": 24.0, "frame_number": 0,
+                            "load_age": 0, "load_density": 0, "load_force": 0, "load_id": 0, "load_isolation_time": 0, "load_mass": 0, "load_neighbors_num": 0, "load_normal": 0,
+                            "load_particles": 100.0, "load_pressure": 0, "load_temperature": 0, "load_uv": 0, "load_viscosity": 0, "load_vorticity": 0,
+                            "max_age": 1.0, "max_density": 1.0, "max_force": 1.0, "max_isolation_time": 1.0, "max_mass": 1.0, "max_nneighbors": 1,
+                            "max_pressure": 1.0, "max_temperature": 1.0, "max_velocity": 1.0, "max_viscosity": 1.0, "max_vorticity": 1.0,
+                            "min_age": 0.0, "min_density": 0.0, "min_force": 0.0, "min_isolation_time": 0.0, "min_mass": 0.0, "min_nneighbors": 0,
+                            "min_pressure": 0.0, "min_temperature": 0.0, "min_velocity": 0.0, "min_viscosity": 0.0, "min_vorticity": 0.0,
+                            "motion_blur_multiplier": 1.0, "radius_multiplier": 1.0, "shutter_speed": 125.0, },
+             'base': [[0.0, 0.0, -0.0], [1.0, 0.0, -0.0], [0.0, 1.0, -0.0], [-0.0, -0.0, 1.0]],
+             'pivot': [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+             'object_props': [False, 100, (255, 255, 255), False, False, False, False, False, ],
+             'material': None, 'backface_material': None, }
+        mxs.particles(**d)
+        
+        
+        tree = [("Empty", None), ("Cube", "Empty"), ("Cube.001", "Empty"), ("Cube.002", "Empty"), ("Cube.003", "Empty"), ("Icosphere", "Cube"), ("ParticleSystem", None), ]
         mxs.hierarchy(tree)
         
         d = {'env_type': 'PHYSICAL_SKY',
