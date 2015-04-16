@@ -20,6 +20,7 @@ import os
 import platform
 import datetime
 import struct
+import math
 
 # from .log import log, LogStyles
 
@@ -905,13 +906,6 @@ class MXSWriter2():
         
         self.matdb = []
     
-    def write(self):
-        """Write scene fo file."""
-        log("saving scene..", 2)
-        ok = self.mxs.writeMXS(self.path)
-        log("done.", 2)
-        return ok
-    
     def set_base_and_pivot(self, o, base=None, pivot=None, ):
         """Convert float tuples to Cbases and set to object.
         o       CmaxwellObject
@@ -1771,6 +1765,15 @@ class MXSWriter2():
         return o
     
     def particles(self, name, properties, base, pivot, object_props, material=None, backface_material=None, ):
+        """Create particles object.
+        name                string
+        properties          dict
+        base                ((3 float), (3 float), (3 float), (3 float))
+        pivot               ((3 float), (3 float), (3 float), (3 float))
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, )
+        material            (string path, bool embed) or None
+        backface_material   (string path, bool embed) or None
+        """
         s = self.mxs
         e = self.mgr.createDefaultGeometryProceduralExtension('MaxwellParticles')
         p = e.getExtensionData()
@@ -1838,11 +1841,93 @@ class MXSWriter2():
                 o.setBackfaceMaterial(mat)
         
         return o
+    
+    def subdivision(self, object_name, level=2, scheme=0, interpolation=2, crease=0.0, smooth_angle=math.radians(90.0), ):
+        """Create subdivision object modifier extension.
+        object_name     string
+        level           int
+        scheme          int     (0, "Catmull-Clark"), (1, "Loop")
+        interpolation   int     (0, "None"), (1, "Edges"), (2, "Edges And Corners"), (3, "Sharp")
+        crease          float
+        smooth          float
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryModifierExtension('SubdivisionModifier')
+        p = e.getExtensionData()
+        
+        p.setUInt('Subdivision Level', level)
+        p.setUInt('Subdivision Scheme', scheme)
+        p.setUInt('Interpolation', interpolation)
+        p.setFloat('Crease', crease)
+        p.setFloat('Smooth Angle', smooth_angle)
+        
+        o = s.getObject(object_name)
+        o.applyGeometryModifierExtension(p)
+        return o
+    
+    def scatter(self, object_name, scatter_object, inherit_objectid=False, density=None, seed=0, scale=None, rotation=None, lod=None, display_percent=10, display_max=1000, ):
+        """Create scatter object modifier extension.
+        object_name                 string
+        scatter_object              string
+        inherit_objectid            bool
+        density                     (float, density_map or None) or None
+        seed                        int
+        scale                       ((float, float, float), scale_map or None, scale_variation (float, float, float)) or None
+        rotation                    ((float, float, float), rotation_map or None, rotation_variation (float, float, float), rotation_direction int (0, "Polygon Normal"), (1, "World Z")) or None
+        lod                         (bool, lod_min_distance float, lod_max_distance float, lod_max_distance_density float) or None
+        display_percent             int
+        display_max                 int
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellScatter')
+        p = e.getExtensionData()
+        
+        p.setString('Object', scatter_object)
+        p.setByte('Inherit ObjectID', inherit_objectid)
+        if(density is not None):
+            p.setFloat('Density', density[0])
+            self.texture_data_to_mxparams(density[1], p.getByName('Density Map')[0])
+        p.setUInt('Seed', seed)
+        if(scale is not None):
+            p.setFloat('Scale X', scale[0][0])
+            p.setFloat('Scale Y', scale[0][1])
+            p.setFloat('Scale Z', scale[0][2])
+            self.texture_data_to_mxparams(scale[1], p.getByName('Scale Map')[0])
+            p.setFloat('Scale X Variation', scale[2][0])
+            p.setFloat('Scale Y Variation', scale[2][1])
+            p.setFloat('Scale Z Variation', scale[2][2])
+        if(rotation is not None):
+            p.setFloat('Rotation X', rotation[0][0])
+            p.setFloat('Rotation Y', rotation[0][1])
+            p.setFloat('Rotation Z', rotation[0][2])
+            self.texture_data_to_mxparams(rotation[1], p.getByName('Rotation Map')[0])
+            p.setFloat('Rotation X Variation', rotation[2][0])
+            p.setFloat('Rotation Y Variation', rotation[2][1])
+            p.setFloat('Rotation Z Variation', rotation[2][2])
+            p.setUInt('Direction Type', rotation[3])
+        if(lod is not None):
+            p.setByte('Enable LOD', lod[0])
+            p.setFloat('LOD Min Distance', lod[1])
+            p.setFloat('LOD Max Distance', lod[2])
+            p.setFloat('LOD Max Distance Density', lod[3])
+        p.setUInt('Display Percent', display_percent)
+        p.setUInt('Display Max. Blades', display_max)
+        
+        o = s.getObject(object_name)
+        o.applyGeometryModifierExtension(p)
+        return o
+    
+    def write(self):
+        """Write scene fo file."""
+        log("saving scene..", 2)
+        ok = self.mxs.writeMXS(self.path)
+        log("done.", 2)
+        return ok
 
 
 if __name__ == "__main__":
     def test():
-        path = "/Users/carbon/Desktop/test.mxs"
+        path = "/Volumes/internal-2tb/teoplib/tmp/test.mxs"
         mxs = MXSWriter2(path)
         d = {'props': ("Camera", 1, 0.004, 0.032, 0.018000000000000002, 100.0, "CIRCULAR", 1.0471975803375244, 6, 24, 960, 540, 1.0, 0, ),
              'steps': ((0, [-2.8184449672698975, 4.383333206176758, 5.104832172393799], [-0.3223283290863037, 1.4271321296691895, 0.4408073425292969], [0.23018550872802734, 0.8729405403137207, -0.43010425567626953], 0.035, 11.0, 1), ),
@@ -1970,6 +2055,26 @@ if __name__ == "__main__":
              'backface_material': None, }
         mxs.hair(**d)
         
+        d = {'object_name': "Icosphere",
+             'level': 2,
+             'scheme': 1,
+             'interpolation': 2,
+             'crease': 0.0,
+             'smooth_angle': math.radians(90.0), }
+        mxs.subdivision(**d)
+        
+        d = {'object_name': "Cube",
+             'scatter_object': "Icosphere",
+             'inherit_objectid': True,
+             'density': (100.0, None),
+             'seed': 0,
+             'scale': ((1.0, 1.0, 1.0), None, (20.0, 20.0, 20.0), ),
+             'rotation': ((0.0, 0.0, 0.0), None, (10.0, 10.0, 10.0), 0),
+             'lod': (False, 10.0, 50.0, 10.0),
+             'display_percent': 10,
+             'display_max': 1000, }
+        mxs.scatter(**d)
+        
         d = {"name": "Grass",
              "object_name": "Icosphere",
              'properties': {
@@ -2009,7 +2114,6 @@ if __name__ == "__main__":
              'object_props': [False, 100, (255, 255, 255), False, False, False, False, False, ],
              'material': None, 'backface_material': None, }
         mxs.particles(**d)
-        
         
         tree = [("Empty", None), ("Cube", "Empty"), ("Cube.001", "Empty"), ("Cube.002", "Empty"), ("Cube.003", "Empty"), ("Icosphere", "Cube"), ("ParticleSystem", None), ]
         mxs.hierarchy(tree)
