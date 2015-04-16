@@ -1327,7 +1327,7 @@ class MXSWriter2():
             # env_type == 'NONE' or env_type == None
             env.setActiveSky('')
     
-    def parameters(self, scene, materials, generals, tone, simulens, illum_caustics, ):
+    def parameters(self, scene, materials=None, generals=None, tone=None, simulens=None, illum_caustics=None, ):
         """Set scene render parameters.
         scene           dict    {cpu_threads        int,
                                  multilight         int,
@@ -1337,17 +1337,17 @@ class MXSWriter2():
                                  time               int, },
         materials       dict    {override           bool,
                                  override_path      string (path),
-                                 search_path        string (path), },
+                                 search_path        string (path), } or None
         generals        dict    {diplacement        bool,
                                  dispersion         bool,
-                                 motion_blur        bool, },
+                                 motion_blur        bool, } or None
         tone            dict    {burn               float,
                                  color_space        int,
                                  gamma              float,
                                  sharpness          bool,
                                  sharpness_value    float,
                                  tint               float,
-                                 whitepoint         float, },
+                                 whitepoint         float, } or None
         simulens        dict    {aperture_map       string (path),
                                  devignetting       bool,
                                  devignetting_value float,
@@ -1356,10 +1356,10 @@ class MXSWriter2():
                                  frequency          float,
                                  obstacle_map       string (path),
                                  scattering         bool,
-                                 scattering_value   float, },
+                                 scattering_value   float, } or None
         illum_caustics  dict    {illumination       int,
                                  refl_caustics      int,
-                                 refr_caustics      int, }
+                                 refr_caustics      int, } or None
         """
         s = self.mxs
         s.setRenderParameter('ENGINE', scene["quality"])
@@ -1368,77 +1368,78 @@ class MXSWriter2():
         s.setRenderParameter('SAMPLING LEVEL', scene["sampling_level"])
         s.setRenderParameter('USE MULTILIGHT', scene["multilight"])
         s.setRenderParameter('SAVE LIGHTS IN SEPARATE FILES', scene["multilight_type"])
-        s.setRenderParameter('DO MOTION BLUR', generals["motion_blur"])
-        s.setRenderParameter('DO DISPLACEMENT', generals["diplacement"])
-        s.setRenderParameter('DO DISPERSION', generals["dispersion"])
         
-        v = illum_caustics['illumination']
-        if(v == 3):
-            s.setRenderParameter('DO DIRECT LAYER', 0)
-            s.setRenderParameter('DO INDIRECT LAYER', 0)
-        elif(v == 2):
-            s.setRenderParameter('DO DIRECT LAYER', 0)
-            s.setRenderParameter('DO INDIRECT LAYER', 1)
-        elif(v == 1):
-            s.setRenderParameter('DO DIRECT LAYER', 1)
-            s.setRenderParameter('DO INDIRECT LAYER', 0)
-        else:
-            s.setRenderParameter('DO DIRECT LAYER', 1)
-            s.setRenderParameter('DO INDIRECT LAYER', 1)
+        if(generals is not None):
+            s.setRenderParameter('DO MOTION BLUR', generals["motion_blur"])
+            s.setRenderParameter('DO DISPLACEMENT', generals["diplacement"])
+            s.setRenderParameter('DO DISPERSION', generals["dispersion"])
         
-        v = illum_caustics['refl_caustics']
-        if(v == 3):
-            s.setRenderParameter('DO DIRECT REFLECTION CAUSTIC LAYER', 0)
-            s.setRenderParameter('DO INDIRECT REFLECTION CAUSTIC LAYER', 0)
-        elif(v == 2):
-            s.setRenderParameter('DO DIRECT REFLECTION CAUSTIC LAYER', 0)
-            s.setRenderParameter('DO INDIRECT REFLECTION CAUSTIC LAYER', 1)
-        elif(v == 1):
-            s.setRenderParameter('DO DIRECT REFLECTION CAUSTIC LAYER', 1)
-            s.setRenderParameter('DO INDIRECT REFLECTION CAUSTIC LAYER', 0)
-        else:
-            s.setRenderParameter('DO DIRECT REFLECTION CAUSTIC LAYER', 1)
-            s.setRenderParameter('DO INDIRECT REFLECTION CAUSTIC LAYER', 1)
+        if(illum_caustics is not None):
+            v = illum_caustics['illumination']
+            if(v == 3):
+                s.setRenderParameter('DO DIRECT LAYER', 0)
+                s.setRenderParameter('DO INDIRECT LAYER', 0)
+            elif(v == 2):
+                s.setRenderParameter('DO DIRECT LAYER', 0)
+                s.setRenderParameter('DO INDIRECT LAYER', 1)
+            elif(v == 1):
+                s.setRenderParameter('DO DIRECT LAYER', 1)
+                s.setRenderParameter('DO INDIRECT LAYER', 0)
+            else:
+                s.setRenderParameter('DO DIRECT LAYER', 1)
+                s.setRenderParameter('DO INDIRECT LAYER', 1)
+            v = illum_caustics['refl_caustics']
+            if(v == 3):
+                s.setRenderParameter('DO DIRECT REFLECTION CAUSTIC LAYER', 0)
+                s.setRenderParameter('DO INDIRECT REFLECTION CAUSTIC LAYER', 0)
+            elif(v == 2):
+                s.setRenderParameter('DO DIRECT REFLECTION CAUSTIC LAYER', 0)
+                s.setRenderParameter('DO INDIRECT REFLECTION CAUSTIC LAYER', 1)
+            elif(v == 1):
+                s.setRenderParameter('DO DIRECT REFLECTION CAUSTIC LAYER', 1)
+                s.setRenderParameter('DO INDIRECT REFLECTION CAUSTIC LAYER', 0)
+            else:
+                s.setRenderParameter('DO DIRECT REFLECTION CAUSTIC LAYER', 1)
+                s.setRenderParameter('DO INDIRECT REFLECTION CAUSTIC LAYER', 1)
+            v = illum_caustics['refr_caustics']
+            if(v == 3):
+                s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 0)
+                s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 0)
+            elif(v == 2):
+                s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 0)
+                s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 1)
+            elif(v == 1):
+                s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 1)
+                s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 0)
+            else:
+                s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 1)
+                s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 1)
         
-        v = illum_caustics['refr_caustics']
-        if(v == 3):
-            s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 0)
-            s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 0)
-        elif(v == 2):
-            s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 0)
-            s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 1)
-        elif(v == 1):
-            s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 1)
-            s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 0)
-        else:
-            s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 1)
-            s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 1)
+        if(simulens is not None):
+            s.setRenderParameter('DO DEVIGNETTING', simulens["devignetting"])
+            s.setRenderParameter('DEVIGNETTING', simulens["devignetting_value"])
+            s.setRenderParameter('DO SCATTERING_LENS', simulens["scattering"])
+            s.setRenderParameter('SCATTERING_LENS', simulens["scattering_value"])
+            if(simulens["diffraction"]):
+                s.enableDiffraction()
+                s.setDiffraction(simulens["diffraction_value"], simulens["frequency"], simulens["aperture_map"], simulens["obstacle_map"])
         
-        s.setRenderParameter('DO DEVIGNETTING', simulens["devignetting"])
-        s.setRenderParameter('DEVIGNETTING', simulens["devignetting_value"])
-        s.setRenderParameter('DO SCATTERING_LENS', simulens["scattering"])
-        s.setRenderParameter('SCATTERING_LENS', simulens["scattering_value"])
+        if(tone is not None):
+            s.setRenderParameter('DO SHARPNESS', tone["sharpness"])
+            s.setRenderParameter('SHARPNESS', tone["sharpness_value"])
+            s.setToneMapping(tone["gamma"], tone["burn"])
+            s.setColorSpace(tone["color_space"])
+            s.setWhitePoint(tone["whitepoint"], tone["tint"])
         
-        s.setRenderParameter('DO SHARPNESS', tone["sharpness"])
-        s.setRenderParameter('SHARPNESS', tone["sharpness_value"])
-        s.setToneMapping(tone["gamma"], tone["burn"])
-        
-        if(materials["override"]):
-            s.setOverrideMaterial(True)
-        if(materials["override_path"] != ""):
-            s.setOverrideMaterial(materials["override_path"])
-        
-        if(simulens["diffraction"]):
-            s.enableDiffraction()
-            s.setDiffraction(simulens["diffraction_value"], simulens["frequency"], simulens["aperture_map"], simulens["obstacle_map"])
-        
-        s.setColorSpace(tone["color_space"])
-        s.setWhitePoint(tone["whitepoint"], tone["tint"])
-        
-        if(materials["search_path"] != ""):
-            s.addSearchingPath(materials["search_path"])
+        if(materials is not None):
+            if(materials["override"]):
+                s.setOverrideMaterial(True)
+            if(materials["override_path"] != ""):
+                s.setOverrideMaterial(materials["override_path"])
+            if(materials["search_path"] != ""):
+                s.addSearchingPath(materials["search_path"])
     
-    def channels(self, base_path, mxi, image, image_depth, channels_output_mode, channels_render, channels_render_type, channels, ):
+    def channels(self, base_path, mxi, image, image_depth='RGB8', channels_output_mode=0, channels_render=True, channels_render_type=0, channels=None, ):
         """Set scene render channels.
         base_path               string (path)
         mxi                     string (path)
@@ -1480,7 +1481,7 @@ class MXSWriter2():
                                           channels_z_buffer               bool
                                           channels_z_buffer_far           float
                                           channels_z_buffer_file          string
-                                          channels_z_buffer_near          float}
+                                          channels_z_buffer_near          float} or None
         """
         s = self.mxs
         
@@ -1538,58 +1539,58 @@ class MXSWriter2():
         _, depth = get_ext_depth(image_depth, os.path.splitext(os.path.split(image)[1])[1])
         s.setPath('RENDER', image, depth)
         
-        e, depth = get_ext_depth(channels["channels_alpha_file"])
-        s.setPath('ALPHA', "{}_alpha.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_shadow_file"])
-        s.setPath('SHADOW', "{}_shadow.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_object_id_file"])
-        s.setPath('OBJECT', "{}_object_id.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_material_id_file"])
-        s.setPath('MATERIAL', "{}_material_id.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_motion_vector_file"])
-        s.setPath('MOTION', "{}_motion_vector.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_z_buffer_file"])
-        s.setPath('Z', "{}_z_buffer.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_roughness_file"])
-        s.setPath('ROUGHNESS', "{}_roughness.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_fresnel_file"])
-        s.setPath('FRESNEL', "{}_fresnel.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_normals_file"])
-        s.setPath('NORMALS', "{}_normals.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_position_file"])
-        s.setPath('POSITION', "{}_position.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_deep_file"])
-        s.setPath('DEEP', "{}_deep.{}".format(base_path, e), depth)
-        e, depth = get_ext_depth(channels["channels_uv_file"])
-        s.setPath('UV', "{}_uv.{}".format(base_path, e), depth)
-        
-        e, depth = get_ext_depth(channels["channels_custom_alpha_file"])
-        s.setPath('ALPHA_CUSTOM', "{}_custom_alpha.{}".format(base_path, e), depth)
-        
         s.setRenderParameter('DO RENDER CHANNEL', int(channels_render))
         s.setRenderParameter('EMBED CHANNELS', channels_output_mode)
         
-        s.setRenderParameter('DO ALPHA CHANNEL', int(channels["channels_alpha"]))
-        s.setRenderParameter('OPAQUE ALPHA', int(channels["channels_alpha_opaque"]))
-        s.setRenderParameter('DO IDOBJECT CHANNEL', int(channels["channels_object_id"]))
-        s.setRenderParameter('DO IDMATERIAL CHANNEL', int(channels["channels_material_id"]))
-        s.setRenderParameter('DO SHADOW PASS CHANNEL', int(channels["channels_shadow"]))
-        s.setRenderParameter('DO MOTION CHANNEL', int(channels["channels_motion_vector"]))
-        s.setRenderParameter('DO ROUGHNESS CHANNEL', int(channels["channels_roughness"]))
-        s.setRenderParameter('DO FRESNEL CHANNEL', int(channels["channels_fresnel"]))
-        s.setRenderParameter('DO NORMALS CHANNEL', int(channels["channels_normals"]))
-        s.setRenderParameter('NORMALS CHANNEL SPACE', channels["channels_normals_space"])
-        s.setRenderParameter('POSITION CHANNEL SPACE', channels["channels_position_space"])
-        s.setRenderParameter('DO POSITION CHANNEL', int(channels["channels_position"]))
-        s.setRenderParameter('DO ZBUFFER CHANNEL', int(channels["channels_z_buffer"]))
-        s.setRenderParameter('ZBUFFER RANGE', (channels["channels_z_buffer_near"], channels["channels_z_buffer_far"]))
-        s.setRenderParameter('DO DEEP CHANNEL', int(channels["channels_deep"]))
-        s.setRenderParameter('DEEP CHANNEL TYPE', channels["channels_deep_type"])
-        s.setRenderParameter('DEEP MIN DISTANCE', channels["channels_deep_min_dist"])
-        s.setRenderParameter('DEEP MAX SAMPLES', channels["channels_deep_max_samples"])
-        s.setRenderParameter('DO UV CHANNEL', int(channels["channels_uv"]))
-        # s.setRenderParameter('MOTION CHANNEL TYPE', ?)
-        s.setRenderParameter('DO ALPHA CUSTOM CHANNEL', int(channels["channels_custom_alpha"]))
+        if(channels is not None):
+            e, depth = get_ext_depth(channels["channels_alpha_file"])
+            s.setPath('ALPHA', "{}_alpha{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_shadow_file"])
+            s.setPath('SHADOW', "{}_shadow{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_object_id_file"])
+            s.setPath('OBJECT', "{}_object_id{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_material_id_file"])
+            s.setPath('MATERIAL', "{}_material_id{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_motion_vector_file"])
+            s.setPath('MOTION', "{}_motion_vector{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_z_buffer_file"])
+            s.setPath('Z', "{}_z_buffer{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_roughness_file"])
+            s.setPath('ROUGHNESS', "{}_roughness{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_fresnel_file"])
+            s.setPath('FRESNEL', "{}_fresnel{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_normals_file"])
+            s.setPath('NORMALS', "{}_normals{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_position_file"])
+            s.setPath('POSITION', "{}_position{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_deep_file"])
+            s.setPath('DEEP', "{}_deep{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_uv_file"])
+            s.setPath('UV', "{}_uv{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_custom_alpha_file"])
+            s.setPath('ALPHA_CUSTOM', "{}_custom_alpha{}".format(base_path, e), depth)
+            
+            s.setRenderParameter('DO ALPHA CHANNEL', int(channels["channels_alpha"]))
+            s.setRenderParameter('OPAQUE ALPHA', int(channels["channels_alpha_opaque"]))
+            s.setRenderParameter('DO IDOBJECT CHANNEL', int(channels["channels_object_id"]))
+            s.setRenderParameter('DO IDMATERIAL CHANNEL', int(channels["channels_material_id"]))
+            s.setRenderParameter('DO SHADOW PASS CHANNEL', int(channels["channels_shadow"]))
+            s.setRenderParameter('DO MOTION CHANNEL', int(channels["channels_motion_vector"]))
+            s.setRenderParameter('DO ROUGHNESS CHANNEL', int(channels["channels_roughness"]))
+            s.setRenderParameter('DO FRESNEL CHANNEL', int(channels["channels_fresnel"]))
+            s.setRenderParameter('DO NORMALS CHANNEL', int(channels["channels_normals"]))
+            s.setRenderParameter('NORMALS CHANNEL SPACE', channels["channels_normals_space"])
+            s.setRenderParameter('POSITION CHANNEL SPACE', channels["channels_position_space"])
+            s.setRenderParameter('DO POSITION CHANNEL', int(channels["channels_position"]))
+            s.setRenderParameter('DO ZBUFFER CHANNEL', int(channels["channels_z_buffer"]))
+            s.setRenderParameter('ZBUFFER RANGE', (channels["channels_z_buffer_near"], channels["channels_z_buffer_far"]))
+            s.setRenderParameter('DO DEEP CHANNEL', int(channels["channels_deep"]))
+            s.setRenderParameter('DEEP CHANNEL TYPE', channels["channels_deep_type"])
+            s.setRenderParameter('DEEP MIN DISTANCE', channels["channels_deep_min_dist"])
+            s.setRenderParameter('DEEP MAX SAMPLES', channels["channels_deep_max_samples"])
+            s.setRenderParameter('DO UV CHANNEL', int(channels["channels_uv"]))
+            # s.setRenderParameter('MOTION CHANNEL TYPE', ?)
+            s.setRenderParameter('DO ALPHA CUSTOM CHANNEL', int(channels["channels_custom_alpha"]))
     
     def custom_alphas(self, groups, ):
         """Set custom alphas.
