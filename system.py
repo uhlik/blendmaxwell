@@ -56,7 +56,7 @@ def check_for_pymaxwell():
     if(ok):
         return True
     
-    log("{}: ERROR: python 3.4 with pymaxwell seems not to be installed..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
+    log("ERROR: python 3.4 with pymaxwell seems not to be installed..", 1, LogStyles.ERROR, )
     raise OSError("python 3.4 with pymaxwell seems not to be installed..")
     return False
 
@@ -65,7 +65,7 @@ def check_for_template():
     # check for template
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
     if(not os.path.exists(TEMPLATE)):
-        log("{}: ERROR: support directory is missing..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
+        log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )
         raise OSError("support directory is missing..")
     return TEMPLATE
 
@@ -207,8 +207,8 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, i
         args = shlex.split(command_line, )
         o = subprocess.call(args, )
         if(o != 0):
-            log("error in {0}".format(self.script_path), 0, LogStyles.ERROR, )
-            raise Exception("error in {0}".format(self.script_path))
+            log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
+            raise Exception("error in {0}".format(script_path))
     elif(s == 'Windows'):
         pass
     else:
