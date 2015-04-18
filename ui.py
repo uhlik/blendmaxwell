@@ -1734,6 +1734,8 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
         else:
             sub.prop(m, 'bl_use_velocity')
             sub.prop(m, 'bl_size')
+            # here i need some calculation of result size first
+            # sub.prop(m, 'bl_use_size')
             sub.prop(m, 'bin_directory')
             sub.prop(m, 'bin_overwrite')
         
