@@ -1380,9 +1380,11 @@ class MXSExport():
         me.calc_tessface()
         me.calc_normals()
         
-        nm = ob.data.name
+        # nm = ob.data.name
+        nm = "{}-{}".format(ob.data.name, uuid.uuid1())
         if(self.use_instances is False):
-            nm = ob.name
+            # nm = ob.name
+            nm = "{}-{}".format(ob.name, uuid.uuid1())
         
         md = {'name': nm,
               'channel_uvw': [],
