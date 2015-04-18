@@ -1059,20 +1059,21 @@ class MXSWriter2():
         os.remove(p)
         return m
     
-    def empty(self, name, base, pivot, object_props, ):
+    def empty(self, name, base, pivot, object_props=None, ):
         """Create empty object.
         name            string
         base            ((3 float), (3 float), (3 float), (3 float))
         pivot           ((3 float), (3 float), (3 float), (3 float))
-        object_props    (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, )
+        object_props    (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
         """
         s = self.mxs
         o = s.createMesh(name, 0, 0, 0, 0, )
         self.set_base_and_pivot(o, base, pivot, )
-        self.set_object_props(o, *object_props)
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
         return o
     
-    def mesh(self, name, base, pivot, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, object_props, num_materials=0, materials=[], triangle_materials=None, backface_material=None, ):
+    def mesh(self, name, base, pivot, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, object_props=None, num_materials=0, materials=[], triangle_materials=None, backface_material=None, ):
         """Create mesh object.
         name                string
         base                ((3 float), (3 float), (3 float), (3 float))
@@ -1084,7 +1085,7 @@ class MXSWriter2():
         triangle_normals    [[(float x, float y, float z), ..., ], [...], ]
         uv_channels         [[(float u1, float v1, float w1, float u2, float v2, float w2, float u3, float v3, float w3, ), ..., ], ..., ] or None      # ordered by uv index and ordered by triangle index
         num_materials       int
-        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, )
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
         materials           [(string path, bool embed), ..., ] or None
         triangle_materials  [(int tri_id, int mat_id), ..., ] or None
         backface_material   (string path, bool embed) or None
@@ -1114,7 +1115,8 @@ class MXSWriter2():
                     o.setTriangleUVW(it, iuv, *t)
         
         self.set_base_and_pivot(o, base, pivot, )
-        self.set_object_props(o, *object_props)
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
         
         if(materials is not None):
             if(num_materials > 1):
@@ -1145,13 +1147,13 @@ class MXSWriter2():
         
         return o
     
-    def instance(self, name, instanced_name, base, pivot, object_props, material=None, backface_material=None, ):
+    def instance(self, name, instanced_name, base, pivot, object_props=None, material=None, backface_material=None, ):
         """Create instance of mesh object. Instanced object must exist in scene.
         name                string
         instanced_name      string
         base                ((3 float), (3 float), (3 float), (3 float))
         pivot               ((3 float), (3 float), (3 float), (3 float))
-        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, )
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
         material            (string path, bool embed) or None
         backface_material   (string path, bool embed) or None
         """
@@ -1160,7 +1162,8 @@ class MXSWriter2():
         o = s.createInstancement(name, bo)
         
         self.set_base_and_pivot(o, base, pivot, )
-        self.set_object_props(o, *object_props)
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
         
         if(material is not None):
             m = self.load_material(*material)
@@ -1603,7 +1606,7 @@ class MXSWriter2():
                 o = s.getObject(n)
                 o.addToCustomAlpha(a['name'])
     
-    def hair(self, name, extension, base, pivot, root_radius, tip_radius, data, object_props, display_percent=10, display_max=1000, material=None, backface_material=None, ):
+    def hair(self, name, extension, base, pivot, root_radius, tip_radius, data, object_props=None, display_percent=10, display_max=1000, material=None, backface_material=None, ):
         """Create hair/grass object.
         name                string
         extension           string ('MaxwellHair' ,'MGrassP')
@@ -1612,7 +1615,7 @@ class MXSWriter2():
         root_radius         float
         tip_radius          float
         data                dict of extension data
-        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, )
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
         display_percent     int
         display_max         int
         material            (string path, bool embed) or None
@@ -1652,7 +1655,8 @@ class MXSWriter2():
         o = s.createGeometryProceduralObject(name, p)
         
         self.set_base_and_pivot(o, base, pivot, )
-        self.set_object_props(o, *object_props)
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
         
         if(material is not None):
             mat = self.load_material(material)
@@ -1765,13 +1769,13 @@ class MXSWriter2():
         o.applyGeometryModifierExtension(p)
         return o
     
-    def particles(self, name, properties, base, pivot, object_props, material=None, backface_material=None, ):
+    def particles(self, name, properties, base, pivot, object_props=None, material=None, backface_material=None, ):
         """Create particles object.
         name                string
         properties          dict
         base                ((3 float), (3 float), (3 float), (3 float))
         pivot               ((3 float), (3 float), (3 float), (3 float))
-        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, )
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
         material            (string path, bool embed) or None
         backface_material   (string path, bool embed) or None
         """
@@ -1830,7 +1834,8 @@ class MXSWriter2():
         o = s.createGeometryProceduralObject(name, p)
         
         self.set_base_and_pivot(o, base, pivot, )
-        self.set_object_props(o, *object_props)
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
         
         if(material is not None):
             mat = self.load_material(material)
@@ -1950,7 +1955,8 @@ if __name__ == "__main__":
              'triangles': [(3, 2, 0, 8, 8, 8), (7, 6, 2, 9, 9, 9), (5, 4, 6, 10, 10, 10), (1, 0, 4, 11, 11, 11), (2, 6, 4, 12, 12, 12), (7, 3, 1, 13, 13, 13), (1, 3, 0, 14, 14, 14), (3, 7, 2, 15, 15, 15), (7, 5, 6, 16, 16, 16), (5, 1, 4, 17, 17, 17), (0, 2, 4, 18, 18, 18), (5, 7, 1, 19, 19, 19), ],
              'triangle_normals': [((-1.0, 0.0, -0.0), (0.0, -2.9802322387695312e-08, -1.0), (1.0, -0.0, 0.0), (0.0, 2.9802322387695312e-08, 1.0), (0.0, -1.0, 2.9802322387695312e-08), (0.0, 1.0, -2.9802322387695312e-08), (-1.0, 0.0, 0.0), (-0.0, -2.9802322387695312e-08, -1.0), (1.0, -0.0, 0.0), (-0.0, 2.9802322387695312e-08, 1.0), (0.0, -1.0, 2.9802322387695312e-08), (0.0, 1.0, -2.9802322387695312e-08))],
              'uv_channels': [((0.33333340287208557, 0.6666666269302368, 0.0, 0.6666666865348816, 0.6666666567325592, 0.0, 0.6666667461395264, 0.3333333730697632, 0.0), (0.0, 0.6666665971279144, 0.0, 0.333333283662796, 0.6666666567325592, 0.0, 0.3333333432674408, 0.3333333730697632, 0.0), (0.0, 0.9999999105930613, 0.0, 0.3333333134651184, 1.0, 0.0, 0.33333340287208557, 0.6666667461395264, 0.0), (0.6666666865348816, 1.0, 0.0, 0.6666667461395264, 0.6666667461395264, 0.0, 0.33333346247673035, 0.6666666865348816, 0.0), (1.0, 0.6666667759418488, 0.0, 0.6666667461395264, 0.6666667759418488, 0.0, 0.6666667461395264, 0.9999999701976865, 0.0), (0.33333325386047363, 0.3333333134651184, 0.0, 0.333333283662796, 5.960464477539063e-08, 0.0, 4.967052547044659e-08, 5.960464477539063e-08, 0.0), (0.33333346247673035, 0.3333333730697632, 0.0, 0.33333340287208557, 0.6666666269302368, 0.0, 0.6666667461395264, 0.3333333730697632, 0.0), (3.973642037635727e-08, 0.3333333134651184, 0.0, 0.0, 0.6666665971279144, 0.0, 0.3333333432674408, 0.3333333730697632, 0.0), (1.291433733285885e-07, 0.6666666567325592, 0.0, 0.0, 0.9999999105930613, 0.0, 0.33333340287208557, 0.6666667461395264, 0.0), (0.33333340287208557, 0.9999999602635832, 0.0, 0.6666666865348816, 1.0, 0.0, 0.33333346247673035, 0.6666666865348816, 0.0), (1.0, 1.0, 0.0, 1.0, 0.6666667759418488, 0.0, 0.6666667461395264, 0.9999999701976865, 0.0), (0.0, 0.33333325386047363, 0.0, 0.33333325386047363, 0.3333333134651184, 0.0, 4.967052547044659e-08, 5.960464477539063e-08, 0.0),), ((0.0, 0.08858555555343628, 0.0, 0.12544512748718262, 0.626363068819046, 0.0, 0.5000001192092896, 1.0, 0.0), (0.5, 0.0, 0.0, 0.49999988079071045, 0.4283735156059265, 0.0, 0.12544512748718262, 0.626363068819046, 0.0), (1.0, 0.08858531713485718, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0, 0.49999988079071045, 0.4283735156059265, 0.0), (0.5000002384185791, 0.3003859519958496, 0.0, 0.5000001192092896, 1.0, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0), (0.12544512748718262, 0.626363068819046, 0.0, 0.49999988079071045, 0.4283735156059265, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0), (0.5, 0.0, 0.0, 0.0, 0.08858555555343628, 0.0, 0.5000002384185791, 0.3003859519958496, 0.0), (0.5000002384185791, 0.3003859519958496, 0.0, 0.0, 0.08858555555343628, 0.0, 0.5000001192092896, 1.0, 0.0), (0.0, 0.08858555555343628, 0.0, 0.5, 0.0, 0.0, 0.12544512748718262, 0.626363068819046, 0.0), (0.5, 0.0, 0.0, 1.0, 0.08858531713485718, 0.0, 0.49999988079071045, 0.4283735156059265, 0.0), (1.0, 0.08858531713485718, 0.0, 0.5000002384185791, 0.3003859519958496, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0), (0.5000001192092896, 1.0, 0.0, 0.12544512748718262, 0.626363068819046, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0), (1.0, 0.08858531713485718, 0.0, 0.5, 0.0, 0.0, 0.5000002384185791, 0.3003859519958496, 0.0)), ],
-             'object_props': [False, 100, (255, 255, 255), False, False, False, False, False, ],
+             # 'object_props': [False, 100, (255, 255, 255), False, False, False, False, False, ],
+             'object_props': None,
              'num_materials': 2,
              'materials': [["/Volumes/internal-2tb/teoplib/tmp/test_objects/plastic.mxm", True, ], [None, True]],
              'triangle_materials': [(0, 0), (1, 1), (2, 0), (3, 1), (4, 1), (5, 0), (6, 0), (7, 1), (8, 0), (9, 1), (10, 1), (11, 0)],
