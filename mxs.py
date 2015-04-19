@@ -21,11 +21,23 @@ import platform
 import datetime
 import struct
 import math
+import bpy
 
 # from .log import log, LogStyles
 
 # if(platform.system() != 'Darwin'):
 #     from pymaxwell import *
+
+'''
+def prefs():
+    a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
+    p = bpy.context.user_preferences.addons[a].preferences
+    return p
+
+
+import sys
+sys.path.append(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'pymaxwell', 'python3.4')))
+'''
 
 if __name__ == "__main__":
     from pymaxwell import *
@@ -887,7 +899,9 @@ class MXSWriter2():
         append  bool
         """
         
-        # return
+        if('Cmaxwell' not in locals()):
+            raise ImportError("No pymaxwell..")
+            return
         
         if(__name__ != "__main__"):
             if(platform.system() == 'Darwin'):

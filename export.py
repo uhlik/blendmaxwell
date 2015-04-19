@@ -4717,6 +4717,12 @@ class MXSExport4():
         
         self.hierarchy = []
         
+        self.groups = []
+        for g in bpy.data.groups:
+            gmx = g.maxwell_render
+            if(gmx.custom_alpha_use):
+                self.groups.append({'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, })
+        
         log("processing cameras..", 1, LogStyles.MESSAGE)
         for o in self.cameras:
             self._camera(o)
@@ -4736,7 +4742,7 @@ class MXSExport4():
             
             log("processing instances..", 1, LogStyles.MESSAGE)
             for o in self.instances:
-                self._instance()
+                self._instance(o)
         
         log("processing duplicates..", 1, LogStyles.MESSAGE)
         if(len(self.duplicates) != 0):
@@ -5173,14 +5179,18 @@ class MXSExport4():
         
         if(instance is True):
             # is instance
+            # def find_base_name(mnm):
+            #     for ib in self.data:
+            #         try:
+            #             if(ib['instance_base'] is True):
+            #                 if(ib['mesh_name'] == mnm):
+            #                     return ib['name']
+            #         except KeyError:
+            #             pass
             def find_base_name(mnm):
-                for ib in self.data:
-                    try:
-                        if(ib['instance_base'] is True):
-                            if(ib['mesh_name'] == mnm):
-                                return ib['name']
-                    except KeyError:
-                        pass
+                for o in self.bases:
+                    if(o['mesh'].name == mnm):
+                        return o['object'].name
             
             # so find base object
             original = self.context.scene.objects[find_base_name(ob.data.name)]
@@ -5495,6 +5505,16 @@ class MXSExport4():
         if(ob.parent):
             parent = ob.parent.name
         self.hierarchy.append((name, parent))
+        
+        for g in bpy.data.groups:
+            gmx = g.maxwell_render
+            if(gmx.custom_alpha_use):
+                # self.groups.append({'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, })
+                if(ob in g.objects):
+                    for gr in self.groups:
+                        if(gr['name'] == g.name):
+                            gr['objects'].append(name)
+                            break
     
     def _instance(self, o, iname=None, ):
         log("{0}".format(o['object'].name), 2)
@@ -5536,7 +5556,9 @@ class MXSExport4():
         materials = None
         if(num_materials != 0):
             materials = [(m[1], m[0]) for m in d['materials']]
-        material = materials[0]
+        material = None
+        if(material is not None):
+            material = materials[0]
         
         backface_material = None
         if(len(d['backface_material']) != 0):
@@ -5548,6 +5570,16 @@ class MXSExport4():
         if(ob.parent):
             parent = ob.parent.name
         self.hierarchy.append((name, parent))
+        
+        for g in bpy.data.groups:
+            gmx = g.maxwell_render
+            if(gmx.custom_alpha_use):
+                # self.groups.append({'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, })
+                if(ob in g.objects):
+                    for gr in self.groups:
+                        if(gr['name'] == g.name):
+                            gr['objects'].append(name)
+                            break
     
     def _environment(self):
         mx = self.context.scene.world.maxwell_render
@@ -5648,7 +5680,7 @@ class MXSExport4():
         if(sun['sun_date'] == "DD.MM.YYYY"):
             mx.sun_date = n.strftime('%d.%m.%Y')
             sun['sun_date'] = mx.sun_date
-        if(env['sun_time'] == "HH:MM"):
+        if(sun['sun_time'] == "HH:MM"):
             mx.sun_time = n.strftime('%H:%M')
             sun['sun_time'] = mx.sun_time
         
@@ -5797,16 +5829,6 @@ class MXSExport4():
         
         self.mxs.channels(base_path, mxi, image, image_depth, channels_output_mode, channels_render, channels_render_type, channels, )
         
-        groups = []
-        for g in bpy.data.groups:
-            gmx = g.maxwell_render
-            if(gmx.custom_alpha_use):
-                a = {'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
-                for o in g.objects:
-                    for mo in self.data:
-                        if(o.name == mo['name'] and (mo['type'] == 'MESH' or mo['type'] == 'INSTANCE')):
-                            a['objects'].append(o.name)
-                groups.append(a)
+        groups = self.groups[:]
         if(len(groups) > 0):
             self.mxs.custom_alphas(groups)
-        

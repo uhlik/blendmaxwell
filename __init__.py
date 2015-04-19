@@ -116,7 +116,7 @@ def register():
         elif(s == 'Linux'):
             py = '/usr/bin/'
         elif(s == 'Windows'):
-            raise OSError("Windows are not supported at the moment..")
+            py = ""
         else:
             raise OSError("Unknown platform: {}.".format(s))
         p.python34_path = py
@@ -130,7 +130,7 @@ def register():
         elif(s == 'Linux'):
             mx = os.environ.get("MAXWELL3_ROOT")
         elif(s == 'Windows'):
-            raise OSError("Windows are not supported at the moment..")
+            mx = os.environ.get("MAXWELL3_ROOT")
         else:
             raise OSError("Unknown platform: {}.".format(s))
         p.maxwell_path = mx
