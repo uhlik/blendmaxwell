@@ -4711,12 +4711,15 @@ class MXSExport4():
         log("collecting objects..", 1)
         self.tree = self._collect()
         
+        # conversion matrix
         self.matrix = Matrix(((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
         
         self.mxs = mxs.MXSWriter2(path=self.mxs_path, append=False, )
         
+        # this is going to be filled with (child name, parent name) tuples
         self.hierarchy = []
         
+        # prepare alpha groups, objects will be filled later when is clear they're exported..
         self.groups = []
         for g in bpy.data.groups:
             gmx = g.maxwell_render
@@ -4736,6 +4739,7 @@ class MXSExport4():
             self._mesh(o)
         
         if(self.use_instances):
+            # if self.use_instances is False those are already exported..
             log("processing instance base meshes..", 1, LogStyles.MESSAGE)
             for o in self.bases:
                 self._mesh(o)
@@ -4752,9 +4756,120 @@ class MXSExport4():
                 else:
                     self._mesh(o, o['dupli_name'], )
         
-        # log("processing particles..", 1, LogStyles.MESSAGE)
-        # self._particles()
+        log("processing particles..", 1, LogStyles.MESSAGE)
         
+        def collect_particles():
+            scene = self.context.scene
+            
+            def verify_parent(name):
+                for c, p in self.hierarchy:
+                    if(c == name):
+                        return True
+                return False
+            
+            particles = []
+            for o in scene.objects:
+                if(len(o.particle_systems) != 0):
+                    for ps in o.particle_systems:
+                        if(ps.settings.maxwell_render.use == 'PARTICLES'):
+                            parent = o.name
+                            p = verify_parent(parent)
+                            if(not p):
+                                log("Particles '{0}' container object '{1}' is not renderable and thus not exported. Particles will not be parented.".format(ps.name, o.name), 1, LogStyles.WARNING, )
+                                parent = None
+                            
+                            mx = ps.settings.maxwell_render
+                            renderable = False
+                            for om in self.meshes:
+                                if(om['object'] == o):
+                                    if(om['export']):
+                                        renderable = True
+                                        break
+                            show_render = False
+                            for mo in o.modifiers:
+                                if(mo.type == 'PARTICLE_SYSTEM'):
+                                    if(mo.particle_system == ps):
+                                        if(mo.show_render is True):
+                                            show_render = True
+                            
+                            if(renderable and show_render):
+                                d = {'props': ps.settings.maxwell_particles_extension,
+                                     'matrix': Matrix(),
+                                     'type': ps.settings.maxwell_render.use,
+                                     'ps': ps,
+                                     'name': "{}-{}".format(o.name, ps.name),
+                                     'pmatrix': o.matrix_local,
+                                     'parent': parent, }
+                                particles.append(d)
+                        elif(ps.settings.maxwell_render.use == 'GRASS'):
+                            mx = ps.settings.maxwell_render
+                            
+                            renderable = False
+                            for om in self.meshes:
+                                if(om['object'] == o):
+                                    if(om['export']):
+                                        renderable = True
+                                        break
+                            show_render = False
+                            for mo in o.modifiers:
+                                if(mo.type == 'PARTICLE_SYSTEM'):
+                                    if(mo.particle_system == ps):
+                                        if(mo.show_render is True):
+                                            show_render = True
+                            
+                            if(renderable and show_render):
+                                d = {'props': ps.settings.maxwell_grass_extension,
+                                     'matrix': o.matrix_local,
+                                     'type': ps.settings.maxwell_render.use,
+                                     'ps': ps,
+                                     'name': "{}-{}".format(o.name, ps.name),
+                                     'parent': o.name, }
+                                particles.append(d)
+                        elif(ps.settings.maxwell_render.use == 'HAIR'):
+                            parent = o.name
+                            p = verify_parent(parent)
+                            if(not p):
+                                log("Hair '{0}' container object '{1}' is not renderable and thus not exported. Hair will not be parented.".format(ps.name, o.name), 1, LogStyles.WARNING, )
+                                parent = None
+                            
+                            mx = ps.settings.maxwell_render
+                            
+                            renderable = False
+                            for om in self.meshes:
+                                if(om['object'] == o):
+                                    if(om['export']):
+                                        renderable = True
+                                        break
+                            show_render = False
+                            for mo in o.modifiers:
+                                if(mo.type == 'PARTICLE_SYSTEM'):
+                                    if(mo.particle_system == ps):
+                                        if(mo.show_render is True):
+                                            show_render = True
+                            
+                            if(renderable and show_render):
+                                d = {'props': ps.settings.maxwell_hair_extension,
+                                     'matrix': Matrix(),
+                                     'type': ps.settings.maxwell_render.use,
+                                     'ps': ps,
+                                     'name': "{}-{}".format(o.name, ps.name),
+                                     'parent': parent, }
+                                particles.append(d)
+                        else:
+                            pass
+            
+            return particles
+        
+        self.particles = collect_particles()
+        for o in self.particles:
+            if(o['type'] == 'PARTICLES'):
+                self._particles(o)
+            elif(o['type'] == 'GRASS'):
+                self._grass(o)
+            elif(o['type'] == 'HAIR'):
+                self._hair(o)
+        
+        # all objects are written, now set hierarchy
         self.mxs.hierarchy(self.hierarchy)
         
         log("processing environment..", 1, LogStyles.MESSAGE)
@@ -5832,3 +5947,231 @@ class MXSExport4():
         groups = self.groups[:]
         if(len(groups) > 0):
             self.mxs.custom_alphas(groups)
+    
+    def _particles(self, o, pname=None, ):
+        log("{0} ({1})".format(o['name'], o['type']), 2)
+        
+        name = o['name']
+        if(pname is not None):
+            name = pname
+        
+        base, pivot = self._matrix_to_base_and_pivot(o['matrix'])
+        
+        m = o['props']
+        ps = o['ps']
+        psm = ps.maxwell_render
+        
+        if(m.source == 'BLENDER_PARTICLES'):
+            if(len(ps.particles) == 0):
+                msg = "particle system {} has no particles".format(ps.name)
+                raise ValueError(msg)
+            ok = False
+            for part in ps.particles:
+                if(part.alive_state == "ALIVE"):
+                    ok = True
+                    break
+            if(ok is False):
+                msg = "particle system {} has no 'ALIVE' particles".format(ps.name)
+                raise ValueError(msg)
+            locs = []
+            vels = []
+            sizes = []
+            mat = o['pmatrix'].copy()
+            mat.invert()
+            for part in ps.particles:
+                if(part.alive_state == "ALIVE"):
+                    l = part.location.copy()
+                    l = mat * l
+                    locs.append(l.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
+                    if(m.bl_use_velocity):
+                        v = part.velocity.copy()
+                        v = mat * v
+                        vels.append(v.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
+                    else:
+                        vels.append((0.0, 0.0, 0.0) + (0.0, 0.0, 0.0, 0, 0, 0))
+                    # size per particle
+                    if(m.bl_use_size):
+                        sizes.append(part.size * m.bl_size)
+                    else:
+                        sizes.append(m.bl_size)
+            locs = maths.apply_matrix_for_realflow_bin_export(locs)
+            vels = maths.apply_matrix_for_realflow_bin_export(vels)
+            particles = []
+            for i, ploc in enumerate(locs):
+                particles.append((i, ) + tuple(ploc[:3]) + (0.0, 0.0, 0.0) + tuple(vels[i][:3]) + (sizes[i], ))
+            
+            if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
+                raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
+            
+            cf = self.context.scene.frame_current
+            prms = {'directory': bpy.path.abspath(m.bin_directory),
+                    'name': "{}".format(name),
+                    'frame': cf,
+                    'particles': particles,
+                    'fps': self.context.scene.render.fps,
+                    'size': m.bl_size, }
+            rfbw = rfbin.RFBinWriter2(**prms)
+            m.bin_filename = rfbw.path
+        else:
+            pass
+        
+        properties = {'filename': bpy.path.abspath(m.bin_filename), 'radius_multiplier': m.bin_radius_multiplier, 'motion_blur_multiplier': m.bin_motion_blur_multiplier, 'shutter_speed': m.bin_shutter_speed,
+                      'load_particles': m.bin_load_particles, 'axis_system': int(m.bin_axis_system[-1:]), 'frame_number': m.bin_frame_number, 'fps': m.bin_fps, 'extra_create_np_pp': m.bin_extra_create_np_pp,
+                      'extra_dispersion': m.bin_extra_dispersion, 'extra_deformation': m.bin_extra_deformation, 'load_force': int(m.bin_load_force), 'load_vorticity': int(m.bin_load_vorticity),
+                      'load_normal': int(m.bin_load_normal), 'load_neighbors_num': int(m.bin_load_neighbors_num), 'load_uv': int(m.bin_load_uv), 'load_age': int(m.bin_load_age),
+                      'load_isolation_time': int(m.bin_load_isolation_time), 'load_viscosity': int(m.bin_load_viscosity), 'load_density': int(m.bin_load_density), 'load_pressure': int(m.bin_load_pressure),
+                      'load_mass': int(m.bin_load_mass), 'load_temperature': int(m.bin_load_temperature), 'load_id': int(m.bin_load_id), 'min_force': m.bin_min_force, 'max_force': m.bin_max_force,
+                      'min_vorticity': m.bin_min_vorticity, 'max_vorticity': m.bin_max_vorticity, 'min_nneighbors': m.bin_min_nneighbors, 'max_nneighbors': m.bin_max_nneighbors, 'min_age': m.bin_min_age,
+                      'max_age': m.bin_max_age, 'min_isolation_time': m.bin_min_isolation_time, 'max_isolation_time': m.bin_max_isolation_time, 'min_viscosity': m.bin_min_viscosity,
+                      'max_viscosity': m.bin_max_viscosity, 'min_density': m.bin_min_density, 'max_density': m.bin_max_density, 'min_pressure': m.bin_min_pressure, 'max_pressure': m.bin_max_pressure,
+                      'min_mass': m.bin_min_mass, 'max_mass': m.bin_max_mass, 'min_temperature': m.bin_min_temperature, 'max_temperature': m.bin_max_temperature, 'min_velocity': m.bin_min_velocity,
+                      'max_velocity': m.bin_max_velocity, }
+        
+        object_props = (psm.hide, psm.opacity, self._color_to_rgb8(psm.object_id), psm.hidden_camera, psm.hidden_camera_in_shadow_channel,
+                        psm.hidden_global_illumination, psm.hidden_reflections_refractions, psm.hidden_zclip_planes, )
+        
+        material = (bpy.path.abspath(m.material), m.material_embed, )
+        if(material[0] != "" and not os.path.exists(material[0])):
+            log("{1}: mxm ('{0}') does not exist.".format(material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
+            material = None
+        backface_material = (bpy.path.abspath(m.backface_material), m.backface_material_embed, )
+        if(backface_material[0] != "" and not os.path.exists(backface_material[0])):
+            log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
+            backface_material = None
+        
+        self.mxm.particles(name, properties, base, pivot, object_props, material, backface_material, )
+        
+        parent = None
+        if(o['parent']):
+            parent = o['parent']
+        self.hierarchy.append((name, parent))
+    
+    def _grass(self, o, pname=None, ):
+        log("{0} ({1})".format(o['name'], o['type']), 2)
+        
+        name = o['name']
+        if(pname is not None):
+            name = pname
+        
+        object_name = o['parent']
+        
+        m = o['props']
+        ps = o['ps']
+        
+        properties = {'density': int(m.density), 'density_map': texture_to_data(m.density_map, ps),
+                      'length': m.length, 'length_map': texture_to_data(m.length_map, ps), 'length_variation': m.length_variation,
+                      'root_width': m.root_width, 'tip_width': m.tip_width, 'direction_type': int(m.direction_type),
+                      'initial_angle': math.degrees(m.initial_angle), 'initial_angle_map': m.initial_angle_variation, 'initial_angle_variation': texture_to_data(m.initial_angle_map, ps),
+                      'start_bend': m.start_bend, 'start_bend_map': m.start_bend_variation, 'start_bend_variation': texture_to_data(m.start_bend_map, ps),
+                      'bend_radius': m.bend_radius, 'bend_radius_map': m.bend_radius_variation, 'bend_radius_variation': texture_to_data(m.bend_radius_map, ps),
+                      'bend_angle': math.degrees(m.bend_angle), 'bend_angle_map': m.bend_angle_variation, 'bend_angle_variation': texture_to_data(m.bend_angle_map, ps),
+                      'cut_off': m.cut_off, 'cut_off_map': m.cut_off_variation, 'cut_off_variation': texture_to_data(m.cut_off_map, ps),
+                      'points_per_blade': int(m.points_per_blade), 'primitive_type': int(m.primitive_type), 'seed': m.seed,
+                      'lod': m.lod, 'lod_max_distance': m.lod_min_distance, 'lod_max_distance_density': m.lod_max_distance, 'lod_min_distance': m.lod_max_distance_density,
+                      'display_max_blades': int(m.display_percent), 'display_percent': int(m.display_max_blades), }
+        
+        material = (bpy.path.abspath(m.material), m.material_embed, )
+        if(material[0] != "" and not os.path.exists(material[0])):
+            log("{1}: mxm ('{0}') does not exist.".format(material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
+            material = None
+        backface_material = (bpy.path.abspath(m.backface_material), m.backface_material_embed, )
+        if(backface_material[0] != "" and not os.path.exists(backface_material[0])):
+            log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
+            backface_material = None
+        
+        self.mxs.grass(name, object_name, properties, material, backface_material, )
+    
+    def _hair(self, o, pname=None, ):
+        log("{0} ({1})".format(o['name'], o['type']), 2)
+        
+        name = o['name']
+        if(pname is not None):
+            name = pname
+        
+        base, pivot = self._matrix_to_base_and_pivot(o['matrix'])
+        
+        m = o['props']
+        ps = o['ps']
+        psm = ps.maxwell_render
+        
+        ob = bpy.data.objects[o['parent']]
+        ps.set_resolution(self.context.scene, ob, 'RENDER')
+        
+        mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+        transform = ob.matrix_world.inverted()
+        omw = ob.matrix_world
+        
+        steps = 2 ** ps.settings.render_step
+        num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
+        points = []
+        for p in range(0, num_curves):
+            seg_length = 1.0
+            curve = []
+            
+            for step in range(0, steps):
+                co = ps.co_hair(ob, p, step)
+                
+                # get distance between last and this point
+                if(step > 0):
+                    seg_length = (co - omw * curve[len(curve) - 1]).length_squared
+                
+                if not (co.length_squared == 0 or seg_length == 0):
+                    # if it is not zero append as new point
+                    v = transform * co
+                    v = mat * v
+                    curve.append(v)
+            
+            points.append(curve)
+        
+        ps.set_resolution(self.context.scene, ob, 'PREVIEW')
+        
+        # fill gaps with last location, confirm it has no negative effect in rendering..
+        for l in points:
+            if(len(l) < steps):
+                e = [l[-1]] * (steps - len(l))
+                l.extend(e)
+        # flatten curves
+        points = [v for l in points for v in l]
+        # 3 float tuples from vectors
+        points = [v.to_tuple() for v in points]
+        # just list of floats
+        locs = [v for l in points for v in l]
+        
+        data = {'HAIR_MAJOR_VER': [1, 0, 0, 0],
+                'HAIR_MINOR_VER': [0, 0, 0, 0],
+                'HAIR_FLAG_ROOT_UVS': [0],
+                'HAIR_GUIDES_COUNT': [num_curves],
+                'HAIR_GUIDES_POINT_COUNT': [steps],
+                'HAIR_POINTS': locs,
+                'HAIR_NORMALS': [1.0], }
+        
+        if(m.hair_type == 'GRASS'):
+            extension = 'MGrassP'
+            root_radius = maths.real_length_to_relative(o.matrix_world, m.grass_root_width) / 1000
+            tip_radius = maths.real_length_to_relative(o.matrix_world, m.grass_tip_width) / 1000
+            display_max = m.display_max_blades
+        else:
+            extension = 'MaxwellHair'
+            root_radius = maths.real_length_to_relative(o.matrix_world, m.hair_root_radius) / 1000
+            tip_radius = maths.real_length_to_relative(o.matrix_world, m.hair_tip_radius) / 1000
+            display_max = m.display_max_hairs
+        display_percent = int(m.display_percent)
+        
+        object_props = (psm.hide, psm.opacity, self._color_to_rgb8(psm.object_id), psm.hidden_camera, psm.hidden_camera_in_shadow_channel,
+                        psm.hidden_global_illumination, psm.hidden_reflections_refractions, psm.hidden_zclip_planes, )
+        
+        material = (bpy.path.abspath(m.material), m.material_embed, )
+        if(material[0] != "" and not os.path.exists(material[0])):
+            log("{1}: mxm ('{0}') does not exist.".format(material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
+            material = None
+        backface_material = (bpy.path.abspath(m.backface_material), m.backface_material_embed, )
+        if(backface_material[0] != "" and not os.path.exists(backface_material[0])):
+            log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
+            backface_material = None
+        
+        self.mxm.hair(name, extension, base, pivot, root_radius, tip_radius, data, object_props, display_percent, display_max, material, backface_material, )
+        
+        parent = None
+        if(o['parent']):
+            parent = o['parent']
+        self.hierarchy.append((name, parent))

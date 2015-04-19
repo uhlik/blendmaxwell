@@ -21,7 +21,6 @@ import platform
 import datetime
 import struct
 import math
-import bpy
 
 # from .log import log, LogStyles
 
@@ -35,9 +34,23 @@ def prefs():
     return p
 
 
+import bpy
 import sys
 sys.path.append(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'pymaxwell', 'python3.4')))
 '''
+
+'''
+s = platform.system()
+if(s == 'Darwin'):
+    p = '/Applications/Maxwell 3/'
+elif(s == 'Linux'):
+    p = os.environ.get("MAXWELL3_ROOT")
+elif(s == 'Windows'):
+    p = os.environ.get("MAXWELL3_ROOT")
+
+sys.path.append(os.path.abspath(os.path.join(p, 'python', 'pymaxwell', 'python3.4')))
+'''
+
 
 if __name__ == "__main__":
     from pymaxwell import *
@@ -899,9 +912,9 @@ class MXSWriter2():
         append  bool
         """
         
-        if('Cmaxwell' not in locals()):
-            raise ImportError("No pymaxwell..")
-            return
+        # if('Cmaxwell' not in locals()):
+        #     raise ImportError("No pymaxwell..")
+        #     return
         
         if(__name__ != "__main__"):
             if(platform.system() == 'Darwin'):
@@ -1968,7 +1981,7 @@ if __name__ == "__main__":
                    ((0, (-2.8184449672698975, 4.383333206176758, 5.104832172393799), (-0.3223283290863037, 1.4271321296691895, 0.4408073425292969), (0.23018550872802734, 0.8729405403137207, -0.43010425567626953), 0.035, 11.0, 1),),
                    True, None, 'Maxwell', None, None, None, )
         
-        '''
+        # '''
         d = {'name': "Empty",
              'base': [[-0.5253749489784241, 0.25817662477493286, -0.44481390714645386], [0.9348477721214294, 0.20595940947532654, -0.28920647501945496], [-0.3544178903102875, 0.5898690819740295, -0.7255635261535645], [0.021157313138246536, 0.7807914018630981, 0.6244334578514099]],
              'pivot': [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
@@ -2153,7 +2166,7 @@ if __name__ == "__main__":
         
         tree = [("Empty", None), ("Cube", "Empty"), ("Cube.001", "Empty"), ("Cube.002", "Empty"), ("Cube.003", "Empty"), ("Icosphere", "Cube"), ("ParticleSystem", None), ]
         mxs.hierarchy(tree)
-        '''
+        # '''
         
         d = {'name': "Cube",
              'base': ((1.2964980602264404, -0.3998532295227051, 0.7126235961914062), (-0.10209611058235168, -0.5031424164772034, 0.8581515550613403), (0.5799700021743774, 0.6707702279090881, 0.46227923035621643), (-0.8082148432731628, 0.544899046421051, 0.2233244776725769)),
@@ -2209,7 +2222,6 @@ if __name__ == "__main__":
              'illum_caustics': {'illumination': 0, 'refl_caustics': 0, 'refr_caustics': 0, }, }
         mxs.parameters(**d)
         
-        
         mxi_path = "/Volumes/internal-2tb/teoplib/tmp/test_data.mxi"
         image_path = "/Volumes/internal-2tb/teoplib/tmp/test_data.png"
         h, t = os.path.split(mxi_path)
@@ -2223,10 +2235,7 @@ if __name__ == "__main__":
                           "channels_object_id": False, "channels_object_id_file": "PNG16", "channels_position": False, "channels_position_file": "PNG16", "channels_position_space": 0,
                           "channels_roughness": False, "channels_roughness_file": "PNG16", "channels_shadow": False, "channels_shadow_file": "PNG16", "channels_uv": False, "channels_uv_file": "PNG16",
                           "channels_z_buffer": False, "channels_z_buffer_far": 0.0, "channels_z_buffer_file": "PNG16", "channels_z_buffer_near": 0.0, }, }
-        # mxs.channels(**d)
-        
-        
-        mxs.channels(base_path, None, None)
+        mxs.channels(**d)
         
         '''
         d = {'groups': [{'name': 'custom alpha', 'objects': ["Cube", "Cube.001"], 'opaque': True, }, ], }
