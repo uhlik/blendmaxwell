@@ -4799,6 +4799,7 @@ class MXSExport4():
                                      'ps': ps,
                                      'name': "{}-{}".format(o.name, ps.name),
                                      'pmatrix': o.matrix_local,
+                                     'object': o,
                                      'parent': parent, }
                                 particles.append(d)
                         elif(ps.settings.maxwell_render.use == 'GRASS'):
@@ -4823,6 +4824,7 @@ class MXSExport4():
                                      'type': ps.settings.maxwell_render.use,
                                      'ps': ps,
                                      'name': "{}-{}".format(o.name, ps.name),
+                                     'object': o,
                                      'parent': o.name, }
                                 particles.append(d)
                         elif(ps.settings.maxwell_render.use == 'HAIR'):
@@ -4853,6 +4855,7 @@ class MXSExport4():
                                      'type': ps.settings.maxwell_render.use,
                                      'ps': ps,
                                      'name': "{}-{}".format(o.name, ps.name),
+                                     'object': o,
                                      'parent': parent, }
                                 particles.append(d)
                         else:
@@ -5407,6 +5410,38 @@ class MXSExport4():
     def _color_to_rgb8(self, c, ):
         return tuple([int(255 * v) for v in c])
     
+    def _psys_texture_to_data(self, name, ps):
+        tex = None
+        for ts in ps.settings.texture_slots:
+            if(ts is not None):
+                if(ts.texture is not None):
+                    if(ts.texture.type == 'IMAGE'):
+                        if(ts.texture.name == name):
+                            tex = ts.texture
+        
+        d = {'type': 'IMAGE',
+             'path': "",
+             'channel': 0,
+             'use_override_map': False,
+             'tile_method_type': [True, True],
+             'tile_method_units': 0,
+             'repeat': [1.0, 1.0],
+             'mirror': [False, False],
+             'offset': [0.0, 0.0],
+             'rotation': 0.0,
+             'invert': False,
+             'alpha_only': False,
+             'interpolation': False,
+             'brightness': 0.0,
+             'contrast': 0.0,
+             'saturation': 0.0,
+             'hue': 0.0,
+             'rgb_clamp': [0.0, 255.0], }
+        if(tex is not None):
+            d['path'] = bpy.path.abspath(tex.image.filepath),
+            return d
+        return None
+    
     def _camera(self, o, ):
         log("{0}".format(o['object'].name), 2)
         
@@ -5959,7 +5994,7 @@ class MXSExport4():
         
         m = o['props']
         ps = o['ps']
-        psm = ps.maxwell_render
+        psm = ps.settings.maxwell_particles_extension
         
         if(m.source == 'BLENDER_PARTICLES'):
             if(len(ps.particles) == 0):
@@ -6039,7 +6074,7 @@ class MXSExport4():
             log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
             backface_material = None
         
-        self.mxm.particles(name, properties, base, pivot, object_props, material, backface_material, )
+        self.mxs.particles(name, properties, base, pivot, object_props, material, backface_material, )
         
         parent = None
         if(o['parent']):
@@ -6058,17 +6093,38 @@ class MXSExport4():
         m = o['props']
         ps = o['ps']
         
-        properties = {'density': int(m.density), 'density_map': texture_to_data(m.density_map, ps),
-                      'length': m.length, 'length_map': texture_to_data(m.length_map, ps), 'length_variation': m.length_variation,
-                      'root_width': m.root_width, 'tip_width': m.tip_width, 'direction_type': int(m.direction_type),
-                      'initial_angle': math.degrees(m.initial_angle), 'initial_angle_map': m.initial_angle_variation, 'initial_angle_variation': texture_to_data(m.initial_angle_map, ps),
-                      'start_bend': m.start_bend, 'start_bend_map': m.start_bend_variation, 'start_bend_variation': texture_to_data(m.start_bend_map, ps),
-                      'bend_radius': m.bend_radius, 'bend_radius_map': m.bend_radius_variation, 'bend_radius_variation': texture_to_data(m.bend_radius_map, ps),
-                      'bend_angle': math.degrees(m.bend_angle), 'bend_angle_map': m.bend_angle_variation, 'bend_angle_variation': texture_to_data(m.bend_angle_map, ps),
-                      'cut_off': m.cut_off, 'cut_off_map': m.cut_off_variation, 'cut_off_variation': texture_to_data(m.cut_off_map, ps),
-                      'points_per_blade': int(m.points_per_blade), 'primitive_type': int(m.primitive_type), 'seed': m.seed,
-                      'lod': m.lod, 'lod_max_distance': m.lod_min_distance, 'lod_max_distance_density': m.lod_max_distance, 'lod_min_distance': m.lod_max_distance_density,
-                      'display_max_blades': int(m.display_percent), 'display_percent': int(m.display_max_blades), }
+        properties = {'density': int(m.density),
+                      'density_map': self._psys_texture_to_data(m.density_map, ps),
+                      'length': m.length,
+                      'length_map': self._psys_texture_to_data(m.length_map, ps),
+                      'length_variation': m.length_variation,
+                      'root_width': m.root_width,
+                      'tip_width': m.tip_width,
+                      'direction_type': int(m.direction_type),
+                      'initial_angle': math.degrees(m.initial_angle),
+                      'initial_angle_map': self._psys_texture_to_data(m.initial_angle_map, ps),
+                      'initial_angle_variation': m.initial_angle_variation,
+                      'start_bend': m.start_bend,
+                      'start_bend_map': self._psys_texture_to_data(m.start_bend_map, ps),
+                      'start_bend_variation': m.start_bend_variation,
+                      'bend_radius': m.bend_radius,
+                      'bend_radius_map': self._psys_texture_to_data(m.bend_radius_map, ps),
+                      'bend_radius_variation': m.bend_radius_variation,
+                      'bend_angle': math.degrees(m.bend_angle),
+                      'bend_angle_map': self._psys_texture_to_data(m.bend_angle_map, ps),
+                      'bend_angle_variation': m.bend_angle_variation,
+                      'cut_off': m.cut_off,
+                      'cut_off_map': self._psys_texture_to_data(m.cut_off_map, ps),
+                      'cut_off_variation': m.cut_off_variation,
+                      'points_per_blade': int(m.points_per_blade),
+                      'primitive_type': int(m.primitive_type),
+                      'seed': m.seed,
+                      'lod': m.lod,
+                      'lod_max_distance': m.lod_max_distance,
+                      'lod_max_distance_density': m.lod_max_distance_density,
+                      'lod_min_distance': m.lod_min_distance,
+                      'display_max_blades': int(m.display_max_blades),
+                      'display_percent': int(m.display_percent), }
         
         material = (bpy.path.abspath(m.material), m.material_embed, )
         if(material[0] != "" and not os.path.exists(material[0])):
@@ -6092,9 +6148,9 @@ class MXSExport4():
         
         m = o['props']
         ps = o['ps']
-        psm = ps.maxwell_render
+        psm = ps.settings.maxwell_particles_extension
         
-        ob = bpy.data.objects[o['parent']]
+        ob = bpy.data.objects[o['object'].name]
         ps.set_resolution(self.context.scene, ob, 'RENDER')
         
         mat = Matrix.Rotation(math.radians(-90.0), 4, 'X')
@@ -6147,13 +6203,21 @@ class MXSExport4():
         
         if(m.hair_type == 'GRASS'):
             extension = 'MGrassP'
-            root_radius = maths.real_length_to_relative(o.matrix_world, m.grass_root_width) / 1000
-            tip_radius = maths.real_length_to_relative(o.matrix_world, m.grass_tip_width) / 1000
+            if(o['parent'] is None):
+                root_radius = maths.real_length_to_relative(o['matrix'], m.grass_root_width) / 1000
+                tip_radius = maths.real_length_to_relative(o['matrix'], m.grass_tip_width) / 1000
+            else:
+                root_radius = maths.real_length_to_relative(ob.matrix_world, m.grass_root_width) / 1000
+                tip_radius = maths.real_length_to_relative(ob.matrix_world, m.grass_tip_width) / 1000
             display_max = m.display_max_blades
         else:
             extension = 'MaxwellHair'
-            root_radius = maths.real_length_to_relative(o.matrix_world, m.hair_root_radius) / 1000
-            tip_radius = maths.real_length_to_relative(o.matrix_world, m.hair_tip_radius) / 1000
+            if(o['parent'] is None):
+                root_radius = maths.real_length_to_relative(o['matrix'], m.hair_root_radius) / 1000
+                tip_radius = maths.real_length_to_relative(o['matrix'], m.hair_tip_radius) / 1000
+            else:
+                root_radius = maths.real_length_to_relative(ob.matrix_world, m.hair_root_radius) / 1000
+                tip_radius = maths.real_length_to_relative(ob.matrix_world, m.hair_tip_radius) / 1000
             display_max = m.display_max_hairs
         display_percent = int(m.display_percent)
         
@@ -6169,7 +6233,7 @@ class MXSExport4():
             log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
             backface_material = None
         
-        self.mxm.hair(name, extension, base, pivot, root_radius, tip_radius, data, object_props, display_percent, display_max, material, backface_material, )
+        self.mxs.hair(name, extension, base, pivot, root_radius, tip_radius, data, object_props, display_percent, display_max, material, backface_material, )
         
         parent = None
         if(o['parent']):
