@@ -284,13 +284,13 @@ class MaxwellRenderExportEngine(RenderEngine):
                      'use_instances': m.export_use_instances,
                      'keep_intermediates': m.export_keep_intermediates, }
                 ex = export.MXSExport(**d)
+                
+                # ex = export.MXSExport4(bpy.context, p, m.export_use_instances, )
+                
             elif(system.PLATFORM == 'Linux'):
-                d = {'context': bpy.context,
-                     'mxs_path': p,
-                     'use_instances': m.export_use_instances, }
-                ex = export.MXSExport3(**d)
+                ex = export.MXSExport4(bpy.context, p, m.export_use_instances, )
             elif(system.PLATFORM == 'Windows'):
-                pass
+                ex = export.MXSExport4(bpy.context, p, m.export_use_instances, )
             else:
                 pass
         

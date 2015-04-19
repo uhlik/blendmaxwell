@@ -4691,3 +4691,1122 @@ class MXSBinHairReader():
         e = r(o + "?")
         if(self.offset != len(self.bindata)):
             raise RuntimeError("expected EOF")
+
+
+class MXSExport4():
+    def __init__(self, context, mxs_path, use_instances=True, ):
+        self.context = context
+        self.mxs_path = os.path.realpath(mxs_path)
+        self.use_instances = use_instances
+        
+        self._prepare()
+        self._export()
+    
+    def _prepare(self):
+        log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
+        if(os.path.exists(self.mxs_path)):
+            log("mxs file exists at {0}, will be overwritten..".format(self.mxs_path), 1, LogStyles.WARNING, )
+    
+    def _export(self):
+        log("collecting objects..", 1)
+        self.tree = self._collect()
+        
+        self.matrix = Matrix(((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+        
+        self.mxs = mxs.MXSWriter2(path=self.mxs_path, append=False, )
+        
+        self.hierarchy = []
+        
+        log("processing cameras..", 1, LogStyles.MESSAGE)
+        for o in self.cameras:
+            self._camera(o)
+        
+        log("processing empties..", 1, LogStyles.MESSAGE)
+        for o in self.empties:
+            self._empty(o)
+        
+        log("processing meshes..", 1, LogStyles.MESSAGE)
+        for o in self.meshes:
+            self._mesh(o)
+        
+        if(self.use_instances):
+            log("processing instance base meshes..", 1, LogStyles.MESSAGE)
+            for o in self.bases:
+                self._mesh(o)
+            
+            log("processing instances..", 1, LogStyles.MESSAGE)
+            for o in self.instances:
+                self._instance()
+        
+        log("processing duplicates..", 1, LogStyles.MESSAGE)
+        if(len(self.duplicates) != 0):
+            for o in self.duplicates:
+                if(self.use_instances):
+                    self._instance(o, o['dupli_name'], )
+                else:
+                    self._mesh(o, o['dupli_name'], )
+        
+        # log("processing particles..", 1, LogStyles.MESSAGE)
+        # self._particles()
+        
+        self.mxs.hierarchy(self.hierarchy)
+        
+        log("processing environment..", 1, LogStyles.MESSAGE)
+        self._environment()
+        log("processing parameters..", 1, LogStyles.MESSAGE)
+        self._parameters()
+        log("processing channels..", 1, LogStyles.MESSAGE)
+        self._channels()
+        
+        self.mxs.write()
+        
+        log("mxs saved in:", 1)
+        log("{0}".format(self.mxs_path), 0, LogStyles.MESSAGE, prefix="")
+        log("done.", 1, LogStyles.MESSAGE)
+    
+    def _collect(self):
+        objs = self.context.scene.objects
+        
+        # sort objects
+        def sort_objects():
+            meshes = []
+            empties = []
+            cameras = []
+            bases = []
+            instances = []
+            convertibles = []
+            others = []
+            
+            might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
+            for o in objs:
+                if(o.type == 'MESH'):
+                    if(self.use_instances):
+                        if(o.data.users > 1):
+                            instances.append(o)
+                        else:
+                            meshes.append(o)
+                    else:
+                        meshes.append(o)
+                elif(o.type == 'EMPTY'):
+                    empties.append(o)
+                elif(o.type == 'CAMERA'):
+                    cameras.append(o)
+                elif(o.type in might_be_renderable):
+                    convertibles.append(o)
+                else:
+                    others.append(o)
+            instance_groups = {}
+            for o in instances:
+                if(o.data.name not in instance_groups):
+                    instance_groups[o.data.name] = [o, ]
+                else:
+                    instance_groups[o.data.name].append(o)
+            bases_names = []
+            for n, g in instance_groups.items():
+                nms = [o.name for o in g]
+                ls = sorted(nms)
+                bases_names.append(ls[0])
+            insts = instances[:]
+            instances = []
+            for o in insts:
+                if(o.name in bases_names):
+                    bases.append(o)
+                else:
+                    instances.append(o)
+            return {'meshes': meshes,
+                    'empties': empties,
+                    'cameras': cameras,
+                    'bases': bases,
+                    'instances': instances,
+                    'convertibles': convertibles,
+                    'others': others, }
+        
+        so = sort_objects()
+        
+        # visibility
+        mx = self.context.scene.maxwell_render
+        layers = self.context.scene.layers
+        render_layers = self.context.scene.render.layers.active.layers
+        
+        def check_visibility(o):
+            if(o.hide_render is True):
+                return False
+            
+            s = None
+            r = None
+            for i, l in enumerate(o.layers):
+                if(layers[i] is True and l is True):
+                    s = True
+                    break
+            for i, l in enumerate(o.layers):
+                if(render_layers[i] is True and l is True):
+                    r = True
+                    break
+            if(s and r):
+                return True
+            return False
+        
+        # export type
+        might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
+        
+        def export_type(o):
+            t = 'EMPTY'
+            m = None
+            c = False
+            if(o.type == 'MESH'):
+                m = o.data
+                if(self.use_instances):
+                    if(o.data.users > 1):
+                        if(o in so['bases']):
+                            t = 'BASE_INSTANCE'
+                        else:
+                            t = 'INSTANCE'
+                    else:
+                        if(len(o.data.polygons) > 0):
+                            t = 'MESH'
+                        else:
+                            # case when object has no polygons, but with modifiers applied it will have..
+                            me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                            if(len(me.polygons) > 0):
+                                t = 'MESH'
+                                # remove mesh, was created only for testing..
+                                bpy.data.meshes.remove(me)
+                else:
+                    if(len(o.data.polygons) > 0):
+                        t = 'MESH'
+                    else:
+                        # case when object has no polygons, but with modifiers applied it will have..
+                        me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                        if(len(me.polygons) > 0):
+                            t = 'MESH'
+                            # remove mesh, was created only for testing..
+                            bpy.data.meshes.remove(me)
+            elif(o.type == 'EMPTY'):
+                pass
+            elif(o.type == 'CAMERA'):
+                t = 'CAMERA'
+            elif(o.type in might_be_renderable):
+                me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                if(me is not None):
+                    if(len(me.polygons) > 0):
+                        t = 'MESH'
+                        m = me
+                        c = True
+            elif(o.type == 'LAMP'):
+                if(o.data.type == 'SUN'):
+                    t = 'SUN'
+            return t, m, c
+        
+        # object hierarchy
+        def hierarchy():
+            h = []
+            
+            def get_object_hiearchy(o):
+                r = []
+                for ch in o.children:
+                    t, m, c = export_type(ch)
+                    p = {'object': ch,
+                         'children': get_object_hiearchy(ch),
+                         'export': check_visibility(ch),
+                         'export_type': t,
+                         'mesh': m,
+                         'converted': c,
+                         'parent': o,
+                         'type': ch.type, }
+                    r.append(p)
+                return r
+            
+            for ob in objs:
+                if(ob.parent is None):
+                    t, m, c = export_type(ob)
+                    p = {'object': ob,
+                         'children': get_object_hiearchy(ob),
+                         'export': check_visibility(ob),
+                         'export_type': t,
+                         'mesh': m,
+                         'converted': c,
+                         'parent': None,
+                         'type': ob.type, }
+                    h.append(p)
+            return h
+        
+        h = hierarchy()
+        
+        # if object is not visible and has renderable children, swap type to EMPTY and mark for export
+        def renderable_children(o):
+            r = False
+            for c in o['children']:
+                if(c['export'] is True):
+                    r = True
+            return r
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            ob = o['object']
+            if(o['export'] is False and renderable_children(o)):
+                o['export_type'] = 'EMPTY'
+                o['export'] = True
+        
+        for o in h:
+            walk(o)
+        
+        # mark to remove all redundant empties
+        def check_renderables_in_tree(oo):
+            ov = []
+            
+            def walk(o):
+                for c in o['children']:
+                    walk(c)
+                if((o['export_type'] == 'MESH' or o['export_type'] == 'BASE_INSTANCE') or o['export_type'] == 'INSTANCE' and o['export'] is True):
+                    # keep instances (Maxwell 3)
+                    # keep: meshes, bases - both with export: True
+                    # (export: False are hidden objects, and should be already swapped to empties if needed for hiearchy)
+                    # > meshes..
+                    # > bases can have children, bases are real meshes
+                    ov.append(True)
+                else:
+                    # remove: empties, bases, instances, suns, meshes and bases with export: False (hidden objects)
+                    # > empties can be removed
+                    # > instances are moved to base level, because with instances hiearchy is irrelevant
+                    # > suns are not objects
+                    # > meshes and bases, see above
+                    ov.append(False)
+            for o in oo['children']:
+                walk(o)
+            
+            if(len(ov) == 0):
+                # nothing found, can be removed
+                return False
+            if(sum(ov) == 0):
+                # found only object which can be removed
+                return False
+            # otherwise always True
+            return True
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            # current object is empty
+            if(o['export_type'] == 'EMPTY'):
+                # check all children if there are some renderable one, if so, keep current empty
+                keep = check_renderables_in_tree(o)
+                if(keep is False):
+                    # if not, do not export it
+                    o['export'] = False
+        
+        for o in h:
+            walk(o)
+        
+        # split objects to lists
+        instances = []
+        meshes = []
+        empties = []
+        cameras = []
+        bases = []
+        suns = []
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            if(o['export'] is not False):
+                # only object marked for export..
+                if(o['export_type'] == 'MESH'):
+                    meshes.append(o)
+                elif(o['export_type'] == 'EMPTY'):
+                    empties.append(o)
+                elif(o['export_type'] == 'CAMERA'):
+                    cameras.append(o)
+                elif(o['export_type'] == 'BASE_INSTANCE'):
+                    bases.append(o)
+                elif(o['export_type'] == 'INSTANCE'):
+                    instances.append(o)
+                elif(o['export_type'] == 'SUN'):
+                    suns.append(o)
+        
+        for o in h:
+            walk(o)
+        
+        self.meshes = meshes
+        self.bases = bases
+        self.instances = instances
+        self.empties = empties
+        self.cameras = cameras
+        
+        # no visible camera
+        if(len(self.cameras) == 0):
+            log("No visible and active camera in scene!", 2, LogStyles.WARNING)
+            log("Trying to find hidden active camera..", 3, LogStyles.WARNING)
+            ac = self.context.scene.camera
+            if(ac is not None):
+                # there is one active in scene, try to find it
+                def walk(o):
+                    for c in o['children']:
+                        walk(c)
+                    ob = o['object']
+                    if(ob == ac):
+                        cam = o
+                        cam['export'] = True
+                        self.cameras.append(cam)
+                        log("Found active camera: '{0}' and added to scene.".format(cam['object'].name), 3, LogStyles.WARNING)
+                for o in h:
+                    walk(o)
+        
+        # dupliverts / duplifaces
+        self.duplicates = []
+        
+        def find_dupli_object(obj):
+            for o in self.meshes:
+                ob = o['object']
+                if(ob == obj):
+                    return o
+            for o in self.bases:
+                ob = o['object']
+                if(ob == obj):
+                    return o
+            return None
+        
+        def put_to_bases(o):
+            if(o not in self.bases and o in self.meshes):
+                self.meshes.remove(o)
+                self.bases.append(o)
+        
+        for o in self.meshes:
+            ob = o['object']
+            if(ob.dupli_type != 'NONE'):
+                if(ob.dupli_type == 'FACES' or ob.dupli_type == 'VERTS'):
+                    ob.dupli_list_create(self.context.scene, settings='RENDER')
+                    for dli in ob.dupli_list:
+                        do = dli.object
+                        # i've just spent half an hour trying to understand why these lousy matrices does not work
+                        # then suddenly i realized that calling dupli_list_clear might remove them from memory
+                        # and i am just getting some garbage data..
+                        # remember this in future, and do NOT use data after freeing them from memory
+                        dm = dli.matrix.copy()
+                        di = dli.index
+                        io = find_dupli_object(do)
+                        if(self.use_instances):
+                            put_to_bases(io)
+                        if(io is not None):
+                            nm = "{0}-duplicator-{1}-{2}".format(ob.name, io['object'].name, di)
+                            d = {'object': do,
+                                 'dupli_name': nm,
+                                 'dupli_matrix': dm,
+                                 'children': [],
+                                 'export': True,
+                                 'export_type': 'INSTANCE',
+                                 'mesh': io['mesh'],
+                                 'converted': False,
+                                 'parent': o,
+                                 'type': 'MESH', }
+                            self.duplicates.append(d)
+                    ob.dupli_list_clear()
+        
+        # find instances without base and change first one to base, quick and dirty..
+        # this case happens when object (by name chosen as base) is on hidden layer and marked to be not exported
+        # also, hope this is the last change of this nasty piece of code..
+        def find_base_object_name(mnm):
+            for bo in self.bases:
+                if(bo['mesh'].name == mnm):
+                    return bo['object'].name
+        
+        instances2 = self.instances[:]
+        for o in instances2:
+            if(find_base_object_name(o['mesh'].name) is None):
+                o['export_type'] = 'BASE_INSTANCE'
+                self.bases.append(o)
+                self.instances.remove(o)
+        
+        # overriden instances
+        instances2 = self.instances[:]
+        for o in instances2:
+            m = o['object'].maxwell_render
+            if(m.override_instance):
+                o['export_type'] = 'MESH'
+                o['override_instance'] = o['object'].data
+                self.meshes.append(o)
+                self.instances.remove(o)
+        
+        # ----------------------------------------------------------------------------------
+        # (everything above this line is pure magic, below is just standard code)
+        
+        # import pprint
+        # pp = pprint.PrettyPrinter(indent=4)
+        # pp.pprint(h)
+        
+        # print("-" * 100)
+        # raise Exception()
+        
+        return h
+    
+    def _matrix_to_base_and_pivot(self, m, ):
+        b = ((m[0][3], m[2][3], m[1][3] * -1),
+             (m[0][0], m[2][0], m[1][0] * -1),
+             (m[0][2], m[2][2], m[1][2] * -1),
+             (m[0][1] * -1, m[2][1] * -1, m[1][1]), )
+        p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        return (b, p, )
+    
+    def _get_object_props(self, o, ):
+        try:
+            m = o.maxwell_render
+        except:
+            m = None
+        p = None
+        if(m is not None):
+            p = (m.hide, m.opacity, self._color_to_rgb8(m.object_id), m.hidden_camera, m.hidden_camera_in_shadow_channel,
+                 m.hidden_global_illumination, m.hidden_reflections_refractions, m.hidden_zclip_planes)
+        return p
+    
+    def _object_materials(self, ob, d, instance=False, ):
+        def check_path(p):
+            if(p is not ""):
+                if(p.startswith('//')):
+                    p = bpy.path.abspath(p)
+                if(os.path.exists(p)):
+                    h, t = os.path.split(p)
+                    n, e = os.path.splitext(t)
+                    if(e == '.mxm'):
+                        return True
+                log("{1}: mxm ('{0}') does not exist.".format(p, self.__class__.__name__), 2, LogStyles.WARNING, )
+            return False
+        
+        if(instance is True):
+            # is instance
+            def find_base_name(mnm):
+                for ib in self.data:
+                    try:
+                        if(ib['instance_base'] is True):
+                            if(ib['mesh_name'] == mnm):
+                                return ib['name']
+                    except KeyError:
+                        pass
+            
+            # so find base object
+            original = self.context.scene.objects[find_base_name(ob.data.name)]
+            # check if instance has the same materials as originals
+            if(len(ob.material_slots) != 0):
+                for i, s in enumerate(ob.material_slots):
+                    if(s.material is not None):
+                        # double silly check, for maxwell_render in instance's material and original's material
+                        try:
+                            mmx = s.material.maxwell_render
+                        except:
+                            mmx = None
+                        if(mmx is not None):
+                            im = mmx.mxm_file
+                        else:
+                            im = ""
+                        try:
+                            ommx = original.material_slots[i].maxwell_render
+                        except:
+                            ommx = None
+                        if(ommx is not None):
+                            om = ommx.mxm_file
+                        else:
+                            om = ""
+                        if((im != om) and (mmx is not None and ommx is not None)):
+                            log("{1}: {0}: multi material instances with different materials than original are not supported".format(ob.name, self.__class__.__name__), 2, LogStyles.WARNING, )
+                            break
+            for i, s in enumerate(ob.material_slots):
+                if(s.material is not None):
+                    try:
+                        mmx = s.material.maxwell_render
+                    except:
+                        mmx = None
+                    if(mmx is not None):
+                        # there is material with data
+                        fm = bpy.path.abspath(mmx.mxm_file)
+                        if(not check_path(fm)):
+                            fm = ""
+                        if(fm != ""):
+                            a = (mmx.embed, fm)
+                        else:
+                            a = (False, "", )
+                    else:
+                        # there isn't, put blank
+                        a = (False, "", )
+                else:
+                    a = (False, "", )
+                d['materials'].append(a)
+        else:
+            # not instance
+            for s in ob.material_slots:
+                # check all slots
+                if(s.material is not None):
+                    # and if there is a material, store props
+                    try:
+                        mmx = s.material.maxwell_render
+                    except:
+                        mmx = None
+                    if(mmx is not None):
+                        # there is material with data
+                        fm = bpy.path.abspath(mmx.mxm_file)
+                        if(not check_path(fm)):
+                            fm = ""
+                        if(fm != ""):
+                            a = (mmx.embed, fm)
+                        else:
+                            a = (False, "", )
+                    else:
+                        # there isn't, put blank
+                        a = (False, "", )
+                else:
+                    # else put blank material
+                    a = (False, "", )
+                    if(len(ob.material_slots) > 1):
+                        # if it is a multi material object, create dummy material
+                        # but this should be handled in pymaxwell..
+                        pass
+                d['materials'].append(a)
+        
+        try:
+            obm = ob.maxwell_render
+        except:
+            obm = None
+        
+        if(obm is not None):
+            bm = bpy.path.abspath(obm.backface_material_file)
+            if(not check_path(bm)):
+                bm = ""
+            d['backface_material'] = (bm, obm.backface_material_embed)
+        else:
+            d['backface_material'] = []
+        
+        # and i don't want you to complain about this function.. understand?
+        # it is much better then it was, believe me. previous version was horrid.
+        # don't you even try to look for it in repository, you've been warned..
+        
+        return d
+    
+    def _color_to_rgb8(self, c, ):
+        return tuple([int(255 * v) for v in c])
+    
+    def _camera(self, o, ):
+        log("{0}".format(o['object'].name), 2)
+        
+        ob = o['object']
+        cd = ob.data
+        rp = self.context.scene.render
+        mx = ob.data.maxwell_render
+        
+        # film width / height: width / height ratio a ==  x_res / y_res ratio
+        # x_res / y_res is more important than sensor size, depending on sensor fit the other one is calculated
+        resolution_x = int(rp.resolution_x * rp.resolution_percentage / 100.0)
+        resolution_y = int(rp.resolution_y * rp.resolution_percentage / 100.0)
+        pixel_aspect = rp.pixel_aspect_x / rp.pixel_aspect_y
+        sf = cd.sensor_fit
+        film_height = cd.sensor_height / 1000.0
+        film_width = cd.sensor_width / 1000.0
+        if(sf == 'AUTO'):
+            if(resolution_x > resolution_y):
+                sf = 'HORIZONTAL'
+                film_width = cd.sensor_width / 1000.0
+            else:
+                sf = 'VERTICAL'
+                film_height = cd.sensor_width / 1000.0
+        if(sf == 'VERTICAL'):
+            film_width = (film_height * resolution_x) / resolution_y
+        else:
+            film_height = (film_width * resolution_y) / resolution_x
+        
+        props = (ob.name, 1, 1 / mx.shutter, film_width, film_height, mx.iso, mx.aperture, mx.diaphragm_angle, mx.diaphragm_blades,
+                 mx.frame_rate, resolution_x, resolution_y, pixel_aspect, int(mx.lens[-1:]), )
+        
+        mw_loc, mw_rot, _ = ob.matrix_world.decompose()
+        mw_location = Matrix.Translation(mw_loc).to_4x4()
+        mw_rotation = mw_rot.to_matrix().to_4x4()
+        mw_scale = Matrix.Identity(4)
+        mw = mw_location * mw_rotation * mw_scale
+        origin = mw.to_translation()
+        if(ob.data.dof_object):
+            dof_distance = (origin - ob.data.dof_object.matrix_world.to_translation()).length
+        else:
+            dof_distance = ob.data.dof_distance
+            if(dof_distance == 0.0):
+                dof_distance = 1.0
+        focal_point = mw * Vector((0.0, 0.0, -dof_distance))
+        up = mw * Vector((0.0, 1.0, 0.0)) - origin
+        
+        origin = Vector(self.matrix * origin).to_tuple()
+        focal_point = Vector(self.matrix * focal_point).to_tuple()
+        up = Vector(self.matrix * up).to_tuple()
+        steps = ((0, origin, focal_point, up, cd.lens / 1000.0, mx.fstop, 1), )
+        
+        active = (self.context.scene.camera == ob)
+        
+        lens_extra = None
+        if(int(mx.lens[-1:]) != 0):
+            if(mx.lens == 'TYPE_FISHEYE_3'):
+                lens_extra = mx.fov
+            elif(mx.lens == 'TYPE_SPHERICAL_4'):
+                lens_extra = mx.azimuth
+            elif(mx.lens == 'TYPE_CYLINDRICAL_5'):
+                lens_extra = mx.angle
+        
+        region = None
+        if(mx.screen_region != 'NONE'):
+            x = int(resolution_x * rp.border_min_x)
+            h = resolution_y - int(resolution_y * rp.border_min_y)
+            w = int(resolution_x * rp.border_max_x)
+            y = resolution_y - int(resolution_y * rp.border_max_y)
+            region = (x, y, w, h, mx.screen_region)
+        
+        custom_bokeh = None
+        if(mx.custom_bokeh):
+            custom_bokeh = (mx.bokeh_ratio, mx.bokeh_angle, mx.custom_bokeh)
+        
+        cut_planes = None
+        if(mx.zclip):
+            cut_planes = (cd.clip_start, cd.clip_end, mx.zclip)
+        
+        shift_lens = None
+        if(cd.shift_x != 0 or cd.shift_y != 0):
+            shift_lens = (cd.shift_x * 10.0, cd.shift_y * 10.0)
+        
+        self.mxs.camera(props, steps, active, lens_extra, mx.response, region, cut_planes, shift_lens, )
+    
+    def _empty(self, o, ename=None, ):
+        log("{0}".format(o['object'].name), 2)
+        ob = o['object']
+        
+        if(ob.parent_type == 'BONE'):
+            oamw = ob.matrix_world.copy()
+            apmw = ob.parent.matrix_world.copy()
+            apmw.invert()
+            amw = apmw * oamw
+            b, p = self._matrix_to_base_and_pivot(amw)
+        else:
+            b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+        
+        name = ob.name
+        if(ename is not None):
+            name = ename
+        self.mxs.empty(name, b, p, self._get_object_props(ob), )
+        
+        parent = None
+        if(ob.parent):
+            parent = ob.parent.name
+        self.hierarchy.append((name, parent))
+    
+    def _mesh(self, o, mname=None, ):
+        ob = o['object']
+        log("{0}".format(ob.name), 2)
+        
+        if(o['converted'] is True):
+            # get to-mesh-conversion result, will be removed at the end..
+            me = o['mesh']
+        else:
+            # or make new flattened mesh
+            me = ob.to_mesh(self.context.scene, True, 'RENDER', )
+        # mesh will be removed at the end of this..
+        
+        # rotate x -90
+        mr90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+        me.transform(mr90)
+        
+        # here, in triangulating, i experienced crash from not so well mesh, validating before prevents it..
+        me.validate()
+        
+        # triangulate in advance :)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.triangulate(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        
+        me.calc_tessface()
+        me.calc_normals()
+        
+        if(ob.parent_type == 'BONE'):
+            oamw = ob.matrix_world.copy()
+            apmw = ob.parent.matrix_world.copy()
+            apmw.invert()
+            amw = apmw * oamw
+            base, pivot = self._matrix_to_base_and_pivot(amw)
+        else:
+            base, pivot = self._matrix_to_base_and_pivot(ob.matrix_local)
+        
+        vertices = [[v.co.to_tuple() for v in me.vertices], ]
+        normals = [[v.normal.to_tuple() for v in me.vertices], ]
+        
+        triangles = []
+        triangle_normals = []
+        ni = len(me.vertices) - 1
+        tns = []
+        for fi, f in enumerate(me.tessfaces):
+            ni = ni + 1
+            
+            tns.append(f.normal.to_tuple())
+            fv = f.vertices
+            # smoothing
+            if(f.use_smooth):
+                # vertex normals
+                nix = (fv[0], fv[1], fv[2], )
+            else:
+                # face normal
+                nix = (ni, ni, ni, )
+            
+            t = tuple(fv) + nix
+            triangles.append(t)
+        
+        triangle_normals.append(tns)
+        
+        uv_channels = None
+        if(len(me.tessface_uv_textures) > 0):
+            uv_channels = []
+            for tix, uvtex in enumerate(me.tessface_uv_textures):
+                uv = []
+                for fi, f in enumerate(me.tessfaces):
+                    d = uvtex.data[fi].uv
+                    uv.append((d[0][0], 1.0 - d[0][1], 0.0, d[1][0], 1.0 - d[1][1], 0.0, d[2][0], 1.0 - d[2][1], 0.0, ))
+            uv_channels.append(uv)
+        
+        d = {'num_materials': len(ob.material_slots),
+             'materials': [], }
+        d = self._object_materials(ob, d)
+        
+        num_materials = d['num_materials']
+        materials = None
+        if(num_materials != 0):
+            materials = [(m[1], m[0]) for m in d['materials']]
+        
+        triangle_materials = None
+        if(num_materials > 1):
+            triangle_materials = []
+            for fi, f in enumerate(me.tessfaces):
+                triangle_materials.append((fi, f.material_index, ))
+        
+        backface_material = None
+        if(len(d['backface_material']) != 0):
+            backface_material = (d['backface_material'][0], d['backface_material'][1])
+        
+        name = ob.name
+        if(mname is not None):
+            name = mname
+        
+        self.mxs.mesh(name, base, pivot, 1, vertices, normals, triangles, triangle_normals, uv_channels,
+                      self._get_object_props(ob), num_materials, materials, triangle_materials, backface_material, )
+        
+        # cleanup
+        bpy.data.meshes.remove(me)
+        
+        parent = None
+        if(ob.parent):
+            parent = ob.parent.name
+        self.hierarchy.append((name, parent))
+    
+    def _instance(self, o, iname=None, ):
+        log("{0}".format(o['object'].name), 2)
+        ob = o['object']
+        
+        # negative scaled instances will be transformed in a weird way
+        # currently i have no solution, so just warn about it.
+        _, _, ms = ob.matrix_world.decompose()
+        if(ms.x < 0.0 or ms.y < 0.0 or ms.z < 0.0):
+            log("{1}: WARNING: instance {0} is negative scaled. Weird transformation will occur..".format(ob.name, self.__class__.__name__), 1, LogStyles.WARNING, )
+        
+        name = ob.name
+        if(iname is not None):
+            name = iname
+        
+        def find_base_object_name(mnm):
+            for o in self.bases:
+                if(o['mesh'].name == mnm):
+                    return o['object'].name
+        
+        instanced_name = find_base_object_name(ob.data.name)
+        
+        if(ob.parent_type == 'BONE'):
+            oamw = ob.matrix_world.copy()
+            apmw = ob.parent.matrix_world.copy()
+            apmw.invert()
+            amw = apmw * oamw
+            base, pivot = self._matrix_to_base_and_pivot(amw)
+        else:
+            base, pivot = self._matrix_to_base_and_pivot(ob.matrix_local)
+        
+        object_props = self._get_object_props(ob)
+        
+        d = {'num_materials': len(ob.material_slots),
+             'materials': [], }
+        d = self._object_materials(ob, d, True, )
+        
+        num_materials = d['num_materials']
+        materials = None
+        if(num_materials != 0):
+            materials = [(m[1], m[0]) for m in d['materials']]
+        material = materials[0]
+        
+        backface_material = None
+        if(len(d['backface_material']) != 0):
+            backface_material = (d['backface_material'][0], d['backface_material'][1])
+        
+        self.mxs.instance(name, instanced_name, base, pivot, object_props, material, backface_material, )
+        
+        parent = None
+        if(ob.parent):
+            parent = ob.parent.name
+        self.hierarchy.append((name, parent))
+    
+    def _environment(self):
+        mx = self.context.scene.world.maxwell_render
+        
+        env_type = mx.env_type
+        if(env_type == 'NONE'):
+            self.mxs.environment(None)
+            return
+        
+        sky_type = mx.sky_type
+        sky = {'sky_use_preset': mx.sky_use_preset,
+               'sky_preset': bpy.path.abspath(mx.sky_preset),
+               'sky_intensity': mx.sky_intensity,
+               'sky_planet_refl': mx.sky_planet_refl / 100.0,
+               'sky_ozone': mx.sky_ozone,
+               'sky_water': mx.sky_water,
+               'sky_turbidity_coeff': mx.sky_turbidity_coeff,
+               'sky_wavelength_exp': mx.sky_wavelength_exp,
+               'sky_reflectance': mx.sky_reflectance / 100.0,
+               'sky_asymmetry': mx.sky_asymmetry, }
+        dome = {'dome_intensity': mx.dome_intensity,
+                'dome_zenith': self._color_to_rgb8(mx.dome_zenith),
+                'dome_horizon': self._color_to_rgb8(mx.dome_horizon),
+                'dome_mid_point': math.degrees(mx.dome_mid_point), }
+        
+        sun_type = mx.sun_type
+        sun = None
+        if(sun_type != 'DISABLED'):
+            v = Vector((mx.sun_dir_x, mx.sun_dir_y, mx.sun_dir_z))
+            v = self.matrix * v
+            sun = {'sun_power': mx.sun_power,
+                   'sun_radius_factor': mx.sun_radius_factor,
+                   'sun_temp': mx.sun_temp,
+                   'sun_color': self._color_to_rgb8(mx.sun_color),
+                   'sun_location_type': mx.sun_location_type,
+                   'sun_latlong_lat': mx.sun_latlong_lat,
+                   'sun_latlong_lon': mx.sun_latlong_lon,
+                   'sun_date': mx.sun_date,
+                   'sun_time': mx.sun_time,
+                   'sun_latlong_gmt': mx.sun_latlong_gmt,
+                   'sun_latlong_gmt_auto': mx.sun_latlong_gmt_auto,
+                   'sun_latlong_ground_rotation': mx.sun_latlong_ground_rotation,
+                   'sun_angles_zenith': mx.sun_angles_zenith,
+                   'sun_angles_azimuth': mx.sun_angles_azimuth,
+                   'sun_dir_x': v.x,
+                   'sun_dir_y': v.y,
+                   'sun_dir_z': v.z, }
+            
+            if(mx.sun_lamp_priority):
+                # extract suns from objects
+                objs = self.context.scene.objects
+                suns = []
+                for o in objs:
+                    if(o.type == 'LAMP'):
+                        if(o.data.type == 'SUN'):
+                            suns.append(o)
+                
+                # use just one sun. decide which one here..
+                def get_sun(suns):
+                    if(len(suns) == 0):
+                        return None
+                    if(len(suns) == 1):
+                        return suns[0]
+                    else:
+                        log("more than one sun in scene", 1, LogStyles.WARNING)
+                        nm = []
+                        for o in suns:
+                            nm.append(o['object'].name)
+                        snm = sorted(nm)
+                        n = snm[0]
+                        for o in suns:
+                            if(o['object'].name == n):
+                                log("using {0} as sun".format(n), 1, LogStyles.WARNING)
+                                return o
+                
+                sun = get_sun(suns)
+                if(sun is None):
+                    log("'Sun Lamp Priority' is True, but there is not Sun object in scene. Using World settings..", 1, LogStyles.WARNING)
+                    env['sun_lamp_priority'] = False
+                else:
+                    # direction from matrix
+                    mw = sun.matrix_world
+                    loc, rot, sca = mw.decompose()
+                    v = Vector((0.0, 0.0, 1.0))
+                    v.rotate(rot)
+                    v = self.matrix * v
+                    mx.sun_dir_x = v.x
+                    mx.sun_dir_y = v.y
+                    mx.sun_dir_z = v.z
+                    sun['sun_location_type'] = 'DIRECTION'
+                    sun['sun_dir_x'] = v.x
+                    sun['sun_dir_y'] = v.y
+                    sun['sun_dir_z'] = v.z
+        
+        # and change this, just in case..
+        import datetime
+        n = datetime.datetime.now()
+        if(sun['sun_date'] == "DD.MM.YYYY"):
+            mx.sun_date = n.strftime('%d.%m.%Y')
+            sun['sun_date'] = mx.sun_date
+        if(env['sun_time'] == "HH:MM"):
+            mx.sun_time = n.strftime('%H:%M')
+            sun['sun_time'] = mx.sun_time
+        
+        ibl = None
+        if(env_type == 'IMAGE_BASED'):
+            ibl = {'ibl_intensity': mx.ibl_intensity,
+                   'ibl_interpolation': mx.ibl_interpolation,
+                   'ibl_screen_mapping': mx.ibl_screen_mapping,
+                   'ibl_bg_type': mx.ibl_bg_type,
+                   'ibl_bg_map': bpy.path.abspath(mx.ibl_bg_map),
+                   'ibl_bg_intensity': mx.ibl_bg_intensity,
+                   'ibl_bg_scale_x': mx.ibl_bg_scale_x,
+                   'ibl_bg_scale_y': mx.ibl_bg_scale_y,
+                   'ibl_bg_offset_x': mx.ibl_bg_offset_x,
+                   'ibl_bg_offset_y': mx.ibl_bg_offset_y,
+                   'ibl_refl_type': mx.ibl_refl_type,
+                   'ibl_refl_map': bpy.path.abspath(mx.ibl_refl_map),
+                   'ibl_refl_intensity': mx.ibl_refl_intensity,
+                   'ibl_refl_scale_x': mx.ibl_refl_scale_x,
+                   'ibl_refl_scale_y': mx.ibl_refl_scale_y,
+                   'ibl_refl_offset_x': mx.ibl_refl_offset_x,
+                   'ibl_refl_offset_y': mx.ibl_refl_offset_y,
+                   'ibl_refr_type': mx.ibl_refr_type,
+                   'ibl_refr_map': bpy.path.abspath(mx.ibl_refr_map),
+                   'ibl_refr_intensity': mx.ibl_refr_intensity,
+                   'ibl_refr_scale_x': mx.ibl_refr_scale_x,
+                   'ibl_refr_scale_y': mx.ibl_refr_scale_y,
+                   'ibl_refr_offset_x': mx.ibl_refr_offset_x,
+                   'ibl_refr_offset_y': mx.ibl_refr_offset_y,
+                   'ibl_illum_type': mx.ibl_illum_type,
+                   'ibl_illum_map': bpy.path.abspath(mx.ibl_illum_map),
+                   'ibl_illum_intensity': mx.ibl_illum_intensity,
+                   'ibl_illum_scale_x': mx.ibl_illum_scale_x,
+                   'ibl_illum_scale_y': mx.ibl_illum_scale_y,
+                   'ibl_illum_offset_x': mx.ibl_illum_offset_x,
+                   'ibl_illum_offset_y': mx.ibl_illum_offset_y, }
+        
+        self.mxs.environment(env_type, sky_type, sky, dome, sun_type, sun, ibl, )
+    
+    def _parameters(self):
+        mx = self.context.scene.maxwell_render
+        
+        scene = {'cpu_threads': mx.scene_cpu_threads,
+                 'multilight': int(mx.scene_multilight[-1:]),
+                 'multilight_type': int(mx.scene_multilight_type[-1:]),
+                 'quality': mx.scene_quality,
+                 'sampling_level': mx.scene_sampling_level,
+                 'time': mx.scene_time, }
+        
+        materials = {'override': mx.materials_override,
+                     'override_path': bpy.path.abspath(mx.materials_override_path),
+                     'search_path': bpy.path.abspath(mx.materials_search_path), }
+        
+        generals = {'diplacement': mx.globals_diplacement,
+                    'dispersion': mx.globals_dispersion,
+                    'motion_blur': mx.globals_motion_blur, }
+        
+        tone = {'burn': mx.tone_burn,
+                'color_space': int(mx.tone_color_space.split('_')[1]),
+                'gamma': mx.tone_gamma,
+                'sharpness': mx.tone_sharpness,
+                'sharpness_value': mx.tone_sharpness_value / 100.0,
+                'tint': mx.tone_tint,
+                'whitepoint': mx.tone_whitepoint, }
+        
+        simulens = {'aperture_map': bpy.path.abspath(mx.simulens_aperture_map),
+                    'devignetting': mx.simulens_devignetting,
+                    'devignetting_value': mx.simulens_devignetting_value / 100.0,
+                    'diffraction': mx.simulens_diffraction,
+                    'diffraction_value': maths.remap(mx.simulens_diffraction_value, 0.0, 2500.0, 0.0, 1.0),
+                    'frequency': maths.remap(mx.simulens_frequency, 0.0, 2500.0, 0.0, 1.0),
+                    'obstacle_map': bpy.path.abspath(mx.simulens_obstacle_map),
+                    'scattering': mx.simulens_scattering,
+                    'scattering_value': maths.remap(mx.simulens_scattering_value, 0.0, 2500.0, 0.0, 1.0), }
+        
+        illum_caustics = {'illumination': int(mx.illum_caustics_illumination[-1:]),
+                          'refl_caustics': int(mx.illum_caustics_refl_caustics[-1:]),
+                          'refr_caustics': int(mx.illum_caustics_refr_caustics[-1:]), }
+        
+        self.mxs.parameters(scene, materials, generals, tone, simulens, illum_caustics, )
+    
+    def _channels(self):
+        mx = self.context.scene.maxwell_render
+        
+        mxi = None
+        if(mx.output_mxi_enabled):
+            mxi = bpy.path.abspath(mx.output_mxi)
+        
+        image = None
+        image_depth = None
+        if(mx.output_image_enabled):
+            image = bpy.path.abspath(mx.output_image)
+            image_depth = mx.output_depth
+        
+        if(mxi is not None):
+            h, t = os.path.split(mxi)
+            n, e = os.path.splitext(t)
+            base_path = os.path.join(h, n)
+        elif(image is not None):
+            h, t = os.path.split(image)
+            n, e = os.path.splitext(t)
+            base_path = os.path.join(h, n)
+        else:
+            h, t = os.path.split(self.mxs_path)
+            n, e = os.path.splitext(t)
+            base_path = os.path.join(h, n)
+        
+        channels_output_mode = int(mx.channels_output_mode[-1:])
+        channels_render = mx.channels_render
+        channels_render_type = int(mx.channels_render_type[-1:])
+        
+        channels = {'channels_alpha': mx.channels_alpha,
+                    'channels_alpha_file': mx.channels_alpha_file,
+                    'channels_alpha_opaque': mx.channels_alpha_opaque,
+                    'channels_custom_alpha': mx.channels_custom_alpha,
+                    'channels_custom_alpha_file': mx.channels_custom_alpha_file,
+                    'channels_deep': mx.channels_deep,
+                    'channels_deep_file': mx.channels_deep_file,
+                    'channels_deep_max_samples': mx.channels_deep_max_samples,
+                    'channels_deep_min_dist': mx.channels_deep_min_dist,
+                    'channels_deep_type': int(mx.channels_deep_type[-1:]),
+                    'channels_fresnel': mx.channels_fresnel,
+                    'channels_fresnel_file': mx.channels_fresnel_file,
+                    'channels_material_id': mx.channels_material_id,
+                    'channels_material_id_file': mx.channels_material_id_file,
+                    'channels_motion_vector': mx.channels_motion_vector,
+                    'channels_motion_vector_file': mx.channels_motion_vector_file,
+                    'channels_normals': mx.channels_normals,
+                    'channels_normals_file': mx.channels_normals_file,
+                    'channels_normals_space': int(mx.channels_normals_space[-1:]),
+                    'channels_object_id': mx.channels_object_id,
+                    'channels_object_id_file': mx.channels_object_id_file,
+                    'channels_position': mx.channels_position,
+                    'channels_position_file': mx.channels_position_file,
+                    'channels_position_space': int(mx.channels_position_space[-1:]),
+                    'channels_roughness': mx.channels_roughness,
+                    'channels_roughness_file': mx.channels_roughness_file,
+                    'channels_shadow': mx.channels_shadow,
+                    'channels_shadow_file': mx.channels_shadow_file,
+                    'channels_uv': mx.channels_uv,
+                    'channels_uv_file': mx.channels_uv_file,
+                    'channels_z_buffer': mx.channels_z_buffer,
+                    'channels_z_buffer_far': mx.channels_z_buffer_far,
+                    'channels_z_buffer_file': mx.channels_z_buffer_file,
+                    'channels_z_buffer_near': mx.channels_z_buffer_near, }
+        
+        self.mxs.channels(base_path, mxi, image, image_depth, channels_output_mode, channels_render, channels_render_type, channels, )
+        
+        groups = []
+        for g in bpy.data.groups:
+            gmx = g.maxwell_render
+            if(gmx.custom_alpha_use):
+                a = {'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
+                for o in g.objects:
+                    for mo in self.data:
+                        if(o.name == mo['name'] and (mo['type'] == 'MESH' or mo['type'] == 'INSTANCE')):
+                            a['objects'].append(o.name)
+                groups.append(a)
+        if(len(groups) > 0):
+            self.mxs.custom_alphas(groups)
+        
