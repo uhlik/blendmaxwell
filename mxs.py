@@ -22,49 +22,26 @@ import datetime
 import struct
 import math
 
-# from .log import log, LogStyles
-
-# if(platform.system() != 'Darwin'):
-#     from pymaxwell import *
 
 '''
-def prefs():
-    a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
-    p = bpy.context.user_preferences.addons[a].preferences
-    return p
-
-
-import bpy
-import sys
-sys.path.append(os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'pymaxwell', 'python3.4')))
-'''
-
-'''
+# import from maxwell installation directory?
 s = platform.system()
+p = None
 if(s == 'Darwin'):
-    p = '/Applications/Maxwell 3/'
+    p = os.path.abspath(os.path.join('/Applications/Maxwell 3/', 'Libs', 'pymaxwell', 'python3.4'))
 elif(s == 'Linux'):
-    p = os.environ.get("MAXWELL3_ROOT")
+    # p = os.path.abspath(os.path.join(os.environ.get("MAXWELL3_ROOT"), 'python', 'pymaxwell', 'python3.4'))
+    pass
 elif(s == 'Windows'):
-    p = os.environ.get("MAXWELL3_ROOT")
-
-sys.path.append(os.path.abspath(os.path.join(p, 'python', 'pymaxwell', 'python3.4')))
+    p = os.path.abspath(os.path.join(os.environ.get("MAXWELL3_ROOT"), 'python', 'pymaxwell', 'python3.4'))
+if(p is not None):
+    sys.path.append(p)
 '''
 
 
-if __name__ == "__main__":
+from .log import log, LogStyles
+if(platform.system() != 'Darwin'):
     from pymaxwell import *
-    
-    class LogStyles():
-        MESSAGE = ""
-    
-    def log(*args, **kwargs):
-        pass
-    
-else:
-    from .log import log, LogStyles
-    if(platform.system() != 'Darwin'):
-        from pymaxwell import *
 
 
 class MXSWriter():
@@ -868,10 +845,10 @@ class MXSWriter():
         return o
     
     def texture_data_to_mxparams(name, data, mxparams, ):
+        d = data
         if(d is None):
             return
         
-        d = data
         t = mxparams.getTextureMap(name)[0]
         t.setPath(d['path'])
         v = Cvector2D()
@@ -1135,78 +1112,3 @@ class MXSWriter():
         ok = self.mxs.writeMXS(self.path)
         log("done.", 2)
         return ok
-
-
-if __name__ == "__main__":
-    def test():
-        path = "/Volumes/internal-2tb/teoplib/tmp/test.mxs"
-        mxs = MXSWriter(path)
-        
-        mxs.camera(('Camera', 1, 0.004, 0.032, 0.018000000000000002, 100.0, 'CIRCULAR', 1.0471975803375244, 6, 24, 960, 540, 1.0, 0, ),
-                   ((0, (-2.8184449672698975, 4.383333206176758, 5.104832172393799), (-0.3223283290863037, 1.4271321296691895, 0.4408073425292969), (0.23018550872802734, 0.8729405403137207, -0.43010425567626953), 0.035, 11.0, 1),),
-                   True, None, 'Maxwell', None, None, None, )
-        
-        d = {'name': "Empty",
-             'base': [[-0.5253749489784241, 0.25817662477493286, -0.44481390714645386], [0.9348477721214294, 0.20595940947532654, -0.28920647501945496], [-0.3544178903102875, 0.5898690819740295, -0.7255635261535645], [0.021157313138246536, 0.7807914018630981, 0.6244334578514099]],
-             'pivot': [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-             'object_props': [False, 100, (255, 255, 255), False, False, False, False, False, ], }
-        mxs.empty(**d)
-        
-        d = {'name': "Cube",
-             'base': [[1.2964980602264404, -0.39985325932502747, 0.7126237154006958], [-0.10209614783525467, -0.5031424164772034, 0.8581515550613403], [0.5799700021743774, 0.6707702279090881, 0.46227920055389404], [-0.8082149028778076, 0.5448989868164062, 0.22332444787025452]],
-             'pivot': [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-             'num_positions': 1,
-             'vertices': [((-1.0, -1.0, 1.0), (-1.0, 1.0, 1.0), (-1.0, -1.0, -1.0), (-1.0, 1.0, -1.0), (1.0, -1.0, 1.0), (1.0, 1.0, 1.0), (1.0, -1.0, -1.0), (1.0, 1.0, -1.0), ), ],
-             'normals': [((-0.5773491859436035, -0.5773491859436035, 0.5773491859436035), (-0.5773491859436035, 0.5773491859436035, 0.5773491859436035), (-0.5773491859436035, -0.5773491859436035, -0.5773491859436035), (-0.5773491859436035, 0.5773491859436035, -0.5773491859436035), (0.5773491859436035, -0.5773491859436035, 0.5773491859436035), (0.5773491859436035, 0.5773491859436035, 0.5773491859436035), (0.5773491859436035, -0.5773491859436035, -0.5773491859436035), (0.5773491859436035, 0.5773491859436035, -0.5773491859436035))],
-             'triangles': [(3, 2, 0, 8, 8, 8), (7, 6, 2, 9, 9, 9), (5, 4, 6, 10, 10, 10), (1, 0, 4, 11, 11, 11), (2, 6, 4, 12, 12, 12), (7, 3, 1, 13, 13, 13), (1, 3, 0, 14, 14, 14), (3, 7, 2, 15, 15, 15), (7, 5, 6, 16, 16, 16), (5, 1, 4, 17, 17, 17), (0, 2, 4, 18, 18, 18), (5, 7, 1, 19, 19, 19), ],
-             'triangle_normals': [((-1.0, 0.0, -0.0), (0.0, -2.9802322387695312e-08, -1.0), (1.0, -0.0, 0.0), (0.0, 2.9802322387695312e-08, 1.0), (0.0, -1.0, 2.9802322387695312e-08), (0.0, 1.0, -2.9802322387695312e-08), (-1.0, 0.0, 0.0), (-0.0, -2.9802322387695312e-08, -1.0), (1.0, -0.0, 0.0), (-0.0, 2.9802322387695312e-08, 1.0), (0.0, -1.0, 2.9802322387695312e-08), (0.0, 1.0, -2.9802322387695312e-08))],
-             'uv_channels': [((0.33333340287208557, 0.6666666269302368, 0.0, 0.6666666865348816, 0.6666666567325592, 0.0, 0.6666667461395264, 0.3333333730697632, 0.0), (0.0, 0.6666665971279144, 0.0, 0.333333283662796, 0.6666666567325592, 0.0, 0.3333333432674408, 0.3333333730697632, 0.0), (0.0, 0.9999999105930613, 0.0, 0.3333333134651184, 1.0, 0.0, 0.33333340287208557, 0.6666667461395264, 0.0), (0.6666666865348816, 1.0, 0.0, 0.6666667461395264, 0.6666667461395264, 0.0, 0.33333346247673035, 0.6666666865348816, 0.0), (1.0, 0.6666667759418488, 0.0, 0.6666667461395264, 0.6666667759418488, 0.0, 0.6666667461395264, 0.9999999701976865, 0.0), (0.33333325386047363, 0.3333333134651184, 0.0, 0.333333283662796, 5.960464477539063e-08, 0.0, 4.967052547044659e-08, 5.960464477539063e-08, 0.0), (0.33333346247673035, 0.3333333730697632, 0.0, 0.33333340287208557, 0.6666666269302368, 0.0, 0.6666667461395264, 0.3333333730697632, 0.0), (3.973642037635727e-08, 0.3333333134651184, 0.0, 0.0, 0.6666665971279144, 0.0, 0.3333333432674408, 0.3333333730697632, 0.0), (1.291433733285885e-07, 0.6666666567325592, 0.0, 0.0, 0.9999999105930613, 0.0, 0.33333340287208557, 0.6666667461395264, 0.0), (0.33333340287208557, 0.9999999602635832, 0.0, 0.6666666865348816, 1.0, 0.0, 0.33333346247673035, 0.6666666865348816, 0.0), (1.0, 1.0, 0.0, 1.0, 0.6666667759418488, 0.0, 0.6666667461395264, 0.9999999701976865, 0.0), (0.0, 0.33333325386047363, 0.0, 0.33333325386047363, 0.3333333134651184, 0.0, 4.967052547044659e-08, 5.960464477539063e-08, 0.0),), ((0.0, 0.08858555555343628, 0.0, 0.12544512748718262, 0.626363068819046, 0.0, 0.5000001192092896, 1.0, 0.0), (0.5, 0.0, 0.0, 0.49999988079071045, 0.4283735156059265, 0.0, 0.12544512748718262, 0.626363068819046, 0.0), (1.0, 0.08858531713485718, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0, 0.49999988079071045, 0.4283735156059265, 0.0), (0.5000002384185791, 0.3003859519958496, 0.0, 0.5000001192092896, 1.0, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0), (0.12544512748718262, 0.626363068819046, 0.0, 0.49999988079071045, 0.4283735156059265, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0), (0.5, 0.0, 0.0, 0.0, 0.08858555555343628, 0.0, 0.5000002384185791, 0.3003859519958496, 0.0), (0.5000002384185791, 0.3003859519958496, 0.0, 0.0, 0.08858555555343628, 0.0, 0.5000001192092896, 1.0, 0.0), (0.0, 0.08858555555343628, 0.0, 0.5, 0.0, 0.0, 0.12544512748718262, 0.626363068819046, 0.0), (0.5, 0.0, 0.0, 1.0, 0.08858531713485718, 0.0, 0.49999988079071045, 0.4283735156059265, 0.0), (1.0, 0.08858531713485718, 0.0, 0.5000002384185791, 0.3003859519958496, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0), (0.5000001192092896, 1.0, 0.0, 0.12544512748718262, 0.626363068819046, 0.0, 0.8745548725128174, 0.6263629496097565, 0.0), (1.0, 0.08858531713485718, 0.0, 0.5, 0.0, 0.0, 0.5000002384185791, 0.3003859519958496, 0.0)), ],
-             'object_props': None,
-             'num_materials': 2,
-             'materials': [["/Volumes/internal-2tb/teoplib/tmp/test_objects/plastic.mxm", True, ], [None, True]],
-             'triangle_materials': [(0, 0), (1, 1), (2, 0), (3, 1), (4, 1), (5, 0), (6, 0), (7, 1), (8, 0), (9, 1), (10, 1), (11, 0)],
-             'backface_material': None, }
-        mxs.mesh(**d)
-        
-        d = {'env_type': 'PHYSICAL_SKY',
-             'sky_type': 'PHYSICAL',
-             'sky': {"sky_asymmetry": 0.699999988079071, "sky_intensity": 1.0, "sky_ozone": 0.4000000059604645, "sky_planet_refl": 0.25, "sky_preset": "", "sky_reflectance": 0.8, "sky_turbidity_coeff": 0.03999999910593033, "sky_use_preset": False, "sky_water": 2.0, "sky_wavelength_exp": 1.2000000476837158, },
-             'dome': {"dome_horizon": [255, 255, 255], "dome_intensity": 10000.0, "dome_mid_point": 45.00000125223908, "dome_zenith": [255, 255, 255], },
-             'sun_type': 'PHYSICAL',
-             'sun': {"sun_angles_azimuth": 0.7853981852531433, "sun_angles_zenith": 0.7853981852531433, "sun_color": [255, 255, 255], "sun_date": "14.04.2015", "sun_dir_x": 0.0, "sun_dir_y": 1.0, "sun_dir_z": 0.0, "sun_lamp_priority": False, "sun_latlong_gmt": 0, "sun_latlong_ground_rotation": 0.0, "sun_latlong_lat": 40.0, "sun_latlong_lon": -3.0, "sun_location_type": "DIRECTION", "sun_power": 1.0, "sun_radius_factor": 1.0, "sun_temp": 5776.0, "sun_time": "19:45", },
-             'ibl': {"ibl_intensity": 1.0, "ibl_interpolation": False, "ibl_screen_mapping": False,
-                     "ibl_bg_type": "HDR_IMAGE", "ibl_bg_intensity": 1.0, "ibl_bg_map": "", "ibl_bg_offset_x": 0.0, "ibl_bg_offset_y": 0.0, "ibl_bg_scale_x": 1.0, "ibl_bg_scale_y": 1.0,
-                     "ibl_illum_type": "SAME_AS_BG", "ibl_illum_intensity": 1.0, "ibl_illum_map": "", "ibl_illum_offset_x": 0.0, "ibl_illum_offset_y": 0.0, "ibl_illum_scale_x": 1.0, "ibl_illum_scale_y": 1.0,
-                     "ibl_refl_type": "SAME_AS_BG", "ibl_refl_intensity": 1.0, "ibl_refl_map": "", "ibl_refl_offset_x": 0.0, "ibl_refl_offset_y": 0.0, "ibl_refl_scale_x": 1.0, "ibl_refl_scale_y": 1.0,
-                     "ibl_refr_type": "SAME_AS_BG", "ibl_refr_intensity": 1.0, "ibl_refr_map": "", "ibl_refr_offset_x": 0.0, "ibl_refr_offset_y": 0.0, "ibl_refr_scale_x": 1.0, "ibl_refr_scale_y": 1.0, }, }
-        mxs.environment(**d)
-        
-        d = {'scene': {'cpu_threads': 0, 'multilight': 0, 'multilight_type': 0, 'quality': "RS1", 'sampling_level': 12.0, 'time': 60, },
-             'materials': {'override': False, 'override_path': "", 'search_path': "", },
-             'generals': {'diplacement': True, 'dispersion': True, 'motion_blur': True, },
-             'tone': {'burn': 0.800000011920929, 'color_space': 0, 'gamma': 2.200000047683716, 'sharpness': False, 'sharpness_value': 0.6, 'tint': 0.0, 'whitepoint': 6500.0, },
-             'simulens': {'aperture_map': "", 'devignetting': False, 'devignetting_value': 0.0, 'diffraction': False, 'diffraction_value': 0.02,
-                          'frequency': 0.02, 'obstacle_map': "", 'scattering': False, 'scattering_value': 0.0, },
-             'illum_caustics': {'illumination': 0, 'refl_caustics': 0, 'refr_caustics': 0, }, }
-        mxs.parameters(**d)
-        
-        mxi_path = "/Volumes/internal-2tb/teoplib/tmp/test_data.mxi"
-        image_path = "/Volumes/internal-2tb/teoplib/tmp/test_data.png"
-        h, t = os.path.split(mxi_path)
-        n, e = os.path.splitext(t)
-        base_path = os.path.join(h, n)
-        d = {'base_path': base_path, 'mxi': mxi_path, 'image': image_path, 'image_depth': "RGB8", 'channels_output_mode': 0, 'channels_render': True, 'channels_render_type': 0,
-             'channels': {"channels_alpha": False, "channels_alpha_file": "PNG16", "channels_alpha_opaque": False, "channels_custom_alpha": False, "channels_custom_alpha_file": "PNG16",
-                          "channels_deep": False, "channels_deep_file": "EXR_DEEP", "channels_deep_max_samples": 20, "channels_deep_min_dist": 0.20000000298023224, "channels_deep_type": 0,
-                          "channels_fresnel": False, "channels_fresnel_file": "PNG16", "channels_material_id": False, "channels_material_id_file": "PNG16",
-                          "channels_motion_vector": False, "channels_motion_vector_file": "PNG16", "channels_normals": False, "channels_normals_file": "PNG16", "channels_normals_space": 0,
-                          "channels_object_id": False, "channels_object_id_file": "PNG16", "channels_position": False, "channels_position_file": "PNG16", "channels_position_space": 0,
-                          "channels_roughness": False, "channels_roughness_file": "PNG16", "channels_shadow": False, "channels_shadow_file": "PNG16", "channels_uv": False, "channels_uv_file": "PNG16",
-                          "channels_z_buffer": False, "channels_z_buffer_far": 0.0, "channels_z_buffer_file": "PNG16", "channels_z_buffer_near": 0.0, }, }
-        mxs.channels(**d)
-        
-        mxs.hierarchy((("Cube", "Empty"), ))
-        
-        mxs.write()
-    
-    test()
