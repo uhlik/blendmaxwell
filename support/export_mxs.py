@@ -291,6 +291,7 @@ def texture(d, s):
     t.uvwChannelID = d['channel']
     
     t.brightness = d['brightness']
+    
     t.contrast = d['contrast']
     t.saturation = d['saturation']
     t.hue = d['hue']
@@ -540,33 +541,42 @@ def mesh(d, s):
         # 31: ('EXTENSION_VERSION', [1], 0, 1000000, '1 UINT', 4, 1, True)
         # 32: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
         
-        def texture_data_to_mxparams(d, mp):
+        def texture_data_to_mxparams(d, mp, name):
             if(d is None):
                 return
-            # mp.setString('CtextureMap.FileName', d['path'])
-            # hey, seriously.. WTF?
-            mp.setString('CtextureMap.FileName', ''.join(d['path']))
-            mp.setByte('CtextureMap.uvwChannel', d['channel'])
-            mp.setByte('CtextureMap.uIsTiled', d['tile_method_type'][0])
-            mp.setByte('CtextureMap.vIsTiled', d['tile_method_type'][1])
-            mp.setByte('CtextureMap.uIsMirrored', d['mirror'][0])
-            mp.setByte('CtextureMap.vIsMirrored', d['mirror'][1])
-            mp.setFloat('CtextureMap.scale.x', d['repeat'][0])
-            mp.setFloat('CtextureMap.scale.y', d['repeat'][1])
-            mp.setFloat('CtextureMap.offset.x', d['offset'][0])
-            mp.setFloat('CtextureMap.offset.y', d['offset'][1])
-            mp.setFloat('CtextureMap.rotation', d['rotation'])
-            mp.setByte('CtextureMap.invert', d['invert'])
-            mp.setByte('CtextureMap.useAbsoluteUnits', d['tile_method_units'])
-            mp.setByte('CtextureMap.useAlpha', d['alpha_only'])
-            mp.setByte('CtextureMap.typeInterpolation', d['interpolation'])
-            mp.setFloat('CtextureMap.saturation', d['saturation'])
-            mp.setFloat('CtextureMap.contrast', d['contrast'])
-            mp.setFloat('CtextureMap.brightness', d['brightness'])
-            mp.setFloat('CtextureMap.hue', d['hue'])
-            mp.setFloat('CtextureMap.clampMin', d['rgb_clamp'][0])
-            mp.setFloat('CtextureMap.clampMax', d['rgb_clamp'][1])
-            mp.setFloat('CtextureMap.useGlobalMap', d['use_override_map'])
+        
+            t = mp.getTextureMap(name)[0]
+            t.setPath(d['path'])
+            v = Cvector2D()
+            v.assign(*d['repeat'])
+            t.scale = v
+            v = Cvector2D()
+            v.assign(*d['offset'])
+            t.offset = v
+            t.rotation = d['rotation']
+            t.uvwChannelID = d['channel']
+            t.uIsTiled = d['tile_method_type'][0]
+            t.vIsTiled = d['tile_method_type'][1]
+            t.uIsMirrored = d['mirror'][0]
+            t.vIsMirrored = d['mirror'][1]
+            t.invert = d['invert']
+            # t.doGammaCorrection = 0
+            t.useAbsoluteUnits = d['tile_method_units']
+            # t.normalMappingFlipRed = 0
+            # t.normalMappingFlipGreen = 0
+            # t.normalMappingFullRangeBlue = 0
+            t.useAlpha = d['alpha_only']
+            t.typeInterpolation = d['interpolation']
+            t.saturation = d['saturation']
+            t.contrast = d['contrast']
+            t.brightness = d['brightness']
+            t.hue = d['hue']
+            t.clampMin = d['rgb_clamp'][0]
+            t.clampMax = d['rgb_clamp'][1]
+            t.useGlobalMap = d['use_override_map']
+            # t.cosA = 1.000000
+            # t.sinA = 0.000000
+            mp.setTextureMap(name, t)
         
         m = CextensionManager.instance()
         m.loadAllExtensions()
@@ -577,19 +587,19 @@ def mesh(d, s):
         p.setString('Object', e['scatter_object'])
         p.setByte('Inherit ObjectID', e['inherit_objectid'])
         p.setFloat('Density', e['density'])
-        texture_data_to_mxparams(e['density_map'], p.getByName('Density Map')[0])
+        texture_data_to_mxparams(e['density_map'], p, 'Density Map', )
         p.setUInt('Seed', e['seed'])
         p.setFloat('Scale X', e['scale_x'])
         p.setFloat('Scale Y', e['scale_y'])
         p.setFloat('Scale Z', e['scale_z'])
-        texture_data_to_mxparams(e['scale_map'], p.getByName('Scale Map')[0])
+        texture_data_to_mxparams(e['scale_map'], p, 'Scale Map', )
         p.setFloat('Scale X Variation', e['scale_variation_x'])
         p.setFloat('Scale Y Variation', e['scale_variation_y'])
         p.setFloat('Scale Z Variation', e['scale_variation_z'])
         p.setFloat('Rotation X', e['rotation_x'])
         p.setFloat('Rotation Y', e['rotation_y'])
         p.setFloat('Rotation Z', e['rotation_z'])
-        texture_data_to_mxparams(e['rotation_map'], p.getByName('Rotation Map')[0])
+        texture_data_to_mxparams(e['rotation_map'], p, 'Rotation Map', )
         p.setFloat('Rotation X Variation', e['rotation_variation_x'])
         p.setFloat('Rotation Y Variation', e['rotation_variation_y'])
         p.setFloat('Rotation Z Variation', e['rotation_variation_z'])
@@ -1009,33 +1019,42 @@ def grass(d, s):
     #             s[4] = "{} ({})".format(di, dt)
     #     print(str(tuple(s)))
     
-    def texture_data_to_mxparams(d, mp):
+    def texture_data_to_mxparams(d, mp, name):
         if(d is None):
             return
-        # mp.setString('CtextureMap.FileName', d['path'])
-        # hey, seriously.. WTF?
-        mp.setString('CtextureMap.FileName', ''.join(d['path']))
-        mp.setByte('CtextureMap.uvwChannel', d['channel'])
-        mp.setByte('CtextureMap.uIsTiled', d['tile_method_type'][0])
-        mp.setByte('CtextureMap.vIsTiled', d['tile_method_type'][1])
-        mp.setByte('CtextureMap.uIsMirrored', d['mirror'][0])
-        mp.setByte('CtextureMap.vIsMirrored', d['mirror'][1])
-        mp.setFloat('CtextureMap.scale.x', d['repeat'][0])
-        mp.setFloat('CtextureMap.scale.y', d['repeat'][1])
-        mp.setFloat('CtextureMap.offset.x', d['offset'][0])
-        mp.setFloat('CtextureMap.offset.y', d['offset'][1])
-        mp.setFloat('CtextureMap.rotation', d['rotation'])
-        mp.setByte('CtextureMap.invert', d['invert'])
-        mp.setByte('CtextureMap.useAbsoluteUnits', d['tile_method_units'])
-        mp.setByte('CtextureMap.useAlpha', d['alpha_only'])
-        mp.setByte('CtextureMap.typeInterpolation', d['interpolation'])
-        mp.setFloat('CtextureMap.saturation', d['saturation'])
-        mp.setFloat('CtextureMap.contrast', d['contrast'])
-        mp.setFloat('CtextureMap.brightness', d['brightness'])
-        mp.setFloat('CtextureMap.hue', d['hue'])
-        mp.setFloat('CtextureMap.clampMin', d['rgb_clamp'][0])
-        mp.setFloat('CtextureMap.clampMax', d['rgb_clamp'][1])
-        mp.setFloat('CtextureMap.useGlobalMap', d['use_override_map'])
+        
+        t = mp.getTextureMap(name)[0]
+        t.setPath(d['path'])
+        v = Cvector2D()
+        v.assign(*d['repeat'])
+        t.scale = v
+        v = Cvector2D()
+        v.assign(*d['offset'])
+        t.offset = v
+        t.rotation = d['rotation']
+        t.uvwChannelID = d['channel']
+        t.uIsTiled = d['tile_method_type'][0]
+        t.vIsTiled = d['tile_method_type'][1]
+        t.uIsMirrored = d['mirror'][0]
+        t.vIsMirrored = d['mirror'][1]
+        t.invert = d['invert']
+        # t.doGammaCorrection = 0
+        t.useAbsoluteUnits = d['tile_method_units']
+        # t.normalMappingFlipRed = 0
+        # t.normalMappingFlipGreen = 0
+        # t.normalMappingFullRangeBlue = 0
+        t.useAlpha = d['alpha_only']
+        t.typeInterpolation = d['interpolation']
+        t.saturation = d['saturation']
+        t.contrast = d['contrast']
+        t.brightness = d['brightness']
+        t.hue = d['hue']
+        t.clampMin = d['rgb_clamp'][0]
+        t.clampMax = d['rgb_clamp'][1]
+        t.useGlobalMap = d['use_override_map']
+        # t.cosA = 1.000000
+        # t.sinA = 0.000000
+        mp.setTextureMap(name, t)
     
     if(d['material'] != ""):
         mat = material(d['material'], s, d['material_embed'])
@@ -1046,12 +1065,10 @@ def grass(d, s):
         p.setString('Double Sided Material', bmat.getName())
     
     p.setUInt('Density', d['density'])
-    
-    mxp = p.getByName('Density Map')[0]
-    texture_data_to_mxparams(d['density_map'], p.getByName('Density Map')[0])
+    texture_data_to_mxparams(d['density_map'], p, 'Density Map')
     
     p.setFloat('Length', d['length'])
-    texture_data_to_mxparams(d['length_map'], p.getByName('Length Map')[0])
+    texture_data_to_mxparams(d['length_map'], p, 'Length Map')
     p.setFloat('Length Variation', d['length_variation'])
     
     p.setFloat('Root Width', d['root_width'])
@@ -1061,23 +1078,23 @@ def grass(d, s):
     
     p.setFloat('Initial Angle', d['initial_angle'])
     p.setFloat('Initial Angle Variation', d['initial_angle_variation'])
-    texture_data_to_mxparams(d['initial_angle_map'], p.getByName('Initial Angle Map')[0])
+    texture_data_to_mxparams(d['initial_angle_map'], p, 'Initial Angle Map')
     
     p.setFloat('Start Bend', d['start_bend'])
     p.setFloat('Start Bend Variation', d['start_bend_variation'])
-    texture_data_to_mxparams(d['start_bend_map'], p.getByName('Start Bend Map')[0])
+    texture_data_to_mxparams(d['start_bend_map'], p, 'Start Bend Map')
     
     p.setFloat('Bend Radius', d['bend_radius'])
     p.setFloat('Bend Radius Variation', d['bend_radius_variation'])
-    texture_data_to_mxparams(d['bend_radius_map'], p.getByName('Bend Radius Map')[0])
+    texture_data_to_mxparams(d['bend_radius_map'], p, 'Bend Radius Map')
     
     p.setFloat('Bend Angle', d['bend_angle'])
     p.setFloat('Bend Angle Variation', d['bend_angle_variation'])
-    texture_data_to_mxparams(d['bend_angle_map'], p.getByName('Bend Angle Map')[0])
+    texture_data_to_mxparams(d['bend_angle_map'], p, 'Bend Angle Map')
     
     p.setFloat('Cut Off', d['cut_off'])
     p.setFloat('Cut Off Variation', d['cut_off_variation'])
-    texture_data_to_mxparams(d['cut_off_map'], p.getByName('Cut Off Map')[0])
+    texture_data_to_mxparams(d['cut_off_map'], p, 'Cut Off Map')
     
     p.setUInt('Points per Blade', d['points_per_blade'])
     p.setUInt('Primitive Type', d['primitive_type'])

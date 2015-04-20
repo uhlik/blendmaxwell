@@ -1232,8 +1232,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
     
     @classmethod
     def poll(cls, context):
-        return False
-        
         if(not super().poll(context)):
             return False
         if(context.space_data.texture_context not in ['MATERIAL', 'PARTICLES']):
@@ -1244,9 +1242,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
         l = self.layout
         m = context.texture.maxwell_render
         
-        # tex = context.texture
-        # l.template_image(tex, "image", tex.image_user)
-        
         tex = None
         ts = context.texture_slot
         if(ts.texture is not None):
@@ -1255,12 +1250,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
         if(tex is None):
             l.active = False
         
-        # s = l.split(percentage=0.25)
-        # s.label("Path:")
-        # s.prop(m, 'path', text="", )
-        
-        # l.prop_search(m, 'path', tex, 'image', text="")
-        # l.prop_search(m, "path", bpy.data, "images")
         c = l.column()
         if(tex is not None and tex.image):
             image = tex.image
@@ -1271,22 +1260,13 @@ class TexturePanel(TextureButtonsPanel, Panel):
         else:
             c.label("Load an image", icon='ERROR', )
         
-        # l.template_image(tex, "image", tex.image_user, )
-        
-        # l.separator()
         l.label("Projection Properties:")
         l.prop(m, 'use_global_map')
         
         sub = l.column()
         sub.active = not m.use_global_map
         
-        # l.prop(m, 'channel')
-        tex = context.texture_slot
-        # tex.texture_coords = 'UV'
-        
-        # col = split.column()
-        # col.prop(tex, "texture_coords", text="")
-        
+        tex = context.texture
         ob = context.object
         
         r = sub.row()
@@ -1295,7 +1275,8 @@ class TexturePanel(TextureButtonsPanel, Panel):
         if(len(ob.data.uv_textures) == 0):
             s.label("No UV Maps", icon='ERROR', )
         else:
-            s.prop_search(tex, "uv_layer", ob.data, "uv_textures", text="")
+            s.prop_search(ts, "uv_layer", ob.data, "uv_textures", text="")
+        sub.separator()
         
         r = sub.row()
         r.prop(m, 'tiling_method', expand=True, )
@@ -1310,20 +1291,10 @@ class TexturePanel(TextureButtonsPanel, Panel):
         r = sub.row()
         r.prop(m, 'repeat')
         
-        # r = sub.row()
-        # r.label("Mirror:")
-        # r.prop(m, 'mirror_x', text="X", )
-        # r.prop(m, 'mirror_y', text="Y", )
-        
         r = sub.row()
         r.prop(m, 'offset')
         
         sub.prop(m, 'rotation')
-        
-        # r = sub.row()
-        # s = r.split(percentage=0.32)
-        # s.label(text="Rotation:")
-        # s.prop(m, 'rotation')
         
         l.separator()
         l.label("Image Properties:")
@@ -1333,26 +1304,9 @@ class TexturePanel(TextureButtonsPanel, Panel):
         r.prop(m, 'invert')
         r.prop(m, 'use_alpha')
         r.prop(m, 'interpolation')
-        # sub.prop(m, 'type_interpolation')
         
-        # s = sub.split(percentage=0.5)
-        # c = s.column(align=True)
-        # c.prop(m, 'brightness')
-        # c.prop(m, 'contrast')
-        # c.prop(m, 'saturation')
-        # c.prop(m, 'hue')
-        #
-        # c = s.column()
-        # c.prop(m, 'type_interpolation')
-        # c.prop(m, 'clamp')
-        
-        # r = sub.row()
-        # r.prop(m, 'brightness')
-        # r.prop(m, 'contrast')
-        # r = sub.row()
-        # r.prop(m, 'saturation')
-        # r.prop(m, 'hue')
-        
+        sub = l.column()
+        sub.label("Nothing to see here move along..", icon='ERROR', )
         sub.prop(m, 'brightness')
         sub.prop(m, 'contrast')
         sub.prop(m, 'saturation')
@@ -1360,6 +1314,8 @@ class TexturePanel(TextureButtonsPanel, Panel):
         
         r = sub.row()
         r.prop(m, 'clamp')
+        
+        sub.enabled = False
 
 
 class ParticlesPanel(ParticleButtonsPanel, Panel):
