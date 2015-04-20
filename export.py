@@ -1577,14 +1577,14 @@ class MXSExportLegacy():
                 o['object'].data = o['object'].data.copy()
                 d, md = self._mesh_to_data(o)
                 p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-                w = MXSBinMeshWriter(p, md, d['num_positions_per_vertex'])
+                w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
                 rm = o['object'].data
                 o['object'].data = o['override_instance']
                 bpy.data.meshes.remove(rm)
             else:
                 d, md = self._mesh_to_data(o)
                 p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-                w = MXSBinMeshWriter(p, md, d['num_positions_per_vertex'])
+                w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
             
             self.mesh_data_paths.append(p)
             d['mesh_data_path'] = p
@@ -1600,7 +1600,7 @@ class MXSExportLegacy():
             d['mesh_name'] = ob.data.name
             
             p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-            w = MXSBinMeshWriter(p, md, d['num_positions_per_vertex'])
+            w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
             
             self.mesh_data_paths.append(p)
             d['mesh_data_path'] = p
@@ -2210,7 +2210,7 @@ class MXSExportLegacy():
                 locs = [v for l in points for v in l]
                 
                 p = os.path.join(self.tmp_dir, "{0}.binhair".format(q['name']))
-                w = MXSBinHairWriter(p, locs)
+                w = MXSBinHairWriterLegacy(p, locs)
                 q['hair_data_path'] = p
                 self.hair_data_paths.append(p)
                 
@@ -2289,7 +2289,7 @@ class MXSExportLegacy():
             log("{1}: WARNING: _cleanup(): {0} does not exist?".format(self.tmp_dir, self.__class__.__name__), 1, LogStyles.WARNING, )
 
 
-class MXSExportWireframe(MXSExportLegacy):
+class MXSExportWireframeLegacy(MXSExportLegacy):
     def __init__(self, context, mxs_path, use_instances=True, keep_intermediates=False, edge_radius=0.00025, edge_resolution=32, wire_mat={}, clay_mat={}, ):
         """
         context: bpy.context
@@ -2324,7 +2324,7 @@ class MXSExportWireframe(MXSExportLegacy):
         self.wire_mat = wire_mat
         self.clay_mat = clay_mat
         
-        super(MXSExportWireframe, self).__init__(context, mxs_path, use_instances, keep_intermediates, )
+        super(MXSExportWireframeLegacy, self).__init__(context, mxs_path, use_instances, keep_intermediates, )
     
     def _export(self):
         log("collecting objects..", 1)
@@ -2428,7 +2428,7 @@ class MXSExportWireframe(MXSExportLegacy):
         d['type'] = 'WIREFRAME_EDGE'
         
         p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-        w = MXSBinMeshWriter(p, md, d['num_positions_per_vertex'])
+        w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
         
         self.wire_base_data = p
         d['mesh_data_path'] = p
@@ -2539,7 +2539,7 @@ class MXSExportWireframe(MXSExportLegacy):
         return matrices
 
 
-class MXSBinMeshWriter():
+class MXSBinMeshWriterLegacy():
     def __init__(self, path, mesh, steps):
         m = mesh
         o = "@"
@@ -2607,7 +2607,7 @@ class MXSBinMeshWriter():
         self.path = path
 
 
-class MXSBinMeshReader():
+class MXSBinMeshReaderLegacy():
     def __init__(self, path):
         self.offset = 0
         with open(path, "rb") as bf:
@@ -2706,7 +2706,7 @@ class MXSBinMeshReader():
                      'v_setVertex': self.vertices[:], }
 
 
-class MXSBinHairWriter():
+class MXSBinHairWriterLegacy():
     def __init__(self, path, data):
         d = data
         o = "@"
@@ -2729,7 +2729,7 @@ class MXSBinHairWriter():
         self.path = path
 
 
-class MXSBinHairReader():
+class MXSBinHairReaderLegacy():
     def __init__(self, path):
         self.offset = 0
         with open(path, "rb") as bf:
@@ -2770,7 +2770,7 @@ class MXSBinHairReader():
             raise RuntimeError("expected EOF")
 
 
-class MXSExportNG():
+class MXSExport():
     def __init__(self, context, mxs_path, use_instances=True, ):
         self.context = context
         self.mxs_path = os.path.realpath(mxs_path)

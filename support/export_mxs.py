@@ -51,7 +51,7 @@ def log(msg, indent=0):
             f.write("{}{}".format(m, "\n"))
 
 
-class MXSBinMeshReader():
+class MXSBinMeshReaderLegacy():
     def __init__(self, path):
         self.offset = 0
         with open(path, "rb") as bf:
@@ -150,7 +150,7 @@ class MXSBinMeshReader():
                      'v_setVertex': self.vertices[:], }
 
 
-class MXSBinHairReader():
+class MXSBinHairReaderLegacy():
     def __init__(self, path):
         self.offset = 0
         with open(path, "rb") as bf:
@@ -419,7 +419,7 @@ def empty(d, s):
 
 
 def mesh(d, s):
-    r = MXSBinMeshReader(d['mesh_data_path'])
+    r = MXSBinMeshReaderLegacy(d['mesh_data_path'])
     m = r.data
     o = s.createMesh(d['name'], d['num_vertexes'], d['num_normals'], d['num_triangles'], d['num_positions_per_vertex'], )
     for i in m['channel_uvw']:
@@ -1142,7 +1142,7 @@ def hair(d, s):
     c.zAxis = Cvector(0.0, 0.0, 1.0)
     
     bhp = d['hair_data_path']
-    r = MXSBinHairReader(bhp)
+    r = MXSBinHairReaderLegacy(bhp)
     p.setFloatArray('HAIR_POINTS', list(r.data), c)
     
     # p.setFloatArray('HAIR_POINTS', d['data']['HAIR_POINTS'], c)

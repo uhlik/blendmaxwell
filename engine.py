@@ -276,7 +276,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                  'wire_mat': wire_mat,
                  'clay_mat': clay_mat,
                  'keep_intermediates': m.export_keep_intermediates, }
-            ex = export.MXSExportWireframe(**d)
+            ex = export.MXSExportWireframeLegacy(**d)
         else:
             if(system.PLATFORM == 'Darwin'):
                 d = {'context': bpy.context,
@@ -285,12 +285,12 @@ class MaxwellRenderExportEngine(RenderEngine):
                      'keep_intermediates': m.export_keep_intermediates, }
                 ex = export.MXSExportLegacy(**d)
                 
-                # ex = export.MXSExportNG(bpy.context, p, m.export_use_instances, )
+                # ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
                 
             elif(system.PLATFORM == 'Linux'):
-                ex = export.MXSExportNG(bpy.context, p, m.export_use_instances, )
+                ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
             elif(system.PLATFORM == 'Windows'):
-                ex = export.MXSExportNG(bpy.context, p, m.export_use_instances, )
+                ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
             else:
                 pass
         
