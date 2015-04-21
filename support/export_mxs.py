@@ -594,12 +594,13 @@ def scene(d, s):
     s.setRenderParameter('SAMPLING LEVEL', d["scene_sampling_level"])
     s.setRenderParameter('USE MULTILIGHT', d["scene_multilight"])
     s.setRenderParameter('SAVE LIGHTS IN SEPARATE FILES', d["scene_multilight_type"])
+    
     s.setRenderParameter('MXI FULLNAME', d["output_mxi"])
     s.setRenderParameter('DO NOT SAVE MXI FILE', not d["output_mxi_enabled"])
     s.setRenderParameter('DO NOT SAVE IMAGE FILE', not d["output_image_enabled"])
     # s.setRenderParameter('RENAME AFTER SAVING', d[""])
-    s.setRenderParameter('COPY MXI AFTER RENDER', d["output_mxi"])
-    s.setRenderParameter('COPY IMAGE AFTER RENDER', d["output_image"])
+    # s.setRenderParameter('COPY MXI AFTER RENDER', d["output_mxi"])
+    # s.setRenderParameter('COPY IMAGE AFTER RENDER', d["output_image"])
     # s.setRenderParameter('REMOVE FILES AFTER COPY', d[""])
     s.setRenderParameter('DO MOTION BLUR', d["globals_motion_blur"])
     s.setRenderParameter('DO DISPLACEMENT', d["globals_diplacement"])
@@ -665,7 +666,13 @@ def scene(d, s):
         if(e is not None):
             t = "{}{}".format(e[1:].upper(), int(t[3:]))
         
-        if(t == 'PNG8'):
+        if(t == 'RGB8'):
+            return ('.png', 8)
+        elif(t == 'RGB16'):
+            return ('.png', 16)
+        elif(t == 'RGB32'):
+            return ('.exr', 32)
+        elif(t == 'PNG8'):
             return ('.png', 8)
         elif(t == 'PNG16'):
             return ('.png', 16)

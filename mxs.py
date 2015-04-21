@@ -21,6 +21,7 @@ import platform
 import datetime
 import struct
 import math
+import sys
 
 
 '''
@@ -40,7 +41,46 @@ if(p is not None):
 
 
 from .log import log, LogStyles
-if(platform.system() != 'Darwin'):
+
+# if(platform.system() != 'Darwin'):
+#     from pymaxwell import *
+
+s = platform.system()
+if(s == 'Darwin'):
+    pass
+elif(s == 'Linux'):
+    # mp = os.environ.get("MAXWELL3_ROOT")
+    # pymxp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
+    # sys.path.append(pmp)
+    # lib = "libmxcommon.so"
+    # libp = os.path.join(mp, lib)
+    # linkp = os.path.join(pymxp, lib)
+    # if(os.path.islink(linkp)):
+    #     if(os.path.realpath(linkp) != libp):
+    #         os.unlink(linkp)
+    # os.symlink(libp, linkp)
+    # mgr = CextensionManager.instance()
+    # mgr.loadAllExtensions()
+    # os.unlink(linkp)
+    
+    # mp = os.environ.get("MAXWELL3_ROOT")
+    # pymxp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
+    # sys.path.append(pymxp)
+    # os.environ['LD_LIBRARY_PATH'] = mp
+    # from pymaxwell import *
+    # mgr = CextensionManager.instance()
+    # mgr.loadAllExtensions()
+    
+    # install libtbb-dev
+    # before starting blender (from terminal of course) do: export LD_LIBRARY_PATH=$MAXWELL3_ROOT
+    
+    try:
+        from pymaxwell import *
+    except ImportError:
+        mp = os.environ.get("MAXWELL3_ROOT")
+        sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
+        from pymaxwell import *
+elif(s == 'Windows'):
     from pymaxwell import *
 
 
@@ -538,7 +578,8 @@ class MXSWriter():
                                  refr_caustics      int, } or None
         """
         s = self.mxs
-        s.setRenderParameter('ENGINE', scene["quality"])
+        # s.setRenderParameter('ENGINE', scene["quality"])
+        s.setRenderParameter('ENGINE', bytes(scene["quality"], encoding='UTF-8'))
         s.setRenderParameter('NUM THREADS', scene["cpu_threads"])
         s.setRenderParameter('STOP TIME', scene["time"] * 60)
         s.setRenderParameter('SAMPLING LEVEL', scene["sampling_level"])
@@ -659,33 +700,17 @@ class MXSWriter():
                                           channels_z_buffer_file          string
                                           channels_z_buffer_near          float} or None
         """
-        s = self.mxs
-        
-        s.setRenderParameter('DO NOT SAVE MXI FILE', (mxi is None))
-        s.setRenderParameter('DO NOT SAVE IMAGE FILE', (image is None))
-        if(mxi is not None):
-            s.setRenderParameter('MXI FULLNAME', mxi)
-            s.setRenderParameter('COPY MXI AFTER RENDER', mxi)
-        if(image is not None):
-            s.setRenderParameter('COPY IMAGE AFTER RENDER', image)
-        # s.setRenderParameter('RENAME AFTER SAVING', d[""])
-        # s.setRenderParameter('REMOVE FILES AFTER COPY', d[""])
-        
-        if(channels_render_type == 2):
-            s.setRenderParameter('DO DIFFUSE LAYER', 0)
-            s.setRenderParameter('DO REFLECTION LAYER', 1)
-        elif(channels_render_type == 1):
-            s.setRenderParameter('DO DIFFUSE LAYER', 1)
-            s.setRenderParameter('DO REFLECTION LAYER', 0)
-        else:
-            s.setRenderParameter('DO DIFFUSE LAYER', 1)
-            s.setRenderParameter('DO REFLECTION LAYER', 1)
-        
         def get_ext_depth(t, e=None):
             if(e is not None):
                 t = "{}{}".format(e[1:].upper(), int(t[3:]))
             
-            if(t == 'PNG8'):
+            if(t == 'RGB8'):
+                return ('.tif', 8)
+            elif(t == 'RGB16'):
+                return ('.tif', 16)
+            elif(t == 'RGB32'):
+                return ('.tif', 32)
+            elif(t == 'PNG8'):
                 return ('.png', 8)
             elif(t == 'PNG16'):
                 return ('.png', 16)
@@ -714,14 +739,31 @@ class MXSWriter():
             else:
                 return ('.tif', 8)
         
+        s = self.mxs
+        
+        s.setRenderParameter('DO NOT SAVE MXI FILE', (mxi is None))
+        s.setRenderParameter('DO NOT SAVE IMAGE FILE', (image is None))
+        if(mxi is not None):
+            # s.setRenderParameter('MXI FULLNAME', mxi)
+            s.setRenderParameter('MXI FULLNAME', bytes(mxi, encoding='UTF-8'))
         if(image is not None):
             if(image_depth is None):
-                image_depth = 'PNG8'
+                image_depth = 'RGB8'
             _, depth = get_ext_depth(image_depth, os.path.splitext(os.path.split(image)[1])[1])
             s.setPath('RENDER', image, depth)
         
         s.setRenderParameter('DO RENDER CHANNEL', int(channels_render))
         s.setRenderParameter('EMBED CHANNELS', channels_output_mode)
+        
+        if(channels_render_type == 2):
+            s.setRenderParameter('DO DIFFUSE LAYER', 0)
+            s.setRenderParameter('DO REFLECTION LAYER', 1)
+        elif(channels_render_type == 1):
+            s.setRenderParameter('DO DIFFUSE LAYER', 1)
+            s.setRenderParameter('DO REFLECTION LAYER', 0)
+        else:
+            s.setRenderParameter('DO DIFFUSE LAYER', 1)
+            s.setRenderParameter('DO REFLECTION LAYER', 1)
         
         if(channels is not None):
             e, depth = get_ext_depth(channels["channels_alpha_file"])
@@ -847,7 +889,7 @@ class MXSWriter():
         
         return o
     
-    def texture_data_to_mxparams(name, data, mxparams, ):
+    def texture_data_to_mxparams(self, name, data, mxparams, ):
         d = data
         if(d is None):
             return

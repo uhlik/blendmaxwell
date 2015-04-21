@@ -3807,12 +3807,12 @@ class MXSExport():
         for g in bpy.data.groups:
             gmx = g.maxwell_render
             if(gmx.custom_alpha_use):
-                # self.groups.append({'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, })
-                if(ob in g.objects):
-                    for gr in self.groups:
-                        if(gr['name'] == g.name):
-                            gr['objects'].append(name)
-                            break
+                for gob in g.objects:
+                    if(gob.name == ob.name):
+                        for gr in self.groups:
+                            if(gr['name'] == g.name):
+                                gr['objects'].append(name)
+                                break
     
     def _instance(self, o, iname=None, ):
         log("{0}".format(o['object'].name), 2)
@@ -3872,12 +3872,12 @@ class MXSExport():
         for g in bpy.data.groups:
             gmx = g.maxwell_render
             if(gmx.custom_alpha_use):
-                # self.groups.append({'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, })
-                if(ob in g.objects):
-                    for gr in self.groups:
-                        if(gr['name'] == g.name):
-                            gr['objects'].append(name)
-                            break
+                for gob in g.objects:
+                    if(gob.name == ob.name):
+                        for gr in self.groups:
+                            if(gr['name'] == g.name):
+                                gr['objects'].append(name)
+                                break
     
     def _environment(self):
         mx = self.context.scene.world.maxwell_render
