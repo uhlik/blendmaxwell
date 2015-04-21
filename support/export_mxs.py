@@ -235,36 +235,24 @@ def material_placeholder(s):
             cm = s.addMaterial(c)
             return cm
     
-    '''
-    # encode material
-    def enc(p):
-        import base64
-        with open(p, "rb") as f:
-            b = f.read()
-            b64 = base64.encodebytes(b)
-            print(b64)
-            return b64
+    m = s.createMaterial(n)
+    l = m.addLayer()
+    b = l.addBSDF()
+    r = b.getReflectance()
+    a = Cattribute()
+    a.activeType = MAP_TYPE_BITMAP
+    t = CtextureMap()
+    mgr = CextensionManager.instance()
+    mgr.loadAllExtensions()
+    e = mgr.createDefaultTextureExtension('Checker')
+    ch = e.getExtensionData()
+    ch.setUInt('Number of elements U', 32)
+    ch.setUInt('Number of elements V', 32)
+    t.addProceduralTexture(ch)
+    a.textureMap = t
+    r.setAttribute('color', a)
     
-    enc("default.mxm")
-    '''
-    
-    # load binary mxm file from base64
-    import base64
-    import os
-    checker = b'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\n'
-    # save it do working directory
-    loc, _ = os.path.split(os.path.realpath(__file__))
-    p = os.path.join(loc, "checker.mxm")
-    with open(p, "wb") as bf:
-        b = base64.decodebytes(checker)
-        d = bf.write(b)
-    # load it
-    t = s.readMaterial(p)
-    t.setName(n)
-    m = s.addMaterial(t)
     Materials.db.append((n, m, True))
-    # and erase it
-    os.remove(p)
     
     return m
 
@@ -540,43 +528,6 @@ def mesh(d, s):
         # 30: ('EXTENSION_NAME', 'MaxwellScatter', '', '', '5 STRING', 1, 15, True)
         # 31: ('EXTENSION_VERSION', [1], 0, 1000000, '1 UINT', 4, 1, True)
         # 32: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
-        
-        def texture_data_to_mxparams(d, mp, name):
-            if(d is None):
-                return
-        
-            t = mp.getTextureMap(name)[0]
-            t.setPath(d['path'])
-            v = Cvector2D()
-            v.assign(*d['repeat'])
-            t.scale = v
-            v = Cvector2D()
-            v.assign(*d['offset'])
-            t.offset = v
-            t.rotation = d['rotation']
-            t.uvwChannelID = d['channel']
-            t.uIsTiled = d['tile_method_type'][0]
-            t.vIsTiled = d['tile_method_type'][1]
-            t.uIsMirrored = d['mirror'][0]
-            t.vIsMirrored = d['mirror'][1]
-            t.invert = d['invert']
-            # t.doGammaCorrection = 0
-            t.useAbsoluteUnits = d['tile_method_units']
-            # t.normalMappingFlipRed = 0
-            # t.normalMappingFlipGreen = 0
-            # t.normalMappingFullRangeBlue = 0
-            t.useAlpha = d['alpha_only']
-            t.typeInterpolation = d['interpolation']
-            t.saturation = d['saturation']
-            t.contrast = d['contrast']
-            t.brightness = d['brightness']
-            t.hue = d['hue']
-            t.clampMin = d['rgb_clamp'][0]
-            t.clampMax = d['rgb_clamp'][1]
-            t.useGlobalMap = d['use_override_map']
-            # t.cosA = 1.000000
-            # t.sinA = 0.000000
-            mp.setTextureMap(name, t)
         
         m = CextensionManager.instance()
         m.loadAllExtensions()
@@ -1019,43 +970,6 @@ def grass(d, s):
     #             s[4] = "{} ({})".format(di, dt)
     #     print(str(tuple(s)))
     
-    def texture_data_to_mxparams(d, mp, name):
-        if(d is None):
-            return
-        
-        t = mp.getTextureMap(name)[0]
-        t.setPath(d['path'])
-        v = Cvector2D()
-        v.assign(*d['repeat'])
-        t.scale = v
-        v = Cvector2D()
-        v.assign(*d['offset'])
-        t.offset = v
-        t.rotation = d['rotation']
-        t.uvwChannelID = d['channel']
-        t.uIsTiled = d['tile_method_type'][0]
-        t.vIsTiled = d['tile_method_type'][1]
-        t.uIsMirrored = d['mirror'][0]
-        t.vIsMirrored = d['mirror'][1]
-        t.invert = d['invert']
-        # t.doGammaCorrection = 0
-        t.useAbsoluteUnits = d['tile_method_units']
-        # t.normalMappingFlipRed = 0
-        # t.normalMappingFlipGreen = 0
-        # t.normalMappingFullRangeBlue = 0
-        t.useAlpha = d['alpha_only']
-        t.typeInterpolation = d['interpolation']
-        t.saturation = d['saturation']
-        t.contrast = d['contrast']
-        t.brightness = d['brightness']
-        t.hue = d['hue']
-        t.clampMin = d['rgb_clamp'][0]
-        t.clampMax = d['rgb_clamp'][1]
-        t.useGlobalMap = d['use_override_map']
-        # t.cosA = 1.000000
-        # t.sinA = 0.000000
-        mp.setTextureMap(name, t)
-    
     if(d['material'] != ""):
         mat = material(d['material'], s, d['material_embed'])
         p.setString('Material', mat.getName())
@@ -1327,6 +1241,47 @@ def wireframe_assign_materials(d, s, ws, wm, cm):
     # group all wires..
     for w in ws:
         w.setMaterial(wm)
+
+
+def texture_data_to_mxparams(d, mp, name):
+    if(d is None):
+        return
+    
+    # t = mp.getTextureMap(name)[0]
+    t = CtextureMap()
+    t.setPath(d['path'])
+    v = Cvector2D()
+    v.assign(*d['repeat'])
+    t.scale = v
+    v = Cvector2D()
+    v.assign(*d['offset'])
+    t.offset = v
+    t.rotation = d['rotation']
+    t.uvwChannelID = d['channel']
+    t.uIsTiled = d['tile_method_type'][0]
+    t.vIsTiled = d['tile_method_type'][1]
+    t.uIsMirrored = d['mirror'][0]
+    t.vIsMirrored = d['mirror'][1]
+    t.invert = d['invert']
+    # t.doGammaCorrection = 0
+    t.useAbsoluteUnits = d['tile_method_units']
+    # t.normalMappingFlipRed = 0
+    # t.normalMappingFlipGreen = 0
+    # t.normalMappingFullRangeBlue = 0
+    t.useAlpha = d['alpha_only']
+    t.typeInterpolation = d['interpolation']
+    t.saturation = d['saturation']
+    t.contrast = d['contrast']
+    t.brightness = d['brightness']
+    t.hue = d['hue']
+    t.clampMin = d['rgb_clamp'][0]
+    t.clampMax = d['rgb_clamp'][1]
+    t.useGlobalMap = d['use_override_map']
+    # t.cosA = 1.000000
+    # t.sinA = 0.000000
+    ok = mp.setTextureMap(name, t)
+    
+    return mp
 
 
 def main(args):
