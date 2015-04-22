@@ -24,6 +24,8 @@ import datetime
 import bpy
 from bpy.types import RenderEngine
 
+import numpy
+
 from .log import log, LogStyles, LOG_FILE_PATH
 from . import progress
 from . import export
@@ -40,6 +42,7 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     def render(self, scene):
         if(self.is_preview):
+            self.material_preview(scene)
             return
         
         self._t = time.time()
@@ -207,6 +210,75 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         _d = datetime.timedelta(seconds=time.time() - self._t)
         log("export completed in {0}".format(_d), 1, LogStyles.MESSAGE)
+    
+    def material_preview(self, scene):
+        def get_material(scene):
+            objects_materials = {}
+            
+            def get_instance_materials(ob):
+                obmats = []
+                # Grab materials attached to object instances ...
+                if hasattr(ob, 'material_slots'):
+                    for ms in ob.material_slots:
+                        obmats.append(ms.material)
+                # ... and to the object's mesh data
+                if hasattr(ob.data, 'materials'):
+                    for m in ob.data.materials:
+                        obmats.append(m)
+                return obmats
+            
+            for object in [ob for ob in scene.objects if ob.is_visible(scene) and not ob.hide_render]:
+                for mat in get_instance_materials(object):
+        	        if mat is not None:
+        		        if not object.name in objects_materials.keys(): objects_materials[object] = []
+        		        objects_materials[object].append(mat)
+            # Find objects that are likely to be the preview objects.
+            preview_objects = [o for o in objects_materials.keys() if o.name.startswith('preview')]
+            if len(preview_objects) < 1:
+                return
+            # Find the materials attached to the likely preview object.
+            likely_materials = objects_materials[preview_objects[0]]
+            if len(likely_materials) < 1:
+                return None
+            return likely_materials
+        
+        likely_materials = get_material(scene)
+        
+        if(likely_materials is not None):
+            mat = likely_materials[0]
+            m = mat.maxwell_render
+            p = m.mxm_file
+            if(p is not ''):
+                if(system.PLATFORM == 'Darwin'):
+                    p = os.path.realpath(bpy.path.abspath(p))
+                    system.python34_run_mxm_preview(p)
+                    d = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", )
+                    f = os.path.split(p)[1]
+                    npy = os.path.join(d, "{}.npy".format(f))
+                    a = numpy.load(npy)
+                    w = len(a)
+                    h = len(a[0])
+                    b = []
+                    g = 2.2
+                    for r in reversed(range(w)):
+                        for c in range(h):
+                            p = a[r][c]
+                            b.append([(p[0] / 255) ** g, (p[1] / 255) ** g, (p[2] / 255) ** g, 1.0, ])
+                    r = self.begin_result(0, 0, w, h)
+                    l = r.layers[0]
+                    l.rect = b
+                    self.end_result(r)
+                    if(os.path.exists(npy)):
+                        os.remove(npy)
+            else:
+                xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
+                yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
+                c = xr * yr
+                b = [[0.0, 0.0, 0.0, 1.0]] * c
+                r = self.begin_result(0, 0, xr, yr)
+                l = r.layers[0]
+                l.rect = b
+                self.end_result(r)
     
     def render_scene(self, scene):
         progress.set_default_progress_reporting(progress.PROGRESS_BAR)

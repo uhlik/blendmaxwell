@@ -213,3 +213,21 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, i
         pass
     else:
         raise OSError("Unknown platform: {}.".format(PLATFORM))
+
+
+def python34_run_mxm_preview(mxm_path):
+    if(PLATFORM == 'Darwin'):
+        script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm_preview.py", )
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        command_line = "{0} {1} {2}".format(shlex.quote(PY), shlex.quote(script_path), shlex.quote(mxm_path), )
+        
+        log("command:", 2)
+        log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
+        args = shlex.split(command_line, )
+        o = subprocess.call(args, )
+        if(o != 0):
+            log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
+            raise Exception("error in {0}".format(script_path))
+        
+    else:
+        raise OSError("Unknown platform: {}.".format(PLATFORM))
