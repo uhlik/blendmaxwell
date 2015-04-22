@@ -23,27 +23,7 @@ import struct
 import math
 import sys
 
-
-'''
-# import from maxwell installation directory?
-s = platform.system()
-p = None
-if(s == 'Darwin'):
-    p = os.path.abspath(os.path.join('/Applications/Maxwell 3/', 'Libs', 'pymaxwell', 'python3.4'))
-elif(s == 'Linux'):
-    # p = os.path.abspath(os.path.join(os.environ.get("MAXWELL3_ROOT"), 'python', 'pymaxwell', 'python3.4'))
-    pass
-elif(s == 'Windows'):
-    p = os.path.abspath(os.path.join(os.environ.get("MAXWELL3_ROOT"), 'python', 'pymaxwell', 'python3.4'))
-if(p is not None):
-    sys.path.append(p)
-'''
-
-
 from .log import log, LogStyles
-
-# if(platform.system() != 'Darwin'):
-#     from pymaxwell import *
 
 s = platform.system()
 if(s == 'Darwin'):
@@ -73,6 +53,8 @@ elif(s == 'Linux'):
     
     # install libtbb-dev
     # before starting blender (from terminal of course) do: export LD_LIBRARY_PATH=$MAXWELL3_ROOT
+    # or add this to profile: export LD_LIBRARY_PATH=$MAXWELL3_ROOT:$LD_LIBRARY_PATH
+    # manipulating LD_LIBRARY_PATH from blender itself will not work because it is already running..
     
     try:
         from pymaxwell import *
