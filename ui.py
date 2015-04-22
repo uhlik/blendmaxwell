@@ -1194,10 +1194,6 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
     bl_label = "Preview"
     bl_options = {'DEFAULT_CLOSED'}
     
-    @classmethod
-    def poll(cls, context):
-        return False
-    
     def draw(self, context):
         l = self.layout
         l.template_preview(context.material, show_buttons=False, )

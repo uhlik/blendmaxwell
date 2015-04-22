@@ -1141,3 +1141,12 @@ class MXSWriter():
         ok = self.mxs.writeMXS(self.path)
         log("done.", 2)
         return ok
+
+
+def read_mxm_preview(path):
+    import numpy
+    s = Cmaxwell(mwcallback)
+    m = s.readMaterial(path)
+    a = m.getPreview()[0]
+    r = numpy.copy(a)
+    return r
