@@ -48,6 +48,7 @@
 
 changelog:
 
+* 0.1.7 added: presets, texture panel, basic material preview, RFBin export with size per particle, lots of refactoring, Linux and Windows ports are working without extensions
 * 0.1.6 added: maxwell hair, subdivision, scatter and particles export as realflow bin, fixed: render shortcuts, ui spaceing
 * 0.1.5 added: maxwell grass modifier, incremental export, minor ui tweaks and additions, launch multiple instances of maxwell and studio, fixed: material placeholders on triangle groups, maxwell particles transformation, error reporting
 * 0.1.4 added: render layers panel, fixed: path handling, instance bases on hidden layers and many more
@@ -60,11 +61,3 @@ links:
 [blenderartist.org thread](http://blenderartists.org/forum/showthread.php?366067-Maxwell-Render-integration-for-Blender-%28different-one%29)
 
 [maxwellrender.com/forum thread](http://www.maxwellrender.com/forum/viewtopic.php?f=138&t=43385)
-
-
-***
-
-footnotes:
-
-* Maxwell Render python bindings, "pymaxwell", provided by Next Limit is not compatible with python used in Blender. It can't be loaded directly and this is why separate python 3 installation is needed and exporting is done in two steps. What happens internally is, blender scene is serialized to JSON and custom binary mesh format to temporary directory together with extra python script which is then run with system python and creates Maxwell scene file using pymaxwell. It's a bit slower, but what is a few minutes extra in unbiased rendering anyway..
-
