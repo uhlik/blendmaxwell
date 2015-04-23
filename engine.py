@@ -230,9 +230,10 @@ class MaxwellRenderExportEngine(RenderEngine):
             
             for object in [ob for ob in scene.objects if ob.is_visible(scene) and not ob.hide_render]:
                 for mat in get_instance_materials(object):
-        	        if mat is not None:
-        		        if not object.name in objects_materials.keys(): objects_materials[object] = []
-        		        objects_materials[object].append(mat)
+                    if mat is not None:
+                        if object.name not in objects_materials.keys():
+                            objects_materials[object] = []
+                        objects_materials[object].append(mat)
             # Find objects that are likely to be the preview objects.
             preview_objects = [o for o in objects_materials.keys() if o.name.startswith('preview')]
             if len(preview_objects) < 1:
