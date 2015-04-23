@@ -2010,16 +2010,22 @@ class MXSExportLegacy():
                                 vels.append((0.0, 0.0, 0.0) + (0.0, 0.0, 0.0, 0, 0, 0))
                             # size per particle
                             if(m.bl_use_size):
-                                # particle.size * m.bl_size?
-                                sizes.append(part.size)
+                                sizes.append(part.size / 2)
                             else:
-                                sizes.append(m.bl_size)
+                                sizes.append(m.bl_size / 2)
                     locs = maths.apply_matrix_for_realflow_bin_export(locs)
                     vels = maths.apply_matrix_for_realflow_bin_export(vels)
                     particles = []
                     for i, ploc in enumerate(locs):
+                        # # v1
                         # particles.append(rfbin.RFBinParticle(pid=i, position=ploc[:3], velocity=vels[i][:3]))
-                        particles.append((i, ) + tuple(ploc[:3]) + (0.0, 0.0, 0.0) + tuple(vels[i][:3]) + (sizes[i], ))
+                        # # v2
+                        # particles.append((i, ) + tuple(ploc[:3]) + (0.0, 0.0, 0.0) + tuple(vels[i][:3]) + (sizes[i], ))
+                        # v3
+                        # normal from velocity
+                        pnor = Vector(vels[i][:3])
+                        pnor.normalize()
+                        particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
                     
                     if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
                         raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
@@ -2030,8 +2036,10 @@ class MXSExportLegacy():
                             'frame': cf,
                             'particles': particles,
                             'fps': self.context.scene.render.fps,
-                            'size': m.bl_size, }
+                            'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
+                    # # v1
                     # rfbw = rfbin.RFBinWriter(**prms)
+                    # v2, v3
                     rfbw = rfbin.RFBinWriter2(**prms)
                     m.bin_filename = rfbw.path
                 else:
@@ -3488,38 +3496,6 @@ class MXSExport():
         return tuple([int(255 * v) for v in c])
     
     def _psys_texture_to_data(self, name, ps, ob=None, ):
-        '''
-        tex = None
-        for ts in ps.settings.texture_slots:
-            if(ts is not None):
-                if(ts.texture is not None):
-                    if(ts.texture.type == 'IMAGE'):
-                        if(ts.texture.name == name):
-                            tex = ts.texture
-        
-        d = {'type': 'IMAGE',
-             'path': "",
-             'channel': 0,
-             'use_override_map': False,
-             'tile_method_type': [True, True],
-             'tile_method_units': 0,
-             'repeat': [1.0, 1.0],
-             'mirror': [False, False],
-             'offset': [0.0, 0.0],
-             'rotation': 0.0,
-             'invert': False,
-             'alpha_only': False,
-             'interpolation': False,
-             'brightness': 0.0,
-             'contrast': 0.0,
-             'saturation': 0.0,
-             'hue': 0.0,
-             'rgb_clamp': [0.0, 255.0], }
-        if(tex is not None):
-            d['path'] = bpy.path.abspath(tex.image.filepath),
-            return d
-        return None
-        '''
         tex = None
         for ts in ps.settings.texture_slots:
             if(ts is not None):
@@ -4165,6 +4141,10 @@ class MXSExport():
                 if(part.alive_state == "ALIVE"):
                     l = part.location.copy()
                     l = mat * l
+                    # in case somebody is reading this and wondering why all those zeros
+                    # i wrote all of this for converting pointcloud ply to a bin and those
+                    # files were structured 3 loc, 3 normal, rgb (0-255) and quite a lot
+                    # of code relied on it.. and was too lazy to remove redundant code.
                     locs.append(l.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
                     if(m.bl_use_velocity):
                         v = part.velocity.copy()
@@ -4174,14 +4154,17 @@ class MXSExport():
                         vels.append((0.0, 0.0, 0.0) + (0.0, 0.0, 0.0, 0, 0, 0))
                     # size per particle
                     if(m.bl_use_size):
-                        sizes.append(part.size * m.bl_size)
+                        sizes.append(part.size / 2)
                     else:
-                        sizes.append(m.bl_size)
+                        sizes.append(m.bl_size / 2)
             locs = maths.apply_matrix_for_realflow_bin_export(locs)
             vels = maths.apply_matrix_for_realflow_bin_export(vels)
             particles = []
             for i, ploc in enumerate(locs):
-                particles.append((i, ) + tuple(ploc[:3]) + (0.0, 0.0, 0.0) + tuple(vels[i][:3]) + (sizes[i], ))
+                # normal from velocity
+                pnor = Vector(vels[i][:3])
+                pnor.normalize()
+                particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
             
             if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
                 raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
@@ -4192,7 +4175,7 @@ class MXSExport():
                     'frame': cf,
                     'particles': particles,
                     'fps': self.context.scene.render.fps,
-                    'size': m.bl_size, }
+                    'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
             rfbw = rfbin.RFBinWriter2(**prms)
             m.bin_filename = rfbw.path
         else:

@@ -1316,7 +1316,7 @@ class TexturePanel(TextureButtonsPanel, Panel):
         r.prop(m, 'interpolation')
         
         sub = l.column()
-        sub.label("Nothing to see here move along..", icon='ERROR', )
+        sub.label("Nothing to see here, move along..", icon='ERROR', )
         sub.prop(m, 'brightness')
         sub.prop(m, 'contrast')
         sub.prop(m, 'saturation')
@@ -1704,9 +1704,11 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
             sub.prop(m, 'bin_filename')
         else:
             sub.prop(m, 'bl_use_velocity')
-            sub.prop(m, 'bl_size')
-            # here i need some calculation of result size first
-            # sub.prop(m, 'bl_use_size')
+            r = sub.row()
+            r.prop(m, 'bl_size')
+            if(m.bl_use_size):
+                r.active = False
+            sub.prop(m, 'bl_use_size')
             sub.prop(m, 'bin_directory')
             sub.prop(m, 'bin_overwrite')
         

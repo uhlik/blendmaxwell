@@ -222,7 +222,7 @@ class MXSWriter():
     
     def material_placeholder(self):
         """Create material placeholder when needed to keem trangle material groups.
-        no parameters..
+        (no parameters..)
         """
         s = self.mxs
         n = 'MATERIAL_PLACEHOLDER'
@@ -872,6 +872,28 @@ class MXSWriter():
         return o
     
     def texture_data_to_mxparams(self, name, data, mxparams, ):
+        """Create CtextureMap, fill with parameters and put into mxparams.
+        name        string
+        data        dict {'type':               string,
+                          'path':               string,
+                          'channel':            int,
+                          'use_override_map':   bool,
+                          'tile_method_type':   [bool, bool],
+                          'tile_method_units':  int,
+                          'repeat':             [float, float],
+                          'mirror':             [bool, bool],
+                          'offset':             [float, float],
+                          'rotation':           float,
+                          'invert':             bool,
+                          'alpha_only':         bool,
+                          'interpolation':      bool,
+                          'brightness':         float,
+                          'contrast':           float,
+                          'saturation':         float,
+                          'hue':                float,
+                          'rgb_clamp':          [float, float], }
+        mxparams    mxparams
+        """
         d = data
         if(d is None):
             return
@@ -1136,7 +1158,9 @@ class MXSWriter():
         return o
     
     def write(self):
-        """Write scene fo file."""
+        """Write scene fo file.
+        (no parameters..)
+        """
         log("saving scene..", 2)
         ok = self.mxs.writeMXS(self.path)
         log("done.", 2)
