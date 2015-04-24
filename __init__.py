@@ -31,7 +31,6 @@ bl_info = {"name": "Maxwell Render",
 if "bpy" in locals():
     import imp
     imp.reload(log)
-    imp.reload(progress)
     imp.reload(system)
     imp.reload(rfbin)
     imp.reload(mxs)
@@ -44,7 +43,6 @@ if "bpy" in locals():
     imp.reload(export)
 else:
     from . import log
-    from . import progress
     from . import system
     from . import rfbin
     from . import mxs

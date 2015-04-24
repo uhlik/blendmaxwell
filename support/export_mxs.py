@@ -28,7 +28,6 @@ import struct
 import shutil
 import math
 import datetime
-# import logging
 import os
 
 from pymaxwell import *
@@ -562,6 +561,36 @@ def mesh(d, s):
         p.setUInt('Display Percent', e['display_percent'])
         p.setUInt('Display Max. Blades', e['display_max_blades'])
         o.applyGeometryModifierExtension(p)
+    
+    if(d['sea_ext'] is not None):
+        m = CextensionManager.instance()
+        m.loadAllExtensions()
+        e = m.createDefaultGeometryLoaderExtension('MaxwellSea')
+        p = e.getExtensionData()
+        name = d['sea_ext'][0]
+        hide_parent = d['sea_ext'][1]
+        q = d['sea_ext'][2:]
+        
+        p.setFloat('Reference Time', q[0])
+        p.setUInt('Resolution', q[1])
+        p.setFloat('Ocean Depth', q[2])
+        p.setFloat('Vertical Scale', q[3])
+        p.setFloat('Ocean Dim', q[4])
+        p.setUInt('Ocean Seed', q[5])
+        p.setByte('Enable Choppyness', q[6])
+        p.setFloat('Choppy factor', q[7])
+        p.setFloat('Ocean Wind Mod.', q[8])
+        p.setFloat('Ocean Wind Dir.', q[9])
+        p.setFloat('Ocean Wind Alignment', q[10])
+        p.setFloat('Ocean Min. Wave Length', q[11])
+        p.setFloat('Damp Factor Against Wind', q[12])
+        p.setByte('Enable White Caps', q[13])
+        
+        so = s.createGeometryLoaderObject(name, p)
+        object_props(so, d)
+        so.setParent(o)
+        if(hide_parent):
+            o.setHide(True)
     
     return o
 
@@ -1419,17 +1448,7 @@ if __name__ == "__main__":
     
     quiet = args.quiet
     
-    # logger = logging.getLogger()
-    # logger.setLevel(logging.NOTSET)
-    # fh = logging.FileHandler(args.log_file)
     LOG_FILE_PATH = args.log_file
-    # fh.setLevel(logging.NOTSET)
-    # ch = logging.StreamHandler()
-    # ch.setLevel(logging.NOTSET)
-    # ch.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
-    # fh.setFormatter(logging.Formatter(fmt='{message}', datefmt=None, style='{', ))
-    # logger.addHandler(ch)
-    # logger.addHandler(fh)
     
     try:
         main(args)

@@ -1044,6 +1044,7 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
 class ObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Subdivision Modifier"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
@@ -1073,6 +1074,7 @@ class ObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
 class ObjectScatterPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Scatter Modifier"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
@@ -1146,6 +1148,54 @@ class ObjectScatterPanel(ObjectButtonsPanel, Panel):
         c.label("Display:")
         c.prop(m, 'display_percent')
         c.prop(m, 'display_max_blades')
+
+
+class ObjectSeaExtPanel(ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Sea"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        # e = context.scene.render.engine
+        # o = context.active_object
+        # ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        # return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
+        return False
+    
+    def draw_header(self, context):
+        m = context.object.maxwell_sea_extension
+        self.layout.prop(m, "enabled", text="")
+    
+    def draw(self, context):
+        l = self.layout
+        m = context.object.maxwell_sea_extension
+        sub = l.column()
+        if(not m.enabled):
+            sub.active = False
+        
+        sub.prop(m, 'hide_parent')
+        
+        c = sub.column()
+        c.label("Geometry:")
+        c.prop(m, 'reference_time')
+        c.prop(m, 'resolution')
+        c.prop(m, 'ocean_depth')
+        c.prop(m, 'vertical_scale')
+        c.prop(m, 'ocean_dim')
+        c.prop(m, 'ocean_seed')
+        c.prop(m, 'enable_choppyness')
+        c.prop(m, 'choppy_factor')
+        c.separator()
+        
+        c = sub.column()
+        c.label("Wind:")
+        c.prop(m, 'ocean_wind_mod')
+        c.prop(m, 'ocean_wind_dir')
+        c.prop(m, 'ocean_wind_alignment')
+        c.prop(m, 'ocean_min_wave_length')
+        c.prop(m, 'damp_factor_against_wind')
+        c.separator()
 
 
 class MaterialsPanel(MaterialButtonsPanel, Panel):

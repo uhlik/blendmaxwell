@@ -8,10 +8,9 @@ import time
 import datetime
 
 from .log import log, LogStyles
-from . import progress
 
 
-class RFBinParticle():
+class RFBinParticleLegacy():
     def __init__(self, pid, position, normal=(0.0, 0.0, 0.0), velocity=(0.0, 0.0, 0.0), ):
         """
         pid:        particle id, int
@@ -58,7 +57,7 @@ class RFBinParticle():
         return repr(self)
 
 
-class RFBinWriter():
+class RFBinWriterLegacy():
     """RealFlow particle .bin writer"""
     def __init__(self, directory, name, frame, particles, fps=24, size=0.001, ):
         cn = self.__class__.__name__
@@ -85,8 +84,8 @@ class RFBinWriter():
         
         self.path = os.path.join(self.directory, "{0}-{1}{2}".format(self.name, str(self.frame).zfill(5), self.extension))
         
-        if(all(type(v) is RFBinParticle for v in particles) is False):
-            raise ValueError("{}: particles must contain only instances of RFBinParticle".format(cn))
+        if(all(type(v) is RFBinParticleLegacy for v in particles) is False):
+            raise ValueError("{}: particles must contain only instances of RFBinParticleLegacy".format(cn))
         self.particles = particles
         
         if(int(fps) < 0):
@@ -142,7 +141,6 @@ class RFBinWriter():
             f.write(p("=f", 1.0))                        # emitter_scale (x,y,z)
     
     def _particles(self, f, ):
-        prgs = progress.get_progress(len(self.particles), 1)
         p = struct.pack
         for v in self.particles:
             for i in v.position:
@@ -167,7 +165,6 @@ class RFBinWriter():
             f.write(p("=f", v.mass))
             f.write(p("=f", v.temperature))
             f.write(p("=i", v.pid))
-            prgs.step()
     
     def _appendix(self, f, ):
         p = struct.pack
@@ -187,7 +184,7 @@ class RFBinWriter():
         return s.format(self.__class__.__name__, self.directory, self.name, self.frame, "[{0} items..]".format(len(self.particles)), self.fps, self.size, )
 
 
-class RFBinWriter2():
+class RFBinWriter():
     """RealFlow particle .bin writer"""
     def __init__(self, directory, name, frame, particles, fps=24, size=0.001, ):
         """

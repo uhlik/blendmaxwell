@@ -27,7 +27,6 @@ from bpy.types import RenderEngine
 import numpy
 
 from .log import log, LogStyles, LOG_FILE_PATH
-from . import progress
 from . import export
 from . import ops
 from . import system
@@ -301,9 +300,6 @@ class MaxwellRenderExportEngine(RenderEngine):
                 self.end_result(r)
     
     def render_scene(self, scene):
-        progress.set_default_progress_reporting(progress.PROGRESS_BAR)
-        progress.ENABLED = False
-        
         m = scene.maxwell_render
         p = m.private_path
         bp = m.private_basepath

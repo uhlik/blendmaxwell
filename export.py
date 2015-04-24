@@ -32,7 +32,6 @@ from bpy_extras import io_utils
 import bmesh
 
 from .log import log, LogStyles
-from . import progress
 from . import utils
 from . import maths
 from . import system
@@ -1443,17 +1442,12 @@ class MXSExportLegacy():
         for ti, uvt in enumerate(me.uv_textures):
             md['channel_uvw'].append(ti)
         
-        # vertices and faces joined progress
-        prgr = progress.get_progress(len(me.vertices) + len(me.tessfaces), 2)
-        
         # vertices, vertex normals
         for i, v in enumerate(me.vertices):
             # index, position index, vector
             md['v_setVertex'].append((i, 0, v.co.to_tuple(), ))
             # index, position index, vector
             md['v_setNormal'].append((i, 0, v.normal.to_tuple(), ))
-            #
-            prgr.step()
         
         # faces, face normals, uvs
         ni = len(me.vertices) - 1
@@ -1482,8 +1476,6 @@ class MXSExportLegacy():
                                                uv[1][0], 1.0 - uv[1][1], 0.0,
                                                uv[2][0], 1.0 - uv[2][1], 0.0, ))
             ti = ti + 1
-            #
-            prgr.step()
         
         # cleanup
         bpy.data.meshes.remove(me)
@@ -1558,6 +1550,15 @@ class MXSExportLegacy():
                                 'display_max_blades': int(sc.display_max_blades), }
         else:
             d['scatter_ext'] = None
+        
+        ms = ob.maxwell_sea_extension
+        if(ms.enabled):
+            name = "{}-MaxwellSea".format(ob.name)
+            d['sea_ext'] = [name, ms.hide_parent, ms.reference_time, int(ms.resolution), ms.ocean_depth, ms.vertical_scale, ms.ocean_dim,
+                            ms.ocean_seed, ms.enable_choppyness, ms.choppy_factor, ms.ocean_wind_mod, math.degrees(ms.ocean_wind_dir),
+                            ms.ocean_wind_alignment, ms.ocean_min_wave_length, ms.damp_factor_against_wind, ms.enable_white_caps, ]
+        else:
+            d['sea_ext'] = None
         
         return d, md
     
@@ -1696,10 +1697,7 @@ class MXSExportLegacy():
             m += "{0}: {1} duplicates, ".format(k, v)
         log(m, 2)
         
-        prgr = progress.get_progress(len(self.duplicates), 2)
-        
         for o in self.duplicates:
-            prgr.step()
             if(self.use_instances):
                 ob = o['object']
                 
@@ -2018,7 +2016,7 @@ class MXSExportLegacy():
                     particles = []
                     for i, ploc in enumerate(locs):
                         # # v1
-                        # particles.append(rfbin.RFBinParticle(pid=i, position=ploc[:3], velocity=vels[i][:3]))
+                        # particles.append(rfbin.RFBinParticleLegacy(pid=i, position=ploc[:3], velocity=vels[i][:3]))
                         # # v2
                         # particles.append((i, ) + tuple(ploc[:3]) + (0.0, 0.0, 0.0) + tuple(vels[i][:3]) + (sizes[i], ))
                         # v3
@@ -2038,9 +2036,9 @@ class MXSExportLegacy():
                             'fps': self.context.scene.render.fps,
                             'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
                     # # v1
-                    # rfbw = rfbin.RFBinWriter(**prms)
+                    # rfbw = rfbin.RFBinWriterLegacy(**prms)
                     # v2, v3
-                    rfbw = rfbin.RFBinWriter2(**prms)
+                    rfbw = rfbin.RFBinWriter(**prms)
                     m.bin_filename = rfbw.path
                 else:
                     pass
@@ -2476,9 +2474,7 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
         vs = tuple([v.co.copy() for v in me.vertices])
         es = tuple([tuple([i for i in e.vertices]) for e in me.edges])
         
-        prgr = progress.get_progress(len(es), 2)
-        
-        ms = self._calc_marices(vs=vs, es=es, prgr=prgr, )
+        ms = self._calc_marices(vs=vs, es=es, )
         
         dt = []
         for m in ms:
@@ -2516,7 +2512,7 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
         bpy.data.meshes.remove(me)
         return d, md
     
-    def _calc_marices(self, vs, es, prgr, ):
+    def _calc_marices(self, vs, es, ):
         """Calculate wire matrices."""
         
         def distance(a, b):
@@ -2542,8 +2538,7 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
             ms = Matrix.Scale(d, 4, up)
             m = mtr * ms
             matrices.append(m)
-            #
-            prgr.step()
+        
         return matrices
 
 
@@ -4176,7 +4171,7 @@ class MXSExport():
                     'particles': particles,
                     'fps': self.context.scene.render.fps,
                     'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
-            rfbw = rfbin.RFBinWriter2(**prms)
+            rfbw = rfbin.RFBinWriter(**prms)
             m.bin_filename = rfbw.path
         else:
             pass

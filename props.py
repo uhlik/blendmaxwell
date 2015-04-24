@@ -799,7 +799,9 @@ class SubdivisionExtProperties(PropertyGroup):
     enabled = BoolProperty(name="Subdivision Modifier", default=False, )
     level = IntProperty(name="Subdivision Level", default=2, min=0, max=99, )
     # TODO check if Maxwell can load quad based geometry, if not, Catmull-Clark is pretty useless
-    scheme = EnumProperty(name="Subdivision Scheme", items=[('0', "Catmull-Clark", ""), ('1', "Loop", "")], default='0', )
+    # scheme = EnumProperty(name="Subdivision Scheme", items=[('0', "Catmull-Clark", ""), ('1', "Loop", "")], default='0', )
+    # TODO therefore setting default to Loop Subdivision for now..
+    scheme = EnumProperty(name="Subdivision Scheme", items=[('0', "Catmull-Clark", ""), ('1', "Loop", "")], default='1', )
     interpolation = EnumProperty(name="UV Interpolation", items=[('0', "None", ""), ('1', "Edges", ""), ('2', "Edges And Corners", ""), ('3', "Sharp", "")], default='2', )
     crease = FloatProperty(name="Edge Crease (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     smooth = FloatProperty(name="Smooth Angle", default=math.radians(90.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )
@@ -811,3 +813,32 @@ class SubdivisionExtProperties(PropertyGroup):
     @classmethod
     def unregiser(cls):
         del bpy.types.Object.maxwell_subdivision_extension
+
+
+class SeaExtProperties(PropertyGroup):
+    enabled = BoolProperty(name="Maxwell Sea", default=False, )
+    hide_parent = BoolProperty(name="Hide Container Object", default=True, )
+    resolution = EnumProperty(name="Quality", items=[('0', "4x4", ""), ('1', "8x8", ""), ('2', "16x16", ""), ('3', "32x32", ""), ('4', "64x64", ""),
+                                                     ('5', "128x128", ""), ('6', "256x256", ""), ('7', "512x512", ""), ('8', "1024x1024", ""),
+                                                     ('9', "2048x2048", ""), ('10', "4096x4096", ""), ('11', "8192x8192", ""), ], default='6', )
+    reference_time = FloatProperty(name="Reference Time (s)", default=0.0, min=0.0, max=100000.0, precision=4, )
+    ocean_wind_mod = FloatProperty(name="Wind Speed (m/s)", default=30.0, min=0.0, max=100000.0, precision=3, )
+    ocean_wind_dir = FloatProperty(name="Wind Direction (º)", default=math.radians(45.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )
+    vertical_scale = FloatProperty(name="Vertical Scale", default=0.1, min=0.0, max=100000.0, precision=5, )
+    damp_factor_against_wind = FloatProperty(name="Weight Against Wind", default=0.5, min=0.0, max=1.0, precision=4, subtype='PERCENTAGE', )
+    ocean_wind_alignment = FloatProperty(name="Wind Alignment", default=2.0, min=0.0, max=100000.0, precision=4, )
+    ocean_min_wave_length = FloatProperty(name="Min Wave Length (m)", default=0.1, min=0.0, max=100000.0, precision=4, )
+    ocean_dim = FloatProperty(name="Dimension (m)", default=250.0, min=0.0, max=1000000.0, precision=2, )
+    ocean_depth = FloatProperty(name="Depth (m)", default=200.0, min=0.0, max=100000.0, precision=2, )
+    ocean_seed = IntProperty(name="Seed", default=4217, min=0, max=65535, )
+    enable_choppyness = BoolProperty(name="Enable Choppyness", default=False, )
+    choppy_factor = FloatProperty(name="Choppy Factor", default=0.0, min=0.0, max=100000.0, precision=2, )
+    enable_white_caps = BoolProperty(name="Enable White Caps", default=False, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Object.maxwell_sea_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Object.maxwell_sea_extension
