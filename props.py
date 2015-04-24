@@ -532,7 +532,7 @@ class ParticlesProperties(PropertyGroup):
     use = EnumProperty(name="Type", items=[('GRASS', "Grass", ""),
                                            ('HAIR', "Hair", ""),
                                            ('PARTICLES', "Particles", ""),
-                                           ('MESHER', "Mesher", ""),
+                                           # ('MESHER', "Mesher", ""),
                                            ('CLONER', "Cloner", ""),
                                            ('NONE', "None", "")], default='NONE', )
     
@@ -726,26 +726,6 @@ class HairExtProperties(PropertyGroup):
         del bpy.types.ParticleSettings.maxwell_hair_extension
 
 
-class MesherExtProperties(PropertyGroup):
-    @classmethod
-    def register(cls):
-        bpy.types.ParticleSettings.maxwell_mesher_extension = PointerProperty(type=cls)
-    
-    @classmethod
-    def unregiser(cls):
-        del bpy.types.ParticleSettings.maxwell_mesher_extension
-
-
-class ClonerExtProperties(PropertyGroup):
-    @classmethod
-    def register(cls):
-        bpy.types.ParticleSettings.maxwell_cloner_extension = PointerProperty(type=cls)
-    
-    @classmethod
-    def unregiser(cls):
-        del bpy.types.ParticleSettings.maxwell_cloner_extension
-
-
 class ScatterExtProperties(PropertyGroup):
     enabled = BoolProperty(name="Maxwell Scatter", default=False, )
     
@@ -842,3 +822,40 @@ class SeaExtProperties(PropertyGroup):
     @classmethod
     def unregiser(cls):
         del bpy.types.Object.maxwell_sea_extension
+
+
+class ClonerExtProperties(PropertyGroup):
+    source = EnumProperty(name="Source", items=[('BLENDER_PARTICLES', "Blender Particles", ""), ('EXTERNAL_BIN', "External Bin", "")], default='BLENDER_PARTICLES', )
+    directory = StringProperty(name=".bin Output Directory", default="//", subtype='DIR_PATH', description="Output directory for .bin file(s)", )
+    overwrite = BoolProperty(name="Overwrite Existing", default=True, )
+    bl_use_velocity = BoolProperty(name="Particle Velocity", default=True, )
+    bl_use_size = BoolProperty(name="Size Per Particle (Blender Particle Size Settings)", default=False, )
+    bl_size = FloatProperty(name="Size", default=0.1, min=0.000001, max=1000000.0, step=3, precision=6, )
+    
+    filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
+    
+    radius = FloatProperty(name="Radius Multiplier", default=1.0, min=0.000001, max=1000000.0, )
+    mb_factor = FloatProperty(name="Motion Blur Multiplier", default=1.0, min=0.0, max=1000000.0, )
+    load_percent = FloatProperty(name="Load Particles (%)", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    start_offset = IntProperty(name="Start Offset", default=0, min=0, max=100000000, )
+    extra_npp = IntProperty(name="Extra Part. Per Particle", default=0, min=0, max=100000000, )
+    extra_p_dispersion = FloatProperty(name="Extra Part. Dispersion", default=0.0, min=0.0, max=1000000.0, )
+    extra_p_deformation = FloatProperty(name="Extra Part. Deformation", default=0.0, min=0.0, max=1000000.0, )
+    align_to_velocity = BoolProperty(name="Align To Velocity", default=False, )
+    scale_with_radius = BoolProperty(name="Scale W/ Particle Radius", default=False, )
+    inherit_obj_id = BoolProperty(name="Inherit Object Id", default=False, )
+    
+    display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
+    display_max = IntProperty(name="Display Max. Particles", default=1000, min=0, max=100000, )
+    
+    # axis_system = EnumProperty(name="PRT & ABC Axis System", items=[('YZX_0', "YZX (xsi maya houdini)", ""), ('ZXY_1', "ZXY (3dsmax maya)", ""), ('YXZ_2', "YXZ (lw c4d rf)", "")], default='YZX_0', )
+    # frame = IntProperty(name="Frame Number", default=0, min=-100000000, max=100000000, )
+    # fps = FloatProperty(name="FPS", default=1.0, min=0.0, max=1000000.0, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.ParticleSettings.maxwell_cloner_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.ParticleSettings.maxwell_cloner_extension

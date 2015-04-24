@@ -1843,44 +1843,6 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
             c.prop(m, 'bin_max_velocity')
 
 
-class MesherExtPanel(ParticleButtonsPanel, Panel):
-    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Mesher"
-    
-    @classmethod
-    def poll(cls, context):
-        psys = context.particle_system
-        engine = context.scene.render.engine
-        settings = 0
-        
-        if psys:
-            settings = psys.settings
-        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
-            settings = context.space_data.pin_id
-        
-        if not settings:
-            return False
-        
-        m = context.particle_system.settings.maxwell_render
-        if(m.use != 'MESHER'):
-            return False
-        
-        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
-    
-    def draw(self, context):
-        l = self.layout
-        sub = l.column()
-        
-        o = context.object
-        p = context.particle_system
-        if(p is None):
-            return
-        
-        # m = context.particle_system.settings.maxwell_mesher_extension
-        
-        sub.label("Not implemented yet..", icon='ERROR', )
-
-
 class ClonerExtPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Cloner"
@@ -1914,9 +1876,47 @@ class ClonerExtPanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        # m = context.particle_system.settings.maxwell_cloner_extension
+        m = context.particle_system.settings.maxwell_cloner_extension
         
-        sub.label("Not implemented yet..", icon='ERROR', )
+        r = sub.row()
+        r.prop(m, 'source', expand=True)
+        if(m.source == 'EXTERNAL_BIN'):
+            sub.prop(m, 'filename')
+        else:
+            sub.prop(m, 'bl_use_velocity')
+            r = sub.row()
+            r.prop(m, 'bl_size')
+            if(m.bl_use_size):
+                r.active = False
+            sub.prop(m, 'bl_use_size')
+            sub.prop(m, 'directory')
+            sub.prop(m, 'overwrite')
+        sub.separator()
+        
+        c = sub.column()
+        c.label("Particles:")
+        c.prop(m, 'radius')
+        c.prop(m, 'mb_factor')
+        c.prop(m, 'load_percent')
+        c.prop(m, 'start_offset')
+        c.separator()
+        
+        c = sub.column()
+        c.label("Multipoint:")
+        c.prop(m, 'extra_npp')
+        c.prop(m, 'extra_p_dispersion')
+        c.prop(m, 'extra_p_deformation')
+        c.separator()
+        
+        c = sub.column()
+        c.label("Instance control:")
+        c.prop(m, 'align_to_velocity')
+        c.prop(m, 'scale_with_radius')
+        c.prop(m, 'inherit_obj_id')
+        c.separator()
+        
+        sub.prop(m, 'display_percent')
+        sub.prop(m, 'display_max')
 
 
 class Render_presets(Menu):

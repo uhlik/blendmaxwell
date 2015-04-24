@@ -1887,6 +1887,38 @@ class MXSExportLegacy():
                                  'object': o.name,
                                  'parent': parent, }
                             self.particles.append(d)
+                    elif(ps.settings.maxwell_render.use == 'CLONER'):
+                        try:
+                            mx = ps.settings.maxwell_render
+                        except:
+                            log("Particles cannot be exported without 'Maxwell Render' addon enabled..", 1, LogStyles.WARNING, )
+                            continue
+                        
+                        renderable = False
+                        for om in self.meshes:
+                            if(om['object'] == o):
+                                if(om['export']):
+                                    renderable = True
+                                    break
+                        show_render = False
+                        for mo in o.modifiers:
+                            if(mo.type == 'PARTICLE_SYSTEM'):
+                                if(mo.particle_system == ps):
+                                    if(mo.show_render is True):
+                                        show_render = True
+                        
+                        if(renderable and show_render):
+                            d = {'props': ps.settings.maxwell_cloner_extension,
+                                 # 'matrix': o.matrix_local,
+                                 'matrix': Matrix(),
+                                 'type': ps.settings.maxwell_render.use,
+                                 'ps': ps,
+                                 'name': "{}-{}".format(o.name, ps.name),
+                                 # 'pmatrix': o.matrix_local,
+                                 'pmatrix': Matrix(),
+                                 'object': o.name,
+                                 'parent': o.name, }
+                            self.particles.append(d)
                     else:
                         pass
         
@@ -2234,7 +2266,96 @@ class MXSExportLegacy():
                 # print(len(data['HAIR_POINTS']) == (num_curves * steps * 3))
                 
                 q['data'] = data
+            
+            elif(dp['type'] == 'CLONER'):
+                o = bpy.data.objects[dp['object']]
+                if(m.source == 'BLENDER_PARTICLES'):
+                    if(len(ps.particles) == 0):
+                        msg = "particle system {} has no particles".format(ps.name)
+                        raise ValueError(msg)
+                    ok = False
+                    for part in ps.particles:
+                        if(part.alive_state == "ALIVE"):
+                            ok = True
+                            break
+                    if(ok is False):
+                        msg = "particle system {} has no 'ALIVE' particles".format(ps.name)
+                        raise ValueError(msg)
+                    locs = []
+                    vels = []
+                    sizes = []
+                    mat = dp['pmatrix'].copy()
+                    mat.invert()
+                    for part in ps.particles:
+                        if(part.alive_state == "ALIVE"):
+                            l = part.location.copy()
+                            l = mat * l
+                            locs.append(l.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
+                            if(m.bl_use_velocity):
+                                v = part.velocity.copy()
+                                v = mat * v
+                                vels.append(v.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
+                            else:
+                                vels.append((0.0, 0.0, 0.0) + (0.0, 0.0, 0.0, 0, 0, 0))
+                            # size per particle
+                            if(m.bl_use_size):
+                                sizes.append(part.size)
+                            else:
+                                sizes.append(m.bl_size)
+                    locs = maths.apply_matrix_for_realflow_bin_export(locs)
+                    vels = maths.apply_matrix_for_realflow_bin_export(vels)
+                    particles = []
+                    for i, ploc in enumerate(locs):
+                        pnor = Vector(vels[i][:3])
+                        pnor.normalize()
+                        particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
+                    
+                    if(os.path.exists(bpy.path.abspath(m.directory)) and not m.overwrite):
+                        raise OSError("file: {} exists".format(bpy.path.abspath(m.directory)))
+                    
+                    cf = self.context.scene.frame_current
+                    prms = {'directory': bpy.path.abspath(m.directory),
+                            'name': "{}".format(dp['name']),
+                            'frame': cf,
+                            'particles': particles,
+                            'fps': self.context.scene.render.fps,
+                            'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
+                    rfbw = rfbin.RFBinWriter(**prms)
+                    m.filename = rfbw.path
                 
+                q = {'filename': bpy.path.abspath(m.filename),
+                     'radius': m.radius,
+                     'mb_factor': m.mb_factor,
+                     'load_percent': m.load_percent,
+                     'start_offset': m.start_offset,
+                     'extra_npp': m.extra_npp,
+                     'extra_p_dispersion': m.extra_p_dispersion,
+                     'extra_p_deformation': m.extra_p_deformation,
+                     'align_to_velocity': m.align_to_velocity,
+                     'scale_with_radius': m.scale_with_radius,
+                     'inherit_obj_id': m.inherit_obj_id,
+                     'frame': self.context.scene.frame_current,
+                     'fps': self.context.scene.render.fps,
+                     'display_percent': int(m.display_percent),
+                     'display_max': int(m.display_max),
+                     
+                     # pass some default to skip checks this time..
+                     'opacity': 100,
+                     'hidden_camera': False,
+                     'hidden_camera_in_shadow_channel': False,
+                     'hidden_global_illumination': False,
+                     'hidden_reflections_refractions': False,
+                     'hidden_zclip_planes': False,
+                     'object_id': [255, 255, 255],
+                     'name': dp['name'],
+                     'parent': None,
+                     'base': None,
+                     'pivot': None,
+                     'matrix': None,
+                     'hide': False,
+                     
+                     'object': dp['parent'],
+                     'type': 'CLONER', }
             else:
                 raise TypeError("Unsupported particles type: {}".format(dp['type']))
             

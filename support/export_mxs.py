@@ -1063,6 +1063,36 @@ def grass(d, s):
     o.applyGeometryModifierExtension(p)
 
 
+def cloner(d, s):
+    m = CextensionManager.instance()
+    m.loadAllExtensions()
+    
+    e = m.createDefaultGeometryModifierExtension('MaxwellCloner')
+    p = e.getExtensionData()
+    
+    p.setString('FileName', d['filename'])
+    p.setFloat('Radius Factor', d['radius'])
+    p.setFloat('MB Factor', d['mb_factor'])
+    p.setFloat('Load particles %', d['load_percent'])
+    p.setUInt('Start offset', d['start_offset'])
+    p.setUInt('Create N particles per particle', d['extra_npp'])
+    p.setFloat('Extra particles dispersion', d['extra_p_dispersion'])
+    p.setFloat('Extra particles deformation', d['extra_p_deformation'])
+    
+    p.setByte('Use velocity', d['align_to_velocity'])
+    p.setByte('Scale with particle radius', d['scale_with_radius'])
+    p.setByte('Inherit ObjectID', d['inherit_obj_id'])
+    
+    p.setInt('Frame#', d['frame'])
+    p.setFloat('fps', d['fps'])
+    
+    p.setUInt('Display Percent', d['display_percent'])
+    p.setUInt('Display Max. Particles', d['display_max'])
+    
+    o = s.getObject(d['object'])
+    o.applyGeometryModifierExtension(p)
+
+
 def hair(d, s):
     m = CextensionManager.instance()
     m.loadAllExtensions()
@@ -1366,6 +1396,8 @@ def main(args):
             grass(d, mxs)
         elif(d['type'] == 'HAIR'):
             hair(d, mxs)
+        elif(d['type'] == 'CLONER'):
+            cloner(d, mxs)
         elif(d['type'] == 'WIREFRAME_MATERIAL'):
             mat = wireframe_material(d, mxs)
             m = {'name': d['name'], 'data': mat, }
