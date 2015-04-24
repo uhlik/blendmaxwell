@@ -3072,6 +3072,10 @@ class MXSExport():
                 self._grass(o)
             elif(o['type'] == 'HAIR'):
                 self._hair(o)
+            elif(o['type'] == 'CLONER'):
+                # self._cloner(o)
+                pass
+                # TODO cloner extension
         
         # all objects are written, now set hierarchy
         self.mxs.hierarchy(self.hierarchy)
@@ -3905,6 +3909,8 @@ class MXSExport():
                             if(gr['name'] == g.name):
                                 gr['objects'].append(name)
                                 break
+        
+        # TODO modifiers - subdivision, scatter and cloner
     
     def _instance(self, o, iname=None, ):
         log("{0}".format(o['object'].name), 2)
