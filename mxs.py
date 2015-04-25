@@ -933,9 +933,8 @@ class MXSWriter():
         ok = mxparams.setTextureMap(name, t)
         return mxparams
     
-    def grass(self, name, object_name, properties, material=None, backface_material=None, ):
+    def grass(self, object_name, properties, material=None, backface_material=None, ):
         """Create grass object modifier extension.
-        name                string
         object_name         string
         properties          dict of many, many properties, see code..
         material            (string path, bool embed) or None
@@ -1156,6 +1155,109 @@ class MXSWriter():
         o = s.getObject(object_name)
         o.applyGeometryModifierExtension(p)
         return o
+    
+    def cloner(self, object_name, path, radius=1.0, mb_factor=1.0, load_percent=100.0, start_offset=0, ex_npp=0, ex_p_dispersion=0.0, ex_p_deformation=0.0, align_to_velocity=False, scale_with_radius=False, inherit_obj_id=False, frame=1, fps=24.0, display_percent=10, display_max=1000, ):
+        """Create cloner object modifier extension.
+        object_name         string
+        path                string
+        radius              float
+        mb_factor           float
+        load_percent        float
+        start_offset        int
+        ex_npp              int
+        ex_p_dispersion     float
+        ex_p_deformation    float
+        align_to_velocity   bool
+        scale_with_radius   bool
+        inherit_obj_id      bool
+        frame               int
+        fps                 float
+        display_percent     int
+        display_max         int
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellCloner')
+        p = e.getExtensionData()
+        
+        p.setString('FileName', path)
+        p.setFloat('Radius Factor', radius)
+        
+        p.setFloat('MB Factor', mb_factor)
+        p.setFloat('Load particles %', load_percent)
+        p.setUInt('Start offset', start_offset)
+        
+        p.setUInt('Create N particles per particle', ex_npp)
+        p.setFloat('Extra particles dispersion', ex_p_dispersion)
+        p.setFloat('Extra particles deformation', ex_p_deformation)
+        
+        p.setByte('Use velocity', align_to_velocity)
+        p.setByte('Scale with particle radius', scale_with_radius)
+        p.setByte('Inherit ObjectID', inherit_obj_id)
+        
+        p.setInt('Frame#', frame)
+        p.setFloat('fps', fps)
+        
+        p.setUInt('Display Percent', display_percent)
+        p.setUInt('Display Max. Particles', display_max)
+        
+        o = s.getObject(object_name)
+        o.applyGeometryModifierExtension(p)
+        return o
+    
+    def sea(self, name, base, pivot, object_props=None, geometry=None, wind=None, material=None, backface_material=None, ):
+        """Create sea extension object.
+        name                string
+        base                ((3 float), (3 float), (3 float), (3 float))
+        pivot               ((3 float), (3 float), (3 float), (3 float))
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
+        geometry            (float reference_time,
+                             int resolution,
+                             float ocean_depth,
+                             float vertical_scale,
+                             float ocean_dim,
+                             int ocean_seed,
+                             bool enable_choppyness,
+                             float choppy_factor, )
+        wind                (float ocean_wind_mod,
+                             float ocean_wind_dir,
+                             float ocean_wind_alignment,
+                             float ocean_min_wave_length,
+                             float damp_factor_against_wind, )
+        material            (string path, bool embed) or None
+        backface_material   (string path, bool embed) or None
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryLoaderExtension('MaxwellSea')
+        p = e.getExtensionData()
+        
+        p.setFloat('Reference Time', geometry[0])
+        p.setUInt('Resolution', geometry[1])
+        p.setFloat('Ocean Depth', geometry[2])
+        p.setFloat('Vertical Scale', geometry[3])
+        p.setFloat('Ocean Dim', geometry[4])
+        p.setUInt('Ocean Seed', geometry[5])
+        p.setByte('Enable Choppyness', geometry[6])
+        p.setFloat('Choppy factor', geometry[7])
+        p.setFloat('Ocean Wind Mod.', wind[0])
+        p.setFloat('Ocean Wind Dir.', wind[1])
+        p.setFloat('Ocean Wind Alignment', wind[2])
+        p.setFloat('Ocean Min. Wave Length', wind[3])
+        p.setFloat('Damp Factor Against Wind', wind[4])
+        
+        o = s.createGeometryLoaderObject(name, p)
+        
+        self.set_base_and_pivot(o, base, pivot, )
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
+        
+        if(material is not None):
+            mat = self.load_material(*material)
+            if(mat is not None):
+                o.setMaterial(mat)
+        if(backface_material is not None):
+            mat = self.load_material(*backface_material)
+            if(mat is not None):
+                o.setBackfaceMaterial(mat)
     
     def write(self):
         """Write scene fo file.

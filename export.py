@@ -2900,17 +2900,17 @@ class MXSExport():
         self.mxs_path = os.path.realpath(mxs_path)
         self.use_instances = use_instances
         
-        self._prepare()
-        self._export()
+        self.prepare()
+        self.export()
     
-    def _prepare(self):
+    def prepare(self):
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         if(os.path.exists(self.mxs_path)):
             log("mxs file exists at {0}, will be overwritten..".format(self.mxs_path), 1, LogStyles.WARNING, )
     
-    def _export(self):
+    def export(self):
         log("collecting objects..", 1)
-        self.tree = self._collect()
+        self.tree = self.collect()
         
         # conversion matrix
         self.matrix = Matrix(((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
@@ -2929,33 +2929,33 @@ class MXSExport():
         
         log("processing cameras..", 1, LogStyles.MESSAGE)
         for o in self.cameras:
-            self._camera(o)
+            self.camera(o)
         
         log("processing empties..", 1, LogStyles.MESSAGE)
         for o in self.empties:
-            self._empty(o)
+            self.empty(o)
         
         log("processing meshes..", 1, LogStyles.MESSAGE)
         for o in self.meshes:
-            self._mesh(o)
+            self.mesh(o)
         
         if(self.use_instances):
             # if self.use_instances is False those are already exported..
             log("processing instance base meshes..", 1, LogStyles.MESSAGE)
             for o in self.bases:
-                self._mesh(o)
+                self.mesh(o)
             
             log("processing instances..", 1, LogStyles.MESSAGE)
             for o in self.instances:
-                self._instance(o)
+                self.instance(o)
         
         log("processing duplicates..", 1, LogStyles.MESSAGE)
         if(len(self.duplicates) != 0):
             for o in self.duplicates:
                 if(self.use_instances):
-                    self._instance(o, o['dupli_name'], )
+                    self.instance(o, o['dupli_name'], )
                 else:
-                    self._mesh(o, o['dupli_name'], )
+                    self.mesh(o, o['dupli_name'], )
         
         log("processing particles..", 1, LogStyles.MESSAGE)
         
@@ -3059,6 +3059,32 @@ class MXSExport():
                                      'object': o,
                                      'parent': parent, }
                                 particles.append(d)
+                        elif(ps.settings.maxwell_render.use == 'CLONER'):
+                            mx = ps.settings.maxwell_render
+                            
+                            renderable = False
+                            for om in self.meshes:
+                                if(om['object'] == o):
+                                    if(om['export']):
+                                        renderable = True
+                                        break
+                            show_render = False
+                            for mo in o.modifiers:
+                                if(mo.type == 'PARTICLE_SYSTEM'):
+                                    if(mo.particle_system == ps):
+                                        if(mo.show_render is True):
+                                            show_render = True
+                            
+                            if(renderable and show_render):
+                                d = {'props': ps.settings.maxwell_cloner_extension,
+                                     'matrix': Matrix(),
+                                     'type': ps.settings.maxwell_render.use,
+                                     'ps': ps,
+                                     'name': "{}-{}".format(o.name, ps.name),
+                                     'pmatrix': Matrix(),
+                                     'object': o.name,
+                                     'parent': o.name, }
+                                particles.append(d)
                         else:
                             pass
             
@@ -3067,25 +3093,23 @@ class MXSExport():
         self.particles = collect_particles()
         for o in self.particles:
             if(o['type'] == 'PARTICLES'):
-                self._particles(o)
+                self.particles(o)
             elif(o['type'] == 'GRASS'):
-                self._grass(o)
+                self.grass(o)
             elif(o['type'] == 'HAIR'):
-                self._hair(o)
+                self.hair(o)
             elif(o['type'] == 'CLONER'):
-                # self._cloner(o)
-                pass
-                # TODO cloner extension
+                self.cloner(o)
         
         # all objects are written, now set hierarchy
         self.mxs.hierarchy(self.hierarchy)
         
         log("processing environment..", 1, LogStyles.MESSAGE)
-        self._environment()
+        self.environment()
         log("processing parameters..", 1, LogStyles.MESSAGE)
-        self._parameters()
+        self.parameters()
         log("processing channels..", 1, LogStyles.MESSAGE)
-        self._channels()
+        self.channels()
         
         self.mxs.write()
         
@@ -3093,7 +3117,7 @@ class MXSExport():
         log("{0}".format(self.mxs_path), 0, LogStyles.MESSAGE, prefix="")
         log("done.", 1, LogStyles.MESSAGE)
     
-    def _collect(self):
+    def collect(self):
         objs = self.context.scene.objects
         
         # sort objects
@@ -3468,7 +3492,7 @@ class MXSExport():
         
         return h
     
-    def _matrix_to_base_and_pivot(self, m, ):
+    def matrix_to_base_and_pivot(self, m, ):
         b = ((m[0][3], m[2][3], m[1][3] * -1),
              (m[0][0], m[2][0], m[1][0] * -1),
              (m[0][2], m[2][2], m[1][2] * -1),
@@ -3476,18 +3500,18 @@ class MXSExport():
         p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
         return (b, p, )
     
-    def _get_object_props(self, o, ):
+    def get_object_props(self, o, ):
         try:
             m = o.maxwell_render
         except:
             m = None
         p = None
         if(m is not None):
-            p = (m.hide, m.opacity, self._color_to_rgb8(m.object_id), m.hidden_camera, m.hidden_camera_in_shadow_channel,
+            p = (m.hide, m.opacity, self.color_to_rgb8(m.object_id), m.hidden_camera, m.hidden_camera_in_shadow_channel,
                  m.hidden_global_illumination, m.hidden_reflections_refractions, m.hidden_zclip_planes)
         return p
     
-    def _object_materials(self, ob, d, instance=False, ):
+    def object_materials(self, ob, d, instance=False, ):
         def check_path(p):
             if(p is not ""):
                 if(p.startswith('//')):
@@ -3612,10 +3636,10 @@ class MXSExport():
         
         return d
     
-    def _color_to_rgb8(self, c, ):
+    def color_to_rgb8(self, c, ):
         return tuple([int(255 * v) for v in c])
     
-    def _psys_texture_to_data(self, name, ps, ob=None, ):
+    def psys_texture_to_data(self, name, ps, ob=None, ):
         tex = None
         for ts in ps.settings.texture_slots:
             if(ts is not None):
@@ -3686,7 +3710,7 @@ class MXSExport():
             return d
         return None
     
-    def _camera(self, o, ):
+    def camera(self, o, ):
         log("{0}".format(o['object'].name), 2)
         
         ob = o['object']
@@ -3770,7 +3794,7 @@ class MXSExport():
         
         self.mxs.camera(props, steps, active, lens_extra, mx.response, region, cut_planes, shift_lens, )
     
-    def _empty(self, o, ename=None, ):
+    def empty(self, o, ename=None, ):
         log("{0}".format(o['object'].name), 2)
         ob = o['object']
         
@@ -3779,21 +3803,21 @@ class MXSExport():
             apmw = ob.parent.matrix_world.copy()
             apmw.invert()
             amw = apmw * oamw
-            b, p = self._matrix_to_base_and_pivot(amw)
+            b, p = self.matrix_to_base_and_pivot(amw)
         else:
-            b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+            b, p = self.matrix_to_base_and_pivot(ob.matrix_local)
         
         name = ob.name
         if(ename is not None):
             name = ename
-        self.mxs.empty(name, b, p, self._get_object_props(ob), )
+        self.mxs.empty(name, b, p, self.get_object_props(ob), )
         
         parent = None
         if(ob.parent):
             parent = ob.parent.name
         self.hierarchy.append((name, parent))
     
-    def _mesh(self, o, mname=None, ):
+    def mesh(self, o, mname=None, ):
         ob = o['object']
         log("{0}".format(ob.name), 2)
         
@@ -3827,9 +3851,9 @@ class MXSExport():
             apmw = ob.parent.matrix_world.copy()
             apmw.invert()
             amw = apmw * oamw
-            base, pivot = self._matrix_to_base_and_pivot(amw)
+            base, pivot = self.matrix_to_base_and_pivot(amw)
         else:
-            base, pivot = self._matrix_to_base_and_pivot(ob.matrix_local)
+            base, pivot = self.matrix_to_base_and_pivot(ob.matrix_local)
         
         vertices = [[v.co.to_tuple() for v in me.vertices], ]
         normals = [[v.normal.to_tuple() for v in me.vertices], ]
@@ -3868,7 +3892,7 @@ class MXSExport():
         
         d = {'num_materials': len(ob.material_slots),
              'materials': [], }
-        d = self._object_materials(ob, d)
+        d = self.object_materials(ob, d)
         
         num_materials = d['num_materials']
         materials = None
@@ -3890,7 +3914,7 @@ class MXSExport():
             name = mname
         
         self.mxs.mesh(name, base, pivot, 1, vertices, normals, triangles, triangle_normals, uv_channels,
-                      self._get_object_props(ob), num_materials, materials, triangle_materials, backface_material, )
+                      self.get_object_props(ob), num_materials, materials, triangle_materials, backface_material, )
         
         # cleanup
         bpy.data.meshes.remove(me)
@@ -3910,9 +3934,10 @@ class MXSExport():
                                 gr['objects'].append(name)
                                 break
         
-        # TODO modifiers - subdivision, scatter and cloner
+        # TODO
+        # self.object_extensions(o)
     
-    def _instance(self, o, iname=None, ):
+    def instance(self, o, iname=None, ):
         log("{0}".format(o['object'].name), 2)
         ob = o['object']
         
@@ -3938,15 +3963,15 @@ class MXSExport():
             apmw = ob.parent.matrix_world.copy()
             apmw.invert()
             amw = apmw * oamw
-            base, pivot = self._matrix_to_base_and_pivot(amw)
+            base, pivot = self.matrix_to_base_and_pivot(amw)
         else:
-            base, pivot = self._matrix_to_base_and_pivot(ob.matrix_local)
+            base, pivot = self.matrix_to_base_and_pivot(ob.matrix_local)
         
-        object_props = self._get_object_props(ob)
+        object_props = self.get_object_props(ob)
         
         d = {'num_materials': len(ob.material_slots),
              'materials': [], }
-        d = self._object_materials(ob, d, True, )
+        d = self.object_materials(ob, d, True, )
         
         num_materials = d['num_materials']
         materials = None
@@ -3977,7 +4002,7 @@ class MXSExport():
                                 gr['objects'].append(name)
                                 break
     
-    def _environment(self):
+    def environment(self):
         mx = self.context.scene.world.maxwell_render
         
         env_type = mx.env_type
@@ -3997,8 +4022,8 @@ class MXSExport():
                'sky_reflectance': mx.sky_reflectance / 100.0,
                'sky_asymmetry': mx.sky_asymmetry, }
         dome = {'dome_intensity': mx.dome_intensity,
-                'dome_zenith': self._color_to_rgb8(mx.dome_zenith),
-                'dome_horizon': self._color_to_rgb8(mx.dome_horizon),
+                'dome_zenith': self.color_to_rgb8(mx.dome_zenith),
+                'dome_horizon': self.color_to_rgb8(mx.dome_horizon),
                 'dome_mid_point': math.degrees(mx.dome_mid_point), }
         
         sun_type = mx.sun_type
@@ -4009,7 +4034,7 @@ class MXSExport():
             sun = {'sun_power': mx.sun_power,
                    'sun_radius_factor': mx.sun_radius_factor,
                    'sun_temp': mx.sun_temp,
-                   'sun_color': self._color_to_rgb8(mx.sun_color),
+                   'sun_color': self.color_to_rgb8(mx.sun_color),
                    'sun_location_type': mx.sun_location_type,
                    'sun_latlong_lat': mx.sun_latlong_lat,
                    'sun_latlong_lon': mx.sun_latlong_lon,
@@ -4116,7 +4141,7 @@ class MXSExport():
         
         self.mxs.environment(env_type, sky_type, sky, dome, sun_type, sun, ibl, )
     
-    def _parameters(self):
+    def parameters(self):
         mx = self.context.scene.maxwell_render
         
         scene = {'cpu_threads': mx.scene_cpu_threads,
@@ -4158,7 +4183,7 @@ class MXSExport():
         
         self.mxs.parameters(scene, materials, generals, tone, simulens, illum_caustics, )
     
-    def _channels(self):
+    def channels(self):
         mx = self.context.scene.maxwell_render
         
         mxi = None
@@ -4229,14 +4254,14 @@ class MXSExport():
         if(len(groups) > 0):
             self.mxs.custom_alphas(groups)
     
-    def _particles(self, o, pname=None, ):
+    def particles(self, o, pname=None, ):
         log("{0} ({1})".format(o['name'], o['type']), 2)
         
         name = o['name']
         if(pname is not None):
             name = pname
         
-        base, pivot = self._matrix_to_base_and_pivot(o['matrix'])
+        base, pivot = self.matrix_to_base_and_pivot(o['matrix'])
         
         m = o['props']
         ps = o['ps']
@@ -4315,7 +4340,7 @@ class MXSExport():
                       'min_mass': m.bin_min_mass, 'max_mass': m.bin_max_mass, 'min_temperature': m.bin_min_temperature, 'max_temperature': m.bin_max_temperature, 'min_velocity': m.bin_min_velocity,
                       'max_velocity': m.bin_max_velocity, }
         
-        object_props = (psm.hide, psm.opacity, self._color_to_rgb8(psm.object_id), psm.hidden_camera, psm.hidden_camera_in_shadow_channel,
+        object_props = (psm.hide, psm.opacity, self.color_to_rgb8(psm.object_id), psm.hidden_camera, psm.hidden_camera_in_shadow_channel,
                         psm.hidden_global_illumination, psm.hidden_reflections_refractions, psm.hidden_zclip_planes, )
         
         material = (bpy.path.abspath(m.material), m.material_embed, )
@@ -4334,12 +4359,8 @@ class MXSExport():
             parent = o['parent']
         self.hierarchy.append((name, parent))
     
-    def _grass(self, o, pname=None, ):
+    def grass(self, o, ):
         log("{0} ({1})".format(o['name'], o['type']), 2)
-        
-        name = o['name']
-        if(pname is not None):
-            name = pname
         
         object_name = o['parent']
         
@@ -4348,27 +4369,27 @@ class MXSExport():
         ob = o['object']
         
         properties = {'density': int(m.density),
-                      'density_map': self._psys_texture_to_data(m.density_map, ps, ob, ),
+                      'density_map': self.psys_texture_to_data(m.density_map, ps, ob, ),
                       'length': m.length,
-                      'length_map': self._psys_texture_to_data(m.length_map, ps, ob, ),
+                      'length_map': self.psys_texture_to_data(m.length_map, ps, ob, ),
                       'length_variation': m.length_variation,
                       'root_width': m.root_width,
                       'tip_width': m.tip_width,
                       'direction_type': int(m.direction_type),
                       'initial_angle': math.degrees(m.initial_angle),
-                      'initial_angle_map': self._psys_texture_to_data(m.initial_angle_map, ps, ob, ),
+                      'initial_angle_map': self.psys_texture_to_data(m.initial_angle_map, ps, ob, ),
                       'initial_angle_variation': m.initial_angle_variation,
                       'start_bend': m.start_bend,
-                      'start_bend_map': self._psys_texture_to_data(m.start_bend_map, ps, ob, ),
+                      'start_bend_map': self.psys_texture_to_data(m.start_bend_map, ps, ob, ),
                       'start_bend_variation': m.start_bend_variation,
                       'bend_radius': m.bend_radius,
-                      'bend_radius_map': self._psys_texture_to_data(m.bend_radius_map, ps, ob, ),
+                      'bend_radius_map': self.psys_texture_to_data(m.bend_radius_map, ps, ob, ),
                       'bend_radius_variation': m.bend_radius_variation,
                       'bend_angle': math.degrees(m.bend_angle),
-                      'bend_angle_map': self._psys_texture_to_data(m.bend_angle_map, ps, ob, ),
+                      'bend_angle_map': self.psys_texture_to_data(m.bend_angle_map, ps, ob, ),
                       'bend_angle_variation': m.bend_angle_variation,
                       'cut_off': m.cut_off,
-                      'cut_off_map': self._psys_texture_to_data(m.cut_off_map, ps, ob, ),
+                      'cut_off_map': self.psys_texture_to_data(m.cut_off_map, ps, ob, ),
                       'cut_off_variation': m.cut_off_variation,
                       'points_per_blade': int(m.points_per_blade),
                       'primitive_type': int(m.primitive_type),
@@ -4389,16 +4410,16 @@ class MXSExport():
             log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
             backface_material = None
         
-        self.mxs.grass(name, object_name, properties, material, backface_material, )
+        self.mxs.grass(object_name, properties, material, backface_material, )
     
-    def _hair(self, o, pname=None, ):
+    def hair(self, o, pname=None, ):
         log("{0} ({1})".format(o['name'], o['type']), 2)
         
         name = o['name']
         if(pname is not None):
             name = pname
         
-        base, pivot = self._matrix_to_base_and_pivot(o['matrix'])
+        base, pivot = self.matrix_to_base_and_pivot(o['matrix'])
         
         m = o['props']
         ps = o['ps']
@@ -4475,7 +4496,7 @@ class MXSExport():
             display_max = m.display_max_hairs
         display_percent = int(m.display_percent)
         
-        object_props = (psm.hide, psm.opacity, self._color_to_rgb8(psm.object_id), psm.hidden_camera, psm.hidden_camera_in_shadow_channel,
+        object_props = (psm.hide, psm.opacity, self.color_to_rgb8(psm.object_id), psm.hidden_camera, psm.hidden_camera_in_shadow_channel,
                         psm.hidden_global_illumination, psm.hidden_reflections_refractions, psm.hidden_zclip_planes, )
         
         material = (bpy.path.abspath(m.material), m.material_embed, )
@@ -4493,3 +4514,183 @@ class MXSExport():
         if(o['parent']):
             parent = o['parent']
         self.hierarchy.append((name, parent))
+    
+    def cloner(self, o, ):
+        log("{0} ({1})".format(o['name'], o['type']), 2)
+        
+        m = o['props']
+        ps = o['ps']
+        psm = ps.settings.maxwell_cloner_extension
+        
+        if(m.source == 'BLENDER_PARTICLES'):
+            if(len(ps.particles) == 0):
+                msg = "particle system {} has no particles".format(ps.name)
+                raise ValueError(msg)
+            ok = False
+            for part in ps.particles:
+                if(part.alive_state == "ALIVE"):
+                    ok = True
+                    break
+            if(ok is False):
+                msg = "particle system {} has no 'ALIVE' particles".format(ps.name)
+                raise ValueError(msg)
+            locs = []
+            vels = []
+            sizes = []
+            mat = dp['pmatrix'].copy()
+            mat.invert()
+            for part in ps.particles:
+                if(part.alive_state == "ALIVE"):
+                    l = part.location.copy()
+                    l = mat * l
+                    locs.append(l.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
+                    if(m.bl_use_velocity):
+                        v = part.velocity.copy()
+                        v = mat * v
+                        vels.append(v.to_tuple() + (0.0, 0.0, 0.0, 0, 0, 0))
+                    else:
+                        vels.append((0.0, 0.0, 0.0) + (0.0, 0.0, 0.0, 0, 0, 0))
+                    # size per particle
+                    if(m.bl_use_size):
+                        sizes.append(part.size)
+                    else:
+                        sizes.append(m.bl_size)
+            locs = maths.apply_matrix_for_realflow_bin_export(locs)
+            vels = maths.apply_matrix_for_realflow_bin_export(vels)
+            particles = []
+            for i, ploc in enumerate(locs):
+                pnor = Vector(vels[i][:3])
+                pnor.normalize()
+                particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
+            
+            if(os.path.exists(bpy.path.abspath(m.directory)) and not m.overwrite):
+                raise OSError("file: {} exists".format(bpy.path.abspath(m.directory)))
+            
+            cf = self.context.scene.frame_current
+            prms = {'directory': bpy.path.abspath(m.directory),
+                    'name': "{}".format(dp['name']),
+                    'frame': cf,
+                    'particles': particles,
+                    'fps': self.context.scene.render.fps,
+                    'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
+            rfbw = rfbin.RFBinWriter(**prms)
+            m.filename = rfbw.path
+        
+        d = {'object_name': o['parent'],
+             'path': bpy.path.abspath(m.filename),
+             'radius': m.radius,
+             'mb_factor': m.mb_factor,
+             'load_percent': m.load_percent,
+             'start_offset': m.start_offset,
+             'ex_npp': m.extra_npp,
+             'ex_p_dispersion': m.extra_p_dispersion,
+             'ex_p_deformation': m.extra_p_deformation,
+             'align_to_velocity': m.align_to_velocity,
+             'scale_with_radius': m.scale_with_radius,
+             'inherit_obj_id': m.inherit_obj_id,
+             'frame': self.context.scene.frame_current,
+             'fps': self.context.scene.render.fps,
+             'display_percent': int(m.display_percent),
+             'display_max': int(m.display_max), }
+        self.mxs.cloner(**d)
+    
+    def object_extensions(self, o, ):
+        # TODO
+        ob = o['object']
+        
+        sd = ob.maxwell_subdivision_extension
+        if(sd.enabled):
+            self.mxs.subdivision(ob.name, int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), )
+        
+        '''
+        sc = ob.maxwell_scatter_extension
+        if(sc.enabled):
+            density = (sc.density, )
+            scale = ()
+            rotation = ()
+            lod = ()
+            
+            def texture_to_data(name):
+                tex = None
+                for t in bpy.data.textures:
+                    if(t.type == 'IMAGE'):
+                        if(t.name == name):
+                            tex = t
+            
+                d = {'type': 'IMAGE',
+                     'path': "",
+                     'channel': 0,
+                     'use_override_map': False,
+                     'tile_method_type': [True, True],
+                     'tile_method_units': 0,
+                     'repeat': [1.0, 1.0],
+                     'mirror': [False, False],
+                     'offset': [0.0, 0.0],
+                     'rotation': 0.0,
+                     'invert': False,
+                     'alpha_only': False,
+                     'interpolation': False,
+                     'brightness': 0.0,
+                     'contrast': 0.0,
+                     'saturation': 0.0,
+                     'hue': 0.0,
+                     'rgb_clamp': [0.0, 255.0], }
+                if(tex is not None):
+                    d['path'] = bpy.path.abspath(tex.image.filepath),
+                    return d
+                return None
+            
+            self.mxs.scatter(ob.name, sc.scatter_object, sc.inherit_objectid, density, int(sc.seed), scale, rotation, lod, int(sc.display_percent), int(sc.display_max), )
+            
+            d['scatter_ext'] = {'scatter_object': sc.scatter_object,
+                                'inherit_objectid': sc.inherit_objectid,
+                                'density': sc.density,
+                                'density_map': texture_to_data(sc.density_map),
+                                'seed': int(sc.seed),
+                                'scale_x': sc.scale_x,
+                                'scale_y': sc.scale_y,
+                                'scale_z': sc.scale_z,
+                                'scale_map': texture_to_data(sc.scale_map),
+                                'scale_variation_x': sc.scale_variation_x,
+                                'scale_variation_y': sc.scale_variation_y,
+                                'scale_variation_z': sc.scale_variation_z,
+                                'rotation_x': math.degrees(sc.rotation_x),
+                                'rotation_y': math.degrees(sc.rotation_y),
+                                'rotation_z': math.degrees(sc.rotation_z),
+                                'rotation_map': texture_to_data(sc.rotation_map),
+                                'rotation_variation_x': sc.rotation_variation_x,
+                                'rotation_variation_y': sc.rotation_variation_y,
+                                'rotation_variation_z': sc.rotation_variation_z,
+                                'rotation_direction': int(sc.rotation_direction),
+                                'lod': sc.lod,
+                                'lod_min_distance': sc.lod_min_distance,
+                                'lod_max_distance': sc.lod_max_distance,
+                                'lod_max_distance_density': sc.lod_max_distance_density,
+                                'display_percent': int(sc.display_percent),
+                                'display_max_blades': int(sc.display_max_blades), }
+        '''
+        '''
+        ms = ob.maxwell_sea_extension
+        if(ms.enabled):
+            name = "{}-MaxwellSea".format(ob.name)
+            self.mxs.sea(object_name, name, base, pivot, object_props=None, geometry=None, wind=None, material=None, backface_material=None, )
+            
+            d['sea_ext'] = [name, ms.hide_parent, ms.reference_time, int(ms.resolution), ms.ocean_depth, ms.vertical_scale, ms.ocean_dim,
+                            ms.ocean_seed, ms.enable_choppyness, ms.choppy_factor, ms.ocean_wind_mod, math.degrees(ms.ocean_wind_dir),
+                            ms.ocean_wind_alignment, ms.ocean_min_wave_length, ms.damp_factor_against_wind, ms.enable_white_caps, ]
+        
+        
+        log("{0}".format(ob.name), 2)
+        '''
+    
+    def subdivision(self, o, ):
+        # TODO
+        pass
+    
+    def scatter(self, o, ):
+        # TODO
+        pass
+    
+    def sea(self, o, name=None, ):
+        # TODO
+        pass
