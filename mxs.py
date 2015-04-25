@@ -66,6 +66,15 @@ elif(s == 'Windows'):
     from pymaxwell import *
 
 
+def read_mxm_preview(path):
+    import numpy
+    s = Cmaxwell(mwcallback)
+    m = s.readMaterial(path)
+    a = m.getPreview()[0]
+    r = numpy.copy(a)
+    return r
+
+
 class MXSWriter():
     def __init__(self, path, append=False, ):
         """Create scene or load existing.
@@ -95,6 +104,15 @@ class MXSWriter():
         self.mgr.loadAllExtensions()
         
         self.matdb = []
+    
+    def write(self):
+        """Write scene fo file.
+        (no parameters..)
+        """
+        log("saving scene..", 2)
+        ok = self.mxs.writeMXS(self.path)
+        log("done.", 2)
+        return ok
     
     def set_base_and_pivot(self, o, base=None, pivot=None, ):
         """Convert float tuples to Cbases and set to object.
@@ -148,53 +166,67 @@ class MXSWriter():
         if(hzcp):
             o.excludeOfCutPlanes(True)
     
-    def camera(self, props, steps, active=False, lens_extra=None, response=None, region=None, custom_bokeh=(1.0, 0.0, False), cut_planes=(0.0, 1e7, False), shift_lens=(0.0, 0.0), ):
-        """Create camera.
-        props           (string name, int nSteps, float shutter, float filmWidth, float filmHeight, float iso, int diaphragmType, float angle,
-                         int nBlades, float fps, int xRes, int yRes, float pixelAspect, int lensType, int projectionType)
-        steps           [(int iStep, [3 float] origin, [3 float] focalPoint, [3 float] up, float focalLength, float fStop, bool focalLengthNeedCorrection), ..., ]
-        active          bool
-        lens_extra      float or None
-        response        string or None
-        region          (float x1, float y1, float x2, float y2, string type) or None
-        custom_bokeh    (float ratio, float angle, bool enabled) or None
-        cut_planes      (float near, float far, bool enabled) or None
-        shift_lens      (float x, float y) or None
+    def texture_data_to_mxparams(self, name, data, mxparams, ):
+        """Create CtextureMap, fill with parameters and put into mxparams.
+        name        string
+        data        dict {'type':               string,
+                          'path':               string,
+                          'channel':            int,
+                          'use_override_map':   bool,
+                          'tile_method_type':   [bool, bool],
+                          'tile_method_units':  int,
+                          'repeat':             [float, float],
+                          'mirror':             [bool, bool],
+                          'offset':             [float, float],
+                          'rotation':           float,
+                          'invert':             bool,
+                          'alpha_only':         bool,
+                          'interpolation':      bool,
+                          'brightness':         float,
+                          'contrast':           float,
+                          'saturation':         float,
+                          'hue':                float,
+                          'rgb_clamp':          [float, float], }
+        mxparams    mxparams
         """
+        d = data
+        if(d is None):
+            return
         
-        # TODO how to set shutter_angle?
-        
-        s = self.mxs
-        c = s.addCamera(*props)
-        for step in steps:
-            l = list(step[:])
-            l[1] = Cvector(*l[1])
-            l[2] = Cvector(*l[2])
-            l[3] = Cvector(*l[3])
-            c.setStep(*l)
-        
-        # TYPE_THIN_LENS, TYPE_PINHOLE, TYPE_ORTHO
-        if(lens_extra is not None):
-            if(props[13] == TYPE_FISHEYE):
-                c.setFishLensProperties(lens_extra)
-            if(props[13] == TYPE_SPHERICAL):
-                c.setSphericalLensProperties(lens_extra)
-            if(props[13] == TYPE_CYLINDRICAL):
-                c.setCylindricalLensProperties(lens_extra)
-        if(response is not None):
-            c.setCameraResponsePreset(response)
-        if(custom_bokeh is not None):
-            c.setCustomBokeh(*custom_bokeh)
-        if(cut_planes is not None):
-            c.setCutPlanes(*cut_planes)
-        if(shift_lens is not None):
-            c.setShiftLens(*shift_lens)
-        if(region is not None):
-            c.setScreenRegion(*region)
-        
-        if(active):
-            c.setActive()
-        return c
+        # t = mxparams.getTextureMap(name)[0]
+        t = CtextureMap()
+        t.setPath(d['path'])
+        v = Cvector2D()
+        v.assign(*d['repeat'])
+        t.scale = v
+        v = Cvector2D()
+        v.assign(*d['offset'])
+        t.offset = v
+        t.rotation = d['rotation']
+        t.uvwChannelID = d['channel']
+        t.uIsTiled = d['tile_method_type'][0]
+        t.vIsTiled = d['tile_method_type'][1]
+        t.uIsMirrored = d['mirror'][0]
+        t.vIsMirrored = d['mirror'][1]
+        t.invert = d['invert']
+        # t.doGammaCorrection = 0
+        t.useAbsoluteUnits = d['tile_method_units']
+        # t.normalMappingFlipRed = 0
+        # t.normalMappingFlipGreen = 0
+        # t.normalMappingFullRangeBlue = 0
+        t.useAlpha = d['alpha_only']
+        t.typeInterpolation = d['interpolation']
+        t.saturation = d['saturation']
+        t.contrast = d['contrast']
+        t.brightness = d['brightness']
+        t.hue = d['hue']
+        t.clampMin = d['rgb_clamp'][0]
+        t.clampMax = d['rgb_clamp'][1]
+        t.useGlobalMap = d['use_override_map']
+        # t.cosA = 1.000000
+        # t.sinA = 0.000000
+        ok = mxparams.setTextureMap(name, t)
+        return mxparams
     
     def load_material(self, path, embed, ):
         """Load material from mxm file.
@@ -253,6 +285,54 @@ class MXSWriter():
         self.matdb.append((n, m, True))
         
         return m
+    
+    def camera(self, props, steps, active=False, lens_extra=None, response=None, region=None, custom_bokeh=(1.0, 0.0, False), cut_planes=(0.0, 1e7, False), shift_lens=(0.0, 0.0), ):
+        """Create camera.
+        props           (string name, int nSteps, float shutter, float filmWidth, float filmHeight, float iso, int diaphragmType, float angle,
+                         int nBlades, float fps, int xRes, int yRes, float pixelAspect, int lensType, int projectionType)
+        steps           [(int iStep, [3 float] origin, [3 float] focalPoint, [3 float] up, float focalLength, float fStop, bool focalLengthNeedCorrection), ..., ]
+        active          bool
+        lens_extra      float or None
+        response        string or None
+        region          (float x1, float y1, float x2, float y2, string type) or None
+        custom_bokeh    (float ratio, float angle, bool enabled) or None
+        cut_planes      (float near, float far, bool enabled) or None
+        shift_lens      (float x, float y) or None
+        """
+        
+        # TODO how to set shutter_angle?
+        
+        s = self.mxs
+        c = s.addCamera(*props)
+        for step in steps:
+            l = list(step[:])
+            l[1] = Cvector(*l[1])
+            l[2] = Cvector(*l[2])
+            l[3] = Cvector(*l[3])
+            c.setStep(*l)
+        
+        # TYPE_THIN_LENS, TYPE_PINHOLE, TYPE_ORTHO
+        if(lens_extra is not None):
+            if(props[13] == TYPE_FISHEYE):
+                c.setFishLensProperties(lens_extra)
+            if(props[13] == TYPE_SPHERICAL):
+                c.setSphericalLensProperties(lens_extra)
+            if(props[13] == TYPE_CYLINDRICAL):
+                c.setCylindricalLensProperties(lens_extra)
+        if(response is not None):
+            c.setCameraResponsePreset(response)
+        if(custom_bokeh is not None):
+            c.setCustomBokeh(*custom_bokeh)
+        if(cut_planes is not None):
+            c.setCutPlanes(*cut_planes)
+        if(shift_lens is not None):
+            c.setShiftLens(*shift_lens)
+        if(region is not None):
+            c.setScreenRegion(*region)
+        
+        if(active):
+            c.setActive()
+        return c
     
     def empty(self, name, base, pivot, object_props=None, ):
         """Create empty object.
@@ -808,201 +888,7 @@ class MXSWriter():
                 o = s.getObject(n)
                 o.addToCustomAlpha(a['name'])
     
-    def hair(self, name, extension, base, pivot, root_radius, tip_radius, data, object_props=None, display_percent=10, display_max=1000, material=None, backface_material=None, ):
-        """Create hair/grass object.
-        name                string
-        extension           string ('MaxwellHair' ,'MGrassP')
-        base                ((3 float), (3 float), (3 float), (3 float))
-        pivot               ((3 float), (3 float), (3 float), (3 float))
-        root_radius         float
-        tip_radius          float
-        data                dict of extension data
-        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
-        display_percent     int
-        display_max         int
-        material            (string path, bool embed) or None
-        backface_material   (string path, bool embed) or None
-        """
-        s = self.mxs
-        e = self.mgr.createDefaultGeometryProceduralExtension(extension)
-        p = e.getExtensionData()
-        p.setByteArray('HAIR_MAJOR_VER', data['HAIR_MAJOR_VER'])
-        p.setByteArray('HAIR_MINOR_VER', data['HAIR_MINOR_VER'])
-        p.setByteArray('HAIR_FLAG_ROOT_UVS', data['HAIR_FLAG_ROOT_UVS'])
-        
-        m = memoryview(struct.pack("I", data['HAIR_GUIDES_COUNT'][0])).tolist()
-        p.setByteArray('HAIR_GUIDES_COUNT', m)
-        m = memoryview(struct.pack("I", data['HAIR_GUIDES_POINT_COUNT'][0])).tolist()
-        p.setByteArray('HAIR_GUIDES_POINT_COUNT', m)
-        
-        c = Cbase()
-        c.origin = Cvector(0.0, 0.0, 0.0)
-        c.xAxis = Cvector(1.0, 0.0, 0.0)
-        c.yAxis = Cvector(0.0, 1.0, 0.0)
-        c.zAxis = Cvector(0.0, 0.0, 1.0)
-        
-        p.setFloatArray('HAIR_POINTS', list(data['HAIR_POINTS']), c)
-        p.setFloatArray('HAIR_NORMALS', list(data['HAIR_NORMALS']), c)
-        
-        p.setUInt('Display Percent', display_percent)
-        if(extension == 'MaxwellHair'):
-            p.setUInt('Display Max. Hairs', display_max)
-            p.setDouble('Root Radius', root_radius)
-            p.setDouble('Tip Radius', tip_radius)
-        if(extension == 'MGrassP'):
-            p.setUInt('Display Max. Hairs', display_max)
-            p.setDouble('Root Radius', root_radius)
-            p.setDouble('Tip Radius', tip_radius)
-        
-        o = s.createGeometryProceduralObject(name, p)
-        
-        self.set_base_and_pivot(o, base, pivot, )
-        if(object_props is not None):
-            self.set_object_props(o, *object_props)
-        
-        if(material is not None):
-            mat = self.load_material(*material)
-            if(mat is not None):
-                o.setMaterial(mat)
-        if(backface_material is not None):
-            mat = self.load_material(*backface_material)
-            if(mat is not None):
-                o.setBackfaceMaterial(mat)
-        
-        return o
-    
-    def texture_data_to_mxparams(self, name, data, mxparams, ):
-        """Create CtextureMap, fill with parameters and put into mxparams.
-        name        string
-        data        dict {'type':               string,
-                          'path':               string,
-                          'channel':            int,
-                          'use_override_map':   bool,
-                          'tile_method_type':   [bool, bool],
-                          'tile_method_units':  int,
-                          'repeat':             [float, float],
-                          'mirror':             [bool, bool],
-                          'offset':             [float, float],
-                          'rotation':           float,
-                          'invert':             bool,
-                          'alpha_only':         bool,
-                          'interpolation':      bool,
-                          'brightness':         float,
-                          'contrast':           float,
-                          'saturation':         float,
-                          'hue':                float,
-                          'rgb_clamp':          [float, float], }
-        mxparams    mxparams
-        """
-        d = data
-        if(d is None):
-            return
-        
-        # t = mxparams.getTextureMap(name)[0]
-        t = CtextureMap()
-        t.setPath(d['path'])
-        v = Cvector2D()
-        v.assign(*d['repeat'])
-        t.scale = v
-        v = Cvector2D()
-        v.assign(*d['offset'])
-        t.offset = v
-        t.rotation = d['rotation']
-        t.uvwChannelID = d['channel']
-        t.uIsTiled = d['tile_method_type'][0]
-        t.vIsTiled = d['tile_method_type'][1]
-        t.uIsMirrored = d['mirror'][0]
-        t.vIsMirrored = d['mirror'][1]
-        t.invert = d['invert']
-        # t.doGammaCorrection = 0
-        t.useAbsoluteUnits = d['tile_method_units']
-        # t.normalMappingFlipRed = 0
-        # t.normalMappingFlipGreen = 0
-        # t.normalMappingFullRangeBlue = 0
-        t.useAlpha = d['alpha_only']
-        t.typeInterpolation = d['interpolation']
-        t.saturation = d['saturation']
-        t.contrast = d['contrast']
-        t.brightness = d['brightness']
-        t.hue = d['hue']
-        t.clampMin = d['rgb_clamp'][0]
-        t.clampMax = d['rgb_clamp'][1]
-        t.useGlobalMap = d['use_override_map']
-        # t.cosA = 1.000000
-        # t.sinA = 0.000000
-        ok = mxparams.setTextureMap(name, t)
-        return mxparams
-    
-    def grass(self, object_name, properties, material=None, backface_material=None, ):
-        """Create grass object modifier extension.
-        object_name         string
-        properties          dict of many, many properties, see code..
-        material            (string path, bool embed) or None
-        backface_material   (string path, bool embed) or None
-        """
-        s = self.mxs
-        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellGrass')
-        p = e.getExtensionData()
-        
-        if(material is not None):
-            mat = self.load_material(*material)
-            if(mat is not None):
-                p.setString('Material', mat.getName())
-        if(backface_material is not None):
-            mat = self.load_material(*backface_material)
-            if(mat is not None):
-                p.setString('Double Sided Material', bmat.getName())
-        
-        p.setUInt('Density', properties['density'])
-        self.texture_data_to_mxparams('Density Map', properties['density_map'], p, )
-        
-        p.setFloat('Length', properties['length'])
-        self.texture_data_to_mxparams('Length Map', properties['length_map'], p, )
-        p.setFloat('Length Variation', properties['length_variation'])
-        
-        p.setFloat('Root Width', properties['root_width'])
-        p.setFloat('Tip Width', properties['tip_width'])
-        
-        p.setUInt('Direction Type', properties['direction_type'])
-        
-        p.setFloat('Initial Angle', properties['initial_angle'])
-        p.setFloat('Initial Angle Variation', properties['initial_angle_variation'])
-        self.texture_data_to_mxparams('Initial Angle Map', properties['initial_angle_map'], p, )
-        
-        p.setFloat('Start Bend', properties['start_bend'])
-        p.setFloat('Start Bend Variation', properties['start_bend_variation'])
-        self.texture_data_to_mxparams('Start Bend Map', properties['start_bend_map'], p, )
-        
-        p.setFloat('Bend Radius', properties['bend_radius'])
-        p.setFloat('Bend Radius Variation', properties['bend_radius_variation'])
-        self.texture_data_to_mxparams('Bend Radius Map', properties['bend_radius_map'], p, )
-        
-        p.setFloat('Bend Angle', properties['bend_angle'])
-        p.setFloat('Bend Angle Variation', properties['bend_angle_variation'])
-        self.texture_data_to_mxparams('Bend Angle Map', properties['bend_angle_map'], p, )
-        
-        p.setFloat('Cut Off', properties['cut_off'])
-        p.setFloat('Cut Off Variation', properties['cut_off_variation'])
-        self.texture_data_to_mxparams('Cut Off Map', properties['cut_off_map'], p, )
-        
-        p.setUInt('Points per Blade', properties['points_per_blade'])
-        p.setUInt('Primitive Type', properties['primitive_type'])
-        
-        p.setUInt('Seed', properties['seed'])
-        
-        p.setByte('Enable LOD', properties['lod'])
-        p.setFloat('LOD Min Distance', properties['lod_min_distance'])
-        p.setFloat('LOD Max Distance', properties['lod_max_distance'])
-        p.setFloat('LOD Max Distance Density', properties['lod_max_distance_density'])
-        
-        p.setUInt('Display Percent', properties['display_percent'])
-        p.setUInt('Display Max. Blades', properties['display_max_blades'])
-        
-        o = s.getObject(object_name)
-        o.applyGeometryModifierExtension(p)
-        return o
-    
-    def particles(self, name, properties, base, pivot, object_props=None, material=None, backface_material=None, ):
+    def ext_particles(self, name, properties, base, pivot, object_props=None, material=None, backface_material=None, ):
         """Create particles object.
         name                string
         properties          dict
@@ -1081,130 +967,70 @@ class MXSWriter():
         
         return o
     
-    def subdivision(self, object_name, level=2, scheme=0, interpolation=2, crease=0.0, smooth_angle=math.radians(90.0), ):
-        """Create subdivision object modifier extension.
-        object_name     string
-        level           int
-        scheme          int     (0, "Catmull-Clark"), (1, "Loop")
-        interpolation   int     (0, "None"), (1, "Edges"), (2, "Edges And Corners"), (3, "Sharp")
-        crease          float
-        smooth          float
-        """
-        s = self.mxs
-        e = self.mgr.createDefaultGeometryModifierExtension('SubdivisionModifier')
-        p = e.getExtensionData()
-        
-        p.setUInt('Subdivision Level', level)
-        p.setUInt('Subdivision Scheme', scheme)
-        p.setUInt('Interpolation', interpolation)
-        p.setFloat('Crease', crease)
-        p.setFloat('Smooth Angle', smooth_angle)
-        
-        o = s.getObject(object_name)
-        o.applyGeometryModifierExtension(p)
-        return o
-    
-    def scatter(self, object_name, scatter_object, inherit_objectid=False, density=None, seed=0, scale=None, rotation=None, lod=None, display_percent=10, display_max=1000, ):
-        """Create scatter object modifier extension.
-        object_name                 string
-        scatter_object              string
-        inherit_objectid            bool
-        density                     (float, density_map or None) or None
-        seed                        int
-        scale                       ((float, float, float), scale_map or None, scale_variation (float, float, float)) or None
-        rotation                    ((float, float, float), rotation_map or None, rotation_variation (float, float, float), rotation_direction int (0, "Polygon Normal"), (1, "World Z")) or None
-        lod                         (bool, lod_min_distance float, lod_max_distance float, lod_max_distance_density float) or None
-        display_percent             int
-        display_max                 int
-        """
-        s = self.mxs
-        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellScatter')
-        p = e.getExtensionData()
-        
-        p.setString('Object', scatter_object)
-        p.setByte('Inherit ObjectID', inherit_objectid)
-        if(density is not None):
-            p.setFloat('Density', density[0])
-            self.texture_data_to_mxparams('Density Map', density[1], p, )
-        p.setUInt('Seed', seed)
-        if(scale is not None):
-            p.setFloat('Scale X', scale[0][0])
-            p.setFloat('Scale Y', scale[0][1])
-            p.setFloat('Scale Z', scale[0][2])
-            self.texture_data_to_mxparams('Scale Map', scale[1], p, )
-            p.setFloat('Scale X Variation', scale[2][0])
-            p.setFloat('Scale Y Variation', scale[2][1])
-            p.setFloat('Scale Z Variation', scale[2][2])
-        if(rotation is not None):
-            p.setFloat('Rotation X', rotation[0][0])
-            p.setFloat('Rotation Y', rotation[0][1])
-            p.setFloat('Rotation Z', rotation[0][2])
-            self.texture_data_to_mxparams('Rotation Map', rotation[1], p, )
-            p.setFloat('Rotation X Variation', rotation[2][0])
-            p.setFloat('Rotation Y Variation', rotation[2][1])
-            p.setFloat('Rotation Z Variation', rotation[2][2])
-            p.setUInt('Direction Type', rotation[3])
-        if(lod is not None):
-            p.setByte('Enable LOD', lod[0])
-            p.setFloat('LOD Min Distance', lod[1])
-            p.setFloat('LOD Max Distance', lod[2])
-            p.setFloat('LOD Max Distance Density', lod[3])
-        p.setUInt('Display Percent', display_percent)
-        p.setUInt('Display Max. Blades', display_max)
-        
-        o = s.getObject(object_name)
-        o.applyGeometryModifierExtension(p)
-        return o
-    
-    def cloner(self, object_name, path, radius=1.0, mb_factor=1.0, load_percent=100.0, start_offset=0, ex_npp=0, ex_p_dispersion=0.0, ex_p_deformation=0.0, align_to_velocity=False, scale_with_radius=False, inherit_obj_id=False, frame=1, fps=24.0, display_percent=10, display_max=1000, ):
-        """Create cloner object modifier extension.
-        object_name         string
-        path                string
-        radius              float
-        mb_factor           float
-        load_percent        float
-        start_offset        int
-        ex_npp              int
-        ex_p_dispersion     float
-        ex_p_deformation    float
-        align_to_velocity   bool
-        scale_with_radius   bool
-        inherit_obj_id      bool
-        frame               int
-        fps                 float
+    def ext_hair(self, name, extension, base, pivot, root_radius, tip_radius, data, object_props=None, display_percent=10, display_max=1000, material=None, backface_material=None, ):
+        """Create hair/grass object.
+        name                string
+        extension           string ('MaxwellHair' ,'MGrassP')
+        base                ((3 float), (3 float), (3 float), (3 float))
+        pivot               ((3 float), (3 float), (3 float), (3 float))
+        root_radius         float
+        tip_radius          float
+        data                dict of extension data
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
         display_percent     int
         display_max         int
+        material            (string path, bool embed) or None
+        backface_material   (string path, bool embed) or None
         """
         s = self.mxs
-        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellCloner')
+        e = self.mgr.createDefaultGeometryProceduralExtension(extension)
         p = e.getExtensionData()
+        p.setByteArray('HAIR_MAJOR_VER', data['HAIR_MAJOR_VER'])
+        p.setByteArray('HAIR_MINOR_VER', data['HAIR_MINOR_VER'])
+        p.setByteArray('HAIR_FLAG_ROOT_UVS', data['HAIR_FLAG_ROOT_UVS'])
         
-        p.setString('FileName', path)
-        p.setFloat('Radius Factor', radius)
+        m = memoryview(struct.pack("I", data['HAIR_GUIDES_COUNT'][0])).tolist()
+        p.setByteArray('HAIR_GUIDES_COUNT', m)
+        m = memoryview(struct.pack("I", data['HAIR_GUIDES_POINT_COUNT'][0])).tolist()
+        p.setByteArray('HAIR_GUIDES_POINT_COUNT', m)
         
-        p.setFloat('MB Factor', mb_factor)
-        p.setFloat('Load particles %', load_percent)
-        p.setUInt('Start offset', start_offset)
+        c = Cbase()
+        c.origin = Cvector(0.0, 0.0, 0.0)
+        c.xAxis = Cvector(1.0, 0.0, 0.0)
+        c.yAxis = Cvector(0.0, 1.0, 0.0)
+        c.zAxis = Cvector(0.0, 0.0, 1.0)
         
-        p.setUInt('Create N particles per particle', ex_npp)
-        p.setFloat('Extra particles dispersion', ex_p_dispersion)
-        p.setFloat('Extra particles deformation', ex_p_deformation)
-        
-        p.setByte('Use velocity', align_to_velocity)
-        p.setByte('Scale with particle radius', scale_with_radius)
-        p.setByte('Inherit ObjectID', inherit_obj_id)
-        
-        p.setInt('Frame#', frame)
-        p.setFloat('fps', fps)
+        p.setFloatArray('HAIR_POINTS', list(data['HAIR_POINTS']), c)
+        p.setFloatArray('HAIR_NORMALS', list(data['HAIR_NORMALS']), c)
         
         p.setUInt('Display Percent', display_percent)
-        p.setUInt('Display Max. Particles', display_max)
+        if(extension == 'MaxwellHair'):
+            p.setUInt('Display Max. Hairs', display_max)
+            p.setDouble('Root Radius', root_radius)
+            p.setDouble('Tip Radius', tip_radius)
+        if(extension == 'MGrassP'):
+            p.setUInt('Display Max. Hairs', display_max)
+            p.setDouble('Root Radius', root_radius)
+            p.setDouble('Tip Radius', tip_radius)
         
-        o = s.getObject(object_name)
-        o.applyGeometryModifierExtension(p)
+        o = s.createGeometryProceduralObject(name, p)
+        
+        self.set_base_and_pivot(o, base, pivot, )
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
+        
+        if(material is not None):
+            mat = self.load_material(*material)
+            if(mat is not None):
+                o.setMaterial(mat)
+        if(backface_material is not None):
+            mat = self.load_material(*backface_material)
+            if(mat is not None):
+                o.setBackfaceMaterial(mat)
+        
         return o
     
-    def sea(self, name, base, pivot, object_props=None, geometry=None, wind=None, material=None, backface_material=None, ):
+    def ext_sea(self, name, base, pivot, object_props=None, geometry=None, wind=None, material=None, backface_material=None, ):
         """Create sea extension object.
         name                string
         base                ((3 float), (3 float), (3 float), (3 float))
@@ -1259,20 +1085,194 @@ class MXSWriter():
             if(mat is not None):
                 o.setBackfaceMaterial(mat)
     
-    def write(self):
-        """Write scene fo file.
-        (no parameters..)
+    def mod_grass(self, object_name, properties, material=None, backface_material=None, ):
+        """Create grass object modifier extension.
+        object_name         string
+        properties          dict of many, many properties, see code..
+        material            (string path, bool embed) or None
+        backface_material   (string path, bool embed) or None
         """
-        log("saving scene..", 2)
-        ok = self.mxs.writeMXS(self.path)
-        log("done.", 2)
-        return ok
-
-
-def read_mxm_preview(path):
-    import numpy
-    s = Cmaxwell(mwcallback)
-    m = s.readMaterial(path)
-    a = m.getPreview()[0]
-    r = numpy.copy(a)
-    return r
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellGrass')
+        p = e.getExtensionData()
+        
+        if(material is not None):
+            mat = self.load_material(*material)
+            if(mat is not None):
+                p.setString('Material', mat.getName())
+        if(backface_material is not None):
+            mat = self.load_material(*backface_material)
+            if(mat is not None):
+                p.setString('Double Sided Material', bmat.getName())
+        
+        p.setUInt('Density', properties['density'])
+        self.texture_data_to_mxparams('Density Map', properties['density_map'], p, )
+        
+        p.setFloat('Length', properties['length'])
+        self.texture_data_to_mxparams('Length Map', properties['length_map'], p, )
+        p.setFloat('Length Variation', properties['length_variation'])
+        
+        p.setFloat('Root Width', properties['root_width'])
+        p.setFloat('Tip Width', properties['tip_width'])
+        
+        p.setUInt('Direction Type', properties['direction_type'])
+        
+        p.setFloat('Initial Angle', properties['initial_angle'])
+        p.setFloat('Initial Angle Variation', properties['initial_angle_variation'])
+        self.texture_data_to_mxparams('Initial Angle Map', properties['initial_angle_map'], p, )
+        
+        p.setFloat('Start Bend', properties['start_bend'])
+        p.setFloat('Start Bend Variation', properties['start_bend_variation'])
+        self.texture_data_to_mxparams('Start Bend Map', properties['start_bend_map'], p, )
+        
+        p.setFloat('Bend Radius', properties['bend_radius'])
+        p.setFloat('Bend Radius Variation', properties['bend_radius_variation'])
+        self.texture_data_to_mxparams('Bend Radius Map', properties['bend_radius_map'], p, )
+        
+        p.setFloat('Bend Angle', properties['bend_angle'])
+        p.setFloat('Bend Angle Variation', properties['bend_angle_variation'])
+        self.texture_data_to_mxparams('Bend Angle Map', properties['bend_angle_map'], p, )
+        
+        p.setFloat('Cut Off', properties['cut_off'])
+        p.setFloat('Cut Off Variation', properties['cut_off_variation'])
+        self.texture_data_to_mxparams('Cut Off Map', properties['cut_off_map'], p, )
+        
+        p.setUInt('Points per Blade', properties['points_per_blade'])
+        p.setUInt('Primitive Type', properties['primitive_type'])
+        
+        p.setUInt('Seed', properties['seed'])
+        
+        p.setByte('Enable LOD', properties['lod'])
+        p.setFloat('LOD Min Distance', properties['lod_min_distance'])
+        p.setFloat('LOD Max Distance', properties['lod_max_distance'])
+        p.setFloat('LOD Max Distance Density', properties['lod_max_distance_density'])
+        
+        p.setUInt('Display Percent', properties['display_percent'])
+        p.setUInt('Display Max. Blades', properties['display_max_blades'])
+        
+        o = s.getObject(object_name)
+        o.applyGeometryModifierExtension(p)
+        return o
+    
+    def mod_subdivision(self, object_name, level=2, scheme=0, interpolation=2, crease=0.0, smooth_angle=math.radians(90.0), ):
+        """Create subdivision object modifier extension.
+        object_name     string
+        level           int
+        scheme          int     (0, "Catmull-Clark"), (1, "Loop")
+        interpolation   int     (0, "None"), (1, "Edges"), (2, "Edges And Corners"), (3, "Sharp")
+        crease          float
+        smooth          float
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryModifierExtension('SubdivisionModifier')
+        p = e.getExtensionData()
+        
+        p.setUInt('Subdivision Level', level)
+        p.setUInt('Subdivision Scheme', scheme)
+        p.setUInt('Interpolation', interpolation)
+        p.setFloat('Crease', crease)
+        p.setFloat('Smooth Angle', smooth_angle)
+        
+        o = s.getObject(object_name)
+        o.applyGeometryModifierExtension(p)
+        return o
+    
+    def mod_scatter(self, object_name, scatter_object, inherit_objectid=False, density=None, seed=0, scale=None, rotation=None, lod=None, display_percent=10, display_max=1000, ):
+        """Create scatter object modifier extension.
+        object_name                 string
+        scatter_object              string
+        inherit_objectid            bool
+        density                     (float, density_map or None) or None
+        seed                        int
+        scale                       ((float, float, float), scale_map or None, scale_variation (float, float, float)) or None
+        rotation                    ((float, float, float), rotation_map or None, rotation_variation (float, float, float), rotation_direction int (0, "Polygon Normal"), (1, "World Z")) or None
+        lod                         (bool, lod_min_distance float, lod_max_distance float, lod_max_distance_density float) or None
+        display_percent             int
+        display_max                 int
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellScatter')
+        p = e.getExtensionData()
+        
+        p.setString('Object', scatter_object)
+        p.setByte('Inherit ObjectID', inherit_objectid)
+        if(density is not None):
+            p.setFloat('Density', density[0])
+            self.texture_data_to_mxparams('Density Map', density[1], p, )
+        p.setUInt('Seed', seed)
+        if(scale is not None):
+            p.setFloat('Scale X', scale[0][0])
+            p.setFloat('Scale Y', scale[0][1])
+            p.setFloat('Scale Z', scale[0][2])
+            self.texture_data_to_mxparams('Scale Map', scale[1], p, )
+            p.setFloat('Scale X Variation', scale[2][0])
+            p.setFloat('Scale Y Variation', scale[2][1])
+            p.setFloat('Scale Z Variation', scale[2][2])
+        if(rotation is not None):
+            p.setFloat('Rotation X', rotation[0][0])
+            p.setFloat('Rotation Y', rotation[0][1])
+            p.setFloat('Rotation Z', rotation[0][2])
+            self.texture_data_to_mxparams('Rotation Map', rotation[1], p, )
+            p.setFloat('Rotation X Variation', rotation[2][0])
+            p.setFloat('Rotation Y Variation', rotation[2][1])
+            p.setFloat('Rotation Z Variation', rotation[2][2])
+            p.setUInt('Direction Type', rotation[3])
+        if(lod is not None):
+            p.setByte('Enable LOD', lod[0])
+            p.setFloat('LOD Min Distance', lod[1])
+            p.setFloat('LOD Max Distance', lod[2])
+            p.setFloat('LOD Max Distance Density', lod[3])
+        p.setUInt('Display Percent', display_percent)
+        p.setUInt('Display Max. Blades', display_max)
+        
+        o = s.getObject(object_name)
+        o.applyGeometryModifierExtension(p)
+        return o
+    
+    def mod_cloner(self, object_name, path, radius=1.0, mb_factor=1.0, load_percent=100.0, start_offset=0, ex_npp=0, ex_p_dispersion=0.0, ex_p_deformation=0.0, align_to_velocity=False, scale_with_radius=False, inherit_obj_id=False, frame=1, fps=24.0, display_percent=10, display_max=1000, ):
+        """Create cloner object modifier extension.
+        object_name         string
+        path                string
+        radius              float
+        mb_factor           float
+        load_percent        float
+        start_offset        int
+        ex_npp              int
+        ex_p_dispersion     float
+        ex_p_deformation    float
+        align_to_velocity   bool
+        scale_with_radius   bool
+        inherit_obj_id      bool
+        frame               int
+        fps                 float
+        display_percent     int
+        display_max         int
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryModifierExtension('MaxwellCloner')
+        p = e.getExtensionData()
+        
+        p.setString('FileName', path)
+        p.setFloat('Radius Factor', radius)
+        
+        p.setFloat('MB Factor', mb_factor)
+        p.setFloat('Load particles %', load_percent)
+        p.setUInt('Start offset', start_offset)
+        
+        p.setUInt('Create N particles per particle', ex_npp)
+        p.setFloat('Extra particles dispersion', ex_p_dispersion)
+        p.setFloat('Extra particles deformation', ex_p_deformation)
+        
+        p.setByte('Use velocity', align_to_velocity)
+        p.setByte('Scale with particle radius', scale_with_radius)
+        p.setByte('Inherit ObjectID', inherit_obj_id)
+        
+        p.setInt('Frame#', frame)
+        p.setFloat('fps', fps)
+        
+        p.setUInt('Display Percent', display_percent)
+        p.setUInt('Display Max. Particles', display_max)
+        
+        o = s.getObject(object_name)
+        o.applyGeometryModifierExtension(p)
+        return o

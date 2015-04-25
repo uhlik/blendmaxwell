@@ -1259,6 +1259,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
         m = context.material.maxwell_render
         sub.prop(m, 'mxm_file')
         sub.prop(m, 'embed')
+        r = sub.row()
+        r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
         
         r = sub.row(align=True)
         if(m.mxm_file == ''):

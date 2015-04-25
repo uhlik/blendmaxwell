@@ -3710,6 +3710,90 @@ class MXSExport():
             return d
         return None
     
+    def mod_texture_to_data(self, name, ob=None, ):
+        tex = None
+        for t in bpy.data.textures:
+            if(t.type == 'IMAGE'):
+                if(t.name == name):
+                    tex = t
+
+        d = {'type': 'IMAGE',
+             'path': "",
+             'channel': 0,
+             'use_override_map': False,
+             'tile_method_type': [True, True],
+             'tile_method_units': 0,
+             'repeat': [1.0, 1.0],
+             'mirror': [False, False],
+             'offset': [0.0, 0.0],
+             'rotation': 0.0,
+             'invert': False,
+             'alpha_only': False,
+             'interpolation': False,
+             'brightness': 0.0,
+             'contrast': 0.0,
+             'saturation': 0.0,
+             'hue': 0.0,
+             'rgb_clamp': [0.0, 255.0], }
+        if(tex is not None):
+            d['path'] = bpy.path.abspath(tex.image.filepath),
+            return d
+        return None
+        
+        '''
+        tex = None
+        for t in bpy.data.textures:
+            if(t.name == name):
+                if(t.type == 'IMAGE'):
+                    tex = t
+        
+        # defaults
+        d = {'type': 'IMAGE', 'path': "", 'channel': 0, 'use_override_map': False, 'tile_method_type': [True, True], 'tile_method_units': 0,
+             'repeat': [1.0, 1.0], 'mirror': [False, False], 'offset': [0.0, 0.0], 'rotation': 0.0, 'invert': False, 'alpha_only': False,
+             'interpolation': False, 'brightness': 0.0, 'contrast': 0.0, 'saturation': 0.0, 'hue': 0.0, 'rgb_clamp': [0.0, 255.0], }
+        m = tex.maxwell_render
+        if(tex is not None and ob is not None and m is not None):
+            d['type'] = 'IMAGE'
+            d['path'] = bpy.path.abspath(tex.image.filepath)
+            d['channel'] = 0
+            ts = None
+            for i, t in enumerate(ob.texture_slots):
+                if(t.texture == tex):
+                    ts = t
+                    break
+            
+            for i, uv in enumerate(ob.data.uv_textures):
+                if(uv.name == ts.uv_layer):
+                    d['channel'] = i
+                    break
+            
+            d['use_override_map'] = m.use_global_map
+            if(m.tiling_method == 'NO_TILING'):
+                tm = [False, False]
+            elif(m.tiling_method == 'TILE_X'):
+                tm = [True, False]
+            elif(m.tiling_method == 'TILE_Y'):
+                tm = [False, True]
+            else:
+                tm = [True, True]
+            d['tile_method_type'] = tm
+            d['tile_method_units'] = int(m.tiling_units[-1:])
+            d['repeat'] = [m.repeat[0], m.repeat[1]]
+            d['mirror'] = [m.mirror_x, m.mirror_y]
+            d['offset'] = [m.offset[0], m.offset[1]]
+            d['rotation'] = m.rotation
+            d['invert'] = m.invert
+            d['alpha_only'] = m.use_alpha
+            d['interpolation'] = m.interpolation
+            d['brightness'] = m.brightness
+            d['contrast'] = m.contrast
+            d['saturation'] = m.saturation
+            d['hue'] = m.hue
+            d['rgb_clamp'] = [m.clamp[0], m.clamp[1]]
+            return d
+        return None
+        '''
+    
     def camera(self, o, ):
         log("{0}".format(o['object'].name), 2)
         
@@ -3934,8 +4018,7 @@ class MXSExport():
                                 gr['objects'].append(name)
                                 break
         
-        # TODO
-        # self.object_extensions(o)
+        self.object_extensions(o)
     
     def instance(self, o, iname=None, ):
         log("{0}".format(o['object'].name), 2)
@@ -4352,7 +4435,7 @@ class MXSExport():
             log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
             backface_material = None
         
-        self.mxs.particles(name, properties, base, pivot, object_props, material, backface_material, )
+        self.mxs.ext_particles(name, properties, base, pivot, object_props, material, backface_material, )
         
         parent = None
         if(o['parent']):
@@ -4410,7 +4493,7 @@ class MXSExport():
             log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
             backface_material = None
         
-        self.mxs.grass(object_name, properties, material, backface_material, )
+        self.mxs.mod_grass(object_name, properties, material, backface_material, )
     
     def hair(self, o, pname=None, ):
         log("{0} ({1})".format(o['name'], o['type']), 2)
@@ -4508,7 +4591,7 @@ class MXSExport():
             log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
             backface_material = None
         
-        self.mxs.hair(name, extension, base, pivot, root_radius, tip_radius, data, object_props, display_percent, display_max, material, backface_material, )
+        self.mxs.ext_hair(name, extension, base, pivot, root_radius, tip_radius, data, object_props, display_percent, display_max, material, backface_material, )
         
         parent = None
         if(o['parent']):
@@ -4592,105 +4675,40 @@ class MXSExport():
              'fps': self.context.scene.render.fps,
              'display_percent': int(m.display_percent),
              'display_max': int(m.display_max), }
-        self.mxs.cloner(**d)
+        self.mxs.mod_cloner(**d)
     
     def object_extensions(self, o, ):
-        # TODO
         ob = o['object']
         
         sd = ob.maxwell_subdivision_extension
         if(sd.enabled):
-            self.mxs.subdivision(ob.name, int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), )
+            log("{0}".format("Subdivision"), 3)
+            self.mxs.mod_subdivision(ob.name, int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), )
         
-        '''
         sc = ob.maxwell_scatter_extension
         if(sc.enabled):
-            density = (sc.density, )
-            scale = ()
-            rotation = ()
-            lod = ()
-            
-            def texture_to_data(name):
-                tex = None
-                for t in bpy.data.textures:
-                    if(t.type == 'IMAGE'):
-                        if(t.name == name):
-                            tex = t
-            
-                d = {'type': 'IMAGE',
-                     'path': "",
-                     'channel': 0,
-                     'use_override_map': False,
-                     'tile_method_type': [True, True],
-                     'tile_method_units': 0,
-                     'repeat': [1.0, 1.0],
-                     'mirror': [False, False],
-                     'offset': [0.0, 0.0],
-                     'rotation': 0.0,
-                     'invert': False,
-                     'alpha_only': False,
-                     'interpolation': False,
-                     'brightness': 0.0,
-                     'contrast': 0.0,
-                     'saturation': 0.0,
-                     'hue': 0.0,
-                     'rgb_clamp': [0.0, 255.0], }
-                if(tex is not None):
-                    d['path'] = bpy.path.abspath(tex.image.filepath),
-                    return d
-                return None
-            
-            self.mxs.scatter(ob.name, sc.scatter_object, sc.inherit_objectid, density, int(sc.seed), scale, rotation, lod, int(sc.display_percent), int(sc.display_max), )
-            
-            d['scatter_ext'] = {'scatter_object': sc.scatter_object,
-                                'inherit_objectid': sc.inherit_objectid,
-                                'density': sc.density,
-                                'density_map': texture_to_data(sc.density_map),
-                                'seed': int(sc.seed),
-                                'scale_x': sc.scale_x,
-                                'scale_y': sc.scale_y,
-                                'scale_z': sc.scale_z,
-                                'scale_map': texture_to_data(sc.scale_map),
-                                'scale_variation_x': sc.scale_variation_x,
-                                'scale_variation_y': sc.scale_variation_y,
-                                'scale_variation_z': sc.scale_variation_z,
-                                'rotation_x': math.degrees(sc.rotation_x),
-                                'rotation_y': math.degrees(sc.rotation_y),
-                                'rotation_z': math.degrees(sc.rotation_z),
-                                'rotation_map': texture_to_data(sc.rotation_map),
-                                'rotation_variation_x': sc.rotation_variation_x,
-                                'rotation_variation_y': sc.rotation_variation_y,
-                                'rotation_variation_z': sc.rotation_variation_z,
-                                'rotation_direction': int(sc.rotation_direction),
-                                'lod': sc.lod,
-                                'lod_min_distance': sc.lod_min_distance,
-                                'lod_max_distance': sc.lod_max_distance,
-                                'lod_max_distance_density': sc.lod_max_distance_density,
-                                'display_percent': int(sc.display_percent),
-                                'display_max_blades': int(sc.display_max_blades), }
-        '''
-        '''
+            log("{0}".format("Scatter"), 3)
+            density = (sc.density, mod_texture_to_data(sc.density_map), )
+            scale = (sc.scale_x, sc.scale_y, sc.scale_z, mod_texture_to_data(sc.scale_map), sc.scale_variation_x, sc.scale_variation_y, sc.scale_variation_z, )
+            rotation = (math.degrees(sc.rotation_x), math.degrees(sc.rotation_y), math.degrees(sc.rotation_z), mod_texture_to_data(sc.rotation_map), sc.rotation_variation_x, sc.rotation_variation_y, sc.rotation_variation_z, int(sc.rotation_direction), )
+            lod = (sc.lod, sc.lod_min_distance, sc.lod_max_distance, sc.lod_max_distance_density, )
+            self.mxs.mod_scatter(ob.name, sc.scatter_object, sc.inherit_objectid, density, int(sc.seed), scale, rotation, lod, int(sc.display_percent), int(sc.display_max), )
+        
         ms = ob.maxwell_sea_extension
         if(ms.enabled):
+            log("{0}".format("Sea"), 3)
             name = "{}-MaxwellSea".format(ob.name)
-            self.mxs.sea(object_name, name, base, pivot, object_props=None, geometry=None, wind=None, material=None, backface_material=None, )
-            
-            d['sea_ext'] = [name, ms.hide_parent, ms.reference_time, int(ms.resolution), ms.ocean_depth, ms.vertical_scale, ms.ocean_dim,
-                            ms.ocean_seed, ms.enable_choppyness, ms.choppy_factor, ms.ocean_wind_mod, math.degrees(ms.ocean_wind_dir),
-                            ms.ocean_wind_alignment, ms.ocean_min_wave_length, ms.damp_factor_against_wind, ms.enable_white_caps, ]
-        
-        
-        log("{0}".format(ob.name), 2)
-        '''
-    
-    def subdivision(self, o, ):
-        # TODO
-        pass
-    
-    def scatter(self, o, ):
-        # TODO
-        pass
-    
-    def sea(self, o, name=None, ):
-        # TODO
-        pass
+            base, pivot = self.matrix_to_base_and_pivot(Matrix())
+            geometry = (m.reference_time, m.resolution, m.ocean_depth, m.vertical_scale, m.ocean_dim, m.ocean_seed, m.enable_choppyness, m.choppy_factor, )
+            wind = (m.ocean_wind_mod, m.ocean_wind_dir, m.ocean_wind_alignment, m.ocean_min_wave_length, m.damp_factor_against_wind, )
+            d = {'num_materials': len(ob.material_slots),
+                 'materials': [], }
+            d = self.object_materials(ob, d)
+            material = None
+            if(d['num_materials'] != 0):
+                # take just the first one, no multimaterial possible
+                material = (d['materials'][0][1], d['materials'][0][0])
+            backface_material = None
+            if(len(d['backface_material']) != 0):
+                backface_material = (d['backface_material'][0], d['backface_material'][1])
+            self.mxs.ext_sea(name, base, pivot, self.get_object_props(ob), geometry, wind, material, backface_material, )
