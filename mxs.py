@@ -1276,3 +1276,101 @@ class MXSWriter():
         o = s.getObject(object_name)
         o.applyGeometryModifierExtension(p)
         return o
+    
+    def wire_material(self, name, r0=(210, 210, 210), r90=(230, 230, 230), cid=(255, 0, 0), roughness=97.0, ):
+        """Create basic material for wire render.
+        name        string
+        r0          (int, int, int)
+        r90         (int, int, int)
+        cid         (int, int, int)
+        roughness   float
+        """
+        mat = s.createMaterial(name)
+        l = mat.addLayer()
+        l.setName(name)
+        b = l.addBSDF()
+        r = b.getReflectance()
+        a = Cattribute()
+        a.activeType = MAP_TYPE_RGB
+        c = Crgb8()
+        c.assign(*r0)
+        a.rgb.assign(c.toRGB())
+        r.setAttribute('color', a)
+        a = Cattribute()
+        a.activeType = MAP_TYPE_RGB
+        c = Crgb8()
+        c.assign(*r90)
+        a.rgb.assign(c.toRGB())
+        r.setAttribute('color.tangential', a)
+        a = Cattribute()
+        a.type = MAP_TYPE_VALUE
+        a.value = roughness
+        b.setAttribute('roughness', a)
+        c = Crgb8()
+        c.assign(*cid)
+        mat.setColorID(c.toRGB())
+        return mat
+    
+    def wire_instances(self, wname, oname, matrices, object_props=None, wire_material_name=None, ):
+        """Instance wire object by matrices.
+        wname           string
+        oname           string
+        matrices        [matrix, ...]
+        object_props    ()
+        material_name   string
+        """
+        s = self.mxs
+        bo = s.getObject(wname)
+        if(wire_material_name is not None):
+            wmat = s.getMaterial(wire_material_name)
+        
+        def matrix_to_base_and_pivot(m, ):
+            b = ((m[0][3], m[2][3], m[1][3] * -1),
+                 (m[0][0], m[2][0], m[1][0] * -1),
+                 (m[0][2], m[2][2], m[1][2] * -1),
+                 (m[0][1] * -1, m[2][1] * -1, m[1][1]), )
+            p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+            return (b, p, )
+        
+        for i, m in enumerate(matrices):
+            b, p = matrix_to_base_and_pivot(m)
+            n = "{}-wire-{}".format(oname, i)
+            o = s.createInstancement(n, bo)
+            self.set_base_and_pivot(o, base, pivot, )
+            if(object_props is not None):
+                self.set_object_props(o, *object_props)
+            if(wmat is not None):
+                o.setMaterial(wmat)
+    
+    def wire_hierarchy(self, wname, clay_material_name, ):
+        """Set wire hierarchy and set clay material to all other objects.
+        wname           string
+        """
+        s = self.mxs
+        wo = s.getObject(wname)
+        if(clay_material_name is not None):
+            cmat = s.getMaterial(clay_material_name)
+        z = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
+        # do two empties, one clay one wire and parent all to them
+        ce = self.empty("clay", z, z, None, )
+        we = self.empty("wire", z, z, None, )
+        
+        def get_objects_names(mxs):
+            it = CmaxwellObjectIterator()
+            o = it.first(mxs)
+            l = []
+            while not o.isNull():
+                name, _ = o.getName()
+                l.append(name)
+                o = it.next()
+            return l
+        
+        ns = get_objects_names(s)
+        for n in ns:
+            o = s.getObject(n)
+            if(o.getInstanced() == wo):
+                o.setParent(we)
+            else:
+                o.setParent(ce)
+                if(cmat is not None):
+                    o.setMaterial(cmat)

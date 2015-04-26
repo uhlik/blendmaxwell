@@ -368,15 +368,22 @@ class MaxwellRenderExportEngine(RenderEngine):
                         'reflectance_90': [int(255 * v) for v in m.export_clay_mat_reflectance_90],
                         'roughness': m.export_clay_mat_roughness,
                         'id': [int(255 * v) for v in m.export_clay_mat_color_id], }
-            d = {'context': bpy.context,
-                 'mxs_path': p,
-                 'use_instances': m.export_use_instances,
-                 'edge_radius': m.export_edge_radius,
-                 'edge_resolution': m.export_edge_resolution,
-                 'wire_mat': wire_mat,
-                 'clay_mat': clay_mat,
-                 'keep_intermediates': m.export_keep_intermediates, }
-            ex = export.MXSExportWireframeLegacy(**d)
+            if(system.PLATFORM == 'Darwin'):
+                d = {'context': bpy.context,
+                     'mxs_path': p,
+                     'use_instances': m.export_use_instances,
+                     'edge_radius': m.export_edge_radius,
+                     'edge_resolution': m.export_edge_resolution,
+                     'wire_mat': wire_mat,
+                     'clay_mat': clay_mat,
+                     'keep_intermediates': m.export_keep_intermediates, }
+                ex = export.MXSExportWireframeLegacy(**d)
+            elif(system.PLATFORM == 'Linux'):
+                ex = export.MXSExportWireframe(bpy.context, p, m.export_use_instances, m.export_edge_radius, m.export_edge_resolution, wire_mat, clay_mat, )
+            elif(system.PLATFORM == 'Windows'):
+                ex = export.MXSExportWireframe(bpy.context, p, m.export_use_instances, m.export_edge_radius, m.export_edge_resolution, wire_mat, clay_mat, )
+            else:
+                pass
         else:
             if(system.PLATFORM == 'Darwin'):
                 d = {'context': bpy.context,
@@ -384,9 +391,6 @@ class MaxwellRenderExportEngine(RenderEngine):
                      'use_instances': m.export_use_instances,
                      'keep_intermediates': m.export_keep_intermediates, }
                 ex = export.MXSExportLegacy(**d)
-                
-                # ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
-                
             elif(system.PLATFORM == 'Linux'):
                 ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
             elif(system.PLATFORM == 'Windows'):

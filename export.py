@@ -2465,6 +2465,7 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
             os.makedirs(self.tmp_dir)
         
         self.mesh_data_paths = []
+        self.hair_data_paths = []
         self.wire_data_paths = []
         self.scene_data_name = "{0}-{1}.json".format(n, self.uuid)
         self.script_name = "{0}-{1}.py".format(n, self.uuid)
@@ -4712,3 +4713,121 @@ class MXSExport():
             if(len(d['backface_material']) != 0):
                 backface_material = (d['backface_material'][0], d['backface_material'][1])
             self.mxs.ext_sea(name, base, pivot, self.get_object_props(ob), geometry, wind, material, backface_material, )
+
+
+class MXSExportWireframe(MXSExport):
+    def __init__(self, context, mxs_path, use_instances=True, edge_radius=0.00025, edge_resolution=32, wire_mat={}, clay_mat={}, ):
+        self.edge_radius = edge_radius
+        self.edge_resolution = edge_resolution
+        try:
+            v = wire_mat['reflectance_0']
+            v = wire_mat['reflectance_90']
+            v = wire_mat['roughness']
+            v = wire_mat['id']
+        except KeyError:
+            r0 = 20
+            r90 = 45
+            wire_mat = {'reflectance_0': (r0, r0, r0, ), 'reflectance_90': (r90, r90, r90, ), 'id': (0, 255, 0), 'roughness': 97.0, }
+        try:
+            v = clay_mat['reflectance_0']
+            v = clay_mat['reflectance_90']
+            v = clay_mat['roughness']
+            v = clay_mat['id']
+        except KeyError:
+            r0 = 210
+            r90 = 230
+            clay_mat = {'reflectance_0': (r0, r0, r0, ), 'reflectance_90': (r90, r90, r90, ), 'id': (255, 0, 0), 'roughness': 97.0, }
+        self.wire_mat = wire_mat
+        self.clay_mat = clay_mat
+        
+        super(MXSExportWireframe, self).__init__(context, mxs_path, use_instances, )
+    
+    def export(self):
+        super(MXSExportWireframe, self).export()
+        
+        # wireframe
+        self.uuid = uuid.uuid1()
+        log("making wire materials..", 1, LogStyles.MESSAGE)
+        wm = self.mxs.wire_material("wire_material", wire_mat['reflectance_0'], wire_mat['reflectance_90'], wire_mat['id'], wire_mat['roughness'], )
+        self.wm = wm.getName()
+        cm = self.mxs.wire_material("clay_material", wire_mat['reflectance_0'], wire_mat['reflectance_90'], wire_mat['id'], wire_mat['roughness'], )
+        self.cm = cm.getName()
+        
+        log("making wire base mesh..", 1, LogStyles.MESSAGE)
+        self._wire_base()
+        
+        log("processing wires..", 1, LogStyles.MESSAGE)
+        self._wire_objects()
+        
+        log("processing hierarchy..", 1, LogStyles.MESSAGE)
+        self._wire_hierarchy(self.wireframe_edge_name)
+        
+        # save again..
+        self.mxs.write()
+    
+    def _wire_base(self):
+        """Create and set to export base wire edge cylinder."""
+        gen = utils.CylinderMeshGenerator(height=1, radius=self.edge_radius, sides=self.edge_resolution, )
+        n = "wireframe_edge_{0}".format(self.uuid)
+        me = bpy.data.meshes.new(n)
+        v, e, f = gen.generate()
+        me.from_pydata(v, [], f)
+        log("{0}".format(n), 2)
+        ob = utils.add_object(n, me)
+        o = {'object': ob,
+             'children': [],
+             'export': True,
+             'export_type': 'MESH',
+             'mesh': ob.data,
+             'converted': False,
+             'parent': None,
+             'type': ob.type, }
+        self.mxs.mesh(o)
+        self.wireframe_edge_name = ob.name
+        utils.wipe_out_object(ob, and_data=True)
+    
+    def _wire_objects(self):
+        """Loop over all renderable objects and prepare wire data for pymaxwell."""
+        eo = self.meshes[:] + self.bases[:] + self.instances[:] + self.duplicates[:]
+        
+        for o in eo:
+            log("{0}".format(o['object'].name), 2)
+            ob = o['object']
+            me = ob.to_mesh(self.context.scene, True, 'RENDER', )
+            mw = ob.matrix_world
+            try:
+                # duplicates are handled differently
+                mw = o['dupli_matrix']
+            except KeyError:
+                pass
+            me.transform(mw)
+            
+            vs = tuple([v.co.copy() for v in me.vertices])
+            es = tuple([tuple([i for i in e.vertices]) for e in me.edges])
+            ms = self._calc_marices(vs=vs, es=es, )
+            
+            self.mxs.wire_instances(self.wireframe_edge_name, ob.name, ms, None, self.wm, )
+            
+            bpy.data.meshes.remove(me)
+    
+    def _calc_marices(self, vs, es, ):
+        """Calculate wire matrices."""
+        
+        def distance(a, b):
+            return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2) ** 0.5
+        
+        matrices = []
+        up = Vector((0, 0, 1))
+        for i, e in enumerate(es):
+            a = vs[e[0]]
+            b = vs[e[1]]
+            d = distance(a, b)
+            quat = maths.rotation_to(Vector((0, 0, 1)), b - a)
+            mr = quat.to_matrix().to_4x4()
+            mt = Matrix.Translation(a)
+            mtr = mt * mr
+            ms = Matrix.Scale(d, 4, up)
+            m = mtr * ms
+            matrices.append(m)
+        
+        return matrices
