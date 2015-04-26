@@ -251,44 +251,56 @@ class MaxwellRenderExportEngine(RenderEngine):
             p = m.mxm_file
             if(p is not ''):
                 p = os.path.realpath(bpy.path.abspath(p))
+                a = None
                 
                 if(system.PLATFORM == 'Darwin'):
                     system.python34_run_mxm_preview(p)
                     d = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", )
                     f = os.path.split(p)[1]
                     npy = os.path.join(d, "{}.npy".format(f))
-                    a = numpy.load(npy)
+                    if(os.path.exists(npy)):
+                        a = numpy.load(npy)
                     # cleanup
                     if(os.path.exists(npy)):
                         os.remove(npy)
                 else:
                     a = mxs.read_mxm_preview(path)
                 
-                w, h, _ = a.shape
-                
-                # flip
-                a = numpy.flipud(a)
-                
-                # gamma correct
-                a.astype(float)
-                g = 2.2
-                a = (a[:] / 255) ** g
-                a = numpy.reshape(a, (w * h, 3))
-                z = numpy.empty((w * h, 1))
-                z.fill(1.0)
-                a = numpy.append(a, z, axis=1, )
-                
-                # draw
-                xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-                yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-                x = int((xr - w) / 2)
-                y = int((yr - h) / 2)
-                # TODO sometime in future slice array to fit when frame is smaller than image
-                
-                r = self.begin_result(x, y, w, h)
-                l = r.layers[0]
-                l.rect = a.tolist()
-                self.end_result(r)
+                if(a is not None):
+                    w, h, _ = a.shape
+                    
+                    # flip
+                    a = numpy.flipud(a)
+                    
+                    # gamma correct
+                    a.astype(float)
+                    g = 2.2
+                    a = (a[:] / 255) ** g
+                    a = numpy.reshape(a, (w * h, 3))
+                    z = numpy.empty((w * h, 1))
+                    z.fill(1.0)
+                    a = numpy.append(a, z, axis=1, )
+                    
+                    # draw
+                    xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
+                    yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
+                    x = int((xr - w) / 2)
+                    y = int((yr - h) / 2)
+                    # TODO sometime in future slice array to fit when frame is smaller than image
+                    
+                    r = self.begin_result(x, y, w, h)
+                    l = r.layers[0]
+                    l.rect = a.tolist()
+                    self.end_result(r)
+                else:
+                    xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
+                    yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
+                    c = xr * yr
+                    b = [[0.0, 0.0, 0.0, 1.0]] * c
+                    r = self.begin_result(0, 0, xr, yr)
+                    l = r.layers[0]
+                    l.rect = b
+                    self.end_result(r)
             else:
                 xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
                 yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)

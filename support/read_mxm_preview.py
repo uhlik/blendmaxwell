@@ -37,12 +37,15 @@ def main(args):
     p = args.mxm_path
     s = Cmaxwell(mwcallback)
     m = s.readMaterial(p)
-    a = m.getPreview()[0]
-    
-    sd = os.path.split(os.path.realpath(__file__))[0]
-    mn = os.path.split(p)[1]
-    np = os.path.join(sd, "{}.npy".format(mn))
-    numpy.save(np, a)
+    try:
+        a, ok = m.getPreview()
+    except:
+        ok = False
+    if(ok):
+        sd = os.path.split(os.path.realpath(__file__))[0]
+        mn = os.path.split(p)[1]
+        np = os.path.join(sd, "{}.npy".format(mn))
+        numpy.save(np, a)
 
 
 if __name__ == "__main__":
