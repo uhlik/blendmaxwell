@@ -3094,7 +3094,7 @@ class MXSExport():
         self.particles = collect_particles()
         for o in self.particles:
             if(o['type'] == 'PARTICLES'):
-                self.particles(o)
+                self.ext_particles(o)
             elif(o['type'] == 'GRASS'):
                 self.grass(o)
             elif(o['type'] == 'HAIR'):
@@ -4338,7 +4338,7 @@ class MXSExport():
         if(len(groups) > 0):
             self.mxs.custom_alphas(groups)
     
-    def particles(self, o, pname=None, ):
+    def ext_particles(self, o, pname=None, ):
         log("{0} ({1})".format(o['name'], o['type']), 2)
         
         name = o['name']
@@ -4621,7 +4621,7 @@ class MXSExport():
             locs = []
             vels = []
             sizes = []
-            mat = dp['pmatrix'].copy()
+            mat = o['pmatrix'].copy()
             mat.invert()
             for part in ps.particles:
                 if(part.alive_state == "ALIVE"):
@@ -4652,7 +4652,7 @@ class MXSExport():
             
             cf = self.context.scene.frame_current
             prms = {'directory': bpy.path.abspath(m.directory),
-                    'name': "{}".format(dp['name']),
+                    'name': "{}".format(o['name']),
                     'frame': cf,
                     'particles': particles,
                     'fps': self.context.scene.render.fps,
@@ -4689,19 +4689,19 @@ class MXSExport():
         sc = ob.maxwell_scatter_extension
         if(sc.enabled):
             log("{0}".format("Scatter"), 3)
-            density = (sc.density, mod_texture_to_data(sc.density_map), )
-            scale = (sc.scale_x, sc.scale_y, sc.scale_z, mod_texture_to_data(sc.scale_map), sc.scale_variation_x, sc.scale_variation_y, sc.scale_variation_z, )
-            rotation = (math.degrees(sc.rotation_x), math.degrees(sc.rotation_y), math.degrees(sc.rotation_z), mod_texture_to_data(sc.rotation_map), sc.rotation_variation_x, sc.rotation_variation_y, sc.rotation_variation_z, int(sc.rotation_direction), )
-            lod = (sc.lod, sc.lod_min_distance, sc.lod_max_distance, sc.lod_max_distance_density, )
-            self.mxs.mod_scatter(ob.name, sc.scatter_object, sc.inherit_objectid, density, int(sc.seed), scale, rotation, lod, int(sc.display_percent), int(sc.display_max), )
+            density = (sc.density, self.mod_texture_to_data(sc.density_map), )
+            scale = (sc.scale_x, sc.scale_y, sc.scale_z, self.mod_texture_to_data(sc.scale_map), sc.scale_variation_x, sc.scale_variation_y, sc.scale_variation_z, )
+            rotation = (math.degrees(sc.rotation_x), math.degrees(sc.rotation_y), math.degrees(sc.rotation_z), self.mod_texture_to_data(sc.rotation_map), sc.rotation_variation_x, sc.rotation_variation_y, sc.rotation_variation_z, int(sc.rotation_direction), )
+            lod = (int(sc.lod), sc.lod_min_distance, sc.lod_max_distance, sc.lod_max_distance_density, )
+            self.mxs.mod_scatter(ob.name, sc.scatter_object, sc.inherit_objectid, density, int(sc.seed), scale, rotation, lod, int(sc.display_percent), int(sc.display_max_blades), )
         
         ms = ob.maxwell_sea_extension
         if(ms.enabled):
             log("{0}".format("Sea"), 3)
             name = "{}-MaxwellSea".format(ob.name)
             base, pivot = self.matrix_to_base_and_pivot(Matrix())
-            geometry = (m.reference_time, m.resolution, m.ocean_depth, m.vertical_scale, m.ocean_dim, m.ocean_seed, m.enable_choppyness, m.choppy_factor, )
-            wind = (m.ocean_wind_mod, m.ocean_wind_dir, m.ocean_wind_alignment, m.ocean_min_wave_length, m.damp_factor_against_wind, )
+            geometry = (ms.reference_time, int(ms.resolution), ms.ocean_depth, ms.vertical_scale, ms.ocean_dim, ms.ocean_seed, ms.enable_choppyness, ms.choppy_factor, )
+            wind = (ms.ocean_wind_mod, ms.ocean_wind_dir, ms.ocean_wind_alignment, ms.ocean_min_wave_length, ms.damp_factor_against_wind, )
             d = {'num_materials': len(ob.material_slots),
                  'materials': [], }
             d = self.object_materials(ob, d)

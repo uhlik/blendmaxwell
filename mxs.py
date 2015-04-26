@@ -63,7 +63,12 @@ elif(s == 'Linux'):
         sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
         from pymaxwell import *
 elif(s == 'Windows'):
-    from pymaxwell import *
+    try:
+        from pymaxwell import *
+    except ImportError:
+        mp = os.environ.get("MAXWELL3_ROOT")
+        sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
+        from pymaxwell import *
 
 
 def read_mxm_preview(path):
@@ -807,7 +812,12 @@ class MXSWriter():
         s.setRenderParameter('DO NOT SAVE IMAGE FILE', (image is None))
         if(mxi is not None):
             # s.setRenderParameter('MXI FULLNAME', mxi)
-            s.setRenderParameter('MXI FULLNAME', bytes(mxi, encoding='UTF-8'))
+            # s.setRenderParameter('MXI FULLNAME', bytes(mxi, encoding='UTF-8'))
+            if(platform.system() == 'Linux'):
+                # wtf?
+                s.setRenderParameter('MXI FULLNAME', bytes(mxi, encoding='UTF-8'))
+            else:
+                s.setRenderParameter('MXI FULLNAME', mxi)
         if(image is not None):
             if(image_depth is None):
                 image_depth = 'RGB8'
@@ -1201,22 +1211,22 @@ class MXSWriter():
             self.texture_data_to_mxparams('Density Map', density[1], p, )
         p.setUInt('Seed', seed)
         if(scale is not None):
-            p.setFloat('Scale X', scale[0][0])
-            p.setFloat('Scale Y', scale[0][1])
-            p.setFloat('Scale Z', scale[0][2])
-            self.texture_data_to_mxparams('Scale Map', scale[1], p, )
-            p.setFloat('Scale X Variation', scale[2][0])
-            p.setFloat('Scale Y Variation', scale[2][1])
-            p.setFloat('Scale Z Variation', scale[2][2])
+            p.setFloat('Scale X', scale[0])
+            p.setFloat('Scale Y', scale[1])
+            p.setFloat('Scale Z', scale[2])
+            self.texture_data_to_mxparams('Scale Map', scale[3], p, )
+            p.setFloat('Scale X Variation', scale[4])
+            p.setFloat('Scale Y Variation', scale[5])
+            p.setFloat('Scale Z Variation', scale[6])
         if(rotation is not None):
-            p.setFloat('Rotation X', rotation[0][0])
-            p.setFloat('Rotation Y', rotation[0][1])
-            p.setFloat('Rotation Z', rotation[0][2])
-            self.texture_data_to_mxparams('Rotation Map', rotation[1], p, )
-            p.setFloat('Rotation X Variation', rotation[2][0])
-            p.setFloat('Rotation Y Variation', rotation[2][1])
-            p.setFloat('Rotation Z Variation', rotation[2][2])
-            p.setUInt('Direction Type', rotation[3])
+            p.setFloat('Rotation X', rotation[0])
+            p.setFloat('Rotation Y', rotation[1])
+            p.setFloat('Rotation Z', rotation[2])
+            self.texture_data_to_mxparams('Rotation Map', rotation[3], p, )
+            p.setFloat('Rotation X Variation', rotation[4])
+            p.setFloat('Rotation Y Variation', rotation[5])
+            p.setFloat('Rotation Z Variation', rotation[6])
+            p.setUInt('Direction Type', rotation[7])
         if(lod is not None):
             p.setByte('Enable LOD', lod[0])
             p.setFloat('LOD Min Distance', lod[1])
