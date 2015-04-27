@@ -37,7 +37,7 @@
 **WARNING: still highly experimental, expect bugs** (tested on Windows 8.1 64)
 
 * Install Maxwell Render
-* System Properties > Advanced > Environment Variables... > System Variables > add to PATH at the end of current value ```;C:\Program Files\Next Limit\Maxwell 3```, it's the same string as in MAXWELL3_ROOT variable, which you should already have. Don't mess something up. Just keep current value and ONLY ADD a one more path at the END of it.
+* System Properties > Advanced > Environment Variables... > System Variables > add to PATH at the end of current value ```;C:\Program Files\Next Limit\Maxwell 3```, it's the same string as in MAXWELL3_ROOT variable, which you should already have. Don't mess something up. Just keep current value and ONLY ADD one more path at the END of it. Storing original value in text file would be an good idea.
 * install addon as usual
 
 ### addon installation - Linux:
