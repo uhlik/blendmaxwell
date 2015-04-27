@@ -1089,7 +1089,12 @@ def cloner(d, s):
     p.setUInt('Display Percent', d['display_percent'])
     p.setUInt('Display Max. Particles', d['display_max'])
     
-    o = s.getObject(d['object'])
+    if(not d['render_emitter']):
+        o = s.getObject(d['object'])
+        o.setHide(True)
+    
+    # o = s.getObject(d['object'])
+    o = s.getObject(d['cloned_object'])
     o.applyGeometryModifierExtension(p)
 
 

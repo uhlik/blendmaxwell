@@ -1875,6 +1875,17 @@ class ClonerExtPanel(ParticleButtonsPanel, Panel):
         
         m = context.particle_system.settings.maxwell_cloner_extension
         
+        ps = p.settings
+        r = sub.row()
+        r.prop(ps, "dupli_object")
+        r = sub.row()
+        r.prop(ps, "use_render_emitter", text="Render Emitter", )
+        sub.separator()
+        
+        sub = l.column()
+        if(ps.dupli_object is None):
+            sub.active = False
+        
         r = sub.row()
         r.prop(m, 'source', expand=True)
         if(m.source == 'EXTERNAL_BIN'):

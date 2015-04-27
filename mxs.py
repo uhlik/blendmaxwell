@@ -1239,9 +1239,11 @@ class MXSWriter():
         o.applyGeometryModifierExtension(p)
         return o
     
-    def mod_cloner(self, object_name, path, radius=1.0, mb_factor=1.0, load_percent=100.0, start_offset=0, ex_npp=0, ex_p_dispersion=0.0, ex_p_deformation=0.0, align_to_velocity=False, scale_with_radius=False, inherit_obj_id=False, frame=1, fps=24.0, display_percent=10, display_max=1000, ):
+    def mod_cloner(self, object_name, cloned_object, render_emitter, path, radius=1.0, mb_factor=1.0, load_percent=100.0, start_offset=0, ex_npp=0, ex_p_dispersion=0.0, ex_p_deformation=0.0, align_to_velocity=False, scale_with_radius=False, inherit_obj_id=False, frame=1, fps=24.0, display_percent=10, display_max=1000, ):
         """Create cloner object modifier extension.
         object_name         string
+        cloned_object       string
+        render_emitter      bool
         path                string
         radius              float
         mb_factor           float
@@ -1283,7 +1285,12 @@ class MXSWriter():
         p.setUInt('Display Percent', display_percent)
         p.setUInt('Display Max. Particles', display_max)
         
-        o = s.getObject(object_name)
+        if(not render_emitter):
+            o = s.getObject(object_name)
+            o.setHide(True)
+        
+        # o = s.getObject(object_name)
+        o = s.getObject(cloned_object)
         o.applyGeometryModifierExtension(p)
         return o
     

@@ -2339,6 +2339,9 @@ class MXSExportLegacy():
                      'display_percent': int(m.display_percent),
                      'display_max': int(m.display_max),
                      
+                     'cloned_object': ps.settings.dupli_object.name,
+                     'render_emitter': ps.settings.use_render_emitter,
+                     
                      # pass some default to skip checks this time..
                      'opacity': 100,
                      'hidden_camera': False,
@@ -4661,6 +4664,10 @@ class MXSExport():
             m.filename = rfbw.path
         
         d = {'object_name': o['parent'],
+             
+             'cloned_object': ps.settings.dupli_object.name,
+             'render_emitter': ps.settings.use_render_emitter,
+             
              'path': bpy.path.abspath(m.filename),
              'radius': m.radius,
              'mb_factor': m.mb_factor,
