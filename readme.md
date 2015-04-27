@@ -47,6 +47,7 @@
 * Install Maxwell Render
 * append this ```export LD_LIBRARY_PATH=$MAXWELL3_ROOT:$LD_LIBRARY_PATH``` to your .bashrc AFTER generated stuff from Maxwell installation, after MAXWELL3_ROOT is exported
 * to fix complains of some extensions, install ```libtbb-dev```, but this step might be optional, it is used by extension not supported in addon
+* start blender from terminal
 * install addon as usual
 
 
