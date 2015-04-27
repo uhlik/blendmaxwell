@@ -19,7 +19,7 @@
 bl_info = {"name": "Maxwell Render",
            "description": "Maxwell Render integration",
            "author": "Jakub Uhlik",
-           "version": (0, 1, 7),
+           "version": (0, 1, 8),
            "blender": (2, 74, 0),
            "location": "Info header > render engine menu",
            "warning": "Currently only Mac OS X is fully supported",
