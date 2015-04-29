@@ -37,7 +37,6 @@
 **WARNING: still highly experimental, expect bugs** (tested on Windows 8.1 64)
 
 * Install Maxwell Render
-* System Properties > Advanced > Environment Variables... > System Variables > add to PATH at the end of current value ```;C:\Program Files\Next Limit\Maxwell 3```, it's the same string as in MAXWELL3_ROOT variable, which you should already have. Don't mess something up. Just keep current value and ONLY ADD one more path at the END of it. Storing original value in text file would be an good idea.
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```render_maxwell``` and put to ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.74\scripts\addons\```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 

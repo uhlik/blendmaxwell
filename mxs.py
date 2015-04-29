@@ -68,6 +68,7 @@ elif(s == 'Windows'):
     except ImportError:
         mp = os.environ.get("MAXWELL3_ROOT")
         sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
+        os.environ['PATH'] = ';'.join([mp, os.environ['PATH']])
         from pymaxwell import *
 
 
