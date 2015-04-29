@@ -2323,42 +2323,49 @@ class MXSExportLegacy():
                     rfbw = rfbin.RFBinWriter(**prms)
                     m.filename = rfbw.path
                 
-                q = {'filename': bpy.path.abspath(m.filename),
-                     'radius': m.radius,
-                     'mb_factor': m.mb_factor,
-                     'load_percent': m.load_percent,
-                     'start_offset': m.start_offset,
-                     'extra_npp': m.extra_npp,
-                     'extra_p_dispersion': m.extra_p_dispersion,
-                     'extra_p_deformation': m.extra_p_deformation,
-                     'align_to_velocity': m.align_to_velocity,
-                     'scale_with_radius': m.scale_with_radius,
-                     'inherit_obj_id': m.inherit_obj_id,
-                     'frame': self.context.scene.frame_current,
-                     'fps': self.context.scene.render.fps,
-                     'display_percent': int(m.display_percent),
-                     'display_max': int(m.display_max),
+                cloned = None
+                try:
+                    cloned = ps.settings.dupli_object.name
+                except AttributeError:
+                    log("{}: {}: Maxwell Cloner: cloned object is not available. Skipping..".format(o.name, ps.name), 1, LogStyles.WARNING, )
+                
+                if(cloned is not None):
+                    q = {'filename': bpy.path.abspath(m.filename),
+                         'radius': m.radius,
+                         'mb_factor': m.mb_factor,
+                         'load_percent': m.load_percent,
+                         'start_offset': m.start_offset,
+                         'extra_npp': m.extra_npp,
+                         'extra_p_dispersion': m.extra_p_dispersion,
+                         'extra_p_deformation': m.extra_p_deformation,
+                         'align_to_velocity': m.align_to_velocity,
+                         'scale_with_radius': m.scale_with_radius,
+                         'inherit_obj_id': m.inherit_obj_id,
+                         'frame': self.context.scene.frame_current,
+                         'fps': self.context.scene.render.fps,
+                         'display_percent': int(m.display_percent),
+                         'display_max': int(m.display_max),
                      
-                     'cloned_object': ps.settings.dupli_object.name,
-                     'render_emitter': ps.settings.use_render_emitter,
+                         'cloned_object': ps.settings.dupli_object.name,
+                         'render_emitter': ps.settings.use_render_emitter,
                      
-                     # pass some default to skip checks this time..
-                     'opacity': 100,
-                     'hidden_camera': False,
-                     'hidden_camera_in_shadow_channel': False,
-                     'hidden_global_illumination': False,
-                     'hidden_reflections_refractions': False,
-                     'hidden_zclip_planes': False,
-                     'object_id': [255, 255, 255],
-                     'name': dp['name'],
-                     'parent': None,
-                     'base': None,
-                     'pivot': None,
-                     'matrix': None,
-                     'hide': False,
+                         # pass some default to skip checks this time..
+                         'opacity': 100,
+                         'hidden_camera': False,
+                         'hidden_camera_in_shadow_channel': False,
+                         'hidden_global_illumination': False,
+                         'hidden_reflections_refractions': False,
+                         'hidden_zclip_planes': False,
+                         'object_id': [255, 255, 255],
+                         'name': dp['name'],
+                         'parent': None,
+                         'base': None,
+                         'pivot': None,
+                         'matrix': None,
+                         'hide': False,
                      
-                     'object': dp['parent'],
-                     'type': 'CLONER', }
+                         'object': dp['parent'],
+                         'type': 'CLONER', }
             else:
                 raise TypeError("Unsupported particles type: {}".format(dp['type']))
             
@@ -4663,27 +4670,32 @@ class MXSExport():
             rfbw = rfbin.RFBinWriter(**prms)
             m.filename = rfbw.path
         
-        d = {'object_name': o['parent'],
-             
-             'cloned_object': ps.settings.dupli_object.name,
-             'render_emitter': ps.settings.use_render_emitter,
-             
-             'path': bpy.path.abspath(m.filename),
-             'radius': m.radius,
-             'mb_factor': m.mb_factor,
-             'load_percent': m.load_percent,
-             'start_offset': m.start_offset,
-             'ex_npp': m.extra_npp,
-             'ex_p_dispersion': m.extra_p_dispersion,
-             'ex_p_deformation': m.extra_p_deformation,
-             'align_to_velocity': m.align_to_velocity,
-             'scale_with_radius': m.scale_with_radius,
-             'inherit_obj_id': m.inherit_obj_id,
-             'frame': self.context.scene.frame_current,
-             'fps': self.context.scene.render.fps,
-             'display_percent': int(m.display_percent),
-             'display_max': int(m.display_max), }
-        self.mxs.mod_cloner(**d)
+        cloned = None
+        try:
+            cloned = ps.settings.dupli_object.name
+        except AttributeError:
+            log("{}: {}: Maxwell Cloner: cloned object is not available. Skipping..".format(o.name, ps.name), 1, LogStyles.WARNING, )
+        
+        if(cloned is not None):
+            d = {'object_name': o['parent'],
+                 'cloned_object': ps.settings.dupli_object.name,
+                 'render_emitter': ps.settings.use_render_emitter,
+                 'path': bpy.path.abspath(m.filename),
+                 'radius': m.radius,
+                 'mb_factor': m.mb_factor,
+                 'load_percent': m.load_percent,
+                 'start_offset': m.start_offset,
+                 'ex_npp': m.extra_npp,
+                 'ex_p_dispersion': m.extra_p_dispersion,
+                 'ex_p_deformation': m.extra_p_deformation,
+                 'align_to_velocity': m.align_to_velocity,
+                 'scale_with_radius': m.scale_with_radius,
+                 'inherit_obj_id': m.inherit_obj_id,
+                 'frame': self.context.scene.frame_current,
+                 'fps': self.context.scene.render.fps,
+                 'display_percent': int(m.display_percent),
+                 'display_max': int(m.display_max), }
+            self.mxs.mod_cloner(**d)
     
     def object_extensions(self, o, ):
         ob = o['object']
