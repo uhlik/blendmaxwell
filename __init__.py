@@ -22,7 +22,7 @@ bl_info = {"name": "Maxwell Render",
            "version": (0, 1, 8),
            "blender": (2, 74, 0),
            "location": "Info header > render engine menu",
-           "warning": "Currently only Mac OS X is fully supported",
+           "warning": "Alpha",
            "wiki_url": "https://github.com/uhlik/render_maxwell/wiki",
            "tracker_url": "https://github.com/uhlik/render_maxwell/issues",
            "category": "Render", }

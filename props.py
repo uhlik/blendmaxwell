@@ -461,6 +461,23 @@ class ObjectProperties(PropertyGroup):
         del bpy.types.Object.maxwell_render
 
 
+class ReferenceProperties(PropertyGroup):
+    enabled = BoolProperty(name="Enabled", default=False, )
+    path = StringProperty(name="MXS File", default="", subtype='FILE_PATH', )
+    flag_override_hide = BoolProperty(name="Hidden", default=False, )
+    flag_override_hide_to_camera = BoolProperty(name="Camera", default=False, )
+    flag_override_hide_to_refl_refr = BoolProperty(name="Reflections/Refractions", default=False, )
+    flag_override_hide_to_gi = BoolProperty(name="Global Illumination", default=False, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Object.maxwell_render_reference = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Object.maxwell_render_reference
+
+
 class MaterialProperties(PropertyGroup):
     embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )

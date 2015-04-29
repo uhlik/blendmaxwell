@@ -258,7 +258,10 @@ class MXSExportLegacy():
                     #     t = 'EMPTY'
             elif(o.type == 'EMPTY'):
                 # t = 'EMPTY'
-                pass
+                if(o.maxwell_render_reference.enabled):
+                    t = 'REFERENCE'
+                else:
+                    pass
             elif(o.type == 'CAMERA'):
                 t = 'CAMERA'
             elif(o.type in might_be_renderable):
@@ -340,7 +343,7 @@ class MXSExportLegacy():
             def walk(o):
                 for c in o['children']:
                     walk(c)
-                if((o['export_type'] == 'MESH' or o['export_type'] == 'BASE_INSTANCE') or o['export_type'] == 'INSTANCE' and o['export'] is True):
+                if((o['export_type'] == 'MESH' or o['export_type'] == 'BASE_INSTANCE') or o['export_type'] == 'INSTANCE' or o['export_type'] == 'REFERENCE' and o['export'] is True):
                     # keep instances (Maxwell 3)
                     # keep: meshes, bases - both with export: True
                     # (export: False are hidden objects, and should be already swapped to empties if needed for hiearchy)
@@ -348,7 +351,7 @@ class MXSExportLegacy():
                     # > bases can have children, bases are real meshes
                     ov.append(True)
                 else:
-                    # remove: empties, bases, instances, suns, meshes and bases with export: False (hidden objects)
+                    # remove: empties, bases, instances, suns, meshes and bases with export: False (hidden objects) and reference enabled: False
                     # > empties can be removed
                     # > instances are moved to base level, because with instances hiearchy is irrelevant
                     # > suns are not objects
@@ -388,6 +391,7 @@ class MXSExportLegacy():
         cameras = []
         bases = []
         suns = []
+        references = []
         
         def walk(o):
             for c in o['children']:
@@ -406,6 +410,8 @@ class MXSExportLegacy():
                     instances.append(o)
                 elif(o['export_type'] == 'SUN'):
                     suns.append(o)
+                elif(o['export_type'] == 'REFERENCE'):
+                    references.append(o)
         
         for o in h:
             walk(o)
@@ -415,6 +421,7 @@ class MXSExportLegacy():
         self.instances = instances
         self.empties = empties
         self.cameras = cameras
+        self.references = references
         
         # no visible camera
         if(len(self.cameras) == 0):
@@ -988,6 +995,9 @@ class MXSExportLegacy():
         
         log("processing particles..", 1, LogStyles.MESSAGE)
         self._particles()
+        
+        log("processing references..", 1, LogStyles.MESSAGE)
+        self._references()
         
         # import pprint
         # pp = pprint.PrettyPrinter(indent=4)
@@ -2372,6 +2382,57 @@ class MXSExportLegacy():
             if(q is not None):
                 self.data.append(q)
     
+    def _references(self):
+        for o in self.references:
+            ob = o['object']
+            m = ob.maxwell_render_reference
+            
+            log("{0} -> {1}".format(o['object'].name, bpy.path.abspath(m.path)), 2)
+            if(not os.path.exists(bpy.path.abspath(m.path))):
+                log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(m.path)), 3, LogStyles.WARNING)
+                return
+            
+            # template
+            d = {'name': ob.name,
+                 'parent': None,
+                 
+                 'base': None,
+                 'pivot': None,
+                 
+                 'path': bpy.path.abspath(m.path),
+                 'flag_override_hide': m.flag_override_hide,
+                 'flag_override_hide_to_camera': m.flag_override_hide_to_camera,
+                 'flag_override_hide_to_refl_refr': m.flag_override_hide_to_refl_refr,
+                 'flag_override_hide_to_gi': m.flag_override_hide_to_gi,
+                 
+                 'opacity': 100.0,
+                 'hidden_camera': False,
+                 'hidden_camera_in_shadow_channel': False,
+                 'hidden_global_illumination': False,
+                 'hidden_reflections_refractions': False,
+                 'hidden_zclip_planes': False,
+                 'object_id': (255, 255, 255),
+                 
+                 'type': 'REFERENCE', }
+            
+            d = self._object_properties(ob, d)
+            
+            if(ob.parent):
+                d['parent'] = ob.parent.name
+            
+            if(ob.parent_type == 'BONE'):
+                oamw = ob.matrix_world.copy()
+                apmw = ob.parent.matrix_world.copy()
+                apmw.invert()
+                amw = apmw * oamw
+                b, p = self._matrix_to_base_and_pivot(amw)
+            else:
+                b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+            d['base'] = b
+            d['pivot'] = p
+            
+            self.data.append(d)
+    
     def _pymaxwell(self, append=False, instancer=False, wireframe=False, ):
         """Generate pymaxwell script in temp directory and execute it."""
         # generate script
@@ -3112,6 +3173,9 @@ class MXSExport():
             elif(o['type'] == 'CLONER'):
                 self.cloner(o)
         
+        for o in self.references:
+            self.reference(o)
+        
         # all objects are written, now set hierarchy
         self.mxs.hierarchy(self.hierarchy)
         
@@ -3129,6 +3193,15 @@ class MXSExport():
         log("done.", 1, LogStyles.MESSAGE)
     
     def collect(self):
+        """Collect scene objects.
+        what it does (unordered):
+            - Filter all scene objects and collect only objects needed for scene export. Meshes (and instances), empties, cameras and sun.
+            - Remove all objects on hidden layers and with hide_render: True, substitute with an empty if needed for correct hierarchy.
+            - Sort all objects by type, determine base meshes for instanced objects (if use_instances: True).
+            - Try to convert non-mesh objects to mesh and if result is renderable, include them as well.
+            - Covert dupli-objects to real meshes or instances.
+        Return filtered scene hierarchy.
+        """
         objs = self.context.scene.objects
         
         # sort objects
@@ -3193,6 +3266,17 @@ class MXSExport():
         render_layers = self.context.scene.render.layers.active.layers
         
         def check_visibility(o):
+            """Objects which are in visible layers and have hide_render: False are considered visible,
+               objects which are only hidden from viewport are renderable, therefore visible."""
+            # if(mx.render_use_layers == 'RENDER'):
+            #     for i, l in enumerate(o.layers):
+            #         if(render_layers[i] is True and l is True and o.hide_render is False):
+            #             return True
+            # else:
+            #     for i, l in enumerate(o.layers):
+            #         if(layers[i] is True and l is True and o.hide_render is False):
+            #             return True
+            
             if(o.hide_render is True):
                 return False
             
@@ -3214,6 +3298,7 @@ class MXSExport():
         might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
         
         def export_type(o):
+            """determine export type, if convertible, try convert to mesh and store result"""
             t = 'EMPTY'
             m = None
             c = False
@@ -3235,6 +3320,8 @@ class MXSExport():
                                 t = 'MESH'
                                 # remove mesh, was created only for testing..
                                 bpy.data.meshes.remove(me)
+                        # else:
+                        #     t = 'EMPTY'
                 else:
                     if(len(o.data.polygons) > 0):
                         t = 'MESH'
@@ -3245,8 +3332,14 @@ class MXSExport():
                             t = 'MESH'
                             # remove mesh, was created only for testing..
                             bpy.data.meshes.remove(me)
+                    # else:
+                    #     t = 'EMPTY'
             elif(o.type == 'EMPTY'):
-                pass
+                # t = 'EMPTY'
+                if(o.maxwell_render_reference.enabled):
+                    t = 'REFERENCE'
+                else:
+                    pass
             elif(o.type == 'CAMERA'):
                 t = 'CAMERA'
             elif(o.type in might_be_renderable):
@@ -3256,9 +3349,15 @@ class MXSExport():
                         t = 'MESH'
                         m = me
                         c = True
+                    # else:
+                    #     t = 'EMPTY'
+                # else:
+                #     t = 'EMPTY'
             elif(o.type == 'LAMP'):
                 if(o.data.type == 'SUN'):
                     t = 'SUN'
+            # else:
+            #     t = 'EMPTY'
             return t, m, c
         
         # object hierarchy
@@ -3322,7 +3421,7 @@ class MXSExport():
             def walk(o):
                 for c in o['children']:
                     walk(c)
-                if((o['export_type'] == 'MESH' or o['export_type'] == 'BASE_INSTANCE') or o['export_type'] == 'INSTANCE' and o['export'] is True):
+                if((o['export_type'] == 'MESH' or o['export_type'] == 'BASE_INSTANCE') or o['export_type'] == 'INSTANCE' or o['export_type'] == 'REFERENCE' and o['export'] is True):
                     # keep instances (Maxwell 3)
                     # keep: meshes, bases - both with export: True
                     # (export: False are hidden objects, and should be already swapped to empties if needed for hiearchy)
@@ -3330,7 +3429,7 @@ class MXSExport():
                     # > bases can have children, bases are real meshes
                     ov.append(True)
                 else:
-                    # remove: empties, bases, instances, suns, meshes and bases with export: False (hidden objects)
+                    # remove: empties, bases, instances, suns, meshes and bases with export: False (hidden objects) and reference enabled: False
                     # > empties can be removed
                     # > instances are moved to base level, because with instances hiearchy is irrelevant
                     # > suns are not objects
@@ -3362,13 +3461,15 @@ class MXSExport():
         for o in h:
             walk(o)
         
-        # split objects to lists
+        # split objects to lists, instances already are
+        # Maxwell 3, instances are not..
         instances = []
         meshes = []
         empties = []
         cameras = []
         bases = []
         suns = []
+        references = []
         
         def walk(o):
             for c in o['children']:
@@ -3387,6 +3488,8 @@ class MXSExport():
                     instances.append(o)
                 elif(o['export_type'] == 'SUN'):
                     suns.append(o)
+                elif(o['export_type'] == 'REFERENCE'):
+                    references.append(o)
         
         for o in h:
             walk(o)
@@ -3396,6 +3499,7 @@ class MXSExport():
         self.instances = instances
         self.empties = empties
         self.cameras = cameras
+        self.references = references
         
         # no visible camera
         if(len(self.cameras) == 0):
@@ -3461,6 +3565,7 @@ class MXSExport():
                                  'export_type': 'INSTANCE',
                                  'mesh': io['mesh'],
                                  'converted': False,
+                                 # 'parent': None,
                                  'parent': o,
                                  'type': 'MESH', }
                             self.duplicates.append(d)
@@ -4095,6 +4200,38 @@ class MXSExport():
                             if(gr['name'] == g.name):
                                 gr['objects'].append(name)
                                 break
+    
+    def reference(self, o, rname=None, ):
+        ob = o['object']
+        m = ob.maxwell_render_reference
+        rp = bpy.path.abspath(m.path)
+        log("{0} -> {1}".format(ob.name, rp), 2)
+        
+        if(ob.parent_type == 'BONE'):
+            oamw = ob.matrix_world.copy()
+            apmw = ob.parent.matrix_world.copy()
+            apmw.invert()
+            amw = apmw * oamw
+            b, p = self.matrix_to_base_and_pivot(amw)
+        else:
+            b, p = self.matrix_to_base_and_pivot(ob.matrix_local)
+        
+        name = ob.name
+        if(rname is not None):
+            name = rname
+        
+        if(not os.path.exists(rp)):
+            log("mxs file: '{}' does not exist, skipping..".format(rp), 3, LogStyles.WARNING)
+            return
+            
+        flags = [m.flag_override_hide, m.flag_override_hide_to_camera, m.flag_override_hide_to_refl_refr, m.flag_override_hide_to_gi, ]
+        
+        self.mxs.reference(name, path, flags, b, p, self.get_object_props(ob), )
+        
+        parent = None
+        if(ob.parent):
+            parent = ob.parent.name
+        self.hierarchy.append((name, parent))
     
     def environment(self):
         mx = self.context.scene.world.maxwell_render

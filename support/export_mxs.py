@@ -1171,9 +1171,25 @@ def hair(d, s):
     object_props(o, d)
 
 
+def reference(d, s):
+    o = s.createMesh(d['name'], 0, 0, 0, 0,)
+    base_and_pivot(o, d)
+    object_props(o, d)
+    o.setReferencedScenePath(d['path'])
+    if(d['flag_override_hide']):
+        o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE)
+    if(d['flag_override_hide_to_camera']):
+        o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_CAMERA)
+    if(d['flag_override_hide_to_refl_refr']):
+        o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_REFL_REFR)
+    if(d['flag_override_hide_to_gi']):
+        o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_GI)
+    return o
+
+
 def hierarchy(d, s):
     log("setting object hierarchy..", 2)
-    object_types = ['EMPTY', 'MESH', 'INSTANCE', 'PARTICLES', 'HAIR', ]
+    object_types = ['EMPTY', 'MESH', 'INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', ]
     exclude = ['SCENE', 'ENVIRONMENT', 'GRASS', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types and d[i]['type'] not in exclude):
@@ -1403,6 +1419,8 @@ def main(args):
             hair(d, mxs)
         elif(d['type'] == 'CLONER'):
             cloner(d, mxs)
+        elif(d['type'] == 'REFERENCE'):
+            reference(d, mxs)
         elif(d['type'] == 'WIREFRAME_MATERIAL'):
             mat = wireframe_material(d, mxs)
             m = {'name': d['name'], 'data': mat, }
@@ -1488,7 +1506,20 @@ if __name__ == "__main__":
     LOG_FILE_PATH = args.log_file
     
     try:
+        
+        # import cProfile, pstats, io
+        # pr = cProfile.Profile()
+        # pr.enable()
+        
         main(args)
+        
+        # pr.disable()
+        # s = io.StringIO()
+        # sortby = 'cumulative'
+        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        # ps.print_stats()
+        # print(s.getvalue())
+        
     except Exception as e:
         # exc_type, exc_value, exc_traceback = sys.exc_info()
         # lines = traceback.format_exception(exc_type, exc_value, exc_traceback)

@@ -457,6 +457,31 @@ class MXSWriter():
         
         return o
     
+    def reference(self, name, path, flags, base, pivot, object_props=None, ):
+        """Create MXS reference object.
+        name            string
+        path            string (path)
+        flags           [bool, bool, bool, bool]
+        base            ((3 float), (3 float), (3 float), (3 float))
+        pivot           ((3 float), (3 float), (3 float), (3 float))
+        object_props    (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
+        """
+        s = self.mxs
+        o = s.createMesh(name, 0, 0, 0, 0, )
+        o.setReferencedScenePath(path)
+        if(flags[0]):
+            o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE)
+        if(flags[1]):
+            o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_CAMERA)
+        if(flags[2]):
+            o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_REFL_REFR)
+        if(flags[3]):
+            o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_GI)
+        self.set_base_and_pivot(o, base, pivot, )
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
+        return o
+    
     def hierarchy(self, tree, ):
         """Set hierarchy of all objects at once.
         tree    [(obj_name, parent_name or None, ), ..., ]

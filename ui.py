@@ -1036,6 +1036,58 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'hidden_zclip_planes')
 
 
+class ObjectReferencePanel(ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell MXS Reference Object"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['EMPTY']
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
+    
+    def draw_header(self, context):
+        m = context.object.maxwell_render_reference
+        self.layout.prop(m, 'enabled', text="")
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        m = context.object.maxwell_render_reference
+        
+        sub.prop(m, 'path')
+        
+        q = 0.33
+        
+        r = sub.row()
+        s = r.split(percentage=q)
+        c = s.column()
+        c.label(text='Override Flags:')
+        c = s.column()
+        c.prop(m, 'flag_override_hide')
+        
+        r = sub.row()
+        s = r.split(percentage=q)
+        c = s.column()
+        c.label(text='Hidden From:')
+        c = s.column()
+        c.prop(m, 'flag_override_hide_to_camera')
+        
+        r = sub.row()
+        s = r.split(percentage=q)
+        c = s.column()
+        c = s.column()
+        c.prop(m, 'flag_override_hide_to_refl_refr')
+        
+        r = sub.row()
+        s = r.split(percentage=q)
+        c = s.column()
+        c = s.column()
+        c.prop(m, 'flag_override_hide_to_gi')
+
+
 class ObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Subdivision Modifier"

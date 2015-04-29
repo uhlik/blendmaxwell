@@ -390,7 +390,20 @@ class MaxwellRenderExportEngine(RenderEngine):
                      'mxs_path': p,
                      'use_instances': m.export_use_instances,
                      'keep_intermediates': m.export_keep_intermediates, }
+                
+                # import cProfile, pstats, io
+                # pr = cProfile.Profile()
+                # pr.enable()
+                
                 ex = export.MXSExportLegacy(**d)
+                
+                # pr.disable()
+                # s = io.StringIO()
+                # sortby = 'cumulative'
+                # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+                # ps.print_stats()
+                # print(s.getvalue())
+                
             elif(system.PLATFORM == 'Linux'):
                 ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
             elif(system.PLATFORM == 'Windows'):
