@@ -4226,7 +4226,7 @@ class MXSExport():
             
         flags = [m.flag_override_hide, m.flag_override_hide_to_camera, m.flag_override_hide_to_refl_refr, m.flag_override_hide_to_gi, ]
         
-        self.mxs.reference(name, path, flags, b, p, self.get_object_props(ob), )
+        self.mxs.reference(name, rp, flags, b, p, self.get_object_props(ob), )
         
         parent = None
         if(ob.parent):

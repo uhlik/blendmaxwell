@@ -10,6 +10,7 @@
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
 * Mesh objects using the same mesh data are exported as instances (optional)
+* MXS references
 * Dupli verts and faces
 * Multiple UV channels
 * Material assignment (including backface materials) and multiple materials per object
@@ -55,6 +56,7 @@
 
 changelog:
 
+* 0.1.9 added: MXS References, Windows installation simplified
 * 0.1.8 added: Linux and Windows support, cloner extension, lots of refactoring
 * 0.1.7 added: presets, texture panel, basic material preview, RFBin export with size per particle, lots of refactoring, Linux and Windows ports are working without extensions
 * 0.1.6 added: maxwell hair, subdivision, scatter and particles export as realflow bin, fixed: render shortcuts, ui spaceing
