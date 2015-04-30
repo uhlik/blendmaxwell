@@ -1532,32 +1532,36 @@ class MXSExportLegacy():
         
         sc = ob.maxwell_scatter_extension
         if(sc.enabled):
-            d['scatter_ext'] = {'scatter_object': sc.scatter_object,
-                                'inherit_objectid': sc.inherit_objectid,
-                                'density': sc.density,
-                                'density_map': texture_to_data(sc.density_map),
-                                'seed': int(sc.seed),
-                                'scale_x': sc.scale_x,
-                                'scale_y': sc.scale_y,
-                                'scale_z': sc.scale_z,
-                                'scale_map': texture_to_data(sc.scale_map),
-                                'scale_variation_x': sc.scale_variation_x,
-                                'scale_variation_y': sc.scale_variation_y,
-                                'scale_variation_z': sc.scale_variation_z,
-                                'rotation_x': math.degrees(sc.rotation_x),
-                                'rotation_y': math.degrees(sc.rotation_y),
-                                'rotation_z': math.degrees(sc.rotation_z),
-                                'rotation_map': texture_to_data(sc.rotation_map),
-                                'rotation_variation_x': sc.rotation_variation_x,
-                                'rotation_variation_y': sc.rotation_variation_y,
-                                'rotation_variation_z': sc.rotation_variation_z,
-                                'rotation_direction': int(sc.rotation_direction),
-                                'lod': sc.lod,
-                                'lod_min_distance': sc.lod_min_distance,
-                                'lod_max_distance': sc.lod_max_distance,
-                                'lod_max_distance_density': sc.lod_max_distance_density,
-                                'display_percent': int(sc.display_percent),
-                                'display_max_blades': int(sc.display_max_blades), }
+            if(sc.scatter_object is ''):
+                log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(ob.name), 3, LogStyles.WARNING, )
+                d['scatter_ext'] = None
+            else:
+                d['scatter_ext'] = {'scatter_object': sc.scatter_object,
+                                    'inherit_objectid': sc.inherit_objectid,
+                                    'density': sc.density,
+                                    'density_map': texture_to_data(sc.density_map),
+                                    'seed': int(sc.seed),
+                                    'scale_x': sc.scale_x,
+                                    'scale_y': sc.scale_y,
+                                    'scale_z': sc.scale_z,
+                                    'scale_map': texture_to_data(sc.scale_map),
+                                    'scale_variation_x': sc.scale_variation_x,
+                                    'scale_variation_y': sc.scale_variation_y,
+                                    'scale_variation_z': sc.scale_variation_z,
+                                    'rotation_x': math.degrees(sc.rotation_x),
+                                    'rotation_y': math.degrees(sc.rotation_y),
+                                    'rotation_z': math.degrees(sc.rotation_z),
+                                    'rotation_map': texture_to_data(sc.rotation_map),
+                                    'rotation_variation_x': sc.rotation_variation_x,
+                                    'rotation_variation_y': sc.rotation_variation_y,
+                                    'rotation_variation_z': sc.rotation_variation_z,
+                                    'rotation_direction': int(sc.rotation_direction),
+                                    'lod': sc.lod,
+                                    'lod_min_distance': sc.lod_min_distance,
+                                    'lod_max_distance': sc.lod_max_distance,
+                                    'lod_max_distance_density': sc.lod_max_distance_density,
+                                    'display_percent': int(sc.display_percent),
+                                    'display_max_blades': int(sc.display_max_blades), }
         else:
             d['scatter_ext'] = None
         
@@ -4845,11 +4849,14 @@ class MXSExport():
         sc = ob.maxwell_scatter_extension
         if(sc.enabled):
             log("{0}".format("Scatter"), 3)
-            density = (sc.density, self.mod_texture_to_data(sc.density_map), )
-            scale = (sc.scale_x, sc.scale_y, sc.scale_z, self.mod_texture_to_data(sc.scale_map), sc.scale_variation_x, sc.scale_variation_y, sc.scale_variation_z, )
-            rotation = (math.degrees(sc.rotation_x), math.degrees(sc.rotation_y), math.degrees(sc.rotation_z), self.mod_texture_to_data(sc.rotation_map), sc.rotation_variation_x, sc.rotation_variation_y, sc.rotation_variation_z, int(sc.rotation_direction), )
-            lod = (int(sc.lod), sc.lod_min_distance, sc.lod_max_distance, sc.lod_max_distance_density, )
-            self.mxs.mod_scatter(ob.name, sc.scatter_object, sc.inherit_objectid, density, int(sc.seed), scale, rotation, lod, int(sc.display_percent), int(sc.display_max_blades), )
+            if(sc.scatter_object == ''):
+                log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(ob.name), 3, LogStyles.WARNING, )
+            else:
+                density = (sc.density, self.mod_texture_to_data(sc.density_map), )
+                scale = (sc.scale_x, sc.scale_y, sc.scale_z, self.mod_texture_to_data(sc.scale_map), sc.scale_variation_x, sc.scale_variation_y, sc.scale_variation_z, )
+                rotation = (math.degrees(sc.rotation_x), math.degrees(sc.rotation_y), math.degrees(sc.rotation_z), self.mod_texture_to_data(sc.rotation_map), sc.rotation_variation_x, sc.rotation_variation_y, sc.rotation_variation_z, int(sc.rotation_direction), )
+                lod = (int(sc.lod), sc.lod_min_distance, sc.lod_max_distance, sc.lod_max_distance_density, )
+                self.mxs.mod_scatter(ob.name, sc.scatter_object, sc.inherit_objectid, density, int(sc.seed), scale, rotation, lod, int(sc.display_percent), int(sc.display_max_blades), )
         
         ms = ob.maxwell_sea_extension
         if(ms.enabled):

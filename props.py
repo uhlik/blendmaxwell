@@ -853,13 +853,13 @@ class ClonerExtProperties(PropertyGroup):
     
     radius = FloatProperty(name="Radius Multiplier", default=1.0, min=0.000001, max=1000000.0, )
     mb_factor = FloatProperty(name="Motion Blur Multiplier", default=1.0, min=0.0, max=1000000.0, )
-    load_percent = FloatProperty(name="Load Particles (%)", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    load_percent = FloatProperty(name="Load (%)", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     start_offset = IntProperty(name="Start Offset", default=0, min=0, max=100000000, )
     extra_npp = IntProperty(name="Extra Part. Per Particle", default=0, min=0, max=100000000, )
     extra_p_dispersion = FloatProperty(name="Extra Part. Dispersion", default=0.0, min=0.0, max=1000000.0, )
     extra_p_deformation = FloatProperty(name="Extra Part. Deformation", default=0.0, min=0.0, max=1000000.0, )
     align_to_velocity = BoolProperty(name="Align To Velocity", default=False, )
-    scale_with_radius = BoolProperty(name="Scale W/ Particle Radius", default=False, )
+    scale_with_radius = BoolProperty(name="Scale With Particle Radius", default=False, )
     inherit_obj_id = BoolProperty(name="Inherit Object Id", default=False, )
     
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )

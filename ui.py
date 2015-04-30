@@ -1023,6 +1023,7 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         sub.separator()
         
         sub.prop(m, 'opacity')
+        sub.separator()
         r = sub.row()
         r.prop(m, 'object_id')
         sub.label("Hidden from:")
@@ -1444,6 +1445,7 @@ class ParticlesPanel(ParticleButtonsPanel, Panel):
         
         r = sub.row()
         r.prop(m, 'use', expand=True, )
+        # sub.label("Particle system will be skipped.", icon='ERROR', )
 
 
 class GrassExtPanel(ParticleButtonsPanel, Panel):
@@ -1494,6 +1496,7 @@ class GrassExtPanel(ParticleButtonsPanel, Panel):
         c.prop(m, 'backface_material')
         c = s.column()
         c.prop(m, 'backface_material_embed', text='Embed', )
+        sub.separator()
         
         sub.prop(m, 'points_per_blade')
         r = sub.row()
@@ -1565,8 +1568,9 @@ class GrassExtPanel(ParticleButtonsPanel, Panel):
         sub.separator()
         
         sub.label("Display:")
-        sub.prop(m, 'display_percent')
-        sub.prop(m, 'display_max_blades')
+        c = sub.column(align=True)
+        c.prop(m, 'display_percent')
+        c.prop(m, 'display_max_blades')
 
 
 class ParticlesExtObjectPanel(ParticleButtonsPanel, Panel):
@@ -1629,6 +1633,7 @@ class ParticlesExtObjectPanel(ParticleButtonsPanel, Panel):
         sub.prop(m, 'hide')
         sub.prop(m, 'hide_parent')
         sub.prop(m, 'opacity')
+        sub.separator()
         r = sub.row()
         r.prop(m, 'object_id')
         sub.separator()
@@ -1731,11 +1736,19 @@ class HairExtPanel(ParticleButtonsPanel, Panel):
             c.prop(m, 'hair_tip_radius')
         
         sub.separator()
-        sub.prop(m, 'display_percent')
+        # sub.prop(m, 'display_percent')
+        # if(m.hair_type == 'GRASS'):
+        #     sub.prop(m, 'display_max_blades')
+        # else:
+        #     sub.prop(m, 'display_max_hairs')
+        
+        # sub.label("Display:")
+        c = sub.column(align=True)
+        c.prop(m, 'display_percent')
         if(m.hair_type == 'GRASS'):
-            sub.prop(m, 'display_max_blades')
+            c.prop(m, 'display_max_blades')
         else:
-            sub.prop(m, 'display_max_hairs')
+            c.prop(m, 'display_max_hairs')
 
 
 class ParticlesExtPanel(ParticleButtonsPanel, Panel):
@@ -1957,8 +1970,9 @@ class ClonerExtPanel(ParticleButtonsPanel, Panel):
         c.label("Particles:")
         c.prop(m, 'radius')
         c.prop(m, 'mb_factor')
-        c.prop(m, 'load_percent')
-        c.prop(m, 'start_offset')
+        r = c.row()
+        r.prop(m, 'load_percent')
+        r.prop(m, 'start_offset')
         c.separator()
         
         c = sub.column()
@@ -1975,8 +1989,10 @@ class ClonerExtPanel(ParticleButtonsPanel, Panel):
         c.prop(m, 'inherit_obj_id')
         c.separator()
         
-        sub.prop(m, 'display_percent')
-        sub.prop(m, 'display_max')
+        sub.label("Display:")
+        c = sub.column(align=True)
+        c.prop(m, 'display_percent')
+        c.prop(m, 'display_max')
 
 
 class Render_presets(Menu):
