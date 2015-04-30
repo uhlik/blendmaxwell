@@ -648,6 +648,12 @@ class ParticlesExtProperties(PropertyGroup):
     bl_use_size = BoolProperty(name="Size Per Particle (Blender Particle Size Settings)", default=False, )
     bl_size = FloatProperty(name="Size", default=0.1, min=0.000001, max=1000000.0, step=3, precision=6, )
     
+    bin_type = EnumProperty(name="Type", items=[('STATIC', "Static", ""), ('SEQUENCE', "Sequence", "")], default='STATIC', )
+    seq_limit = BoolProperty(name="Limit Sequence", default=False, )
+    seq_start = IntProperty(name="Start Frame", default=0, min=0, max=100000000, )
+    seq_end = IntProperty(name="Stop Frame", default=100, min=0, max=100000000, )
+    private_bin_filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
+    
     bin_filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
     bin_radius_multiplier = FloatProperty(name="Radius Multiplier", default=1.0, min=0.000001, max=1000000.0, step=3, precision=6, )
     bin_motion_blur_multiplier = FloatProperty(name="Motion Blur Multiplier", default=1.0, min=0.000001, max=1000000.0, step=3, precision=6, )

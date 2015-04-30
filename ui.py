@@ -1814,6 +1814,17 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
         r.prop(m, 'source', expand=True)
         if(m.source == 'EXTERNAL_BIN'):
             sub.prop(m, 'bin_filename')
+            
+            # r = sub.row()
+            # r.prop(m, 'bin_type', expand=True, )
+            sub.prop(m, 'bin_type')
+            if(m.bin_type == 'SEQUENCE'):
+                sub.prop(m, 'seq_limit')
+                r = sub.row(align=True)
+                if(not m.seq_limit):
+                    r.active = False
+                r.prop(m, 'seq_start')
+                r.prop(m, 'seq_end')
         else:
             sub.prop(m, 'bl_use_velocity')
             r = sub.row()
@@ -1824,6 +1835,7 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
             sub.prop(m, 'bin_directory')
             sub.prop(m, 'bin_overwrite')
         
+        sub.separator()
         # sub.label("Sequence:")
         
         sub.prop(m, 'bin_radius_multiplier')

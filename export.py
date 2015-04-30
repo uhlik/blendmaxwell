@@ -25,6 +25,7 @@ import shutil
 import struct
 import json
 import sys
+import re
 
 import bpy
 from mathutils import Matrix, Vector
@@ -2008,6 +2009,8 @@ class MXSExportLegacy():
             return None
         
         for dp in self.particles:
+            skip = False
+            
             q = None
             log("{0} ({1})".format(dp['name'], dp['type']), 2)
             b, p = self._matrix_to_base_and_pivot(dp['matrix'])
@@ -2087,7 +2090,45 @@ class MXSExportLegacy():
                     rfbw = rfbin.RFBinWriter(**prms)
                     m.bin_filename = rfbw.path
                 else:
-                    pass
+                    # external particles
+                    if(m.bin_type == 'SEQUENCE'):
+                        # sequence
+                        cf = self.context.scene.frame_current
+                        if(m.seq_limit):
+                            # get frame number from defined range
+                            rng = [i for i in range(m.seq_start, m.seq_end + 1)]
+                            try:
+                                gf = rng[cf - 1]
+                            except IndexError:
+                                # current frame is out of limits, skip
+                                skip = True
+                                gf = -1
+                        else:
+                            gf = cf
+                        if(gf >= 0):
+                            # try to find correct bin
+                            m.private_bin_filename = m.bin_filename
+                            sqpath = bpy.path.abspath(m.bin_filename)
+                            fnm_re = r'^.*\d{5}\.bin$'
+                            dnm, fnm = os.path.split(sqpath)
+                            if(re.match(fnm_re, fnm)):
+                                bnm = fnm[:-10]
+                                sqbp = os.path.join(dnm, "{}-{}.bin".format(bnm, str(gf).zfill(5)))
+                                if(os.path.exists(sqbp)):
+                                    m.bin_filename = sqbp
+                                else:
+                                    # skip if not found
+                                    log("cannot find .bin file for frame: {} at path: '{}'. skipping..".format(gf, sqbp), 3, LogStyles.WARNING, )
+                                    skip = True
+                            else:
+                                # skip if not found
+                                log("cannot find .bin file for frame: {} at path: '{}'. skipping..".format(gf, sqpath), 3, LogStyles.WARNING, )
+                                skip = True
+                        else:
+                            skip = True
+                    else:
+                        # static particles, just take what is on path
+                        pass
                 
                 q = {'bin_filename': bpy.path.abspath(m.bin_filename),
                      'bin_radius_multiplier': m.bin_radius_multiplier, 'bin_motion_blur_multiplier': m.bin_motion_blur_multiplier, 'bin_shutter_speed': m.bin_shutter_speed,
@@ -2115,6 +2156,11 @@ class MXSExportLegacy():
                      'backface_material_embed': m.backface_material_embed,
                      
                      'base': b, 'pivot': p, 'matrix': None, 'hide': m.hide, 'hide_parent': m.hide_parent, 'type': 'PARTICLES', }
+                
+                if(m.private_bin_filename != ''):
+                    m.bin_filename = m.private_bin_filename
+                    m.private_bin_filename = ''
+                
             elif(dp['type'] == 'GRASS'):
                 material = bpy.path.abspath(m.material)
                 if(material != "" and not os.path.exists(material)):
@@ -2383,7 +2429,7 @@ class MXSExportLegacy():
             else:
                 raise TypeError("Unsupported particles type: {}".format(dp['type']))
             
-            if(q is not None):
+            if(q is not None and not skip):
                 self.data.append(q)
     
     def _references(self):
@@ -4561,7 +4607,45 @@ class MXSExport():
             rfbw = rfbin.RFBinWriter(**prms)
             m.bin_filename = rfbw.path
         else:
-            pass
+            # external particles
+            if(m.bin_type == 'SEQUENCE'):
+                # sequence
+                cf = self.context.scene.frame_current
+                if(m.seq_limit):
+                    # get frame number from defined range
+                    rng = [i for i in range(m.seq_start, m.seq_end + 1)]
+                    try:
+                        gf = rng[cf - 1]
+                    except IndexError:
+                        # current frame is out of limits, skip
+                        return
+                else:
+                    gf = cf
+                if(gf >= 0):
+                    # try to find correct bin
+                    m.private_bin_filename = m.bin_filename
+                    sqpath = bpy.path.abspath(m.bin_filename)
+                    fnm_re = r'^.*\d{5}\.bin$'
+                    dnm, fnm = os.path.split(sqpath)
+                    if(re.match(fnm_re, fnm)):
+                        bnm = fnm[:-10]
+                        sqbp = os.path.join(dnm, "{}-{}.bin".format(bnm, str(gf).zfill(5)))
+                        if(os.path.exists(sqbp)):
+                            m.bin_filename = sqbp
+                        else:
+                            # skip if file not found
+                            log("cannot find .bin file for frame: {} at path: '{}'. skipping..".format(gf, sqbp), 3, LogStyles.WARNING, )
+                            return
+                    else:
+                        # skip if not valid sequence name
+                        log("cannot find .bin file for frame: {} at path: '{}'. skipping..".format(gf, sqpath), 3, LogStyles.WARNING, )
+                        return
+                else:
+                    # skip, frame is out of limits
+                    return
+            else:
+                # static particles, just take what is on path
+                pass
         
         properties = {'filename': bpy.path.abspath(m.bin_filename), 'radius_multiplier': m.bin_radius_multiplier, 'motion_blur_multiplier': m.bin_motion_blur_multiplier, 'shutter_speed': m.bin_shutter_speed,
                       'load_particles': m.bin_load_particles, 'axis_system': int(m.bin_axis_system[-1:]), 'frame_number': m.bin_frame_number, 'fps': m.bin_fps, 'extra_create_np_pp': m.bin_extra_create_np_pp,
