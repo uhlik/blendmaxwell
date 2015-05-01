@@ -18,6 +18,7 @@
 
 import os
 import re
+import platform
 
 
 LOG_FILE_PATH = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log.txt'))
@@ -36,6 +37,16 @@ class LogStyles:
     ERROR = "\033[41m\033[1;30m"
     END = "\033[0m"
     EOL = "\n"
+
+
+if(platform.system() == 'Windows'):
+    # no pretty logging for windows
+    LogStyles.NORMAL = ""
+    LogStyles.HEADER = ""
+    LogStyles.MESSAGE = ""
+    LogStyles.WARNING = "WARNING: "
+    LogStyles.ERROR = "ERROR: "
+    LogStyles.END = ""
 
 
 def log(msg="", indent=0, style=LogStyles.NORMAL, instance=None, prefix="> ", ):
