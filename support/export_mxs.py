@@ -52,101 +52,101 @@ def log(msg, indent=0):
 
 class MXSBinMeshReaderLegacy():
     def __init__(self, path):
-        self.offset = 0
+        def r(f, b, o):
+            d = struct.unpack_from(f, b, o)
+            o += struct.calcsize(f)
+            return d, o
+        
+        def r0(f, b, o):
+            d = struct.unpack_from(f, b, o)[0]
+            o += struct.calcsize(f)
+            return d, o
+        
+        offset = 0
         with open(path, "rb") as bf:
-            self.bindata = bf.read()
-        
-        def r(f):
-            d = struct.unpack_from(f, self.bindata, self.offset)
-            self.offset += struct.calcsize(f)
-            return d
-        
+            buff = bf.read()
         # endianness?
-        # signature = 0x004853454D4E4942
         signature = 20357755437992258
-        l = r("<q")[0]
-        self.offset = 0
-        b = r(">q")[0]
-        self.offset = 0
+        l, _ = r0("<q", buff, 0)
+        b, _ = r0(">q", buff, 0)
         if(l == signature):
             if(sys.byteorder != "little"):
                 raise RuntimeError()
-            self.order = "<"
+            order = "<"
         elif(b == signature):
             if(sys.byteorder != "big"):
                 raise RuntimeError()
-            self.order = ">"
+            order = ">"
         else:
             raise AssertionError("{}: not a MXSBinMesh file".format(self.__class__.__name__))
-        o = self.order
-        
+        o = order
         # magic
-        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
-        if(self.magic != 'BINMESH'):
+        magic, offset = r0(o + "7s", buff, offset)
+        magic = magic.decode(encoding="utf-8")
+        if(magic != 'BINMESH'):
             raise RuntimeError()
-        _ = r(o + "?")
-        # mesh name
-        self.name = r(o + "250s")[0].decode(encoding="utf-8").replace('\x00', '')
+        # throwaway
+        _, offset = r(o + "?", buff, offset)
+        # name
+        name, offset = r0(o + "250s", buff, offset)
+        name = name.decode(encoding="utf-8").replace('\x00', '')
         # number of steps
-        self.steps = r(o + "i")[0]
+        num_positions, offset = r0(o + "i", buff, offset)
         # number of vertices
-        self.num_vertices = r(o + "i")[0]
-        # vertices
-        self.vertices = []
-        for i in range(self.num_vertices * self.steps):
-            # int id, int step, (float x, float y, float z)
-            v = (r(o + "i")[0], r(o + "i")[0], r(o + "3d"))
-            self.vertices.append(v)
+        lv, offset = r0(o + "i", buff, offset)
+        # vertex positions
+        vertices = []
+        for i in range(num_positions):
+            vs, offset = r(o + "{}d".format(lv * 3), buff, offset)
+            vs3 = [vs[i:i + 3] for i in range(0, len(vs), 3)]
+            vertices.append(vs3)
         # vertex normals
-        self.vertices_normals = []
-        for i in range(self.num_vertices * self.steps):
-            # int id, int step, (float x, float y, float z)
-            v = (r(o + "i")[0], r(o + "i")[0], r(o + "3d"))
-            self.vertices_normals.append(v)
+        normals = []
+        for i in range(num_positions):
+            ns, offset = r(o + "{}d".format(lv * 3), buff, offset)
+            ns3 = [ns[i:i + 3] for i in range(0, len(ns), 3)]
+            normals.append(ns3)
+        # number of triangle normals
+        ltn, offset = r0(o + "i", buff, offset)
+        # triangle normals
+        triangle_normals = []
+        for i in range(num_positions):
+            tns, offset = r(o + "{}d".format(ltn * 3), buff, offset)
+            tns3 = [tns[i:i + 3] for i in range(0, len(tns), 3)]
+            triangle_normals.append(tns3)
         # number of triangles
-        self.num_triangles = r(o + "i")[0]
-        # number of uv channels
-        self.num_channels = r(o + "i")[0]
-        # uv channels ids
-        self.uv_channels = []
-        for i in range(self.num_channels):
-            self.uv_channels.append(r(o + "i")[0])
+        lt, offset = r0(o + "i", buff, offset)
         # triangles
-        self.triangles = []
-        for i in range(self.num_triangles):
-            # triangles (int id, (int v1, int v2, int v3), (int n1, int n2, int n3))
-            v = (r(o + "i")[0], r(o + "3i"), r(o + "3i"))
-            self.triangles.append(v)
-        # triangle normals (int id, int step, (float x, float y, float z))
-        self.triangles_normals = []
-        for i in range(self.num_triangles * self.steps):
-            # int id, int step, (float x, float y, float z)
-            v = (r(o + "i")[0], r(o + "i")[0], r(o + "3d"))
-            self.triangles_normals.append(v)
-        # triangle material assigment
-        self.triangles_materials = []
-        for i in range(self.num_triangles):
-            # int id, int material slot/id
-            v = (r(o + "i")[0], r(o + "i")[0])
-            self.triangles_materials.append(v)
-        # uvs
-        self.triangles_uvs = []
-        for i in range(self.num_triangles * self.num_channels):
-            # (int id, int channel id, float u1, float v1, float w1, float u2, float v2, float w3, float u3, float v3, float w3)
-            v = (r(o + "i")[0], r(o + "i")[0]) + r(o + "9d")
-            self.triangles_uvs.append(v)
-        e = r(o + "?")
-        if(self.offset != len(self.bindata)):
+        ts, offset = r(o + "{}i".format(lt * 6), buff, offset)
+        triangles = [ts[i:i + 6] for i in range(0, len(ts), 6)]
+        # number uv channels
+        num_channels, offset = r0(o + "i", buff, offset)
+        # uv channels
+        uv_channels = []
+        for i in range(num_channels):
+            uvc, offset = r(o + "{}d".format(lt * 9), buff, offset)
+            uv9 = [uvc[i:i + 9] for i in range(0, len(uvc), 9)]
+            uv_channels.append(uv9)
+        # number of materials
+        num_materials, offset = r0(o + "i", buff, offset)
+        # triangle materials
+        tms, offset = r(o + "{}i".format(2 * lt), buff, offset)
+        triangle_materials = [tms[i:i + 2] for i in range(0, len(tms), 2)]
+        # throwaway
+        _, offset = r(o + "?", buff, offset)
+        # and now.. eof
+        if(offset != len(buff)):
             raise RuntimeError("expected EOF")
-        
-        self.data = {'channel_uvw': self.uv_channels[:],
-                     'f_setNormal': self.triangles_normals[:],
-                     'f_setTriangle': self.triangles[:],
-                     'f_setTriangleMaterial': self.triangles_materials[:],
-                     'f_setTriangleUVW': self.triangles_uvs[:],
-                     'name': str(self.name),
-                     'v_setNormal': self.vertices_normals[:],
-                     'v_setVertex': self.vertices[:], }
+        # collect data
+        self.data = {'name': name,
+                     'num_positions': num_positions,
+                     'vertices': vertices,
+                     'normals': normals,
+                     'triangles': triangles,
+                     'triangle_normals': triangle_normals,
+                     'uv_channels': uv_channels,
+                     'num_materials': num_materials,
+                     'triangle_materials': triangle_materials, }
 
 
 class MXSBinHairReaderLegacy():
@@ -408,24 +408,29 @@ def empty(d, s):
 def mesh(d, s):
     r = MXSBinMeshReaderLegacy(d['mesh_data_path'])
     m = r.data
+    
     o = s.createMesh(d['name'], d['num_vertexes'], d['num_normals'], d['num_triangles'], d['num_positions_per_vertex'], )
-    for i in m['channel_uvw']:
+    
+    for i in range(len(m['uv_channels'])):
         o.addChannelUVW(i)
-    for i in range(len(m['v_setVertex'])):
-        mv = Cvector()
-        v = m['v_setVertex'][i]
-        mv.assign(v[2][0], v[2][1], v[2][2])
-        o.setVertex(v[0], v[1], mv)
-        n = m['v_setNormal'][i]
-        mn = Cvector()
-        mn.assign(n[2][0], n[2][1], n[2][2])
-        o.setNormal(n[0], n[1], mn)
-    for n in m['f_setNormal']:
-        mn = Cvector()
-        mn.assign(n[2][0], n[2][1], n[2][2])
-        o.setNormal(n[0], n[1], mn)
-    for t in m['f_setTriangle']:
-        o.setTriangle(t[0], t[1][0], t[1][1], t[1][2], t[2][0], t[2][1], t[2][2], )
+    
+    an = 0
+    for ip in range(m['num_positions']):
+        verts = m['vertices'][ip]
+        norms = m['normals'][ip]
+        for i, loc in enumerate(verts):
+            o.setVertex(i, ip, Cvector(*loc), )
+            o.setNormal(i, ip, Cvector(*norms[i]), )
+            an += 1
+    for ip in range(m['num_positions']):
+        trinorms = m['triangle_normals'][ip]
+        for i, nor in enumerate(trinorms):
+            o.setNormal(an + i, ip, Cvector(*nor), )
+    for i, tri in enumerate(m['triangles']):
+        o.setTriangle(i, *tri)
+    for iuv, uv in enumerate(m['uv_channels']):
+        for it, t in enumerate(uv):
+            o.setTriangleUVW(it, iuv, *t)
     
     if(d['num_materials'] > 1):
         # multi material
@@ -437,25 +442,14 @@ def mesh(d, s):
             else:
                 mat = material(d['materials'][mi][1], s, d['materials'][mi][0])
             mats.append(mat)
-        for t, ma in m['f_setTriangleMaterial']:
-            o.setTriangleMaterial(t, mats[ma])
+        for tid, mid in m['triangle_materials']:
+            o.setTriangleMaterial(tid, mats[mid])
     elif(d['num_materials'] == 1):
-        # # single material
-        # if(d['materials'][0][1] == ""):
-        #     mat = material_placeholder(s)
-        # else:
-        #     mat = material(d['materials'][0][1], s, d['materials'][0][0])
+        # single material
         if(d['materials'][0][1] == ""):
             mat = None
         else:
             mat = material(d['materials'][0][1], s, d['materials'][0][0])
-        # # this is causing error: Object [...] is not an emitter but has triangles with an emitter material applied to it
-        # # details here: http://support.nextlimit.com/display/knfaq/Render+error+messages
-        # # what is probably happening is, if setTriangleMaterial is used even with the same material on all triangles
-        # # somewhere it is flagged as multi material mesh..
-        # for t, ma in m['f_setTriangleMaterial']:
-        #     o.setTriangleMaterial(t, mat)
-        # # fix
         if(mat is not None):
             o.setMaterial(mat)
     else:
@@ -467,8 +461,6 @@ def mesh(d, s):
             bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
             o.setBackfaceMaterial(bm)
     
-    for t in m['f_setTriangleUVW']:
-        o.setTriangleUVW(t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], )
     base_and_pivot(o, d)
     object_props(o, d)
     

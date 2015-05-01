@@ -88,10 +88,6 @@ class MXSWriter():
         append  bool
         """
         
-        # if('Cmaxwell' not in locals()):
-        #     raise ImportError("No pymaxwell..")
-        #     return
-        
         if(__name__ != "__main__"):
             if(platform.system() == 'Darwin'):
                 raise ImportError("No pymaxwell for Mac OS X..")

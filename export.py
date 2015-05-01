@@ -1396,21 +1396,21 @@ class MXSExportLegacy():
             # nm = ob.name
             nm = "{}-{}".format(ob.name, uuid.uuid1())
         
-        md = {'name': nm,
-              'channel_uvw': [],
-              'v_setVertex': [],
-              'v_setNormal': [],
-              'f_setNormal': [],
-              'f_setTriangle': [],
-              'f_setTriangleUVW': [],
-              'f_setTriangleMaterial': [], }
+        # md = {'name': nm,
+        #       'channel_uvw': [],
+        #       'v_setVertex': [],
+        #       'v_setNormal': [],
+        #       'f_setNormal': [],
+        #       'f_setTriangle': [],
+        #       'f_setTriangleUVW': [],
+        #       'f_setTriangleMaterial': [], }
         
         d = {'name': ob.name,
              'num_vertexes': len(me.vertices),
              'num_normals': len(me.vertices) + len(me.tessfaces),
              'num_triangles': len(me.tessfaces),
              'num_positions_per_vertex': 1,
-             'mesh_data': md['name'],
+             'mesh_data': nm,
              'matrix': None,
              'parent': None,
              
@@ -1449,44 +1449,91 @@ class MXSExportLegacy():
         d['base'] = b
         d['pivot'] = p
         
-        # mesh data
-        for ti, uvt in enumerate(me.uv_textures):
-            md['channel_uvw'].append(ti)
+        # # mesh data
+        # for ti, uvt in enumerate(me.uv_textures):
+        #     md['channel_uvw'].append(ti)
+        #
+        # # vertices, vertex normals
+        # for i, v in enumerate(me.vertices):
+        #     # index, position index, vector
+        #     md['v_setVertex'].append((i, 0, v.co.to_tuple(), ))
+        #     # index, position index, vector
+        #     md['v_setNormal'].append((i, 0, v.normal.to_tuple(), ))
+        #
+        # # faces, face normals, uvs
+        # ni = len(me.vertices) - 1
+        # ti = 0
+        #
+        # for fi, f in enumerate(me.tessfaces):
+        #     ni = ni + 1
+        #     # normal
+        #     md['f_setNormal'].append((ni, 0, f.normal.to_tuple(), ))
+        #     fv = f.vertices
+        #     # smoothing
+        #     if(f.use_smooth):
+        #         # vertex normals
+        #         nix = [fv[0], fv[1], fv[2]]
+        #     else:
+        #         # face normal
+        #         nix = [ni, ni, ni, ]
+        #     # geometry
+        #     md['f_setTriangle'].append((ti, (fv[0], fv[1], fv[2]), (nix[0], nix[1], nix[2]), ))
+        #     md['f_setTriangleMaterial'].append((ti, f.material_index, ))
+        #     # uv
+        #     for tix, uvtex in enumerate(me.tessface_uv_textures):
+        #         uv = uvtex.data[fi].uv
+        #         md['f_setTriangleUVW'].append((ti, tix,
+        #                                        uv[0][0], 1.0 - uv[0][1], 0.0,
+        #                                        uv[1][0], 1.0 - uv[1][1], 0.0,
+        #                                        uv[2][0], 1.0 - uv[2][1], 0.0, ))
+        #     ti = ti + 1
         
-        # vertices, vertex normals
-        for i, v in enumerate(me.vertices):
-            # index, position index, vector
-            md['v_setVertex'].append((i, 0, v.co.to_tuple(), ))
-            # index, position index, vector
-            md['v_setNormal'].append((i, 0, v.normal.to_tuple(), ))
+        vertices = [[v.co.to_tuple() for v in me.vertices], ]
+        normals = [[v.normal.to_tuple() for v in me.vertices], ]
         
-        # faces, face normals, uvs
+        triangles = []
+        triangle_normals = []
         ni = len(me.vertices) - 1
-        ti = 0
-        
+        tns = []
         for fi, f in enumerate(me.tessfaces):
             ni = ni + 1
-            # normal
-            md['f_setNormal'].append((ni, 0, f.normal.to_tuple(), ))
+            tns.append(f.normal.to_tuple())
             fv = f.vertices
             # smoothing
             if(f.use_smooth):
                 # vertex normals
-                nix = [fv[0], fv[1], fv[2]]
+                nix = (fv[0], fv[1], fv[2], )
             else:
                 # face normal
-                nix = [ni, ni, ni, ]
-            # geometry
-            md['f_setTriangle'].append((ti, (fv[0], fv[1], fv[2]), (nix[0], nix[1], nix[2]), ))
-            md['f_setTriangleMaterial'].append((ti, f.material_index, ))
-            # uv
-            for tix, uvtex in enumerate(me.tessface_uv_textures):
-                uv = uvtex.data[fi].uv
-                md['f_setTriangleUVW'].append((ti, tix,
-                                               uv[0][0], 1.0 - uv[0][1], 0.0,
-                                               uv[1][0], 1.0 - uv[1][1], 0.0,
-                                               uv[2][0], 1.0 - uv[2][1], 0.0, ))
-            ti = ti + 1
+                nix = (ni, ni, ni, )
+            t = tuple(fv) + nix
+            triangles.append(t)
+        
+        triangle_normals.append(tns)
+        
+        uv_channels = []
+        for tix, uvtex in enumerate(me.tessface_uv_textures):
+            uv = []
+            for fi, f in enumerate(me.tessfaces):
+                duv = uvtex.data[fi].uv
+                uv.append((duv[0][0], 1.0 - duv[0][1], 0.0, duv[1][0], 1.0 - duv[1][1], 0.0, duv[2][0], 1.0 - duv[2][1], 0.0, ))
+            uv_channels.append(uv)
+        
+        num_materials = len(ob.material_slots)
+        
+        triangle_materials = []
+        for fi, f in enumerate(me.tessfaces):
+            triangle_materials.append((fi, f.material_index, ))
+        
+        md = {'name': nm,
+              'num_positions': 1,
+              'vertices': vertices,
+              'normals': normals,
+              'triangles': triangles,
+              'triangle_normals': triangle_normals,
+              'uv_channels': uv_channels,
+              'num_materials': num_materials,
+              'triangle_materials': triangle_materials, }
         
         # cleanup
         bpy.data.meshes.remove(me)
@@ -1593,14 +1640,16 @@ class MXSExportLegacy():
                 o['object'].data = o['object'].data.copy()
                 d, md = self._mesh_to_data(o)
                 p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-                w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+                # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+                w = MXSBinMeshWriterLegacy(p, **md)
                 rm = o['object'].data
                 o['object'].data = o['override_instance']
                 bpy.data.meshes.remove(rm)
             else:
                 d, md = self._mesh_to_data(o)
                 p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-                w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+                # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+                w = MXSBinMeshWriterLegacy(p, **md)
             
             self.mesh_data_paths.append(p)
             d['mesh_data_path'] = p
@@ -1616,7 +1665,8 @@ class MXSExportLegacy():
             d['mesh_name'] = ob.data.name
             
             p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-            w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+            # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+            w = MXSBinMeshWriterLegacy(p, **md)
             
             self.mesh_data_paths.append(p)
             d['mesh_data_path'] = p
@@ -2677,7 +2727,8 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
         d['type'] = 'WIREFRAME_EDGE'
         
         p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-        w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+        # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+        w = MXSBinMeshWriterLegacy(p, **md)
         
         self.wire_base_data = p
         d['mesh_data_path'] = p
@@ -2786,8 +2837,18 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
 
 
 class MXSBinMeshWriterLegacy():
-    def __init__(self, path, mesh, steps):
-        m = mesh
+    def __init__(self, path, name, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, num_materials, triangle_materials, ):
+        """
+        name                sting
+        num_positions       int
+        vertices            [[(float x, float y, float z), ..., ], [...], ]
+        normals             [[(float x, float y, float z), ..., ], [...], ]
+        triangles           [(int iv0, int iv1, int iv2, int in0, int in1, int in2, ), ..., ], ]   # (3x vertex index, 3x normal index)
+        triangle_normals    [[(float x, float y, float z), ..., ], [...], ]
+        uv_channels         [[(float u1, float v1, float w1, float u2, float v2, float w2, float u3, float v3, float w3, ), ..., ], ..., ] or None      # ordered by uv index and ordered by triangle index
+        num_materials       int
+        triangle_materials  [(int tri_id, int mat_id), ..., ] or None
+        """
         o = "@"
         with open("{0}.tmp".format(path), 'wb') as f:
             p = struct.pack
@@ -2796,57 +2857,42 @@ class MXSBinMeshWriterLegacy():
             fw(p(o + "7s", 'BINMESH'.encode('utf-8')))
             fw(p(o + "?", False))
             # name 250 max length
-            fw(p(o + "250s", m['name'].encode('utf-8')))
+            fw(p(o + "250s", name.encode('utf-8')))
             # number of steps
-            fw(p(o + "i", steps))
+            fw(p(o + "i", num_positions))
             # number of vertices
-            vn = len(m['v_setVertex'])
-            fw(p(o + "i", vn))
-            # vertex (int id, int step, (float x, float y, float z))
-            for i in range(vn):
-                v = m['v_setVertex'][i]
-                fw(p(o + "2i", v[0], v[1]))
-                fw(p(o + "3d", v[2][0], v[2][1], v[2][2]))
-            # vertex normal (int id, int step, (float x, float y, float z))
-            for i in range(vn):
-                v = m['v_setNormal'][i]
-                fw(p(o + "2i", v[0], v[1]))
-                fw(p(o + "3d", v[2][0], v[2][1], v[2][2]))
+            lv = len(vertices[0])
+            fw(p(o + "i", lv))
+            # vertex positions
+            for i in range(num_positions):
+                fw(p(o + "{}d".format(lv * 3), *[f for v in vertices[i] for f in v]))
+            # vertex normals
+            for i in range(num_positions):
+                fw(p(o + "{}d".format(lv * 3), *[f for v in normals[i] for f in v]))
+            # number triangle normals
+            ltn = len(triangle_normals[0])
+            fw(p(o + "i", ltn))
+            # triangle normals
+            for i in range(num_positions):
+                fw(p(o + "{}d".format(ltn * 3), *[f for v in triangle_normals[i] for f in v]))
             # number of triangles
-            tn = len(m['f_setTriangle'])
-            fw(p(o + "i", tn))
+            lt = len(triangles)
+            fw(p(o + "i", lt))
+            # triangles
+            fw(p(o + "{}i".format(lt * 6), *[f for v in triangles for f in v]))
             # number of uv channels
-            un = len(m['channel_uvw'])
-            fw(p(o + "i", un))
-            # uv channel ids
-            for i in range(len(m['channel_uvw'])):
-                fw(p(o + "i", m['channel_uvw'][i]))
-            # triangles (int id, (int v1, int v2, int v3), (int n1, int n2, int n3))
-            for i in range(tn):
-                t = m['f_setTriangle'][i]
-                fw(p(o + "i", t[0]))
-                fw(p(o + "3i", t[1][0], t[1][1], t[1][2]))
-                fw(p(o + "3i", t[2][0], t[2][1], t[2][2]))
-            # triangle normals (int id, int step, (float x, float y, float z))
-            for i in range(tn):
-                v = m['f_setNormal'][i]
-                fw(p(o + "2i", v[0], v[1]))
-                fw(p(o + "3d", v[2][0], v[2][1], v[2][2]))
-            # triangle materials (int id, int material)
-            for i in range(tn):
-                v = m['f_setTriangleMaterial'][i]
-                fw(p(o + "2i", v[0], v[1]))
-            # uvs
-            for i in range(un * tn):
-                # (int id, int channel id, float u1, float v1, float w1, float u2, float v2, float w3, float u3, float v3, float w3)
-                u = m['f_setTriangleUVW'][i]
-                fw(p(o + "2i", u[0], u[1]))
-                fw(p(o + "3d", u[2], u[3], u[4]))
-                fw(p(o + "3d", u[5], u[6], u[7]))
-                fw(p(o + "3d", u[8], u[9], u[10]))
+            luc = len(uv_channels)
+            fw(p(o + "i", luc))
+            # uv channels
+            for i in range(luc):
+                fw(p(o + "{}d".format(lt * 9), *[f for v in uv_channels[i] for f in v]))
+            # number of materials
+            fw(p(o + "i", num_materials))
+            # triangle materials
+            fw(p(o + "{}i".format(lt * 2), *[f for v in triangle_materials for f in v]))
             # end
             fw(p(o + "?", False))
-        
+        # swap files
         if(os.path.exists(path)):
             os.remove(path)
         shutil.move("{0}.tmp".format(path), path)
@@ -2855,101 +2901,101 @@ class MXSBinMeshWriterLegacy():
 
 class MXSBinMeshReaderLegacy():
     def __init__(self, path):
-        self.offset = 0
+        def r(f, b, o):
+            d = struct.unpack_from(f, b, o)
+            o += struct.calcsize(f)
+            return d, o
+        
+        def r0(f, b, o):
+            d = struct.unpack_from(f, b, o)[0]
+            o += struct.calcsize(f)
+            return d, o
+        
+        offset = 0
         with open(path, "rb") as bf:
-            self.bindata = bf.read()
-        
-        def r(f):
-            d = struct.unpack_from(f, self.bindata, self.offset)
-            self.offset += struct.calcsize(f)
-            return d
-        
+            buff = bf.read()
         # endianness?
-        # signature = 0x004853454D4E4942
         signature = 20357755437992258
-        l = r("<q")[0]
-        self.offset = 0
-        b = r(">q")[0]
-        self.offset = 0
+        l, _ = r0("<q", buff, 0)
+        b, _ = r0(">q", buff, 0)
         if(l == signature):
             if(sys.byteorder != "little"):
                 raise RuntimeError()
-            self.order = "<"
+            order = "<"
         elif(b == signature):
             if(sys.byteorder != "big"):
                 raise RuntimeError()
-            self.order = ">"
+            order = ">"
         else:
             raise AssertionError("{}: not a MXSBinMesh file".format(self.__class__.__name__))
-        o = self.order
-        
+        o = order
         # magic
-        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
-        if(self.magic != 'BINMESH'):
+        magic, offset = r0(o + "7s", buff, offset)
+        magic = magic.decode(encoding="utf-8")
+        if(magic != 'BINMESH'):
             raise RuntimeError()
-        _ = r(o + "?")
-        # mesh name
-        self.name = r(o + "250s")[0].decode(encoding="utf-8").replace('\x00', '')
+        # throwaway
+        _, offset = r(o + "?", buff, offset)
+        # name
+        name, offset = r0(o + "250s", buff, offset)
+        name = name.decode(encoding="utf-8").replace('\x00', '')
         # number of steps
-        self.steps = r(o + "i")[0]
+        num_positions, offset = r0(o + "i", buff, offset)
         # number of vertices
-        self.num_vertices = r(o + "i")[0]
-        # vertices
-        self.vertices = []
-        for i in range(self.num_vertices * self.steps):
-            # int id, int step, (float x, float y, float z)
-            v = (r(o + "i")[0], r(o + "i")[0], r(o + "3d"))
-            self.vertices.append(v)
+        lv, offset = r0(o + "i", buff, offset)
+        # vertex positions
+        vertices = []
+        for i in range(num_positions):
+            vs, offset = r(o + "{}d".format(lv * 3), buff, offset)
+            vs3 = [vs[i:i + 3] for i in range(0, len(vs), 3)]
+            vertices.append(vs3)
         # vertex normals
-        self.vertices_normals = []
-        for i in range(self.num_vertices * self.steps):
-            # int id, int step, (float x, float y, float z)
-            v = (r(o + "i")[0], r(o + "i")[0], r(o + "3d"))
-            self.vertices_normals.append(v)
+        normals = []
+        for i in range(num_positions):
+            ns, offset = r(o + "{}d".format(lv * 3), buff, offset)
+            ns3 = [ns[i:i + 3] for i in range(0, len(ns), 3)]
+            normals.append(ns3)
+        # number of triangle normals
+        ltn, offset = r0(o + "i", buff, offset)
+        # triangle normals
+        triangle_normals = []
+        for i in range(num_positions):
+            tns, offset = r(o + "{}d".format(ltn * 3), buff, offset)
+            tns3 = [tns[i:i + 3] for i in range(0, len(tns), 3)]
+            triangle_normals.append(tns3)
         # number of triangles
-        self.num_triangles = r(o + "i")[0]
-        # number of uv channels
-        self.num_channels = r(o + "i")[0]
-        # uv channels ids
-        self.uv_channels = []
-        for i in range(self.num_channels):
-            self.uv_channels.append(r(o + "i")[0])
+        lt, offset = r0(o + "i", buff, offset)
         # triangles
-        self.triangles = []
-        for i in range(self.num_triangles):
-            # triangles (int id, (int v1, int v2, int v3), (int n1, int n2, int n3))
-            v = (r(o + "i")[0], r(o + "3i"), r(o + "3i"))
-            self.triangles.append(v)
-        # triangle normals (int id, int step, (float x, float y, float z))
-        self.triangles_normals = []
-        for i in range(self.num_triangles * self.steps):
-            # int id, int step, (float x, float y, float z)
-            v = (r(o + "i")[0], r(o + "i")[0], r(o + "3d"))
-            self.triangles_normals.append(v)
-        # triangle material assigment
-        self.triangles_materials = []
-        for i in range(self.num_triangles):
-            # int id, int material slot/id
-            v = (r(o + "i")[0], r(o + "i")[0])
-            self.triangles_materials.append(v)
-        # uvs
-        self.triangles_uvs = []
-        for i in range(self.num_triangles * self.num_channels):
-            # (int id, int channel id, float u1, float v1, float w1, float u2, float v2, float w3, float u3, float v3, float w3)
-            v = (r(o + "i")[0], r(o + "i")[0]) + r(o + "9d")
-            self.triangles_uvs.append(v)
-        e = r(o + "?")
-        if(self.offset != len(self.bindata)):
+        ts, offset = r(o + "{}i".format(lt * 6), buff, offset)
+        triangles = [ts[i:i + 6] for i in range(0, len(ts), 6)]
+        # number uv channels
+        num_channels, offset = r0(o + "i", buff, offset)
+        # uv channels
+        uv_channels = []
+        for i in range(num_channels):
+            uvc, offset = r(o + "{}d".format(lt * 9), buff, offset)
+            uv9 = [uvc[i:i + 9] for i in range(0, len(uvc), 9)]
+            uv_channels.append(uv9)
+        # number of materials
+        num_materials, offset = r0(o + "i", buff, offset)
+        # triangle materials
+        tms, offset = r(o + "{}i".format(2 * lt), buff, offset)
+        triangle_materials = [tms[i:i + 2] for i in range(0, len(tms), 2)]
+        # throwaway
+        _, offset = r(o + "?", buff, offset)
+        # and now.. eof
+        if(offset != len(buff)):
             raise RuntimeError("expected EOF")
-        
-        self.data = {'channel_uvw': self.uv_channels[:],
-                     'f_setNormal': self.triangles_normals[:],
-                     'f_setTriangle': self.triangles[:],
-                     'f_setTriangleMaterial': self.triangles_materials[:],
-                     'f_setTriangleUVW': self.triangles_uvs[:],
-                     'name': str(self.name),
-                     'v_setNormal': self.vertices_normals[:],
-                     'v_setVertex': self.vertices[:], }
+        # collect data
+        self.data = {'name': name,
+                     'num_positions': num_positions,
+                     'vertices': vertices,
+                     'normals': normals,
+                     'triangles': triangles,
+                     'triangle_normals': triangle_normals,
+                     'uv_channels': uv_channels,
+                     'num_materials': num_materials,
+                     'triangle_materials': triangle_materials, }
 
 
 class MXSBinHairWriterLegacy():
