@@ -617,6 +617,7 @@ class MXSExportLegacy():
                  # 'overlay_color': (25, 25, 25),
                  # 'overlay_background': False,
                  # 'overlay_background_color': (176, 176, 176),
+                 'export_protect_mxs': False,
                  }
         
         try:
@@ -722,6 +723,8 @@ class MXSExportLegacy():
             # scene['overlay_color'] = self._color_to_rgb8(mx.overlay_color)
             # scene['overlay_background'] = mx.overlay_background
             # scene['overlay_background_color'] = self._color_to_rgb8(mx.overlay_background_color)
+            
+            scene['export_protect_mxs'] = mx.export_protect_mxs
         
         scene['type'] = 'SCENE'
         self.data.append(scene)
@@ -4508,7 +4511,9 @@ class MXSExport():
                           'refl_caustics': int(mx.illum_caustics_refl_caustics[-1:]),
                           'refr_caustics': int(mx.illum_caustics_refr_caustics[-1:]), }
         
-        self.mxs.parameters(scene, materials, generals, tone, simulens, illum_caustics, )
+        other = {'protect': mx.export_protect_mxs, }
+        
+        self.mxs.parameters(scene, materials, generals, tone, simulens, illum_caustics, other, )
     
     def channels(self):
         mx = self.context.scene.maxwell_render

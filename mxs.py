@@ -632,7 +632,7 @@ class MXSWriter():
             # env_type == 'NONE' or env_type == None
             env.setActiveSky('')
     
-    def parameters(self, scene, materials=None, generals=None, tone=None, simulens=None, illum_caustics=None, ):
+    def parameters(self, scene, materials=None, generals=None, tone=None, simulens=None, illum_caustics=None, other=None, ):
         """Set scene render parameters.
         scene           dict    {cpu_threads        int,
                                  multilight         int,
@@ -665,6 +665,7 @@ class MXSWriter():
         illum_caustics  dict    {illumination       int,
                                  refl_caustics      int,
                                  refr_caustics      int, } or None
+        other           dict    {protect            bool, }
         """
         s = self.mxs
         # s.setRenderParameter('ENGINE', scene["quality"])
@@ -744,6 +745,14 @@ class MXSWriter():
                 s.setOverrideMaterial(materials["override_path"])
             if(materials["search_path"] != ""):
                 s.addSearchingPath(materials["search_path"])
+        
+        if(other is not None):
+            try:
+                protect = other['protect']
+                if(protect):
+                    s.enableProtection(True)
+            except KeyError:
+                pass
     
     def channels(self, base_path, mxi, image, image_depth='RGB8', channels_output_mode=0, channels_render=True, channels_render_type=0, channels=None, ):
         """Set scene render channels.

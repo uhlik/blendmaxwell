@@ -82,9 +82,12 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         sub.separator()
         
         sub.label("Options:")
-        sub.prop(m, 'export_use_instances')
-        sub.prop(m, 'export_keep_intermediates')
-        sub.prop(m, 'export_log_open', )
+        r = sub.row()
+        r.prop(m, 'export_use_instances')
+        r.prop(m, 'export_keep_intermediates')
+        r = sub.row()
+        r.prop(m, 'export_log_open', )
+        r.prop(m, 'export_protect_mxs', )
 
 
 class ExportSpecialsPanel(RenderButtonsPanel, Panel):
@@ -1089,7 +1092,7 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'flag_override_hide_to_gi')
 
 
-class ObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
+class ExtObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Subdivision Modifier"
     bl_options = {'DEFAULT_CLOSED'}
@@ -1119,7 +1122,7 @@ class ObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
         sub.prop(m, 'smooth')
 
 
-class ObjectScatterPanel(ObjectButtonsPanel, Panel):
+class ExtObjectScatterPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Scatter Modifier"
     bl_options = {'DEFAULT_CLOSED'}
@@ -1198,7 +1201,7 @@ class ObjectScatterPanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'display_max_blades')
 
 
-class ObjectSeaExtPanel(ObjectButtonsPanel, Panel):
+class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Sea"
     bl_options = {'DEFAULT_CLOSED'}
@@ -1448,7 +1451,7 @@ class ParticlesPanel(ParticleButtonsPanel, Panel):
         # sub.label("Particle system will be skipped.", icon='ERROR', )
 
 
-class GrassExtPanel(ParticleButtonsPanel, Panel):
+class ExtGrassPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Grass"
     
@@ -1573,7 +1576,7 @@ class GrassExtPanel(ParticleButtonsPanel, Panel):
         c.prop(m, 'display_max_blades')
 
 
-class ParticlesExtObjectPanel(ParticleButtonsPanel, Panel):
+class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Particles Object"
     
@@ -1650,7 +1653,7 @@ class ParticlesExtObjectPanel(ParticleButtonsPanel, Panel):
         sub.separator()
 
 
-class HairExtPanel(ParticleButtonsPanel, Panel):
+class ExtHairPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Hair Properties"
     
@@ -1751,7 +1754,7 @@ class HairExtPanel(ParticleButtonsPanel, Panel):
             c.prop(m, 'display_max_hairs')
 
 
-class ParticlesExtPanel(ParticleButtonsPanel, Panel):
+class ExtParticlesPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Particles Properties"
     
@@ -1917,7 +1920,7 @@ class ParticlesExtPanel(ParticleButtonsPanel, Panel):
             c.prop(m, 'bin_max_velocity')
 
 
-class ClonerExtPanel(ParticleButtonsPanel, Panel):
+class ExtClonerPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Cloner"
     

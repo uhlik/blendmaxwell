@@ -233,6 +233,8 @@ class SceneProperties(PropertyGroup):
     # overlay_background = BoolProperty(name="Background", default=False, )
     # overlay_background_color = FloatVectorProperty(name="Background Color", description="", default=(0.69, 0.69, 0.69), min=0.0, max=1.0, subtype='COLOR', )
     
+    export_protect_mxs = BoolProperty(name="Protect MXS", default=False, description="", )
+    
     export_output_directory = StringProperty(name="Output Directory", subtype='DIR_PATH', default="//", description="Output directory for Maxwell scene (.MXS) file", )
     export_use_instances = BoolProperty(name="Use Instances", default=True, description="Convert multi-user mesh objects to instances", )
     export_keep_intermediates = BoolProperty(name="Keep Intermediates", default=False, description="Do not remove intermediate files used for scene export (usable only for debugging purposes)", )
@@ -562,7 +564,7 @@ class ParticlesProperties(PropertyGroup):
         del bpy.types.ParticleSettings.maxwell_render
 
 
-class GrassExtProperties(PropertyGroup):
+class ExtGrassProperties(PropertyGroup):
     material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
     material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
@@ -621,7 +623,7 @@ class GrassExtProperties(PropertyGroup):
         del bpy.types.ParticleSettings.maxwell_grass_extension
 
 
-class ParticlesExtProperties(PropertyGroup):
+class ExtParticlesProperties(PropertyGroup):
     # material_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', )
     # material_embed = BoolProperty(name="Embed Into Scene", default=True, )
     
@@ -713,7 +715,7 @@ class ParticlesExtProperties(PropertyGroup):
         del bpy.types.ParticleSettings.maxwell_particles_extension
 
 
-class HairExtProperties(PropertyGroup):
+class ExtHairProperties(PropertyGroup):
     material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
     material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
@@ -749,7 +751,7 @@ class HairExtProperties(PropertyGroup):
         del bpy.types.ParticleSettings.maxwell_hair_extension
 
 
-class ScatterExtProperties(PropertyGroup):
+class ExtScatterProperties(PropertyGroup):
     enabled = BoolProperty(name="Maxwell Scatter", default=False, )
     
     scatter_object = StringProperty(name="Object", default="", )
@@ -798,7 +800,7 @@ class ScatterExtProperties(PropertyGroup):
         del bpy.types.Object.maxwell_scatter_extension
 
 
-class SubdivisionExtProperties(PropertyGroup):
+class ExtSubdivisionProperties(PropertyGroup):
     enabled = BoolProperty(name="Subdivision Modifier", default=False, )
     level = IntProperty(name="Subdivision Level", default=2, min=0, max=99, )
     # TODO check if Maxwell can load quad based geometry, if not, Catmull-Clark is pretty useless
@@ -818,7 +820,7 @@ class SubdivisionExtProperties(PropertyGroup):
         del bpy.types.Object.maxwell_subdivision_extension
 
 
-class SeaExtProperties(PropertyGroup):
+class ExtSeaProperties(PropertyGroup):
     enabled = BoolProperty(name="Maxwell Sea", default=False, )
     hide_parent = BoolProperty(name="Hide Container Object", default=True, )
     resolution = EnumProperty(name="Quality", items=[('0', "4x4", ""), ('1', "8x8", ""), ('2', "16x16", ""), ('3', "32x32", ""), ('4', "64x64", ""),
@@ -847,7 +849,7 @@ class SeaExtProperties(PropertyGroup):
         del bpy.types.Object.maxwell_sea_extension
 
 
-class ClonerExtProperties(PropertyGroup):
+class ExtClonerProperties(PropertyGroup):
     source = EnumProperty(name="Source", items=[('BLENDER_PARTICLES', "Blender Particles", ""), ('EXTERNAL_BIN', "External Bin", "")], default='BLENDER_PARTICLES', )
     directory = StringProperty(name=".bin Output Directory", default="//", subtype='DIR_PATH', description="Output directory for .bin file(s)", )
     overwrite = BoolProperty(name="Overwrite Existing", default=True, )

@@ -801,6 +801,9 @@ def scene(d, s):
     
     if(d["materials_search_path"] != ""):
         s.addSearchingPath(d["materials_search_path"])
+    
+    if(d['export_protect_mxs']):
+        s.enableProtection(True)
 
 
 def environment(d, s):
