@@ -239,6 +239,32 @@ class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
         sub.prop(m, 'globals_dispersion')
 
 
+class ExtraSamplingOptionsPanel(RenderButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Extra Sampling"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw_header(self, context):
+        m = context.scene.maxwell_render
+        self.layout.prop(m, "extra_sampling_enabled", text="")
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        m = context.scene.maxwell_render
+        
+        r = sub.row()
+        s = r.split(percentage=0.75)
+        c = s.column()
+        c.prop(m, 'extra_sampling_mask')
+        c = s.column()
+        c.prop(m, 'extra_sampling_invert', text="Invert", )
+        
+        sub.prop(m, 'extra_sampling_sl')
+        sub.prop(m, 'extra_sampling_custom_alpha')
+        sub.prop(m, 'extra_sampling_user_bitmap')
+
+
 class ToneMappingOptionsPanel(RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Tone Mapping"

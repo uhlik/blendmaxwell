@@ -747,12 +747,22 @@ class MXSWriter():
                 s.addSearchingPath(materials["search_path"])
         
         if(other is not None):
-            try:
-                protect = other['protect']
-                if(protect):
-                    s.enableProtection(True)
-            except KeyError:
-                pass
+            if(other['protect']):
+                s.enableProtection(True)
+            
+            if(other['extra_sampling_enabled']):
+                s.setRenderParameter('DO EXTRA SAMPLING', 1)
+                s.setRenderParameter('EXTRA SAMPLING SL', other['extra_sampling_sl'])
+                s.setRenderParameter('EXTRA SAMPLING MASK', other['extra_sampling_mask'])
+                if(platform.system() == 'Linux'):
+                    # wtf?
+                    s.setRenderParameter('EXTRA SAMPLING CUSTOM ALPHA', bytes(other['extra_sampling_custom_alpha'], encoding='UTF-8'))
+                    s.setRenderParameter('EXTRA SAMPLING USER BITMAP', bytes(other['extra_sampling_user_bitmap'], encoding='UTF-8'))
+                else:
+                    s.setRenderParameter('EXTRA SAMPLING CUSTOM ALPHA', other['extra_sampling_custom_alpha'])
+                    s.setRenderParameter('EXTRA SAMPLING USER BITMAP', other['extra_sampling_user_bitmap'])
+                if(other['extra_sampling_invert']):
+                    s.setRenderParameter('EXTRA SAMPLING INVERT', 1)
     
     def channels(self, base_path, mxi, image, image_depth='RGB8', channels_output_mode=0, channels_render=True, channels_render_type=0, channels=None, ):
         """Set scene render channels.

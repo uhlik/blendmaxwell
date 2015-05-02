@@ -618,6 +618,13 @@ class MXSExportLegacy():
                  # 'overlay_background': False,
                  # 'overlay_background_color': (176, 176, 176),
                  'export_protect_mxs': False,
+                 
+                 'extra_sampling_enabled': False,
+                 'extra_sampling_sl': 14.0,
+                 'extra_sampling_mask': '',
+                 'extra_sampling_custom_alpha': '',
+                 'extra_sampling_user_bitmap': '',
+                 'extra_sampling_invert': False,
                  }
         
         try:
@@ -725,6 +732,13 @@ class MXSExportLegacy():
             # scene['overlay_background_color'] = self._color_to_rgb8(mx.overlay_background_color)
             
             scene['export_protect_mxs'] = mx.export_protect_mxs
+            
+            scene['extra_sampling_enabled'] = mx.extra_sampling_enabled
+            scene['extra_sampling_sl'] = mx.extra_sampling_sl
+            scene['extra_sampling_mask'] = int(mx.extra_sampling_mask[-1:])
+            scene['extra_sampling_custom_alpha'] = mx.extra_sampling_custom_alpha
+            scene['extra_sampling_user_bitmap'] = bpy.path.abspath(mx.extra_sampling_user_bitmap)
+            scene['extra_sampling_invert'] = mx.extra_sampling_invert
         
         scene['type'] = 'SCENE'
         self.data.append(scene)
@@ -4511,7 +4525,13 @@ class MXSExport():
                           'refl_caustics': int(mx.illum_caustics_refl_caustics[-1:]),
                           'refr_caustics': int(mx.illum_caustics_refr_caustics[-1:]), }
         
-        other = {'protect': mx.export_protect_mxs, }
+        other = {'protect': mx.export_protect_mxs,
+                 'extra_sampling_enabled': mx.extra_sampling_enabled,
+                 'extra_sampling_sl': mx.extra_sampling_sl,
+                 'extra_sampling_mask': int(mx.extra_sampling_mask[-1:]),
+                 'extra_sampling_custom_alpha': mx.extra_sampling_custom_alpha,
+                 'extra_sampling_user_bitmap': bpy.path.abspath(mx.extra_sampling_user_bitmap),
+                 'extra_sampling_invert': mx.extra_sampling_invert, }
         
         self.mxs.parameters(scene, materials, generals, tone, simulens, illum_caustics, other, )
     

@@ -115,6 +115,15 @@ def _update_gpu_dof(self, context):
     dof_options.fstop = self.fstop
 
 
+def _get_custom_alphas(self, context):
+    r = []
+    for i, g in enumerate(bpy.data.groups):
+        gmx = g.maxwell_render
+        if(gmx.custom_alpha_use):
+            r.append((str(i), g.name, '', ))
+    return r
+
+
 class _overrides():
     sun_skip = False
     output_image = False
@@ -146,6 +155,13 @@ class SceneProperties(PropertyGroup):
     globals_motion_blur = BoolProperty(name="Motion Blur", default=True, description="Global enable/disable motion blur", )
     globals_diplacement = BoolProperty(name="Displacement", default=True, description="Global enable/disable displacement", )
     globals_dispersion = BoolProperty(name="Dispersion", default=True, description="Global enable/disable dispaersion", )
+    
+    extra_sampling_enabled = BoolProperty(name="Enabled", default=False, description="Enable rendering extra-sampling based on custom-alpha/alpha/user-input-bitmap.", )
+    extra_sampling_sl = FloatProperty(name="Sampling Level", default=14.0, min=1.0, max=50.00, precision=2, description="Target SL when DO EXTRA SAMPLING is enabled.", )
+    extra_sampling_mask = EnumProperty(name="Mask", items=[('CUSTOM_ALPHA_0', "Custom Alpha", ""), ('ALPHA_1', "Alpha", ""), ('BITMAP_2', "Bitmap", "")], default='CUSTOM_ALPHA_0', description="Sets the extra-sampling mask.", )
+    extra_sampling_custom_alpha = EnumProperty(name="Mask", items=_get_custom_alphas, description="The name of the custom alpha to be used when mask is Custom Alpha.", )
+    extra_sampling_user_bitmap = StringProperty(name="Bitmap", default="", subtype='FILE_PATH', description="Path of the image to use when mask is Birmap", )
+    extra_sampling_invert = BoolProperty(name="Invert Mask", default=False, description="Inverts alpha mask for render extra-sampling.", )
     
     # render_use_layers = EnumProperty(name="Export layers", items=[('VIEWPORT', "Viewport Layers", ""), ('RENDER', "Render Layers", ""), ], default='VIEWPORT', description="Export objects from scene or render layers", )
     

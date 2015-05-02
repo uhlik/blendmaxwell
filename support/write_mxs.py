@@ -804,6 +804,15 @@ def scene(d, s):
     
     if(d['export_protect_mxs']):
         s.enableProtection(True)
+    
+    if(d['extra_sampling_enabled']):
+        s.setRenderParameter('DO EXTRA SAMPLING', 1)
+        s.setRenderParameter('EXTRA SAMPLING SL', d['extra_sampling_sl'])
+        s.setRenderParameter('EXTRA SAMPLING MASK', d['extra_sampling_mask'])
+        s.setRenderParameter('EXTRA SAMPLING CUSTOM ALPHA', d['extra_sampling_custom_alpha'])
+        s.setRenderParameter('EXTRA SAMPLING USER BITMAP', d['extra_sampling_user_bitmap'])
+        if(d['extra_sampling_invert']):
+            s.setRenderParameter('EXTRA SAMPLING INVERT', 1)
 
 
 def environment(d, s):
