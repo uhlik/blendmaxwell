@@ -63,7 +63,7 @@ def check_for_pymaxwell():
 
 def check_for_template():
     # check for template
-    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
+    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_mxs.py")
     if(not os.path.exists(TEMPLATE)):
         log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )
         raise OSError("support directory is missing..")

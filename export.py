@@ -52,7 +52,7 @@ class MXSExportLegacy():
         # system.check_for_pymaxwell()
         
         # # check for template
-        # self.TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "export_mxs.py")
+        # self.TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_mxs.py")
         # if(not os.path.exists(self.TEMPLATE)):
         #     log("{}: ERROR: support directory is missing..".format(self.__class__.__name__), 1, LogStyles.ERROR, )
         #     raise OSError("support directory is missing..")
