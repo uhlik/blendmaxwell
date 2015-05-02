@@ -19,7 +19,7 @@
 bl_info = {"name": "Maxwell Render",
            "description": "Maxwell Render integration",
            "author": "Jakub Uhlik",
-           "version": (0, 1, 9),
+           "version": (0, 2, 0),
            "blender": (2, 74, 0),
            "location": "Info header > render engine menu",
            "warning": "Alpha",

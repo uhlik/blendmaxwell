@@ -20,7 +20,7 @@
 * All render channels including Custom Alphas
 * Environment parameters (Sun can be optionally set by Sun lamp)
 * Object parameters
-* Maxwell Extensions: Particles, Grass, Hair, Scatter, Subdivision, Sea, Cloner
+* Maxwell Extensions: Particles, Grass, Hair, Scatter, Subdivision, Sea, Cloner, Volumetrics
 * Wireframe scene export (all edges are converted to instanced cylinder of user defined radius)
 
 ![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
@@ -49,6 +49,7 @@
 
 changelog:
 
+* 0.2.0 added: much faster large mesh export on Mac OS X, Extra Sampling panel, Volumetrics extension (constant and noise 3d), external particle bin works with animation export
 * 0.1.9 added: MXS References, Windows installation simplified
 * 0.1.8 added: Linux and Windows support, cloner extension, lots of refactoring
 * 0.1.7 added: presets, texture panel, basic material preview, RFBin export with size per particle, lots of refactoring, Linux and Windows ports are working without extensions
