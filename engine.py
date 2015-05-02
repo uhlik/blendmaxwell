@@ -419,13 +419,19 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(ex is not None and not m.exporting_animation_now):
             bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=m.export_open_with, instance_app=m.instance_app, )
         
-        # and make black rectangle as a render result
-        c = self.size_x * self.size_y
-        b = [[0.0, 0.0, 0.0, 1.0]] * c
-        r = self.begin_result(0, 0, self.size_x, self.size_y)
-        l = r.layers[0]
-        l.rect = b
-        self.end_result(r)
+        # # and make black rectangle as a render result
+        # c = self.size_x * self.size_y
+        # b = [[0.0, 0.0, 0.0, 1.0]] * c
+        # r = self.begin_result(0, 0, self.size_x, self.size_y)
+        # l = r.layers[0]
+        # l.rect = b
+        # self.end_result(r)
+        
+        # # leave it as it is
+        # r = self.begin_result(0, 0, self.size_x, self.size_y)
+        # self.end_result(r)
+        
+        # ehm, skip it completelly
     
     def reset_workflow(self, scene):
         m = scene.maxwell_render

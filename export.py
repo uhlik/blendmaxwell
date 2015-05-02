@@ -2566,6 +2566,8 @@ class MXSExportLegacy():
             ob = o['object']
             m = ob.maxwell_volumetrics_extension
             
+            log("{0} ({1})".format(ob.name, o['export_type']), 2)
+            
             material = bpy.path.abspath(m.material)
             if(material != "" and not os.path.exists(material)):
                 log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
