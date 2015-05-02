@@ -1153,7 +1153,7 @@ class MXSWriter():
         
         p.setByte('Create Constant Density', d[0])
         p.setFloat('ConstantDensity', d[1])
-        if(d['vtype'] == 2):
+        if(d[0] == 2):
             p.setUInt('Seed', d[2])
             p.setFloat('Low value', d[3])
             p.setFloat('High value', d[4])

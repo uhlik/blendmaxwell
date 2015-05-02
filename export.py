@@ -4441,13 +4441,14 @@ class MXSExport():
         self.hierarchy.append((name, parent))
     
     def ext_volumetrics(self, o, vname=None, ):
-        log("{0} ({1})".format(o['name'], o['type']), 2)
+        ob = o['object']
         
-        name = o['name']
+        name = ob.name
         if(vname is not None):
             name = vname
         
-        ob = o['object']
+        log("{0} ({1})".format(name, o['export_type']), 2)
+        
         m = ob.maxwell_volumetrics_extension
         
         mat = Matrix()
@@ -4468,7 +4469,7 @@ class MXSExport():
         f = ob.empty_draw_size
         mat = mat * Matrix.Scale(f, 4)
         
-        base, pivot = self._matrix_to_base_and_pivot(mat)
+        base, pivot = self.matrix_to_base_and_pivot(mat)
         
         vtype = int(m.vtype[-1:])
         if(vtype == 2):
