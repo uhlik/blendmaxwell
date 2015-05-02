@@ -1136,6 +1136,48 @@ class MXSWriter():
             if(mat is not None):
                 o.setBackfaceMaterial(mat)
     
+    def ext_volumetrics(self, name, properties, base, pivot, object_props=None, material=None, backface_material=None, ):
+        """Create Volumetrics Extension Object.
+        name                string
+        properties          (int type 1, float density) or (int type 2, float density, int seed, float low, float high, float detail, int octaves, float perssistence)
+        base                ((3 float), (3 float), (3 float), (3 float))
+        pivot               ((3 float), (3 float), (3 float), (3 float))
+        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
+        material            (string path, bool embed) or None
+        backface_material   (string path, bool embed) or None
+        """
+        s = self.mxs
+        e = self.mgr.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
+        p = e.getExtensionData()
+        d = properties
+        
+        p.setByte('Create Constant Density', d[0])
+        p.setFloat('ConstantDensity', d[1])
+        if(d['vtype'] == 2):
+            p.setUInt('Seed', d[2])
+            p.setFloat('Low value', d[3])
+            p.setFloat('High value', d[4])
+            p.setFloat('Detail', d[5])
+            p.setInt('Octaves', d[6])
+            p.setFloat('Persistance', d[7])
+        
+        o = s.createGeometryProceduralObject(name, p)
+        
+        self.set_base_and_pivot(o, base, pivot, )
+        if(object_props is not None):
+            self.set_object_props(o, *object_props)
+        
+        if(material is not None):
+            mat = self.load_material(*material)
+            if(mat is not None):
+                o.setMaterial(mat)
+        if(backface_material is not None):
+            mat = self.load_material(*backface_material)
+            if(mat is not None):
+                o.setBackfaceMaterial(mat)
+        
+        return o
+    
     def mod_grass(self, object_name, properties, material=None, backface_material=None, ):
         """Create grass object modifier extension.
         object_name         string

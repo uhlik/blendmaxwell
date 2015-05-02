@@ -900,3 +900,30 @@ class ExtClonerProperties(PropertyGroup):
     @classmethod
     def unregiser(cls):
         del bpy.types.ParticleSettings.maxwell_cloner_extension
+
+
+class ExtVolumetricsProperties(PropertyGroup):
+    enabled = BoolProperty(name="Enabled", default=False, )
+    vtype = EnumProperty(name="Type", items=[('CONSTANT_1', "Constant", ""), ('NOISE3D_2', "Noise 3D", "")], default='CONSTANT_1', )
+    
+    density = FloatProperty(name="Field Density", default=1.0, min=0.000001, max=10000.0, precision=6, )
+    
+    noise_seed = IntProperty(name="Seed", default=4357, min=0, max=1000000, )
+    noise_low = FloatProperty(name="Low Value", default=0.0, min=0.0, max=1.0, precision=6, )
+    noise_high = FloatProperty(name="High Value", default=1.0, min=0.000001, max=1.0, precision=6, )
+    noise_detail = FloatProperty(name="Detail", default=2.2, min=1.0, max=100.0, precision=4, )
+    noise_octaves = IntProperty(name="Octaves", default=4, min=1, max=50, )
+    noise_persistence = FloatProperty(name="Persistance", default=0.55, min=0.0, max=1.0, precision=4, )
+    
+    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Object.maxwell_volumetrics_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Object.maxwell_volumetrics_extension

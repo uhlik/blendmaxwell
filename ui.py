@@ -1076,7 +1076,8 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         e = context.scene.render.engine
         o = context.active_object
         ts = ['EMPTY']
-        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
+        vol = context.object.maxwell_volumetrics_extension.enabled
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES) and not vol
     
     def draw_header(self, context):
         m = context.object.maxwell_render_reference
@@ -1116,6 +1117,57 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         c = s.column()
         c = s.column()
         c.prop(m, 'flag_override_hide_to_gi')
+
+
+class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Volumetrics"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['EMPTY']
+        ref = context.object.maxwell_render_reference.enabled
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES) and not ref
+    
+    def draw_header(self, context):
+        m = context.object.maxwell_volumetrics_extension
+        self.layout.prop(m, 'enabled', text="")
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        m = context.object.maxwell_volumetrics_extension
+        
+        r = sub.row()
+        r.prop(m, 'vtype', expand=True)
+        
+        sub.separator()
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'material')
+        c = s.column()
+        c.prop(m, 'material_embed', text='Embed', )
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'backface_material')
+        c = s.column()
+        c.prop(m, 'backface_material_embed', text='Embed', )
+        
+        sub.separator()
+        
+        sub.prop(m, 'density')
+        if(m.vtype == 'NOISE3D_2'):
+            sub.prop(m, 'noise_seed')
+            sub.prop(m, 'noise_low')
+            sub.prop(m, 'noise_high')
+            sub.prop(m, 'noise_detail')
+            sub.prop(m, 'noise_octaves')
+            sub.prop(m, 'noise_persistence')
 
 
 class ExtObjectSubdivisionPanel(ObjectButtonsPanel, Panel):

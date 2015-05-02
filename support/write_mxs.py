@@ -1191,6 +1191,35 @@ def reference(d, s):
     return o
 
 
+def volumetrics(d, s):
+    m = CextensionManager.instance()
+    m.loadAllExtensions()
+    e = m.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
+    p = e.getExtensionData()
+    
+    p.setByte('Create Constant Density', d['vtype'])
+    p.setFloat('ConstantDensity', d['density'])
+    p.setUInt('Seed', d['noise_seed'])
+    p.setFloat('Low value', d['noise_low'])
+    p.setFloat('High value', d['noise_high'])
+    p.setFloat('Detail', d['noise_detail'])
+    p.setInt('Octaves', d['noise_octaves'])
+    p.setFloat('Persistance', d['noise_persistence'])
+    
+    o = s.createGeometryProceduralObject(d['name'], p)
+    
+    if(d['material'] != ""):
+        mat = material(d['material'], s, d['material_embed'])
+        o.setMaterial(mat)
+    if(d['backface_material'] != ""):
+        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
+        o.setBackfaceMaterial(bm)
+    
+    base_and_pivot(o, d)
+    object_props(o, d)
+    return o
+
+
 def hierarchy(d, s):
     log("setting object hierarchy..", 2)
     object_types = ['EMPTY', 'MESH', 'INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', ]
@@ -1425,6 +1454,8 @@ def main(args):
             cloner(d, mxs)
         elif(d['type'] == 'REFERENCE'):
             reference(d, mxs)
+        elif(d['type'] == 'VOLUMETRICS'):
+            volumetrics(d, mxs)
         elif(d['type'] == 'WIREFRAME_MATERIAL'):
             mat = wireframe_material(d, mxs)
             m = {'name': d['name'], 'data': mat, }

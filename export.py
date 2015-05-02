@@ -261,6 +261,8 @@ class MXSExportLegacy():
                 # t = 'EMPTY'
                 if(o.maxwell_render_reference.enabled):
                     t = 'REFERENCE'
+                elif(o.maxwell_volumetrics_extension.enabled):
+                    t = 'VOLUMETRICS'
                 else:
                     pass
             elif(o.type == 'CAMERA'):
@@ -338,13 +340,15 @@ class MXSExportLegacy():
             walk(o)
         
         # mark to remove all redundant empties
+        append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'VOLUMETRICS', ]
+        
         def check_renderables_in_tree(oo):
             ov = []
             
             def walk(o):
                 for c in o['children']:
                     walk(c)
-                if((o['export_type'] == 'MESH' or o['export_type'] == 'BASE_INSTANCE') or o['export_type'] == 'INSTANCE' or o['export_type'] == 'REFERENCE' and o['export'] is True):
+                if((o['export_type'] in append_types) and o['export'] is True):
                     # keep instances (Maxwell 3)
                     # keep: meshes, bases - both with export: True
                     # (export: False are hidden objects, and should be already swapped to empties if needed for hiearchy)
@@ -393,6 +397,7 @@ class MXSExportLegacy():
         bases = []
         suns = []
         references = []
+        volumetrics = []
         
         def walk(o):
             for c in o['children']:
@@ -413,6 +418,8 @@ class MXSExportLegacy():
                     suns.append(o)
                 elif(o['export_type'] == 'REFERENCE'):
                     references.append(o)
+                elif(o['export_type'] == 'VOLUMETRICS'):
+                    volumetrics.append(o)
         
         for o in h:
             walk(o)
@@ -423,6 +430,7 @@ class MXSExportLegacy():
         self.empties = empties
         self.cameras = cameras
         self.references = references
+        self.volumetrics = volumetrics
         
         # no visible camera
         if(len(self.cameras) == 0):
@@ -1016,6 +1024,9 @@ class MXSExportLegacy():
         
         log("processing references..", 1, LogStyles.MESSAGE)
         self._references()
+        
+        log("processing volumetrics..", 1, LogStyles.MESSAGE)
+        self._volumetrics()
         
         # import pprint
         # pp = pprint.PrettyPrinter(indent=4)
@@ -2550,6 +2561,78 @@ class MXSExportLegacy():
             
             self.data.append(d)
     
+    def _volumetrics(self):
+        for o in self.volumetrics:
+            ob = o['object']
+            m = ob.maxwell_volumetrics_extension
+            
+            material = bpy.path.abspath(m.material)
+            if(material != "" and not os.path.exists(material)):
+                log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
+                material = ""
+            backface_material = bpy.path.abspath(m.backface_material)
+            if(backface_material != "" and not os.path.exists(backface_material)):
+                log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
+                material = ""
+            
+            d = {'name': ob.name,
+                 'parent': None,
+                 
+                 'base': None,
+                 'pivot': None,
+                 
+                 'vtype': int(m.vtype[-1:]),
+                 'density': m.density,
+                 'noise_seed': m.noise_seed,
+                 'noise_low': m.noise_low,
+                 'noise_high': m.noise_high,
+                 'noise_detail': m.noise_detail,
+                 'noise_octaves': m.noise_octaves,
+                 'noise_persistence': m.noise_persistence,
+                 
+                 'material': material,
+                 'material_embed': m.material_embed,
+                 'backface_material': backface_material,
+                 'backface_material_embed': m.backface_material_embed,
+                 
+                 'opacity': 100.0,
+                 'hidden_camera': False,
+                 'hidden_camera_in_shadow_channel': False,
+                 'hidden_global_illumination': False,
+                 'hidden_reflections_refractions': False,
+                 'hidden_zclip_planes': False,
+                 'object_id': (255, 255, 255),
+                 
+                 'type': 'VOLUMETRICS', }
+            
+            d = self._object_properties(ob, d)
+            
+            if(ob.parent):
+                d['parent'] = ob.parent.name
+            
+            mat = Matrix()
+            if(ob.parent_type == 'BONE'):
+                oamw = ob.matrix_world.copy()
+                apmw = ob.parent.matrix_world.copy()
+                apmw.invert()
+                amw = apmw * oamw
+                mat = amw.copy()
+            else:
+                mat = ob.matrix_local.copy()
+            
+            f = 2
+            mat = mat * Matrix.Scale(f, 4)
+            
+            f = ob.empty_draw_size
+            mat = mat * Matrix.Scale(f, 4)
+            
+            b, p = self._matrix_to_base_and_pivot(mat)
+            
+            d['base'] = b
+            d['pivot'] = p
+            
+            self.data.append(d)
+    
     def _pymaxwell(self, append=False, instancer=False, wireframe=False, ):
         """Generate pymaxwell script in temp directory and execute it."""
         # generate script
@@ -3289,6 +3372,9 @@ class MXSExport():
         for o in self.references:
             self.reference(o)
         
+        for o in self.volumetrics:
+            self.ext_volumetrics(o)
+        
         # all objects are written, now set hierarchy
         self.mxs.hierarchy(self.hierarchy)
         
@@ -3451,6 +3537,8 @@ class MXSExport():
                 # t = 'EMPTY'
                 if(o.maxwell_render_reference.enabled):
                     t = 'REFERENCE'
+                elif(o.maxwell_volumetrics_extension.enabled):
+                    t = 'VOLUMETRICS'
                 else:
                     pass
             elif(o.type == 'CAMERA'):
@@ -3528,13 +3616,15 @@ class MXSExport():
             walk(o)
         
         # mark to remove all redundant empties
+        append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'VOLUMETRICS', ]
+        
         def check_renderables_in_tree(oo):
             ov = []
             
             def walk(o):
                 for c in o['children']:
                     walk(c)
-                if((o['export_type'] == 'MESH' or o['export_type'] == 'BASE_INSTANCE') or o['export_type'] == 'INSTANCE' or o['export_type'] == 'REFERENCE' and o['export'] is True):
+                if((o['export_type'] in append_types) and o['export'] is True):
                     # keep instances (Maxwell 3)
                     # keep: meshes, bases - both with export: True
                     # (export: False are hidden objects, and should be already swapped to empties if needed for hiearchy)
@@ -3583,6 +3673,7 @@ class MXSExport():
         bases = []
         suns = []
         references = []
+        volumetrics = []
         
         def walk(o):
             for c in o['children']:
@@ -3603,6 +3694,8 @@ class MXSExport():
                     suns.append(o)
                 elif(o['export_type'] == 'REFERENCE'):
                     references.append(o)
+                elif(o['export_type'] == 'VOLUMETRICS'):
+                    volumetrics.append(o)
         
         for o in h:
             walk(o)
@@ -3613,6 +3706,7 @@ class MXSExport():
         self.empties = empties
         self.cameras = cameras
         self.references = references
+        self.volumetrics = volumetrics
         
         # no visible camera
         if(len(self.cameras) == 0):
@@ -4344,6 +4438,58 @@ class MXSExport():
         parent = None
         if(ob.parent):
             parent = ob.parent.name
+        self.hierarchy.append((name, parent))
+    
+    def ext_volumetrics(self, o, vname=None, ):
+        log("{0} ({1})".format(o['name'], o['type']), 2)
+        
+        name = o['name']
+        if(vname is not None):
+            name = vname
+        
+        ob = o['object']
+        m = ob.maxwell_volumetrics_extension
+        
+        mat = Matrix()
+        if(ob.parent_type == 'BONE'):
+            oamw = ob.matrix_world.copy()
+            apmw = ob.parent.matrix_world.copy()
+            apmw.invert()
+            amw = apmw * oamw
+            mat = amw.copy()
+        else:
+            mat = ob.matrix_local.copy()
+        
+        # scale 2x because blender empty of size 1.0 is 2 units big
+        f = 2
+        mat = mat * Matrix.Scale(f, 4)
+        
+        # scale by draw size, the result should be the same like in viewport.. if set to draw cube :)
+        f = ob.empty_draw_size
+        mat = mat * Matrix.Scale(f, 4)
+        
+        base, pivot = self._matrix_to_base_and_pivot(mat)
+        
+        vtype = int(m.vtype[-1:])
+        if(vtype == 2):
+            properties = (2, m.density, m.noise_seed, m.noise_low, m.noise_high, m.noise_detail, m.noise_octaves, m.noise_persistence, )
+        else:
+            properties = (1, m.density, )
+        
+        material = (bpy.path.abspath(m.material), m.material_embed, )
+        if(material[0] != "" and not os.path.exists(material[0])):
+            log("{1}: mxm ('{0}') does not exist.".format(material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
+            material = None
+        backface_material = (bpy.path.abspath(m.backface_material), m.backface_material_embed, )
+        if(backface_material[0] != "" and not os.path.exists(backface_material[0])):
+            log("{1}: backface mxm ('{0}') does not exist.".format(backface_material[0], self.__class__.__name__), 2, LogStyles.WARNING, )
+            backface_material = None
+        
+        self.mxs.ext_volumetrics(name, properties, base, pivot, self.get_object_props(ob), material, backface_material, )
+        
+        parent = None
+        if(o['parent']):
+            parent = o['parent']
         self.hierarchy.append((name, parent))
     
     def environment(self):
