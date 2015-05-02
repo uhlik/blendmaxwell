@@ -120,7 +120,7 @@ def _get_custom_alphas(self, context):
     for i, g in enumerate(bpy.data.groups):
         gmx = g.maxwell_render
         if(gmx.custom_alpha_use):
-            r.append((str(i), g.name, '', ))
+            r.append((g.name, g.name, '', ))
     return r
 
 
