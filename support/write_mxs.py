@@ -817,7 +817,7 @@ def scene(d, s):
 
 def environment(d, s):
     env = s.getEnvironment()
-    if(d["env_type"] == 'PHYSICAL_SKY'):
+    if(d["env_type"] == 'PHYSICAL_SKY' or d["env_type"] == 'IMAGE_BASED'):
         env.setActiveSky(d["sky_type"])
         if(d["sky_type"] == 'PHYSICAL'):
             if(not d["sky_use_preset"]):
@@ -859,57 +859,29 @@ def environment(d, s):
             zcc = [c / 255 for c in d['dome_zenith']]
             zc.assign(*zcc)
             env.setSkyConstant(d["dome_intensity"], hc, zc, d['dome_mid_point'])
-    elif(d["env_type"] == 'IMAGE_BASED'):
-        env.enableEnvironment(True)
+        
+        if(d["env_type"] == 'IMAGE_BASED'):
+            env.enableEnvironment(True)
         
         def state(s):
+            # channel state: 0 = Disabled;  1 = Enabled; 2 = Use active sky instead.
             if(s == 'HDR_IMAGE'):
                 return 1
             if(s == 'SAME_AS_BG'):
                 return 2
+            if(s == 'ACTIVE_SKY'):
+                return 2
             return 0
         
         env.setEnvironmentWeight(d["ibl_intensity"])
-        env.setEnvironmentLayer(IBL_LAYER_BACKGROUND,
-                                d["ibl_bg_map"],
-                                state("ibl_bg_type"),
-                                not d["ibl_screen_mapping"],
-                                not d["ibl_interpolation"],
-                                d["ibl_bg_intensity"],
-                                d["ibl_bg_scale_x"],
-                                d["ibl_bg_scale_y"],
-                                d["ibl_bg_offset_x"],
-                                d["ibl_bg_offset_y"], )
-        env.setEnvironmentLayer(IBL_LAYER_REFLECTION,
-                                d["ibl_refl_map"],
-                                state("ibl_refl_type"),
-                                not d["ibl_screen_mapping"],
-                                not d["ibl_interpolation"],
-                                d["ibl_refl_intensity"],
-                                d["ibl_refl_scale_x"],
-                                d["ibl_refl_scale_y"],
-                                d["ibl_refl_offset_x"],
-                                d["ibl_refl_offset_y"], )
-        env.setEnvironmentLayer(IBL_LAYER_REFRACTION,
-                                d["ibl_refr_map"],
-                                state("ibl_refr_type"),
-                                not d["ibl_screen_mapping"],
-                                not d["ibl_interpolation"],
-                                d["ibl_refr_intensity"],
-                                d["ibl_refr_scale_x"],
-                                d["ibl_refr_scale_y"],
-                                d["ibl_refr_offset_x"],
-                                d["ibl_refr_offset_y"], )
-        env.setEnvironmentLayer(IBL_LAYER_ILLUMINATION,
-                                d["ibl_illum_map"],
-                                state("ibl_illum_type"),
-                                not d["ibl_screen_mapping"],
-                                not d["ibl_interpolation"],
-                                d["ibl_illum_intensity"],
-                                d["ibl_illum_scale_x"],
-                                d["ibl_illum_scale_y"],
-                                d["ibl_illum_offset_x"],
-                                d["ibl_illum_offset_y"], )
+        env.setEnvironmentLayer(IBL_LAYER_BACKGROUND, d["ibl_bg_map"], state(d["ibl_bg_type"]), not d["ibl_screen_mapping"], not d["ibl_interpolation"],
+                                d["ibl_bg_intensity"], d["ibl_bg_scale_x"], d["ibl_bg_scale_y"], d["ibl_bg_offset_x"], d["ibl_bg_offset_y"], )
+        env.setEnvironmentLayer(IBL_LAYER_REFLECTION, d["ibl_refl_map"], state(d["ibl_refl_type"]), not d["ibl_screen_mapping"], not d["ibl_interpolation"],
+                                d["ibl_refl_intensity"], d["ibl_refl_scale_x"], d["ibl_refl_scale_y"], d["ibl_refl_offset_x"], d["ibl_refl_offset_y"], )
+        env.setEnvironmentLayer(IBL_LAYER_REFRACTION, d["ibl_refr_map"], state(d["ibl_refr_type"]), not d["ibl_screen_mapping"], not d["ibl_interpolation"],
+                                d["ibl_refr_intensity"], d["ibl_refr_scale_x"], d["ibl_refr_scale_y"], d["ibl_refr_offset_x"], d["ibl_refr_offset_y"], )
+        env.setEnvironmentLayer(IBL_LAYER_ILLUMINATION, d["ibl_illum_map"], state(d["ibl_illum_type"]), not d["ibl_screen_mapping"], not d["ibl_interpolation"],
+                                d["ibl_illum_intensity"], d["ibl_illum_scale_x"], d["ibl_illum_scale_y"], d["ibl_illum_offset_x"], d["ibl_illum_offset_y"], )
     else:
         env.setActiveSky('')
 

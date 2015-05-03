@@ -559,7 +559,7 @@ class MXSWriter():
         """
         s = self.mxs
         env = s.getEnvironment()
-        if(env_type == 'PHYSICAL_SKY'):
+        if(env_type == 'PHYSICAL_SKY' or env_type == 'IMAGE_BASED'):
             if(sky_type is not None):
                 env.setActiveSky(sky_type)
                 if(sky_type == 'PHYSICAL'):
@@ -609,13 +609,17 @@ class MXSWriter():
                     zc = Crgb()
                     zc.assign(*[c / 255 for c in dome['dome_zenith']])
                     env.setSkyConstant(dome["dome_intensity"], hc, zc, dome['dome_mid_point'])
-        elif(env_type == 'IMAGE_BASED'):
-            env.enableEnvironment(True)
+            
+            if(env_type == 'IMAGE_BASED'):
+                env.enableEnvironment(True)
             
             def state(s):
+                # channel state: 0 = Disabled;  1 = Enabled; 2 = Use active sky instead.
                 if(s == 'HDR_IMAGE'):
                     return 1
                 if(s == 'SAME_AS_BG'):
+                    return 2
+                if(s == 'ACTIVE_SKY'):
                     return 2
                 return 0
             
