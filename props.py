@@ -121,6 +121,9 @@ def _get_custom_alphas(self, context):
         gmx = g.maxwell_render
         if(gmx.custom_alpha_use):
             r.append((g.name, g.name, '', ))
+    if(len(r) == 0):
+        # return empty list if no groups in scene
+        return [("0", "", ""), ]
     return r
 
 
