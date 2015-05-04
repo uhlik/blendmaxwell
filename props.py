@@ -930,3 +930,74 @@ class ExtVolumetricsProperties(PropertyGroup):
     @classmethod
     def unregiser(cls):
         del bpy.types.Object.maxwell_volumetrics_extension
+
+
+class ExtMaterialProperties(PropertyGroup):
+    embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )
+    
+    use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""),
+                                           ('EMITTER', "Emitter", ""),
+                                           ('AGS', "AGS", ""),
+                                           ('OPAQUE', "Opaque", ""),
+                                           ('TRANSPARENT', "Transparent", ""),
+                                           ('METAL', "Metal", ""),
+                                           ('TRANSLUCENT', "Translucent", ""),
+                                           ('CARPAINT', "Carpaint", ""),
+                                           ('HAIR', "Hair", ""), ], default='CUSTOM', )
+    
+    ags_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, subtype='COLOR', )
+    ags_reflection = FloatProperty(name="Reflection (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    ags_type = EnumProperty(name="Type", items=[('0', "Normal", ""), ('1', "Clear", "")], default='0', )
+    
+    opaque_color_type = BoolProperty(name="Color Type", default=False, )
+    opaque_color = FloatVectorProperty(name="Color", default=(220 / 255, 220 / 255, 220 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    opaque_color_map = StringProperty(name="Color Map", default="", subtype='FILE_PATH', )
+    opaque_shininess_type = BoolProperty(name="Shininess Type", default=False, )
+    opaque_shininess = FloatProperty(name="Shininess (%)", default=35.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    opaque_shininess_map = StringProperty(name="Shininess Map", default="", subtype='FILE_PATH', )
+    opaque_roughness_type = BoolProperty(name="Roughness Type", default=False, )
+    opaque_roughness = FloatProperty(name="Roughness (%)", default=5.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    opaque_roughness_map = StringProperty(name="Roughness Map", default="", subtype='FILE_PATH', )
+    opaque_clearcoat = BoolProperty(name="Clearcoat", default=False, )
+    
+    transparent_color_type = BoolProperty(name="Color Type", default=False, )
+    transparent_color = FloatVectorProperty(name="Color", default=(182 / 255, 182 / 255, 182 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    transparent_color_map = StringProperty(name="Color Map", default="", subtype='FILE_PATH', )
+    transparent_ior = FloatProperty(name="Ref. Index", default=1.51, min=1.001, max=2.5, precision=3, )
+    transparent_transparency = FloatProperty(name="Transparency (cm)", default=10.0, min=0.1, max=999.0, precision=1, )
+    transparent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
+    transparent_roughness = FloatProperty(name="Roughness (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    transparent_roughness_map = StringProperty(name="Roughness Map", default="", subtype='FILE_PATH', )
+    transparent_specular_tint = FloatProperty(name="Specular Tint (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    transparent_dispersion = FloatProperty(name="Dispersion (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    transparent_clearcoat = BoolProperty(name="Clearcoat", default=False, )
+    
+    metal_ior = EnumProperty(name="Type", items=[('0', "Aluminium", ""), ('1', "Chromium", ""), ('2', "Cobalt", ""), ('3', "Copper", ""), ('4', "Germanium", ""), ('5', "Gold", ""),
+                                                 ('6', "Iron", ""), ('7', "Nickel", ""), ('8', "Silver", ""), ('9', "Titanium", ""), ('10', "Vanadium", ""), ], default='0', )
+    metal_color_type = BoolProperty(name="Color Type", default=False, )
+    metal_color = FloatVectorProperty(name="Color", default=(167 / 255, 167 / 255, 167 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    metal_color_map = StringProperty(name="Color Map", default="", subtype='FILE_PATH', )
+    metal_tint = FloatProperty(name="Tint", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_roughness_type = BoolProperty(name="Roughness Type", default=False, )
+    metal_roughness = FloatProperty(name="Roughness", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_roughness_map = StringProperty(name="Roughness Map", default="", subtype='FILE_PATH', )
+    metal_anisotropy_type = BoolProperty(name="Anisotropy Type", default=False, )
+    metal_anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_anisotropy_map = StringProperty(name="Anisotropy Map", default="", subtype='FILE_PATH', )
+    metal_angle_type = BoolProperty(name="Angle Type", default=False, )
+    metal_angle = FloatProperty(name="Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=1, subtype='ANGLE', )
+    metal_angle_map = StringProperty(name="Angle Map", default="", subtype='FILE_PATH', )
+    metal_dust_type = BoolProperty(name="Dust & Dirt Type", default=False, )
+    metal_dust = FloatProperty(name="Dust & Dirt", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_dust_map = StringProperty(name="Dust & Dirt Map", default="", subtype='FILE_PATH', )
+    metal_perforation_enabled = BoolProperty(name="Perforation Enabled", default=False, )
+    metal_perforation_map = StringProperty(name="Perforation Map", default="", subtype='FILE_PATH', )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Material.maxwell_material_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Material.maxwell_material_extension
