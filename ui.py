@@ -1380,27 +1380,368 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
 
 class MaterialPanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "MXM"
+    bl_label = "Maxwell Material"
     
     def draw(self, context):
         l = self.layout
         sub = l.column()
         m = context.material.maxwell_render
-        sub.prop(m, 'mxm_file')
-        sub.prop(m, 'embed')
-        r = sub.row()
-        r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
+        mx = context.material.maxwell_material_extension
+        mat = context.material
         
-        r = sub.row(align=True)
-        if(m.mxm_file == ''):
-            r.operator('maxwell_render.create_material').backface = False
+        sub.prop(m, 'use', text="Material Type", )
+        sub.separator()
+        
+        if(m.use == 'EMITTER'):
+            sub.prop(mx, 'emitter_type')
+            sub.separator()
+            if(mx.emitter_type == '0'):
+                # Area
+                pass
+            elif(mx.emitter_type == '1'):
+                # IES
+                sub.prop(mx, 'emitter_ies_data')
+                sub.prop(mx, 'emitter_ies_intensity')
+                sub.separator()
+            elif(mx.emitter_type == '2'):
+                # Spot
+                r = sub.row()
+                s = r.split(percentage=0.2)
+                c = s.column()
+                c.label("Spot Map:")
+                c = s.column()
+                r = c.row()
+                r.prop(mx, 'emitter_spot_map_enabled', text="", )
+                r.prop_search(mx, 'emitter_spot_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                
+                sub.prop(mx, 'emitter_spot_cone_angle')
+                sub.prop(mx, 'emitter_spot_falloff_angle')
+                sub.prop(mx, 'emitter_spot_falloff_type')
+                sub.prop(mx, 'emitter_spot_blur')
+                sub.separator()
+            
+            if(mx.emitter_type == '1'):
+                # IES
+                r = sub.row()
+                s = r.split(percentage=0.2)
+                c = s.column()
+                c.label("Color:")
+                c = s.column()
+                r = c.row()
+                r.prop(mx, 'emitter_color', text="", )
+                r.prop(mx, 'emitter_color_black_body_enabled', text="", )
+                r.prop(mx, 'emitter_color_black_body')
+            elif(mx.emitter_type == '2'):
+                # Spot
+                r = sub.row()
+                s = r.split(percentage=0.2)
+                c = s.column()
+                c.label("Color:")
+                c = s.column()
+                r = c.row()
+                r.prop(mx, 'emitter_color', text="", )
+                r.prop(mx, 'emitter_color_black_body_enabled', text="", )
+                r.prop(mx, 'emitter_color_black_body')
+                sub.separator()
+                sub.prop(mx, 'emitter_luminance')
+                if(mx.emitter_luminance == '0'):
+                    # Power & Efficacy
+                    sub.prop(mx, 'emitter_luminance_power')
+                    sub.prop(mx, 'emitter_luminance_efficacy')
+                    # r = sub.row()
+                    # r.prop(mx, 'emitter_luminance_output', text="Output (lm)")
+                    # r.enabled = False
+                elif(mx.emitter_luminance == '1'):
+                    # Lumen
+                    sub.prop(mx, 'emitter_luminance_output', text="Output (lm)")
+                elif(mx.emitter_luminance == '2'):
+                    # Lux
+                    sub.prop(mx, 'emitter_luminance_output', text="Output (lm/m)")
+                elif(mx.emitter_luminance == '3'):
+                    # Candela
+                    sub.prop(mx, 'emitter_luminance_output', text="Output (cd)")
+                elif(mx.emitter_luminance == '4'):
+                    # Luminance
+                    sub.prop(mx, 'emitter_luminance_output', text="Output (cd/m)")
+            else:
+                sub.prop(mx, 'emitter_emission')
+                sub.separator()
+                
+                if(mx.emitter_emission == '0'):
+                    # Color
+                    r = sub.row()
+                    s = r.split(percentage=0.2)
+                    c = s.column()
+                    c.label("Color:")
+                    c = s.column()
+                    r = c.row()
+                    r.prop(mx, 'emitter_color', text="", )
+                    r.prop(mx, 'emitter_color_black_body_enabled', text="", )
+                    r.prop(mx, 'emitter_color_black_body')
+                    sub.separator()
+                    sub.prop(mx, 'emitter_luminance')
+                    if(mx.emitter_luminance == '0'):
+                        # Power & Efficacy
+                        sub.prop(mx, 'emitter_luminance_power')
+                        sub.prop(mx, 'emitter_luminance_efficacy')
+                        # r = sub.row()
+                        # r.prop(mx, 'emitter_luminance_output', text="Output (lm)")
+                        # r.enabled = False
+                    elif(mx.emitter_luminance == '1'):
+                        # Lumen
+                        sub.prop(mx, 'emitter_luminance_output', text="Output (lm)")
+                    elif(mx.emitter_luminance == '2'):
+                        # Lux
+                        sub.prop(mx, 'emitter_luminance_output', text="Output (lm/m)")
+                    elif(mx.emitter_luminance == '3'):
+                        # Candela
+                        sub.prop(mx, 'emitter_luminance_output', text="Output (cd)")
+                    elif(mx.emitter_luminance == '4'):
+                        # Luminance
+                        sub.prop(mx, 'emitter_luminance_output', text="Output (cd/m)")
+                elif(mx.emitter_emission == '1'):
+                    # Temperature
+                    sub.prop(mx, 'emitter_temperature_value')
+                elif(mx.emitter_emission == '2'):
+                    # HDR Image
+                    sub.prop(mx, 'emitter_hdr_map')
+                    sub.prop(mx, 'emitter_hdr_intensity')
+            
+        elif(m.use == 'AGS'):
+            r = sub.row()
+            s = r.split(percentage=0.33)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            c.prop(mx, 'ags_color', text="", )
+            
+            sub.prop(mx, 'ags_reflection')
+            sub.prop(mx, 'ags_type')
+            
+        elif(m.use == 'OPAQUE'):
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'opaque_color', text="", )
+            r.prop(mx, 'opaque_color_type', text="", )
+            r.prop_search(mx, 'opaque_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Shininess:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'opaque_shininess', text="", )
+            r.prop(mx, 'opaque_shininess_type', text="", )
+            r.prop_search(mx, 'opaque_shininess_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Roughness:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'opaque_roughness', text="", )
+            r.prop(mx, 'opaque_roughness_type', text="", )
+            r.prop_search(mx, 'opaque_roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            sub.prop(mx, 'opaque_clearcoat')
+            
+        elif(m.use == 'TRANSPARENT'):
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'transparent_color', text="", )
+            r.prop(mx, 'transparent_color_type', text="", )
+            r.prop_search(mx, 'transparent_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            sub.prop(mx, 'transparent_ior')
+            sub.prop(mx, 'transparent_transparency')
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Roughness:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'transparent_roughness', text="", )
+            r.prop(mx, 'transparent_roughness_type', text="", )
+            r.prop_search(mx, 'transparent_roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            sub.prop(mx, 'transparent_specular_tint')
+            sub.prop(mx, 'transparent_dispersion')
+            sub.prop(mx, 'transparent_clearcoat')
+            
+        elif(m.use == 'METAL'):
+            sub.prop(mx, 'metal_ior')
+            sub.separator()
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'metal_color', text="", )
+            r.prop(mx, 'metal_color_type', text="", )
+            r.prop_search(mx, 'metal_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            sub.prop(mx, 'metal_tint')
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Roughness:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'metal_roughness', text="", )
+            r.prop(mx, 'metal_roughness_type', text="", )
+            r.prop_search(mx, 'metal_roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Anisotropy:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'metal_anisotropy', text="", )
+            r.prop(mx, 'metal_anisotropy_type', text="", )
+            r.prop_search(mx, 'metal_anisotropy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Angle:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'metal_angle', text="", )
+            r.prop(mx, 'metal_angle_type', text="", )
+            r.prop_search(mx, 'metal_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Dust & Dirt:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'metal_dust', text="", )
+            r.prop(mx, 'metal_dust_type', text="", )
+            r.prop_search(mx, 'metal_dust_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Perforation:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'metal_perforation_enabled', text="", )
+            r.prop_search(mx, 'metal_perforation_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+        elif(m.use == 'TRANSLUCENT'):
+            sub.prop(mx, 'translucent_scale')
+            sub.prop(mx, 'translucent_ior')
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'translucent_color', text="", )
+            r.prop(mx, 'translucent_color_type', text="", )
+            r.prop_search(mx, 'translucent_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            sub.prop(mx, 'translucent_hue_shift')
+            sub.prop(mx, 'translucent_invert_hue')
+            sub.prop(mx, 'translucent_vibrance')
+            sub.prop(mx, 'translucent_density')
+            sub.prop(mx, 'translucent_opacity')
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Roughness:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'translucent_roughness', text="", )
+            r.prop(mx, 'translucent_roughness_type', text="", )
+            r.prop_search(mx, 'translucent_roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            sub.prop(mx, 'translucent_specular_tint')
+            sub.prop(mx, 'translucent_clearcoat')
+            sub.prop(mx, 'translucent_clearcoat_ior')
+            
+        elif(m.use == 'CARPAINT'):
+            r = sub.row()
+            s = r.split(percentage=0.33)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            c.prop(mx, 'carpaint_color', text="", )
+            
+            sub.prop(mx, 'carpaint_metallic')
+            sub.prop(mx, 'carpaint_topcoat')
+            
+        elif(m.use == 'HAIR'):
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'hair_color', text="", )
+            r.prop(mx, 'hair_color_type', text="", )
+            r.prop_search(mx, 'hair_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            sub.prop_search(mx, 'hair_root_tip_map', mat, 'texture_slots', icon='TEXTURE', )
+            
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Root-Tip Weight:")
+            c = s.column()
+            r = c.row()
+            r.prop(mx, 'hair_root_tip_weight', text="", )
+            r.prop(mx, 'hair_root_tip_weight_type', text="", )
+            r.prop_search(mx, 'hair_root_tip_weight_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            sub.label('Primary Highlight:')
+            r = sub.row(align=True)
+            r.prop(mx, 'hair_primary_highlight_strength')
+            r.prop(mx, 'hair_primary_highlight_spread')
+            r = sub.row()
+            r.prop(mx, 'hair_primary_highlight_tint')
+            
+            sub.label('Secondary Highlight:')
+            r = sub.row(align=True)
+            r.prop(mx, 'hair_secondary_highlight_strength')
+            r.prop(mx, 'hair_secondary_highlight_spread')
+            r = sub.row()
+            r.prop(mx, 'hair_secondary_highlight_tint')
+            
         else:
-            r.operator('maxwell_render.edit_material').backface = False
+            # 'CUSTOM'
+            sub.prop(m, 'mxm_file')
+            sub.prop(m, 'embed')
+            r = sub.row()
+            r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
+            r = sub.row(align=True)
+            if(m.mxm_file == ''):
+                r.operator('maxwell_render.create_material').backface = False
+            else:
+                r.operator('maxwell_render.edit_material').backface = False
 
 
 class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Backface MXM"
+    bl_label = "Maxwell Backface Material"
     bl_options = {'DEFAULT_CLOSED'}
     
     def draw(self, context):
