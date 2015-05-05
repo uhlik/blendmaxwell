@@ -133,6 +133,18 @@ class _overrides():
     output_mxi = False
 
 
+class PrivateProperties(PropertyGroup):
+    material = StringProperty(name="m", default="", )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Scene.maxwell_render_private = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Scene.maxwell_render_private
+
+
 class SceneProperties(PropertyGroup):
     scene_time = IntProperty(name="Time (minutes)", default=60, min=1, max=50000, description="Maximum render time (in minutes) for the render", )
     scene_sampling_level = FloatProperty(name="Sampling Level", default=12.0, min=1.0, max=50.00, precision=2, description="Maximum sampling level required", )
@@ -505,7 +517,11 @@ class MaterialProperties(PropertyGroup):
     
     # use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""),
     #                                        ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ('HAIR', "Hair", ""), ], default='CUSTOM', )
+    # use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""),
+    #                                        ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ], default='CUSTOM', )
     use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ], default='CUSTOM', )
+    
+    flag = BoolProperty(name="Flag", default=False, description="True - redraw preview, False - skip", options={'HIDDEN'}, )
     
     @classmethod
     def register(cls):
@@ -528,7 +544,6 @@ class TextureProperties(PropertyGroup):
     rotation = FloatProperty(name="Rotation", default=math.radians(0.000), min=math.radians(0.000), max=math.radians(360.000), precision=3, subtype='ANGLE', )
     invert = BoolProperty(name="Invert", default=False, )
     use_alpha = BoolProperty(name="Alpha Only", default=False, )
-    # type_interpolation = EnumProperty(name="Interpolation", items=[('0', "Off", ""), ('1', "On", ""), ], default='0', )
     interpolation = BoolProperty(name="Interpolation", default=False, )
     brightness = FloatProperty(name="Brightness", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
     contrast = FloatProperty(name="Contrast", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
@@ -960,17 +975,17 @@ class ExtMaterialProperties(PropertyGroup):
     emitter_hdr_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=1000000.0, precision=1, )
     
     ags_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, subtype='COLOR', )
-    ags_reflection = FloatProperty(name="Reflection (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    ags_reflection = FloatProperty(name="Reflection (%)", default=12.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     ags_type = EnumProperty(name="Type", items=[('0', "Normal", ""), ('1', "Clear", "")], default='0', )
     
     opaque_color_type = BoolProperty(name="Color Type", default=False, )
     opaque_color = FloatVectorProperty(name="Color", default=(220 / 255, 220 / 255, 220 / 255), min=0.0, max=1.0, subtype='COLOR', )
     opaque_color_map = StringProperty(name="Color Map", default="", )
     opaque_shininess_type = BoolProperty(name="Shininess Type", default=False, )
-    opaque_shininess = FloatProperty(name="Shininess (%)", default=35.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    opaque_shininess = FloatProperty(name="Shininess (%)", default=40.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     opaque_shininess_map = StringProperty(name="Shininess Map", default="", )
     opaque_roughness_type = BoolProperty(name="Roughness Type", default=False, )
-    opaque_roughness = FloatProperty(name="Roughness (%)", default=5.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    opaque_roughness = FloatProperty(name="Roughness (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     opaque_roughness_map = StringProperty(name="Roughness Map", default="", )
     opaque_clearcoat = BoolProperty(name="Clearcoat", default=False, )
     
@@ -978,7 +993,7 @@ class ExtMaterialProperties(PropertyGroup):
     transparent_color = FloatVectorProperty(name="Color", default=(182 / 255, 182 / 255, 182 / 255), min=0.0, max=1.0, subtype='COLOR', )
     transparent_color_map = StringProperty(name="Color Map", default="", )
     transparent_ior = FloatProperty(name="Ref. Index", default=1.51, min=1.001, max=2.5, precision=3, )
-    transparent_transparency = FloatProperty(name="Transparency (cm)", default=10.0, min=0.1, max=999.0, precision=1, )
+    transparent_transparency = FloatProperty(name="Transparency (cm)", default=30.0, min=0.1, max=999.0, precision=1, )
     transparent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
     transparent_roughness = FloatProperty(name="Roughness (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     transparent_roughness_map = StringProperty(name="Roughness Map", default="", )
@@ -988,12 +1003,12 @@ class ExtMaterialProperties(PropertyGroup):
     
     metal_ior = EnumProperty(name="Type", items=[('0', "Aluminium", ""), ('1', "Chromium", ""), ('2', "Cobalt", ""), ('3', "Copper", ""), ('4', "Germanium", ""), ('5', "Gold", ""),
                                                  ('6', "Iron", ""), ('7', "Nickel", ""), ('8', "Silver", ""), ('9', "Titanium", ""), ('10', "Vanadium", ""), ], default='0', )
+    metal_tint = FloatProperty(name="Tint", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     metal_color_type = BoolProperty(name="Color Type", default=False, )
     metal_color = FloatVectorProperty(name="Color", default=(167 / 255, 167 / 255, 167 / 255), min=0.0, max=1.0, subtype='COLOR', )
     metal_color_map = StringProperty(name="Color Map", default="", )
-    metal_tint = FloatProperty(name="Tint", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     metal_roughness_type = BoolProperty(name="Roughness Type", default=False, )
-    metal_roughness = FloatProperty(name="Roughness", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_roughness = FloatProperty(name="Roughness", default=30.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     metal_roughness_map = StringProperty(name="Roughness Map", default="", )
     metal_anisotropy_type = BoolProperty(name="Anisotropy Type", default=False, )
     metal_anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
@@ -1007,40 +1022,40 @@ class ExtMaterialProperties(PropertyGroup):
     metal_perforation_enabled = BoolProperty(name="Perforation Enabled", default=False, )
     metal_perforation_map = StringProperty(name="Perforation Map", default="", )
     
-    translucent_scale = FloatProperty(name="Scale (x10 cm)", default=10.0, min=0.00001, max=1000000.0, precision=2, )
-    translucent_ior = FloatProperty(name="Ref. Index", default=1.51, min=1.001, max=2.5, precision=3, )
+    translucent_scale = FloatProperty(name="Scale (x10 cm)", default=8.0, min=0.00001, max=1000000.0, precision=2, )
+    translucent_ior = FloatProperty(name="Ref. Index", default=1.3, min=1.001, max=2.5, precision=3, )
     translucent_color_type = BoolProperty(name="Color Type", default=False, )
     translucent_color = FloatVectorProperty(name="Color", default=(250 / 255, 245 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', )
     translucent_color_map = StringProperty(name="Color Map", default="", )
     translucent_hue_shift = FloatProperty(name="Hue Shift", default=0.0, min=-120.0, max=120.0, precision=1, )
-    translucent_invert_hue = BoolProperty(name="Invert Hue", default=False, )
-    translucent_vibrance = FloatProperty(name="Vibrance", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    translucent_density = FloatProperty(name="Density", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    translucent_opacity = FloatProperty(name="Opacity", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_invert_hue = BoolProperty(name="Invert Hue", default=True, )
+    translucent_vibrance = FloatProperty(name="Vibrance", default=11.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_density = FloatProperty(name="Density", default=90.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_opacity = FloatProperty(name="Opacity", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     translucent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
-    translucent_roughness = FloatProperty(name="Roughness", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_roughness = FloatProperty(name="Roughness", default=17.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     translucent_roughness_map = StringProperty(name="Roughness Map", default="", )
     translucent_specular_tint = FloatProperty(name="Specular Tint (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     translucent_clearcoat = BoolProperty(name="Clearcoat", default=False, )
-    translucent_clearcoat_ior = FloatProperty(name="Clearcoat IOR", default=1.51, min=1.001, max=2.5, precision=3, )
+    translucent_clearcoat_ior = FloatProperty(name="Clearcoat IOR", default=1.3, min=1.001, max=2.5, precision=3, )
     
     carpaint_color = FloatVectorProperty(name="Color", default=(100 / 255, 0 / 255, 16 / 255), min=0.0, max=1.0, subtype='COLOR', )
     carpaint_metallic = FloatProperty(name="Metallic", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     carpaint_topcoat = FloatProperty(name="Topcoat", default=50.0, min=1.001, max=100.0, precision=3, subtype='PERCENTAGE', )
     
-    hair_color_type = BoolProperty(name="Color Type", default=False, )
-    hair_color = FloatVectorProperty(name="Color", default=(250 / 255, 245 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    hair_color_map = StringProperty(name="Color Map", default="", )
-    hair_root_tip_map = StringProperty(name="Root-Tip Map", default="", )
-    hair_root_tip_weight_type = BoolProperty(name="Root-Tip Weight Type", default=False, )
-    hair_root_tip_weight = FloatVectorProperty(name="Root-Tip Weight", default=(250 / 255, 245 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    hair_root_tip_weight_map = StringProperty(name="Root-Tip Weight Map", default="", )
-    hair_primary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_primary_highlight_spread = FloatProperty(name="Spread", default=36.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_primary_highlight_tint = FloatVectorProperty(name="Tint", default=(245 / 255, 245 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    hair_secondary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_secondary_highlight_spread = FloatProperty(name="Spread", default=45.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_secondary_highlight_tint = FloatVectorProperty(name="Tint", default=(131 / 255, 135 / 255, 140 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    # hair_color_type = BoolProperty(name="Color Type", default=False, )
+    # hair_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    # hair_color_map = StringProperty(name="Color Map", default="", )
+    # hair_root_tip_map = StringProperty(name="Root-Tip Map", default="", )
+    # hair_root_tip_weight_type = BoolProperty(name="Root-Tip Weight Type", default=False, )
+    # hair_root_tip_weight = FloatProperty(name="Root-Tip Weight", default=50.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    # hair_root_tip_weight_map = StringProperty(name="Root-Tip Weight Map", default="", )
+    # hair_primary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    # hair_primary_highlight_spread = FloatProperty(name="Spread", default=36.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    # hair_primary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    # hair_secondary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    # hair_secondary_highlight_spread = FloatProperty(name="Spread", default=45.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    # hair_secondary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
     
     @classmethod
     def register(cls):

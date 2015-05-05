@@ -99,7 +99,212 @@ def get_all_panels():
     return r
 
 
+def get_default_presets():
+    presets = {
+        'opaque': {
+            'white_clay': {'opaque_color_type': False, 'opaque_color': (220 / 255, 220 / 255, 220 / 255), 'opaque_color_map': "", 'opaque_shininess_type': False, 'opaque_shininess': 40.0, 'opaque_shininess_map': "", 'opaque_roughness_type': False, 'opaque_roughness': 25.0, 'opaque_roughness_map': "", 'opaque_clearcoat': False, },
+        },
+        'transparent': {
+            'high_grade_glass': {'transparent_color_type': False, 'transparent_color': (182 / 255, 182 / 255, 182 / 255), 'transparent_color_map': "", 'transparent_ior': 1.51, 'transparent_transparency': 30, 'transparent_roughness_type': 0, 'transparent_roughness': 0, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+            'low_grade_glass': {'transparent_color_type': False, 'transparent_color': (204 / 255, 220 / 255, 194 / 255), 'transparent_color_map': "", 'transparent_ior': 1.51, 'transparent_transparency': 20, 'transparent_roughness_type': 0, 'transparent_roughness': 0, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+            'brown_bottle_glass': {'transparent_color_type': False, 'transparent_color': (236 / 255, 170 / 255, 0 / 255), 'transparent_color_map': "", 'transparent_ior': 1.51, 'transparent_transparency': 0.2, 'transparent_roughness_type': 0, 'transparent_roughness': 5, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+            'green_bottle_glass': {'transparent_color_type': False, 'transparent_color': (212 / 255, 236 / 255, 0 / 255), 'transparent_color_map': "", 'transparent_ior': 1.51, 'transparent_transparency': 0.2, 'transparent_roughness_type': 0, 'transparent_roughness': 5, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+            'turquoise_glassware': {'transparent_color_type': False, 'transparent_color': (115 / 255, 226 / 255, 234 / 255), 'transparent_color_map': "", 'transparent_ior': 1.51, 'transparent_transparency': 3, 'transparent_roughness_type': 0, 'transparent_roughness': 0, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+            'frosted_clear_glass': {'transparent_color_type': False, 'transparent_color': (182 / 255, 182 / 255, 182 / 255), 'transparent_color_map': "", 'transparent_ior': 1.51, 'transparent_transparency': 30, 'transparent_roughness_type': 0, 'transparent_roughness': 100, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+            'frosted_color_glass': {'transparent_color_type': False, 'transparent_color': (220 / 255, 0 / 255, 0 / 255), 'transparent_color_map': "", 'transparent_ior': 1.51, 'transparent_transparency': 30, 'transparent_roughness_type': 0, 'transparent_roughness': 100, 'transparent_roughness_map': "", 'transparent_specular_tint': 30, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+            'water': {'transparent_color_type': False, 'transparent_color': (255 / 255, 255 / 255, 255 / 255), 'transparent_color_map': "", 'transparent_ior': 1.33, 'transparent_transparency': 0, 'transparent_roughness_type': 0, 'transparent_roughness': 0, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+            'ice': {'transparent_color_type': False, 'transparent_color': (255 / 255, 255 / 255, 255 / 255), 'transparent_color_map': "", 'transparent_ior': 1.33, 'transparent_transparency': 30, 'transparent_roughness_type': 0, 'transparent_roughness': 70, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': True, },
+            'diamond': {'transparent_color_type': False, 'transparent_color': (220 / 255, 220 / 255, 220 / 255), 'transparent_color_map': "", 'transparent_ior': 2.41, 'transparent_transparency': 30, 'transparent_roughness_type': 0, 'transparent_roughness': 0, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 44.7, 'transparent_clearcoat': False, },
+            'ruby': {'transparent_color_type': False, 'transparent_color': (162 / 255, 0 / 255, 0 / 255), 'transparent_color_map': "", 'transparent_ior': 1.76, 'transparent_transparency': 3, 'transparent_roughness_type': 0, 'transparent_roughness': 0, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 27.8, 'transparent_clearcoat': False, },
+            'emerald': {'transparent_color_type': False, 'transparent_color': (0 / 255, 162 / 255, 0 / 255), 'transparent_color_map': "", 'transparent_ior': 1.57, 'transparent_transparency': 3, 'transparent_roughness_type': 0, 'transparent_roughness': 0, 'transparent_roughness_map': "", 'transparent_specular_tint': 0, 'transparent_dispersion': 0, 'transparent_clearcoat': False, },
+        },
+        'metal': {
+            'aluminium': {'metal_ior': "0", 'metal_color_type': False, 'metal_color': (167 / 255, 167 / 255, 168 / 255), 'metal_color_map': "", 'metal_tint': 0.0, 'metal_roughness_type': 0, 'metal_roughness': 30.0, 'metal_roughness_map': "", 'metal_anisotropy_type': 0, 'metal_anisotropy': 0, 'metal_anisotropy_map': "", 'metal_angle_type': 0, 'metal_angle': 0, 'metal_angle_map': "", 'metal_dust_type': 0, 'metal_dust': 0, 'metal_dust_map': "", 'metal_perforation_enabled': False, 'metal_perforation_map': "", },
+            '24k_jewelry_gold': {'metal_ior': "5", 'metal_color_type': False, 'metal_color': (206 / 255, 90 / 255, 7 / 255), 'metal_color_map': "", 'metal_tint': 0.0, 'metal_roughness_type': 0, 'metal_roughness': 0.0, 'metal_roughness_map': "", 'metal_anisotropy_type': 0, 'metal_anisotropy': 0, 'metal_anisotropy_map': "", 'metal_angle_type': 0, 'metal_angle': 0, 'metal_angle_map': "", 'metal_dust_type': 0, 'metal_dust': 0, 'metal_dust_map': "", 'metal_perforation_enabled': False, 'metal_perforation_map': "", },
+            'mirror': {'metal_ior': "8", 'metal_color_type': False, 'metal_color': (255 / 255, 255 / 255, 255 / 255), 'metal_color_map': "", 'metal_tint': 0.0, 'metal_roughness_type': 0, 'metal_roughness': 0.0, 'metal_roughness_map': "", 'metal_anisotropy_type': 0, 'metal_anisotropy': 0, 'metal_anisotropy_map': "", 'metal_angle_type': 0, 'metal_angle': 0, 'metal_angle_map': "", 'metal_dust_type': 0, 'metal_dust': 0, 'metal_dust_map': "", 'metal_perforation_enabled': False, 'metal_perforation_map': "", },
+        },
+        'translucent': {
+            'silicone_gel': {'translucent_scale': 8.0, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (250 / 255, 245 / 255, 230 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 0.0, 'translucent_invert_hue': True, 'translucent_vibrance': 11, 'translucent_density': 90, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 17, 'translucent_roughness_map': "", 'translucent_specular_tint': 0.0, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'polyurethane': {'translucent_scale': 0.2, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (236 / 255, 220 / 255, 122 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 19, 'translucent_invert_hue': False, 'translucent_vibrance': 10, 'translucent_density': 20, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 35, 'translucent_roughness_map': "", 'translucent_specular_tint': 20, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'orange_juice': {'translucent_scale': 0.8, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (232 / 255, 169 / 255, 52 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 34, 'translucent_invert_hue': False, 'translucent_vibrance': 45, 'translucent_density': 50, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 0, 'translucent_roughness_map': "", 'translucent_specular_tint': 20, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'honey': {'translucent_scale': 0.7, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (191 / 255, 121 / 255, 10 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 0, 'translucent_invert_hue': False, 'translucent_vibrance': 30, 'translucent_density': 20, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 0, 'translucent_roughness_map': "", 'translucent_specular_tint': 0, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'caoutchouc': {'translucent_scale': 0.3, 'translucent_ior': 1.2, 'translucent_color_type': False, 'translucent_color': (195 / 255, 147 / 255, 5 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 20, 'translucent_invert_hue': False, 'translucent_vibrance': 20, 'translucent_density': 30, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 0, 'translucent_roughness_map': "", 'translucent_specular_tint': 20, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'flint': {'translucent_scale': 1.5, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (242 / 255, 234 / 255, 217 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 0, 'translucent_invert_hue': True, 'translucent_vibrance': 7, 'translucent_density': 90, 'translucent_opacity': 75, 'translucent_roughness_type': False, 'translucent_roughness': 20, 'translucent_roughness_map': "", 'translucent_specular_tint': 0, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'milk': {'translucent_scale': 0.5, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (216 / 255, 210 / 255, 193 / 255), 'translucent_color_map': "", 'translucent_hue_shift': -10, 'translucent_invert_hue': True, 'translucent_vibrance': 8, 'translucent_density': 80, 'translucent_opacity': 80, 'translucent_roughness_type': False, 'translucent_roughness': 0, 'translucent_roughness_map': "", 'translucent_specular_tint': 0, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'wax_red': {'translucent_scale': 0.2, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (90 / 255, 1 / 255, 4 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 0, 'translucent_invert_hue': False, 'translucent_vibrance': 25, 'translucent_density': 40, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 40, 'translucent_roughness_map': "", 'translucent_specular_tint': 20, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'rubber_blue': {'translucent_scale': 1, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (6 / 255, 36 / 255, 204 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 10, 'translucent_invert_hue': False, 'translucent_vibrance': 25, 'translucent_density': 80, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 100, 'translucent_roughness_map': "", 'translucent_specular_tint': 80, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'rubber_lime': {'translucent_scale': 1, 'translucent_ior': 1.3, 'translucent_color_type': False, 'translucent_color': (200 / 255, 233 / 255, 2 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 10, 'translucent_invert_hue': False, 'translucent_vibrance': 10, 'translucent_density': 50, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 30, 'translucent_roughness_map': "", 'translucent_specular_tint': 80, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'vapor': {'translucent_scale': 1, 'translucent_ior': 1.001, 'translucent_color_type': False, 'translucent_color': (255 / 255, 255 / 255, 255 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 0, 'translucent_invert_hue': False, 'translucent_vibrance': 0, 'translucent_density': 30, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 0, 'translucent_roughness_map': "", 'translucent_specular_tint': 0, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+            'smoke': {'translucent_scale': 1, 'translucent_ior': 1.001, 'translucent_color_type': False, 'translucent_color': (1 / 255, 1 / 255, 1 / 255), 'translucent_color_map': "", 'translucent_hue_shift': 0, 'translucent_invert_hue': False, 'translucent_vibrance': 0, 'translucent_density': 30, 'translucent_opacity': 50, 'translucent_roughness_type': False, 'translucent_roughness': 0, 'translucent_roughness_map': "", 'translucent_specular_tint': 0, 'translucent_clearcoat': False, 'translucent_clearcoat_ior': 1.3, },
+        },
+        'carpaint': {
+            'cherry_metallic': {'carpaint_color': (100 / 255, 0 / 255, 16 / 255), 'carpaint_metallic': 100.0, 'carpaint_topcoat': 50.0, },
+        },
+        # 'hair': {
+        #     'black_hair': {'hair_color_type': False, 'hair_color': (6 / 255, 6 / 255, 7 / 255), 'hair_color_map': "", 'hair_root_tip_map': "", 'hair_root_tip_weight_type': False, 'hair_root_tip_weight': 50, 'hair_root_tip_weight_map': "", 'hair_primary_highlight_strength': 40, 'hair_primary_highlight_spread': 36, 'hair_primary_highlight_tint': (245 / 255, 245 / 255, 255 / 255), 'hair_secondary_highlight_strength': 40, 'hair_secondary_highlight_spread': 45, 'hair_secondary_highlight_tint': (131 / 255, 135 / 255, 140 / 255), },
+        #     'dark_brown': {'hair_color_type': False, 'hair_color': (40 / 255, 22 / 255, 11 / 255), 'hair_color_map': "", 'hair_root_tip_map': "", 'hair_root_tip_weight_type': False, 'hair_root_tip_weight': 50, 'hair_root_tip_weight_map': "", 'hair_primary_highlight_strength': 65, 'hair_primary_highlight_spread': 36, 'hair_primary_highlight_tint': (255 / 255, 255 / 255, 255 / 255), 'hair_secondary_highlight_strength': 60, 'hair_secondary_highlight_spread': 45, 'hair_secondary_highlight_tint': (128 / 255, 74 / 255, 58 / 255), },
+        #     'light_brown': {'hair_color_type': True, 'hair_color': (55 / 255, 30 / 255, 15 / 255),
+        #                     'hair_color_map': {'channel': 1, 'override': 0, 'file': "hairTex_lightBrown.png", 'scaleX': 3.0, 'scaleY': 3.0, 'offsetX': 0, 'offsetY': 0, 'mirrorX': 0, 'mirrorY': 0, 'rotation': 0.0, 'invert': 0, 'alpha': 0, 'interpolation': 0, 'brightness': 3, 'contrast': 0, 'hue': 0, 'saturation': -4, 'clampmin': 0, 'clampmax': 255, },
+        #                     'hair_root_tip_map': "", 'hair_root_tip_weight_type': False, 'hair_root_tip_weight': 50, 'hair_root_tip_weight_map': "", 'hair_primary_highlight_strength': 55.0, 'hair_primary_highlight_spread': 40.0, 'hair_primary_highlight_tint': (255 / 255, 255 / 255, 255 / 255), 'hair_secondary_highlight_strength': 55.0, 'hair_secondary_highlight_spread': 55.0, 'hair_secondary_highlight_tint': (160 / 255, 116 / 255, 86 / 255), },
+        #     'dark_blonde': {'hair_color_type': True, 'hair_color': (55 / 255, 30 / 255, 15 / 255),
+        #                     'hair_color_map': {'channel': 1, 'override': 0, 'file': "hairTex_Blonde.png", 'scaleX': 2.0, 'scaleY': 2.0, 'offsetX': 0, 'offsetY': 0, 'mirrorX': 0, 'mirrorY': 0, 'rotation': 0.0, 'invert': 0, 'alpha': 0, 'interpolation': 0, 'brightness': -6, 'contrast': 25, 'hue': -6, 'saturation': -50, 'clampmin': 0, 'clampmax': 255, },
+        #                     'hair_root_tip_map': "", 'hair_root_tip_weight_type': False, 'hair_root_tip_weight': 50, 'hair_root_tip_weight_map': "", 'hair_primary_highlight_strength': 75, 'hair_primary_highlight_spread': 36, 'hair_primary_highlight_tint': (241 / 255, 235 / 255, 226 / 255), 'hair_secondary_highlight_strength': 85, 'hair_secondary_highlight_spread': 45, 'hair_secondary_highlight_tint': (226 / 255, 167 / 255, 139 / 255), },
+        #     'hollywood_blonde': {'hair_color_type': True, 'hair_color': (55 / 255, 30 / 255, 15 / 255),
+        #                          'hair_color_map': {'channel': 1, 'override': 0, 'file': "hairTex_Blonde.png", 'scaleX': 2.0, 'scaleY': 2.0, 'offsetX': 0, 'offsetY': 0, 'mirrorX': 0, 'mirrorY': 0, 'rotation': 0.0, 'invert': 0, 'alpha': 0, 'interpolation': 0, 'brightness': 25, 'contrast': -29, 'hue': -5, 'saturation': -7, 'clampmin': 0, 'clampmax': 255, },
+        #                          'hair_root_tip_map': "", 'hair_root_tip_weight_type': False, 'hair_root_tip_weight': 50, 'hair_root_tip_weight_map': "", 'hair_primary_highlight_strength': 100, 'hair_primary_highlight_spread': 90, 'hair_primary_highlight_tint': (241 / 255, 235 / 255, 226 / 255), 'hair_secondary_highlight_strength': 95, 'hair_secondary_highlight_spread': 75, 'hair_secondary_highlight_tint': (226 / 255, 192 / 255, 113 / 255), },
+        #     'red_hair': {'hair_color_type': True, 'hair_color': (55 / 255, 30 / 255, 15 / 255),
+        #                  'hair_color_map': {'channel': 1, 'override': 0, 'file': "hairTex_Red.png", 'scaleX': 2.0, 'scaleY': 2.0, 'offsetX': 0, 'offsetY': 0, 'mirrorX': 0, 'mirrorY': 0, 'rotation': 0.0, 'invert': 0, 'alpha': 0, 'interpolation': 0, 'brightness': 25, 'contrast': -29, 'hue': -5, 'saturation': -7, 'clampmin': 0, 'clampmax': 255, },
+        #                  'hair_root_tip_map': "", 'hair_root_tip_weight_type': False, 'hair_root_tip_weight': 50, 'hair_root_tip_weight_map': "", 'hair_primary_highlight_strength': 100, 'hair_primary_highlight_spread': 90, 'hair_primary_highlight_tint': (241 / 255, 235 / 255, 226 / 255), 'hair_secondary_highlight_strength': 95, 'hair_secondary_highlight_spread': 75, 'hair_secondary_highlight_tint': (226 / 255, 192 / 255, 113 / 255), },
+        # },
+        'emitter': {
+            'incandescent_lamp_40w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 2700.0, 'emitter_luminance': '0', 'emitter_luminance_power': 40.0, 'emitter_luminance_efficacy': 10.8, 'emitter_luminance_output': 430.0, },
+            'incandescent_lamp_60w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 2700.0, 'emitter_luminance': '0', 'emitter_luminance_power': 60.0, 'emitter_luminance_efficacy': 11.5, 'emitter_luminance_output': 690.0, },
+            'incandescent_lamp_100w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 2700.0, 'emitter_luminance': '0', 'emitter_luminance_power': 100.0, 'emitter_luminance_efficacy': 13.8, 'emitter_luminance_output': 1380.0, },
+            'compact_fluorescent_lamp_warm_7w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 7.0, 'emitter_luminance_efficacy': 57.1, 'emitter_luminance_output': 399.7, },
+            'compact_fluorescent_lamp_warm_9w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 9.0, 'emitter_luminance_efficacy': 66.7, 'emitter_luminance_output': 600.3, },
+            'compact_fluorescent_lamp_cold_7w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 5000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 7.0, 'emitter_luminance_efficacy': 57.1, 'emitter_luminance_output': 399.7, },
+            'compact_fluorescent_lamp_cold_9w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 5000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 9.0, 'emitter_luminance_efficacy': 66.7, 'emitter_luminance_output': 600.3, },
+            'tubular_fluorescent_lamp_warm_20w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 20.0, 'emitter_luminance_efficacy': 51.5, 'emitter_luminance_output': 1030, },
+            'tubular_fluorescent_lamp_warm_40w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 40.0, 'emitter_luminance_efficacy': 65.0, 'emitter_luminance_output': 2600, },
+            'tubular_fluorescent_lamp_warm_65w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 65.0, 'emitter_luminance_efficacy': 63.0, 'emitter_luminance_output': 4095, },
+            'tubular_fluorescent_lamp_midrange_20w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 4500.0, 'emitter_luminance': '0', 'emitter_luminance_power': 20.0, 'emitter_luminance_efficacy': 51.5, 'emitter_luminance_output': 1030, },
+            'tubular_fluorescent_lamp_midrange_40w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 4500.0, 'emitter_luminance': '0', 'emitter_luminance_power': 40.0, 'emitter_luminance_efficacy': 65.0, 'emitter_luminance_output': 2600, },
+            'tubular_fluorescent_lamp_midrange_65w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 4500.0, 'emitter_luminance': '0', 'emitter_luminance_power': 65.0, 'emitter_luminance_efficacy': 63.0, 'emitter_luminance_output': 4095, },
+            'tubular_fluorescent_lamp_cold_20w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 20.0, 'emitter_luminance_efficacy': 51.5, 'emitter_luminance_output': 1030, },
+            'tubular_fluorescent_lamp_cold_40w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 40.0, 'emitter_luminance_efficacy': 65.0, 'emitter_luminance_output': 2600, },
+            'tubular_fluorescent_lamp_cold_65w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 65.0, 'emitter_luminance_efficacy': 63.0, 'emitter_luminance_output': 4095, },
+            'high_pressure_mercury_lamp_250w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3500.0, 'emitter_luminance': '0', 'emitter_luminance_power': 250.0, 'emitter_luminance_efficacy': 54.0, 'emitter_luminance_output': 13500.0, },
+            'high_pressure_mercury_lamp_400w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3500.0, 'emitter_luminance': '0', 'emitter_luminance_power': 400.0, 'emitter_luminance_efficacy': 57.5, 'emitter_luminance_output': 23000.0, },
+            'high_pressure_mercury_lamp_700w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3500.0, 'emitter_luminance': '0', 'emitter_luminance_power': 700.0, 'emitter_luminance_efficacy': 60.0, 'emitter_luminance_output': 42000.0, },
+            'high_pressure_sodium_lamp_250w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 2300.0, 'emitter_luminance': '0', 'emitter_luminance_power': 250.0, 'emitter_luminance_efficacy': 100.0, 'emitter_luminance_output': 25000.0, },
+            'high_pressure_sodium_lamp_400w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 2300.0, 'emitter_luminance': '0', 'emitter_luminance_power': 400.0, 'emitter_luminance_efficacy': 118.0, 'emitter_luminance_output': 47200.0, },
+            'high_pressure_sodium_lamp_1000w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 2300.0, 'emitter_luminance': '0', 'emitter_luminance_power': 1000.0, 'emitter_luminance_efficacy': 120.0, 'emitter_luminance_output': 120000.0, },
+            'low_pressure_sodium_lamp_55w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 1800.0, 'emitter_luminance': '0', 'emitter_luminance_power': 55.0, 'emitter_luminance_efficacy': 145.0, 'emitter_luminance_output': 7975.0, },
+            'low_pressure_sodium_lamp_135w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 1800.0, 'emitter_luminance': '0', 'emitter_luminance_power': 135.0, 'emitter_luminance_efficacy': 167.0, 'emitter_luminance_output': 22545.0, },
+            'low_pressure_sodium_lamp_180w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 1800.0, 'emitter_luminance': '0', 'emitter_luminance_power': 180.0, 'emitter_luminance_efficacy': 180.0, 'emitter_luminance_output': 32400.0, },
+            'tungsten_halogen_low_tension_lamp_20w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 20.0, 'emitter_luminance_efficacy': 16.0, 'emitter_luminance_output': 320.0, },
+            'tungsten_halogen_low_tension_lamp_35w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 35.0, 'emitter_luminance_efficacy': 17.0, 'emitter_luminance_output': 595.0, },
+            'tungsten_halogen_low_tension_lamp_50w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 50.0, 'emitter_luminance_efficacy': 18.2, 'emitter_luminance_output': 910.0, },
+            'tungsten_halogen_tension_lamp_40w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 40.0, 'emitter_luminance_efficacy': 12.2, 'emitter_luminance_output': 490.0, },
+            'tungsten_halogen_tension_lamp_60w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 60.0, 'emitter_luminance_efficacy': 14.0, 'emitter_luminance_output': 840.0, },
+            'tungsten_halogen_tension_lamp_100w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 100.0, 'emitter_luminance_efficacy': 16.0, 'emitter_luminance_output': 1600.0, },
+            'tungsten_halogen_tension_lamp_150w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 3000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 150.0, 'emitter_luminance_efficacy': 17.0, 'emitter_luminance_output': 2550.0, },
+            'metal_halide_hmi_lamp_200w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 200.0, 'emitter_luminance_efficacy': 80.0, 'emitter_luminance_output': 16000.0, },
+            'metal_halide_hmi_lamp_400w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 400.0, 'emitter_luminance_efficacy': 82.5, 'emitter_luminance_output': 33000.0, },
+            'metal_halide_hmi_lamp_575w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 575.0, 'emitter_luminance_efficacy': 85.2, 'emitter_luminance_output': 48990.0, },
+            'metal_halide_hmi_lamp_1200w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 1200.0, 'emitter_luminance_efficacy': 91.6, 'emitter_luminance_output': 109920.0, },
+            'metal_halide_hmi_lamp_2500w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 2500.0, 'emitter_luminance_efficacy': 96.0, 'emitter_luminance_output': 240000.0, },
+            'candle': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 1200.0, 'emitter_luminance': '0', 'emitter_luminance_power': 40.0, 'emitter_luminance_efficacy': 0.3, 'emitter_luminance_output': 12.4, },
+        },
+    }
+    return presets
+
+
+def setup():
+    # make all subdirs for presets
+    pd = os.path.join(bpy.utils.user_resource('SCRIPTS'), "presets", "maxwell_render")
+    l = ['camera', 'channels', 'environment', 'material', 'render', ]
+    for d in l:
+        p = os.path.join(pd, d)
+        if(not os.path.exists(p)):
+            os.makedirs(p)
+    
+    # and now focus on material presets..
+    preset_subdir = os.path.join("maxwell_render", "material")
+    preset_directory = os.path.join(bpy.utils.user_resource('SCRIPTS'), "presets", preset_subdir)
+    preset_paths = bpy.utils.preset_paths(preset_subdir)
+    if(preset_directory not in preset_paths):
+        if(not os.path.exists(preset_directory)):
+            os.makedirs(preset_directory)
+    
+    # search for presets, .py file is considered as preset
+    def walk(p):
+        r = {'files': [], 'dirs': [], }
+        for(root, dirs, files) in os.walk(p):
+            r['files'].extend(files)
+            r['dirs'].extend(dirs)
+            break
+        return r
+    
+    # compare with defaults, if some is missing write
+    as_string = ['emitter_type', 'emitter_spot_falloff_type', 'emitter_emission', 'emitter_luminance', 'ags_type', 'metal_ior', ]
+    defaults = get_default_presets()
+    for k, v in defaults.items():
+        found = []
+        p = os.path.join(preset_directory, k)
+        if(not os.path.exists(p)):
+            os.makedirs(p)
+        c = walk(p)
+        for f in c['files']:
+            if(f.endswith(".py")):
+                found.append(f[:-3])
+        for k2, v2 in v.items():
+            if(k2 not in found):
+                e = "\n"
+                s = ""
+                s += "import bpy" + e
+                s += "m = bpy.context.object.active_material.maxwell_material_extension" + e
+                for k3, v3 in v2.items():
+                    if(type(v3) is dict):
+                        # # is texture map
+                        # s += "import os" + e
+                        # s += "import platform" + e
+                        # s += "o = bpy.context.object" + e
+                        # # s += "bpy.ops.texture.new()" + e
+                        # s += "s = platform.system()" + e
+                        # s += "if(s == 'Darwin'):" + e
+                        # s += "    mp = '/Applications/Maxwell 3/'" + e
+                        # s += "else:" + e
+                        # s += "    mp = os.environ.get('MAXWELL3_ROOT')" + e
+                        # s += "p = os.path.abspath(os.path.join(mp, 'materials database', 'textures', '{}'))".format(v3['file']) + e
+                        # # s += "ts = bpy.context.texture_slot" + e
+                        # # s += "tex = ts.texture" + e
+                        # # s += "tex.filepath = p" + e
+                        # s += "mat = bpy.context.material" + e
+                        # s += "for i in range(len(mat.texture_slots)):" + e
+                        # s += "    mat.texture_slots.clear(i)" + e
+                        # s += "try:" + e
+                        # s += "    img = bpy.data.images.load(p)" + e
+                        # s += "except:" + e
+                        # s += "    raise NameError('Cannot load image: {}'.format(p))" + e
+                        # s += "tex = bpy.data.textures.new('Texture', type='IMAGE')" + e
+                        # s += "tex.image = img" + e
+                        # s += "ts = mat.texture_slots.add()" + e
+                        # s += "ts.texture = tex" + e
+                        # s += "ts.texture_coords = 'UV'" + e
+                        # s += "for i, uv in enumerate(o.data.uv_textures):" + e
+                        # s += "    if(i == {}):".format(v3['channel']) + e
+                        # s += "        ts.uv_layer = uv" + e
+                        # s += "mt = tex.maxwell_render" + e
+                        # s += "mt.use_global_map = {}".format(v3['override']) + e
+                        # s += "mt.repeat = ({}, {})".format(v3['scaleX'], v3['scaleY']) + e
+                        # s += "mt.mirror_x = {}".format(v3['mirrorX']) + e
+                        # s += "mt.mirror_y = {}".format(v3['mirrorY']) + e
+                        # s += "mt.offset = ({}, {})".format(v3['offsetX'], v3['offsetY']) + e
+                        # # s += "mt.rotation = {}".format() + e
+                        # s += "mt.invert = {}".format(v3['invert']) + e
+                        # s += "mt.use_alpha = {}".format(v3['alpha']) + e
+                        # s += "mt.interpolation = {}".format(v3['interpolation']) + e
+                        # s += "mt.brightness = {}".format(v3['brightness']) + e
+                        # s += "mt.contrast = {}".format(v3['contrast']) + e
+                        # s += "mt.saturation = {}".format(v3['saturation']) + e
+                        # s += "mt.hue = {}".format(v3['hue']) + e
+                        # s += "mt.clamp = ({}, {})".format(v3['clampmin'], v3['clampmax']) + e
+                        pass
+                    else:
+                        if(v3 == ""):
+                            s += 'm.{} = ""{}'.format(k3, e)
+                        elif(k3 in as_string):
+                            s += 'm.{} = "{}"{}'.format(k3, v3, e)
+                        else:
+                            s += 'm.{} = {}{}'.format(k3, v3, e)
+                with open(os.path.join(p, "{}.py".format(k2)), mode='w', encoding='utf-8') as f:
+                    f.write(s)
+
+
 def register():
+    setup()
+    
     # bpy.utils.register_module(__name__, verbose=True)
     bpy.utils.register_module(__name__)
     

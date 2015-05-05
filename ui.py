@@ -1375,7 +1375,12 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
-        l.template_preview(context.material, show_buttons=False, )
+        mat = context.material
+        m = mat.maxwell_render
+        
+        l.template_preview(mat, show_buttons=False, )
+        l.prop(m, 'flag', toggle=True, text="Refresh Preview", )
+        # l.prop(bpy.context.scene.maxwell_render_private, 'material')
 
 
 class MaterialPanel(MaterialButtonsPanel, Panel):
@@ -1468,6 +1473,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 sub.separator()
                 
                 if(mx.emitter_emission == '0'):
+                    sub.menu("Emitter_presets", text=bpy.types.Emitter_presets.bl_label)
+                    sub.separator()
                     # Color
                     r = sub.row()
                     s = r.split(percentage=0.2)
@@ -1484,9 +1491,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         # Power & Efficacy
                         sub.prop(mx, 'emitter_luminance_power')
                         sub.prop(mx, 'emitter_luminance_efficacy')
-                        # r = sub.row()
-                        # r.prop(mx, 'emitter_luminance_output', text="Output (lm)")
-                        # r.enabled = False
+                        sub.label("Output: {} lm".format(round(mx.emitter_luminance_power * mx.emitter_luminance_efficacy, 1)))
                     elif(mx.emitter_luminance == '1'):
                         # Lumen
                         sub.prop(mx, 'emitter_luminance_output', text="Output (lm)")
@@ -1519,6 +1524,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'ags_type')
             
         elif(m.use == 'OPAQUE'):
+            sub.menu("Opaque_presets", text=bpy.types.Opaque_presets.bl_label)
+            sub.separator()
+            
             r = sub.row()
             s = r.split(percentage=0.2)
             c = s.column()
@@ -1552,6 +1560,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'opaque_clearcoat')
             
         elif(m.use == 'TRANSPARENT'):
+            sub.menu("Transparent_presets", text=bpy.types.Transparent_presets.bl_label)
+            sub.separator()
+            
             r = sub.row()
             s = r.split(percentage=0.2)
             c = s.column()
@@ -1580,8 +1591,11 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'transparent_clearcoat')
             
         elif(m.use == 'METAL'):
-            sub.prop(mx, 'metal_ior')
+            sub.menu("Metal_presets", text=bpy.types.Metal_presets.bl_label)
             sub.separator()
+            
+            sub.prop(mx, 'metal_ior')
+            sub.prop(mx, 'metal_tint')
             
             r = sub.row()
             s = r.split(percentage=0.2)
@@ -1592,8 +1606,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r.prop(mx, 'metal_color', text="", )
             r.prop(mx, 'metal_color_type', text="", )
             r.prop_search(mx, 'metal_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            sub.prop(mx, 'metal_tint')
             
             r = sub.row()
             s = r.split(percentage=0.2)
@@ -1645,6 +1657,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r.prop_search(mx, 'metal_perforation_map', mat, 'texture_slots', icon='TEXTURE', text="", )
             
         elif(m.use == 'TRANSLUCENT'):
+            sub.menu("Translucent_presets", text=bpy.types.Translucent_presets.bl_label)
+            sub.separator()
+            
             sub.prop(mx, 'translucent_scale')
             sub.prop(mx, 'translucent_ior')
             
@@ -1679,6 +1694,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'translucent_clearcoat_ior')
             
         elif(m.use == 'CARPAINT'):
+            sub.menu("Carpaint_presets", text=bpy.types.Carpaint_presets.bl_label)
+            sub.separator()
+            
             r = sub.row()
             s = r.split(percentage=0.33)
             c = s.column()
@@ -1690,6 +1708,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'carpaint_topcoat')
             
         elif(m.use == 'HAIR'):
+            sub.menu("Hair_presets", text=bpy.types.Hair_presets.bl_label)
+            sub.separator()
+            
             r = sub.row()
             s = r.split(percentage=0.2)
             c = s.column()
@@ -2465,5 +2486,68 @@ class Camera_presets(Menu):
     bl_label = "Camera Presets"
     bl_idname = "Camera_presets"
     preset_subdir = "maxwell_render/camera"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Opaque_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Opaque Presets"
+    bl_idname = "Opaque_presets"
+    preset_subdir = "maxwell_render/material/opaque"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Transparent_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Transparent Presets"
+    bl_idname = "Transparent_presets"
+    preset_subdir = "maxwell_render/material/transparent"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Metal_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Metal Presets"
+    bl_idname = "Metal_presets"
+    preset_subdir = "maxwell_render/material/metal"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Translucent_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Translucent Presets"
+    bl_idname = "Translucent_presets"
+    preset_subdir = "maxwell_render/material/translucent"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Carpaint_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Car Paint Presets"
+    bl_idname = "Carpaint_presets"
+    preset_subdir = "maxwell_render/material/carpaint"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Hair_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Hair Presets"
+    bl_idname = "Hair_presets"
+    preset_subdir = "maxwell_render/material/hair"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Emitter_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Emitter Presets"
+    bl_idname = "Emitter_presets"
+    preset_subdir = "maxwell_render/material/emitter"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset

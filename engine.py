@@ -248,6 +248,15 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(likely_materials is not None):
             mat = likely_materials[0]
             m = mat.maxwell_render
+            
+            if(bpy.context.scene.maxwell_render_private.material != mat.name):
+                bpy.context.scene.maxwell_render_private.material = mat.name
+            else:
+                if(not m.flag):
+                    return
+            
+            bpy.data.materials[mat.name].maxwell_render.flag = False
+            
             p = m.mxm_file
             if(p is not ''):
                 p = os.path.realpath(bpy.path.abspath(p))
