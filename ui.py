@@ -1509,7 +1509,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     sub.prop(mx, 'emitter_temperature_value')
                 elif(mx.emitter_emission == '2'):
                     # HDR Image
-                    sub.prop(mx, 'emitter_hdr_map')
+                    sub.prop_search(mx, 'emitter_hdr_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                    sub.separator()
                     sub.prop(mx, 'emitter_hdr_intensity')
             
         elif(m.use == 'AGS'):
@@ -1707,46 +1708,46 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'carpaint_metallic')
             sub.prop(mx, 'carpaint_topcoat')
             
-        elif(m.use == 'HAIR'):
-            sub.menu("Hair_presets", text=bpy.types.Hair_presets.bl_label)
-            sub.separator()
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Color:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'hair_color', text="", )
-            r.prop(mx, 'hair_color_type', text="", )
-            r.prop_search(mx, 'hair_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            sub.prop_search(mx, 'hair_root_tip_map', mat, 'texture_slots', icon='TEXTURE', )
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Root-Tip Weight:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'hair_root_tip_weight', text="", )
-            r.prop(mx, 'hair_root_tip_weight_type', text="", )
-            r.prop_search(mx, 'hair_root_tip_weight_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            sub.label('Primary Highlight:')
-            r = sub.row(align=True)
-            r.prop(mx, 'hair_primary_highlight_strength')
-            r.prop(mx, 'hair_primary_highlight_spread')
-            r = sub.row()
-            r.prop(mx, 'hair_primary_highlight_tint')
-            
-            sub.label('Secondary Highlight:')
-            r = sub.row(align=True)
-            r.prop(mx, 'hair_secondary_highlight_strength')
-            r.prop(mx, 'hair_secondary_highlight_spread')
-            r = sub.row()
-            r.prop(mx, 'hair_secondary_highlight_tint')
-            
+        # elif(m.use == 'HAIR'):
+        #     sub.menu("Hair_presets", text=bpy.types.Hair_presets.bl_label)
+        #     sub.separator()
+        #
+        #     r = sub.row()
+        #     s = r.split(percentage=0.2)
+        #     c = s.column()
+        #     c.label("Color:")
+        #     c = s.column()
+        #     r = c.row()
+        #     r.prop(mx, 'hair_color', text="", )
+        #     r.prop(mx, 'hair_color_type', text="", )
+        #     r.prop_search(mx, 'hair_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        #
+        #     sub.prop_search(mx, 'hair_root_tip_map', mat, 'texture_slots', icon='TEXTURE', )
+        #
+        #     r = sub.row()
+        #     s = r.split(percentage=0.2)
+        #     c = s.column()
+        #     c.label("Root-Tip Weight:")
+        #     c = s.column()
+        #     r = c.row()
+        #     r.prop(mx, 'hair_root_tip_weight', text="", )
+        #     r.prop(mx, 'hair_root_tip_weight_type', text="", )
+        #     r.prop_search(mx, 'hair_root_tip_weight_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        #
+        #     sub.label('Primary Highlight:')
+        #     r = sub.row(align=True)
+        #     r.prop(mx, 'hair_primary_highlight_strength')
+        #     r.prop(mx, 'hair_primary_highlight_spread')
+        #     r = sub.row()
+        #     r.prop(mx, 'hair_primary_highlight_tint')
+        #
+        #     sub.label('Secondary Highlight:')
+        #     r = sub.row(align=True)
+        #     r.prop(mx, 'hair_secondary_highlight_strength')
+        #     r.prop(mx, 'hair_secondary_highlight_spread')
+        #     r = sub.row()
+        #     r.prop(mx, 'hair_secondary_highlight_tint')
+        #
         else:
             # 'CUSTOM'
             sub.prop(m, 'mxm_file')
