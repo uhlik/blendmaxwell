@@ -14,7 +14,8 @@
 * Dupli verts and faces
 * Multiple UV channels
 * Material assignment (including backface materials) and multiple materials per object
-* Material creation and editing with Mxed
+* Extension Materials creation and editing inside Blender
+* Custom Material creation and editing with Mxed
 * Cameras
 * Render parameters
 * All render channels including Custom Alphas
@@ -49,6 +50,7 @@
 
 changelog:
 
+* 0.2.1 added: extension materials creation and editing inside blender
 * 0.2.0 added: much faster large mesh export on Mac OS X, Extra Sampling panel, Volumetrics extension (constant and noise 3d), external particle bin works with animation export
 * 0.1.9 added: MXS References, Windows installation simplified
 * 0.1.8 added: Linux and Windows support, cloner extension, lots of refactoring
