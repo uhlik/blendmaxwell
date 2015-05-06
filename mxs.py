@@ -230,6 +230,48 @@ class MXSWriter():
         ok = mxparams.setTextureMap(name, t)
         return mxparams
     
+    def texture(self, d, ):
+        s = self.mxs
+        
+        t = CtextureMap()
+        t.setPath(d['path'])
+        
+        t.uvwChannelID = d['channel']
+        
+        t.brightness = d['brightness']
+        
+        t.contrast = d['contrast']
+        t.saturation = d['saturation']
+        t.hue = d['hue']
+        
+        t.useGlobalMap = d['use_override_map']
+        t.useAbsoluteUnits = d['tile_method_units']
+        
+        t.uIsTiled = d['tile_method_type'][0]
+        t.vIsTiled = d['tile_method_type'][1]
+        
+        t.uIsMirrored = d['mirror'][0]
+        t.vIsMirrored = d['mirror'][1]
+        
+        vec = Cvector2D()
+        vec.assign(d['offset'][0], d['offset'][1])
+        t.offset = vec
+        t.rotation = d['rotation']
+        t.invert = d['invert']
+        t.useAlpha = d['alpha_only']
+        if(d['interpolation']):
+            t.typeInterpolation = 1
+        else:
+            t.typeInterpolation = 0
+        t.clampMin = d['rgb_clamp'][0]
+        t.clampMax = d['rgb_clamp'][1]
+        
+        vec = Cvector2D()
+        vec.assign(d['repeat'][0], d['repeat'][1])
+        t.scale = vec
+        
+        return t
+    
     def load_material(self, path, embed, ):
         """Load material from mxm file.
         path    string or None
@@ -237,8 +279,8 @@ class MXSWriter():
         """
         s = self.mxs
         r = None
-        for p, m, e in self.matdb:
-            if(p == path):
+        for p, m, e, x in self.matdb:
+            if(p == path and not x):
                 r = m
         pok = False
         if(path is not None):
@@ -249,10 +291,227 @@ class MXSWriter():
         if(r is None and pok):
             t = s.readMaterial(path)
             r = s.addMaterial(t)
-            self.matdb.append((path, r, embed))
+            self.matdb.append((path, r, embed, False))
             if(embed is False):
                 r.setReference(1, path)
         return r
+    
+    def ext_material(self, d, ):
+        """Create material extension.
+        d       extension parameters
+        """
+        s = self.mxs
+        for p, m, e, x in self.matdb:
+            if(m.getName() == d['name']):
+                if(p == '' and x):
+                    return m
+        
+        p = None
+        if(d['type'] == 'EMITTER'):
+            m = s.createMaterial(d['name'])
+            l = m.addLayer()
+            e = l.createEmitter()
+            
+            if(d['emitter_type'] == 0):
+                e.setLobeType(EMISSION_LOBE_DEFAULT)
+            elif(d['emitter_type'] == 1):
+                e.setLobeType(EMISSION_LOBE_IES)
+                e.setLobeIES(d['emitter_ies_data'])
+                e.setIESLobeIntensity(d['emitter_ies_intensity'])
+            elif(d['emitter_type'] == 2):
+                # e.setLobeType(EMISSION_LOBE_BITMAP)
+                e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
+                if(d['emitter_spot_map'] is not None):
+                    t = self.texture(d['emitter_spot_map'])
+                    e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
+                e.setSpotConeAngle(d['emitter_spot_cone_angle'])
+                e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
+                e.setSpotFallOffType(d['emitter_spot_falloff_type'])
+                e.setSpotBlur(d['emitter_spot_blur'])
+            
+            if(d['emitter_emission'] == 0):
+                e.setActiveEmissionType(EMISSION_TYPE_PAIR)
+                
+                ep = CemitterPair()
+                c = Crgb8()
+                c.assign(*d['emitter_color'])
+                ep.rgb.assign(c.toRGB())
+                ep.temperature = d['emitter_color_black_body']
+                ep.watts = d['emitter_luminance_power']
+                ep.luminousEfficacy = d['emitter_luminance_efficacy']
+                ep.luminousPower = d['emitter_luminance_output']
+                ep.illuminance = d['emitter_luminance_output']
+                ep.luminousIntensity = d['emitter_luminance_output']
+                ep.luminance = d['emitter_luminance_output']
+                e.setPair(ep)
+                
+                if(d['emitter_color_black_body_enabled']):
+                    e.setActivePair(EMISSION_COLOR_TEMPERATURE)
+                else:
+                    if(d['emitter_luminance'] == 0):
+                        u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
+                    elif(d['emitter_luminance'] == 1):
+                        u = EMISSION_UNITS_LUMINOUS_POWER
+                    elif(d['emitter_luminance'] == 2):
+                        u = EMISSION_UNITS_ILLUMINANCE
+                    elif(d['emitter_luminance'] == 3):
+                        u = EMISSION_UNITS_LUMINOUS_INTENSITY
+                    elif(d['emitter_luminance'] == 4):
+                        u = EMISSION_UNITS_LUMINANCE
+                    e.setActivePair(EMISSION_RGB, u)
+            
+            elif(d['emitter_emission'] == 1):
+                e.setActiveEmissionType(EMISSION_TYPE_TEMPERATURE)
+                e.setTemperature(d['emitter_temperature_value'])
+            elif(d['emitter_emission'] == 2):
+                e.setActiveEmissionType(EMISSION_TYPE_MXI)
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = self.texture(d['emitter_hdr_map'])
+                a.textureMap = t
+                a.value = d['emitter_hdr_intensity']
+                e.setMXI(a)
+            
+            e.setState(True)
+            
+            self.matdb.append(('', m, True, True))
+            return m
+        
+        else:
+            m = CextensionManager.instance()
+            m.loadAllExtensions()
+            
+            if(d['type'] == 'AGS'):
+                e = m.createDefaultMaterialModifierExtension('AGS')
+                p = e.getExtensionData()
+                
+                c = Crgb8()
+                c.assign(*d['ags_color'])
+                p.setRgb('Color', c.toRGB())
+                p.setFloat('Reflection', d['ags_reflection'])
+                p.setUInt('Type', d['ags_type'])
+            
+            elif(d['type'] == 'OPAQUE'):
+                e = m.createDefaultMaterialModifierExtension('Opaque')
+                p = e.getExtensionData()
+                
+                p.setByte('Color Type', d['opaque_color_type'])
+                c = Crgb8()
+                c.assign(*d['opaque_color'])
+                p.setRgb('Color', c.toRGB())
+                self.texture_data_to_mxparams('Color Map', d['opaque_color_map'], p, )
+                
+                p.setByte('Shininess Type', d['opaque_shininess_type'])
+                p.setFloat('Shininess', d['opaque_shininess'])
+                self.texture_data_to_mxparams('Shininess Map', d['opaque_shininess_map'], p, )
+                
+                p.setByte('Roughness Type', d['opaque_roughness_type'])
+                p.setFloat('Roughness', d['opaque_roughness'])
+                self.texture_data_to_mxparams('Roughness Map', d['opaque_roughness_map'], p, )
+                
+                p.setByte('Clearcoat', d['opaque_clearcoat'])
+            
+            elif(d['type'] == 'TRANSPARENT'):
+                e = m.createDefaultMaterialModifierExtension('Transparent')
+                p = e.getExtensionData()
+                
+                p.setByte('Color Type', d['transparent_color_type'])
+                c = Crgb8()
+                c.assign(*d['transparent_color'])
+                p.setRgb('Color', c.toRGB())
+                self.texture_data_to_mxparams('Color Map', d['transparent_color_map'], p, )
+                
+                p.setFloat('Ior', d['transparent_ior'])
+                p.setFloat('Transparency', d['transparent_transparency'])
+                
+                p.setByte('Roughness Type', d['transparent_roughness_type'])
+                p.setFloat('Roughness', d['transparent_roughness'])
+                self.texture_data_to_mxparams('Roughness Map', d['transparent_roughness_map'], p, )
+                
+                p.setFloat('Specular Tint', d['transparent_specular_tint'])
+                p.setFloat('Dispersion', d['transparent_dispersion'])
+                p.setByte('Clearcoat', d['transparent_clearcoat'])
+            
+            elif(d['type'] == 'METAL'):
+                e = m.createDefaultMaterialModifierExtension('Metal')
+                p = e.getExtensionData()
+                
+                p.setUInt('IOR', d['metal_ior'])
+                
+                p.setFloat('Tint', d['metal_tint'])
+                
+                p.setByte('Color Type', d['metal_color_type'])
+                c = Crgb8()
+                c.assign(*d['metal_color'])
+                p.setRgb('Color', c.toRGB())
+                self.texture_data_to_mxparams('Color Map', d['metal_color_map'], p, )
+                
+                p.setByte('Roughness Type', d['metal_roughness_type'])
+                p.setFloat('Roughness', d['metal_roughness'])
+                self.texture_data_to_mxparams('Roughness Map', d['metal_roughness_map'], p, )
+                
+                p.setByte('Anisotropy Type', d['metal_anisotropy_type'])
+                p.setFloat('Anisotropy', d['metal_anisotropy'])
+                self.texture_data_to_mxparams('Anisotropy Map', d['metal_anisotropy_map'], p, )
+                
+                p.setByte('Angle Type', d['metal_angle_type'])
+                p.setFloat('Angle', d['metal_angle'])
+                self.texture_data_to_mxparams('Angle Map', d['metal_angle_map'], p, )
+                
+                p.setByte('Dust Type', d['metal_dust_type'])
+                p.setFloat('Dust', d['metal_dust'])
+                self.texture_data_to_mxparams('Dust Map', d['metal_dust_map'], p, )
+                
+                p.setByte('Perforation Enabled', d['metal_perforation_enabled'])
+                self.texture_data_to_mxparams('Perforation Map', d['metal_perforation_map'], p, )
+            
+            elif(d['type'] == 'TRANSLUCENT'):
+                e = m.createDefaultMaterialModifierExtension('Translucent')
+                p = e.getExtensionData()
+                
+                p.setFloat('Scale', d['translucent_scale'])
+                p.setFloat('Ior', d['translucent_ior'])
+                
+                p.setByte('Color Type', d['translucent_color_type'])
+                c = Crgb8()
+                c.assign(*d['translucent_color'])
+                p.setRgb('Color', c.toRGB())
+                self.texture_data_to_mxparams('Color Map', d['translucent_color_map'], p, )
+                
+                p.setFloat('Hue Shift', d['translucent_hue_shift'])
+                p.setByte('Invert Hue', d['translucent_invert_hue'])
+                p.setFloat('Vibrance', d['translucent_vibrance'])
+                p.setFloat('Density', d['translucent_density'])
+                p.setFloat('Opacity', d['translucent_opacity'])
+                
+                p.setByte('Roughness Type', d['translucent_roughness_type'])
+                p.setFloat('Roughness', d['translucent_roughness'])
+                self.texture_data_to_mxparams('Roughness Map', d['translucent_roughness_map'], p, )
+                
+                p.setFloat('Specular Tint', d['translucent_specular_tint'])
+                p.setByte('Clearcoat', d['translucent_clearcoat'])
+                p.setFloat('Clearcoat Ior', d['translucent_clearcoat_ior'])
+            
+            elif(d['type'] == 'CARPAINT'):
+                e = m.createDefaultMaterialModifierExtension('Car Paint')
+                p = e.getExtensionData()
+                
+                c = Crgb8()
+                c.assign(*d['carpaint_color'])
+                p.setRgb('Color', c.toRGB())
+                
+                p.setFloat('Metallic', d['carpaint_metallic'])
+                p.setFloat('Topcoat', d['carpaint_topcoat'])
+            
+            else:
+                return None
+        
+        if(p is not None):
+            m = s.createMaterial(d['name'])
+            m.applyMaterialModifierExtension(p)
+            self.matdb.append(('', m, True, True))
+            return m
+        return None
     
     def material_placeholder(self):
         """Create material placeholder when needed to keem trangle material groups.
@@ -261,8 +520,8 @@ class MXSWriter():
         s = self.mxs
         n = 'MATERIAL_PLACEHOLDER'
         # return clone if already loaded
-        for p, m, e in self.matdb:
-            if(p == n):
+        for p, m, e, x in self.matdb:
+            if(p == n and not x):
                 c = m.createCopy()
                 cm = s.addMaterial(c)
                 return cm
@@ -284,7 +543,7 @@ class MXSWriter():
         a.textureMap = t
         r.setAttribute('color', a)
         
-        self.matdb.append((n, m, True))
+        self.matdb.append((n, m, True, False))
         
         return m
     
@@ -400,7 +659,10 @@ class MXSWriter():
                 # multi material
                 mats = []
                 for mi in range(num_materials):
-                    mat = self.load_material(*materials[mi])
+                    if(type(materials[mi][0]) is dict):
+                        mat = self.ext_material(materials[mi][0])
+                    else:
+                        mat = self.load_material(*materials[mi])
                     if(mat is None):
                         mat = self.material_placeholder()
                     mats.append(mat)
@@ -408,7 +670,10 @@ class MXSWriter():
                     o.setTriangleMaterial(tid, mats[mid])
             elif(num_materials == 1):
                 # single material
-                mat = self.load_material(*materials[0])
+                if(type(materials[0][0]) is dict):
+                    mat = self.ext_material(materials[0][0])
+                else:
+                    mat = self.load_material(*materials[0])
                 if(mat is not None):
                     # set for whole object, no need to care about triangles
                     o.setMaterial(mat)
@@ -443,7 +708,10 @@ class MXSWriter():
             self.set_object_props(o, *object_props)
         
         if(material is not None):
-            m = self.load_material(*material)
+            if(type(material[0]) is dict):
+                m = self.ext_material(material[0])
+            else:
+                m = self.load_material(*material)
             if(m is not None):
                 o.setMaterial(m)
         if(backface_material is not None):
@@ -1216,7 +1484,7 @@ class MXSWriter():
         if(backface_material is not None):
             mat = self.load_material(*backface_material)
             if(mat is not None):
-                p.setString('Double Sided Material', bmat.getName())
+                p.setString('Double Sided Material', mat.getName())
         
         p.setUInt('Density', properties['density'])
         self.texture_data_to_mxparams('Density Map', properties['density_map'], p, )

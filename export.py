@@ -1281,13 +1281,16 @@ class MXSExportLegacy():
                         mmx = None
                     if(mmx is not None):
                         # there is material with data
-                        fm = bpy.path.abspath(mmx.mxm_file)
-                        if(not check_path(fm)):
-                            fm = ""
-                        if(fm != ""):
-                            a = (mmx.embed, fm)
+                        if(mmx.use == 'CUSTOM'):
+                            fm = bpy.path.abspath(mmx.mxm_file)
+                            if(not check_path(fm)):
+                                fm = ""
+                            if(fm != ""):
+                                a = (mmx.embed, fm)
+                            else:
+                                a = (False, "", )
                         else:
-                            a = (False, "", )
+                            a = self._ext_material(s.material, ob)
                     else:
                         # there isn't, put blank
                         a = (False, "", )
@@ -1306,13 +1309,16 @@ class MXSExportLegacy():
                         mmx = None
                     if(mmx is not None):
                         # there is material with data
-                        fm = bpy.path.abspath(mmx.mxm_file)
-                        if(not check_path(fm)):
-                            fm = ""
-                        if(fm != ""):
-                            a = (mmx.embed, fm)
+                        if(mmx.use == 'CUSTOM'):
+                            fm = bpy.path.abspath(mmx.mxm_file)
+                            if(not check_path(fm)):
+                                fm = ""
+                            if(fm != ""):
+                                a = (mmx.embed, fm)
+                            else:
+                                a = (False, "", )
                         else:
-                            a = (False, "", )
+                            a = self._ext_material(s.material, ob)
                     else:
                         # there isn't, put blank
                         a = (False, "", )
@@ -2635,6 +2641,173 @@ class MXSExportLegacy():
             
             self.data.append(d)
     
+    def _ext_material(self, mat, ob):
+        m = mat.maxwell_render
+        mx = mat.maxwell_material_extension
+        
+        def texture_to_data(name):
+            if(name == ""):
+                return None
+            tex = bpy.data.textures[name]
+            if(tex.type != 'IMAGE'):
+                return None
+            
+            m = tex.maxwell_render
+            d = {'type': 'IMAGE',
+                 'path': bpy.path.abspath(tex.image.filepath),
+                 'channel': 0,
+                 'use_override_map': m.use_global_map,
+                 'tile_method_type': [True, True],
+                 'tile_method_units': int(m.tiling_units[-1:]),
+                 'repeat': [m.repeat[0], m.repeat[1]],
+                 'mirror': [m.mirror_x, m.mirror_y],
+                 'offset': [m.offset[0], m.offset[1]],
+                 'rotation': m.rotation,
+                 'invert': m.invert,
+                 'alpha_only': m.use_alpha,
+                 'interpolation': m.interpolation,
+                 'brightness': m.brightness,
+                 'contrast': m.contrast,
+                 'saturation': m.saturation,
+                 'hue': m.hue,
+                 'rgb_clamp': [m.clamp[0], m.clamp[1]], }
+            
+            if(m.tiling_method == 'NO_TILING'):
+                tm = [False, False]
+            elif(m.tiling_method == 'TILE_X'):
+                tm = [True, False]
+            elif(m.tiling_method == 'TILE_Y'):
+                tm = [False, True]
+            else:
+                tm = [True, True]
+            d['tile_method_type'] = tm
+            
+            slot = None
+            for ts in mat.texture_slots:
+                if(ts is not None):
+                    if(ts.texture is not None):
+                        if(ts.texture.name == name):
+                            slot = ts
+                            break
+            
+            for i, uv in enumerate(ob.data.uv_textures):
+                if(uv.name == slot.uv_layer):
+                    d['channel'] = i
+                    break
+            
+            return d
+        
+        if(m.use == 'EMITTER'):
+            d = {'type': 'EMITTER',
+                 'name': mat.name,
+                 'emitter_type': int(mx.emitter_type),
+                 'emitter_ies_data': bpy.path.abspath(mx.emitter_ies_data),
+                 'emitter_ies_intensity': mx.emitter_ies_intensity,
+                 'emitter_spot_map_enabled': mx.emitter_spot_map_enabled,
+                 'emitter_spot_map': texture_to_data(mx.emitter_spot_map),
+                 'emitter_spot_cone_angle': math.degrees(mx.emitter_spot_cone_angle),
+                 'emitter_spot_falloff_angle': math.degrees(mx.emitter_spot_falloff_angle),
+                 'emitter_spot_falloff_type': int(mx.emitter_spot_falloff_type),
+                 'emitter_spot_blur': mx.emitter_spot_blur,
+                 'emitter_emission': int(mx.emitter_emission),
+                 'emitter_color': self._color_to_rgb8(mx.emitter_color),
+                 'emitter_color_black_body_enabled': mx.emitter_color_black_body_enabled,
+                 'emitter_color_black_body': mx.emitter_color_black_body,
+                 'emitter_luminance': int(mx.emitter_luminance),
+                 'emitter_luminance_power': mx.emitter_luminance_power,
+                 'emitter_luminance_efficacy': mx.emitter_luminance_efficacy,
+                 'emitter_luminance_output': mx.emitter_luminance_output,
+                 'emitter_temperature_value': mx.emitter_temperature_value,
+                 'emitter_hdr_map': texture_to_data(mx.emitter_hdr_map),
+                 'emitter_hdr_intensity': mx.emitter_hdr_intensity, }
+        elif(m.use == 'AGS'):
+            d = {'type': 'AGS',
+                 'name': mat.name,
+                 'ags_color': self._color_to_rgb8(mx.ags_color),
+                 'ags_reflection': mx.ags_reflection,
+                 'ags_type': int(mx.ags_type), }
+        elif(m.use == 'OPAQUE'):
+            d = {'type': 'OPAQUE',
+                 'name': mat.name,
+                 'opaque_color_type': mx.opaque_color_type,
+                 'opaque_color': self._color_to_rgb8(mx.opaque_color),
+                 'opaque_color_map': texture_to_data(mx.opaque_color_map),
+                 'opaque_shininess_type': mx.opaque_shininess_type,
+                 'opaque_shininess': mx.opaque_shininess,
+                 'opaque_shininess_map': texture_to_data(mx.opaque_shininess_map),
+                 'opaque_roughness_type': mx.opaque_roughness_type,
+                 'opaque_roughness': mx.opaque_roughness,
+                 'opaque_roughness_map': texture_to_data(mx.opaque_roughness_map),
+                 'opaque_clearcoat': mx.opaque_clearcoat, }
+        elif(m.use == 'TRANSPARENT'):
+            d = {'type': 'TRANSPARENT',
+                 'name': mat.name,
+                 'transparent_color_type': mx.transparent_color_type,
+                 'transparent_color': self._color_to_rgb8(mx.transparent_color),
+                 'transparent_color_map': texture_to_data(mx.transparent_color_map),
+                 'transparent_ior': mx.transparent_ior,
+                 'transparent_transparency': mx.transparent_transparency,
+                 'transparent_roughness_type': mx.transparent_roughness_type,
+                 'transparent_roughness': mx.transparent_roughness,
+                 'transparent_roughness_map': texture_to_data(mx.transparent_roughness_map),
+                 'transparent_specular_tint': mx.transparent_specular_tint,
+                 'transparent_dispersion': mx.transparent_dispersion,
+                 'transparent_clearcoat': mx.transparent_clearcoat, }
+        elif(m.use == 'METAL'):
+            d = {'type': 'METAL',
+                 'name': mat.name,
+                 'metal_ior': int(mx.metal_ior),
+                 'metal_tint': mx.metal_tint,
+                 'metal_color_type': mx.metal_color_type,
+                 'metal_color': self._color_to_rgb8(mx.metal_color),
+                 'metal_color_map': texture_to_data(mx.metal_color_map),
+                 'metal_roughness_type': mx.metal_roughness_type,
+                 'metal_roughness': mx.metal_roughness,
+                 'metal_roughness_map': texture_to_data(mx.metal_roughness_map),
+                 'metal_anisotropy_type': mx.metal_anisotropy_type,
+                 'metal_anisotropy': mx.metal_anisotropy,
+                 'metal_anisotropy_map': texture_to_data(mx.metal_anisotropy_map),
+                 'metal_angle_type': mx.metal_angle_type,
+                 'metal_angle': mx.metal_angle,
+                 'metal_angle_map': texture_to_data(mx.metal_angle_map),
+                 'metal_dust_type': mx.metal_dust_type,
+                 'metal_dust': mx.metal_dust,
+                 'metal_dust_map': texture_to_data(mx.metal_dust_map),
+                 'metal_perforation_enabled': mx.metal_perforation_enabled,
+                 'metal_perforation_map': texture_to_data(mx.metal_perforation_map), }
+        elif(m.use == 'TRANSLUCENT'):
+            d = {'type': 'TRANSLUCENT',
+                 'name': mat.name,
+                 'translucent_scale': mx.translucent_scale,
+                 'translucent_ior': mx.translucent_ior,
+                 'translucent_color_type': mx.translucent_color_type,
+                 'translucent_color': self._color_to_rgb8(mx.translucent_color),
+                 'translucent_color_map': texture_to_data(mx.translucent_color_map),
+                 'translucent_hue_shift': mx.translucent_hue_shift,
+                 'translucent_invert_hue': mx.translucent_invert_hue,
+                 'translucent_vibrance': mx.translucent_vibrance,
+                 'translucent_density': mx.translucent_density,
+                 'translucent_opacity': mx.translucent_opacity,
+                 'translucent_roughness_type': mx.translucent_roughness_type,
+                 'translucent_roughness': mx.translucent_roughness,
+                 'translucent_roughness_map': texture_to_data(mx.translucent_roughness_map),
+                 'translucent_specular_tint': mx.translucent_specular_tint,
+                 'translucent_clearcoat': mx.translucent_clearcoat,
+                 'translucent_clearcoat_ior': mx.translucent_clearcoat_ior, }
+        elif(m.use == 'CARPAINT'):
+            d = {'type': 'CARPAINT',
+                 'name': mat.name,
+                 'carpaint_color': self._color_to_rgb8(mx.carpaint_color),
+                 'carpaint_metallic': mx.carpaint_metallic,
+                 'carpaint_topcoat': mx.carpaint_topcoat, }
+        # elif(m.use == 'HAIR'):
+        #     pass
+        else:
+            # CUSTOM
+            raise ValueError('materials of type CUSTOM should be handled somewhere else..')
+        
+        return (True, d, )
+    
     def _pymaxwell(self, append=False, instancer=False, wireframe=False, ):
         """Generate pymaxwell script in temp directory and execute it."""
         # generate script
@@ -3898,13 +4071,16 @@ class MXSExport():
                         mmx = None
                     if(mmx is not None):
                         # there is material with data
-                        fm = bpy.path.abspath(mmx.mxm_file)
-                        if(not check_path(fm)):
-                            fm = ""
-                        if(fm != ""):
-                            a = (mmx.embed, fm)
+                        if(mmx.use == 'CUSTOM'):
+                            fm = bpy.path.abspath(mmx.mxm_file)
+                            if(not check_path(fm)):
+                                fm = ""
+                            if(fm != ""):
+                                a = (mmx.embed, fm)
+                            else:
+                                a = (False, "", )
                         else:
-                            a = (False, "", )
+                            a = self.ext_material(s.material, ob)
                     else:
                         # there isn't, put blank
                         a = (False, "", )
@@ -3923,13 +4099,16 @@ class MXSExport():
                         mmx = None
                     if(mmx is not None):
                         # there is material with data
-                        fm = bpy.path.abspath(mmx.mxm_file)
-                        if(not check_path(fm)):
-                            fm = ""
-                        if(fm != ""):
-                            a = (mmx.embed, fm)
+                        if(mmx.use == 'CUSTOM'):
+                            fm = bpy.path.abspath(mmx.mxm_file)
+                            if(not check_path(fm)):
+                                fm = ""
+                            if(fm != ""):
+                                a = (mmx.embed, fm)
+                            else:
+                                a = (False, "", )
                         else:
-                            a = (False, "", )
+                            a = self.ext_material(s.material, ob)
                     else:
                         # there isn't, put blank
                         a = (False, "", )
@@ -5180,6 +5359,173 @@ class MXSExport():
             if(len(d['backface_material']) != 0):
                 backface_material = (d['backface_material'][0], d['backface_material'][1])
             self.mxs.ext_sea(name, base, pivot, self.get_object_props(ob), geometry, wind, material, backface_material, )
+    
+    def ext_material(self, mat, o, ):
+        m = mat.maxwell_render
+        mx = mat.maxwell_material_extension
+        
+        def texture_to_data(name):
+            if(name == ""):
+                return None
+            tex = bpy.data.textures[name]
+            if(tex.type != 'IMAGE'):
+                return None
+            
+            m = tex.maxwell_render
+            d = {'type': 'IMAGE',
+                 'path': bpy.path.abspath(tex.image.filepath),
+                 'channel': 0,
+                 'use_override_map': m.use_global_map,
+                 'tile_method_type': [True, True],
+                 'tile_method_units': int(m.tiling_units[-1:]),
+                 'repeat': [m.repeat[0], m.repeat[1]],
+                 'mirror': [m.mirror_x, m.mirror_y],
+                 'offset': [m.offset[0], m.offset[1]],
+                 'rotation': m.rotation,
+                 'invert': m.invert,
+                 'alpha_only': m.use_alpha,
+                 'interpolation': m.interpolation,
+                 'brightness': m.brightness,
+                 'contrast': m.contrast,
+                 'saturation': m.saturation,
+                 'hue': m.hue,
+                 'rgb_clamp': [m.clamp[0], m.clamp[1]], }
+            
+            if(m.tiling_method == 'NO_TILING'):
+                tm = [False, False]
+            elif(m.tiling_method == 'TILE_X'):
+                tm = [True, False]
+            elif(m.tiling_method == 'TILE_Y'):
+                tm = [False, True]
+            else:
+                tm = [True, True]
+            d['tile_method_type'] = tm
+            
+            slot = None
+            for ts in mat.texture_slots:
+                if(ts is not None):
+                    if(ts.texture is not None):
+                        if(ts.texture.name == name):
+                            slot = ts
+                            break
+            
+            for i, uv in enumerate(o.data.uv_textures):
+                if(uv.name == slot.uv_layer):
+                    d['channel'] = i
+                    break
+            
+            return d
+        
+        if(m.use == 'EMITTER'):
+            d = {'type': 'EMITTER',
+                 'name': mat.name,
+                 'emitter_type': int(mx.emitter_type),
+                 'emitter_ies_data': bpy.path.abspath(mx.emitter_ies_data),
+                 'emitter_ies_intensity': mx.emitter_ies_intensity,
+                 'emitter_spot_map_enabled': mx.emitter_spot_map_enabled,
+                 'emitter_spot_map': texture_to_data(mx.emitter_spot_map),
+                 'emitter_spot_cone_angle': math.degrees(mx.emitter_spot_cone_angle),
+                 'emitter_spot_falloff_angle': math.degrees(mx.emitter_spot_falloff_angle),
+                 'emitter_spot_falloff_type': int(mx.emitter_spot_falloff_type),
+                 'emitter_spot_blur': mx.emitter_spot_blur,
+                 'emitter_emission': int(mx.emitter_emission),
+                 'emitter_color': self.color_to_rgb8(mx.emitter_color),
+                 'emitter_color_black_body_enabled': mx.emitter_color_black_body_enabled,
+                 'emitter_color_black_body': mx.emitter_color_black_body,
+                 'emitter_luminance': int(mx.emitter_luminance),
+                 'emitter_luminance_power': mx.emitter_luminance_power,
+                 'emitter_luminance_efficacy': mx.emitter_luminance_efficacy,
+                 'emitter_luminance_output': mx.emitter_luminance_output,
+                 'emitter_temperature_value': mx.emitter_temperature_value,
+                 'emitter_hdr_map': texture_to_data(mx.emitter_hdr_map),
+                 'emitter_hdr_intensity': mx.emitter_hdr_intensity, }
+        elif(m.use == 'AGS'):
+            d = {'type': 'AGS',
+                 'name': mat.name,
+                 'ags_color': self.color_to_rgb8(mx.ags_color),
+                 'ags_reflection': mx.ags_reflection,
+                 'ags_type': int(mx.ags_type), }
+        elif(m.use == 'OPAQUE'):
+            d = {'type': 'OPAQUE',
+                 'name': mat.name,
+                 'opaque_color_type': mx.opaque_color_type,
+                 'opaque_color': self.color_to_rgb8(mx.opaque_color),
+                 'opaque_color_map': texture_to_data(mx.opaque_color_map),
+                 'opaque_shininess_type': mx.opaque_shininess_type,
+                 'opaque_shininess': mx.opaque_shininess,
+                 'opaque_shininess_map': texture_to_data(mx.opaque_shininess_map),
+                 'opaque_roughness_type': mx.opaque_roughness_type,
+                 'opaque_roughness': mx.opaque_roughness,
+                 'opaque_roughness_map': texture_to_data(mx.opaque_roughness_map),
+                 'opaque_clearcoat': mx.opaque_clearcoat, }
+        elif(m.use == 'TRANSPARENT'):
+            d = {'type': 'TRANSPARENT',
+                 'name': mat.name,
+                 'transparent_color_type': mx.transparent_color_type,
+                 'transparent_color': self.color_to_rgb8(mx.transparent_color),
+                 'transparent_color_map': texture_to_data(mx.transparent_color_map),
+                 'transparent_ior': mx.transparent_ior,
+                 'transparent_transparency': mx.transparent_transparency,
+                 'transparent_roughness_type': mx.transparent_roughness_type,
+                 'transparent_roughness': mx.transparent_roughness,
+                 'transparent_roughness_map': texture_to_data(mx.transparent_roughness_map),
+                 'transparent_specular_tint': mx.transparent_specular_tint,
+                 'transparent_dispersion': mx.transparent_dispersion,
+                 'transparent_clearcoat': mx.transparent_clearcoat, }
+        elif(m.use == 'METAL'):
+            d = {'type': 'METAL',
+                 'name': mat.name,
+                 'metal_ior': int(mx.metal_ior),
+                 'metal_tint': mx.metal_tint,
+                 'metal_color_type': mx.metal_color_type,
+                 'metal_color': self.color_to_rgb8(mx.metal_color),
+                 'metal_color_map': texture_to_data(mx.metal_color_map),
+                 'metal_roughness_type': mx.metal_roughness_type,
+                 'metal_roughness': mx.metal_roughness,
+                 'metal_roughness_map': texture_to_data(mx.metal_roughness_map),
+                 'metal_anisotropy_type': mx.metal_anisotropy_type,
+                 'metal_anisotropy': mx.metal_anisotropy,
+                 'metal_anisotropy_map': texture_to_data(mx.metal_anisotropy_map),
+                 'metal_angle_type': mx.metal_angle_type,
+                 'metal_angle': mx.metal_angle,
+                 'metal_angle_map': texture_to_data(mx.metal_angle_map),
+                 'metal_dust_type': mx.metal_dust_type,
+                 'metal_dust': mx.metal_dust,
+                 'metal_dust_map': texture_to_data(mx.metal_dust_map),
+                 'metal_perforation_enabled': mx.metal_perforation_enabled,
+                 'metal_perforation_map': texture_to_data(mx.metal_perforation_map), }
+        elif(m.use == 'TRANSLUCENT'):
+            d = {'type': 'TRANSLUCENT',
+                 'name': mat.name,
+                 'translucent_scale': mx.translucent_scale,
+                 'translucent_ior': mx.translucent_ior,
+                 'translucent_color_type': mx.translucent_color_type,
+                 'translucent_color': self.color_to_rgb8(mx.translucent_color),
+                 'translucent_color_map': texture_to_data(mx.translucent_color_map),
+                 'translucent_hue_shift': mx.translucent_hue_shift,
+                 'translucent_invert_hue': mx.translucent_invert_hue,
+                 'translucent_vibrance': mx.translucent_vibrance,
+                 'translucent_density': mx.translucent_density,
+                 'translucent_opacity': mx.translucent_opacity,
+                 'translucent_roughness_type': mx.translucent_roughness_type,
+                 'translucent_roughness': mx.translucent_roughness,
+                 'translucent_roughness_map': texture_to_data(mx.translucent_roughness_map),
+                 'translucent_specular_tint': mx.translucent_specular_tint,
+                 'translucent_clearcoat': mx.translucent_clearcoat,
+                 'translucent_clearcoat_ior': mx.translucent_clearcoat_ior, }
+        elif(m.use == 'CARPAINT'):
+            d = {'type': 'CARPAINT',
+                 'name': mat.name,
+                 'carpaint_color': self.color_to_rgb8(mx.carpaint_color),
+                 'carpaint_metallic': mx.carpaint_metallic,
+                 'carpaint_topcoat': mx.carpaint_topcoat, }
+        # elif(m.use == 'HAIR'):
+        #     pass
+        else:
+            # CUSTOM
+            raise ValueError('materials of type CUSTOM should be handled somewhere else..')
+        
+        return (True, d, )
 
 
 class MXSExportWireframe(MXSExport):
