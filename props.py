@@ -482,7 +482,8 @@ class ObjectProperties(PropertyGroup):
     backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, )
     backface_material_file = StringProperty(name="Backface MXM File", default="", subtype='FILE_PATH', )
     
-    hide = BoolProperty(name="Hide From Render", default=False, )
+    # hide = BoolProperty(name="Export, but Hide from Render", default=False, )
+    hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio" )
     override_instance = BoolProperty(name="Override Instancing", default=False, )
     
     @classmethod

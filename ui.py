@@ -16,6 +16,8 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+import platform
+
 import bpy
 from bpy.types import Panel, Menu
 from mathutils import Matrix, Vector
@@ -67,6 +69,7 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         m = context.scene.maxwell_render
         sub = l.column()
         
+        sub.label("Workflow:")
         r = sub.row()
         r0 = r.row()
         r0.prop(m, 'export_overwrite')
@@ -74,17 +77,19 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
             r0.enabled = False
         r1 = r.row()
         r1.prop(m, 'export_incremental')
-        sub.separator()
         
-        sub.label("Workflow:")
         sub.prop(m, 'export_open_with')
         sub.prop(m, 'instance_app')
         sub.separator()
         
         sub.label("Options:")
         r = sub.row()
-        r.prop(m, 'export_use_instances')
-        r.prop(m, 'export_keep_intermediates')
+        c = r.column()
+        c.prop(m, 'export_use_instances')
+        c = r.column()
+        c.prop(m, 'export_keep_intermediates')
+        if(platform.system() != 'Darwin'):
+            c.enabled = False
         r = sub.row()
         r.prop(m, 'export_log_open', )
         r.prop(m, 'export_protect_mxs', )
@@ -105,9 +110,9 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
         if(m.export_wireframe):
             c = b.column()
             c.label("Wireframe Options:")
-            r = c.row(align=True)
-            r.prop(m, 'export_edge_radius')
-            r.prop(m, 'export_edge_resolution')
+            sc = c.column(align=True)
+            sc.prop(m, 'export_edge_radius')
+            sc.prop(m, 'export_edge_resolution')
             c.separator()
             
             c.label("Wire Material:")
@@ -716,12 +721,19 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
         sb.prop(m, 'ibl_bg_type')
         sb.prop(m, 'ibl_bg_map')
         sb.prop(m, 'ibl_bg_intensity')
-        r = sb.row(align=True)
-        r.prop(m, 'ibl_bg_scale_x')
-        r.prop(m, 'ibl_bg_scale_y')
-        r = sb.row(align=True)
-        r.prop(m, 'ibl_bg_offset_x')
-        r.prop(m, 'ibl_bg_offset_y')
+        # r = sb.row(align=True)
+        # r.prop(m, 'ibl_bg_scale_x')
+        # r.prop(m, 'ibl_bg_scale_y')
+        # r = sb.row(align=True)
+        # r.prop(m, 'ibl_bg_offset_x')
+        # r.prop(m, 'ibl_bg_offset_y')
+        r = sb.row()
+        c = r.column(align=True)
+        c.prop(m, 'ibl_bg_scale_x')
+        c.prop(m, 'ibl_bg_scale_y')
+        c = r.column(align=True)
+        c.prop(m, 'ibl_bg_offset_x')
+        c.prop(m, 'ibl_bg_offset_y')
         
         b = sub.box()
         sb = b.column()
@@ -730,12 +742,19 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
         if(m.ibl_refl_type == 'HDR_IMAGE'):
             sb.prop(m, 'ibl_refl_map')
             sb.prop(m, 'ibl_refl_intensity')
-            r = sb.row(align=True)
-            r.prop(m, 'ibl_refl_scale_x')
-            r.prop(m, 'ibl_refl_scale_y')
-            r = sb.row(align=True)
-            r.prop(m, 'ibl_refl_offset_x')
-            r.prop(m, 'ibl_refl_offset_y')
+            # r = sb.row(align=True)
+            # r.prop(m, 'ibl_refl_scale_x')
+            # r.prop(m, 'ibl_refl_scale_y')
+            # r = sb.row(align=True)
+            # r.prop(m, 'ibl_refl_offset_x')
+            # r.prop(m, 'ibl_refl_offset_y')
+            r = sb.row()
+            c = r.column(align=True)
+            c.prop(m, 'ibl_refl_scale_x')
+            c.prop(m, 'ibl_refl_scale_y')
+            c = r.column(align=True)
+            c.prop(m, 'ibl_refl_offset_x')
+            c.prop(m, 'ibl_refl_offset_y')
         
         b = sub.box()
         sb = b.column()
@@ -744,12 +763,19 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
         if(m.ibl_refr_type == 'HDR_IMAGE'):
             sb.prop(m, 'ibl_refr_map')
             sb.prop(m, 'ibl_refr_intensity')
-            r = sb.row(align=True)
-            r.prop(m, 'ibl_refr_scale_x')
-            r.prop(m, 'ibl_refr_scale_y')
-            r = sb.row(align=True)
-            r.prop(m, 'ibl_refr_offset_x')
-            r.prop(m, 'ibl_refr_offset_y')
+            # r = sb.row(align=True)
+            # r.prop(m, 'ibl_refr_scale_x')
+            # r.prop(m, 'ibl_refr_scale_y')
+            # r = sb.row(align=True)
+            # r.prop(m, 'ibl_refr_offset_x')
+            # r.prop(m, 'ibl_refr_offset_y')
+            r = sb.row()
+            c = r.column(align=True)
+            c.prop(m, 'ibl_refr_scale_x')
+            c.prop(m, 'ibl_refr_scale_y')
+            c = r.column(align=True)
+            c.prop(m, 'ibl_refr_offset_x')
+            c.prop(m, 'ibl_refr_offset_y')
         
         b = sub.box()
         sb = b.column()
@@ -758,12 +784,19 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
         if(m.ibl_illum_type == 'HDR_IMAGE'):
             sb.prop(m, 'ibl_illum_map')
             sb.prop(m, 'ibl_illum_intensity')
-            r = sb.row(align=True)
-            r.prop(m, 'ibl_illum_scale_x')
-            r.prop(m, 'ibl_illum_scale_y')
-            r = sb.row(align=True)
-            r.prop(m, 'ibl_illum_offset_x')
-            r.prop(m, 'ibl_illum_offset_y')
+            # r = sb.row(align=True)
+            # r.prop(m, 'ibl_illum_scale_x')
+            # r.prop(m, 'ibl_illum_scale_y')
+            # r = sb.row(align=True)
+            # r.prop(m, 'ibl_illum_offset_x')
+            # r.prop(m, 'ibl_illum_offset_y')
+            r = sb.row()
+            c = r.column(align=True)
+            c.prop(m, 'ibl_illum_scale_x')
+            c.prop(m, 'ibl_illum_scale_y')
+            c = r.column(align=True)
+            c.prop(m, 'ibl_illum_offset_x')
+            c.prop(m, 'ibl_illum_offset_y')
 
 
 class SunLampPanel(DataButtonsPanel, Panel):
@@ -1261,9 +1294,10 @@ class ExtObjectScatterPanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'rotation_variation_y')
         c.prop(m, 'rotation_variation_z')
         
+        sub.separator()
         c = sub.column()
         c.prop(m, 'lod')
-        r = c.row()
+        r = c.row(align=True)
         r.prop(m, 'lod_min_distance')
         r.prop(m, 'lod_max_distance')
         if(not m.lod):
@@ -1273,10 +1307,12 @@ class ExtObjectScatterPanel(ObjectButtonsPanel, Panel):
         if(not m.lod):
             r.enabled = False
         
+        sub.separator()
         c = sub.column()
         c.label("Display:")
-        c.prop(m, 'display_percent')
-        c.prop(m, 'display_max_blades')
+        sc = c.column(align=True)
+        sc.prop(m, 'display_percent')
+        sc.prop(m, 'display_max_blades')
 
 
 class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
@@ -1406,6 +1442,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             elif(mx.emitter_type == '1'):
                 # IES
                 sub.prop(mx, 'emitter_ies_data')
+                sub.separator()
                 sub.prop(mx, 'emitter_ies_intensity')
                 sub.separator()
             elif(mx.emitter_type == '2'):
@@ -1489,8 +1526,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     sub.prop(mx, 'emitter_luminance')
                     if(mx.emitter_luminance == '0'):
                         # Power & Efficacy
-                        sub.prop(mx, 'emitter_luminance_power')
-                        sub.prop(mx, 'emitter_luminance_efficacy')
+                        c = sub.column(align=True)
+                        c.prop(mx, 'emitter_luminance_power')
+                        c.prop(mx, 'emitter_luminance_efficacy')
                         sub.label("Output: {} lm".format(round(mx.emitter_luminance_power * mx.emitter_luminance_efficacy, 1)))
                     elif(mx.emitter_luminance == '1'):
                         # Lumen
@@ -2000,7 +2038,7 @@ class ExtGrassPanel(ParticleButtonsPanel, Panel):
         sub.separator()
         
         sub.prop(m, 'lod')
-        r = sub.row()
+        r = sub.row(align=True)
         r.prop(m, 'lod_min_distance')
         r.prop(m, 'lod_max_distance')
         if(not m.lod):
