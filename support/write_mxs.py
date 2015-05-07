@@ -1345,6 +1345,11 @@ def hair(d, s):
     # p.setFloatArray('HAIR_POINTS', d['data']['HAIR_POINTS'], c)
     p.setFloatArray('HAIR_NORMALS', d['data']['HAIR_NORMALS'], c)
     
+    '''
+    if(d['data']['HAIR_FLAG_ROOT_UVS'][0] == 1):
+        p.setFloatArray('HAIR_ROOT_UVS', list(d['data']['HAIR_ROOT_UVS']), c)
+    '''
+    
     p.setUInt('Display Percent', d['display_percent'])
     if(d['extension'] == 'MaxwellHair'):
         p.setUInt('Display Max. Hairs', d['display_max_hairs'])

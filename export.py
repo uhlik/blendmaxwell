@@ -2368,7 +2368,9 @@ class MXSExportLegacy():
                         # get distance between last and this point
                         if(step > 0):
                             seg_length = (co - omw * curve[len(curve) - 1]).length_squared
-                        
+                        if(len(curve) == 0 and co.length_squared == 0):
+                            # in case the first curve part is exactly in 0,0,0
+                            co = Vector((0.000001, 0.000001, 0.000001))
                         if not (co.length_squared == 0 or seg_length == 0):
                             # if it is not zero append as new point
                             v = transform * co
@@ -2376,6 +2378,67 @@ class MXSExportLegacy():
                             curve.append(v)
                     
                     points.append(curve)
+                
+                '''
+                steps = 2 ** ps.settings.render_step
+                num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
+                nc0 = len(ps.particles)
+                nc1 = len(ps.child_particles) - nc0
+                
+                points = []
+                for p in range(0, nc0):
+                    seg_length = 1.0
+                    curve = []
+                    for step in range(0, steps):
+                        co = ps.co_hair(o, p, step)
+                        # get distance between last and this point
+                        if(step > 0):
+                            seg_length = (co - omw * curve[len(curve) - 1]).length_squared
+                        if(len(curve) == 0 and co.length_squared == 0):
+                            # in case the first curve part is exactly in 0,0,0
+                            co = Vector((0.000001, 0.000001, 0.000001))
+                        if not (co.length_squared == 0 or seg_length == 0):
+                            # if it is not zero append as new point
+                            v = transform * co
+                            v = mat * v
+                            curve.append(v)
+                    points.append(curve)
+                for p in range(0, nc1):
+                    seg_length = 1.0
+                    curve = []
+                    for step in range(0, steps):
+                        co = ps.co_hair(o, nc0 + p, step)
+                        # get distance between last and this point
+                        if(step > 0):
+                            seg_length = (co - omw * curve[len(curve) - 1]).length_squared
+                        if(len(curve) == 0 and co.length_squared == 0):
+                            # in case the first curve part is exactly in 0,0,0
+                            co = Vector((0.000001, 0.000001, 0.000001))
+                        if not (co.length_squared == 0 or seg_length == 0):
+                            # if it is not zero append as new point
+                            v = transform * co
+                            v = mat * v
+                            curve.append(v)
+                    points.append(curve)
+                '''
+                # for p in range(0, num_curves):
+                #     seg_length = 1.0
+                #     curve = []
+                #
+                #     for step in range(0, steps):
+                #         co = ps.co_hair(o, p, step)
+                #
+                #         # get distance between last and this point
+                #         if(step > 0):
+                #             seg_length = (co - omw * curve[len(curve) - 1]).length_squared
+                #
+                #         if not (co.length_squared == 0 or seg_length == 0):
+                #             # if it is not zero append as new point
+                #             v = transform * co
+                #             v = mat * v
+                #             curve.append(v)
+                #
+                #     points.append(curve)
                 
                 ps.set_resolution(self.context.scene, o, 'PREVIEW')
                 
@@ -2403,6 +2466,38 @@ class MXSExportLegacy():
                         'HAIR_GUIDES_POINT_COUNT': [steps],
                         # 'HAIR_POINTS': locs,
                         'HAIR_NORMALS': [1.0], }
+                
+                '''
+                if(m.uv_layer is not ""):
+                    uv_no = 0
+                    for i, uv in enumerate(o.data.uv_textures):
+                        if(m.uv_layer == uv.name):
+                            uv_no = i
+                            break
+                    mod = None
+                    for m in o.modifiers:
+                        if(m.type == 'PARTICLE_SYSTEM'):
+                            if(m.particle_system == ps):
+                                mod = m
+                                break
+                    uv_locs = tuple()
+                    for i, p in enumerate(ps.particles):
+                        co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
+                        uv_locs += co.to_tuple()
+                    # for i, p in enumerate(ps.child_particles):
+                    #     co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
+                    #     uv_locs += co.to_tuple()
+                    if(nc1 != 0):
+                        ex = int(nc1 / nc0)
+                    for i in range(ex):
+                        uv_locs += uv_locs
+                    
+                    # print(len(uv_locs))
+                    # print(num_curves * 2)
+                    
+                    data['HAIR_FLAG_ROOT_UVS'] = [1]
+                    data['HAIR_ROOT_UVS'] = uv_locs
+                '''
                 
                 # print(data['HAIR_GUIDES_COUNT'])
                 # print(data['HAIR_GUIDES_POINT_COUNT'])

@@ -776,6 +776,10 @@ class ExtHairProperties(PropertyGroup):
     grass_root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.001, max=100000.0, precision=3, )
     grass_tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.001, max=100000.0, precision=3, )
     
+    '''
+    uv_layer = StringProperty(name="UV Layer", default="", )
+    '''
+    
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max_blades = IntProperty(name="Display Max. Blades", default=1000, min=0, max=100000, )
     display_max_hairs = IntProperty(name="Display Max. Hairs", default=1000, min=0, max=100000, )

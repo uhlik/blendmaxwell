@@ -1850,7 +1850,7 @@ class TexturePanel(TextureButtonsPanel, Panel):
         
         sub.prop(m, 'rotation')
         
-        l.separator()
+        # l.separator()
         l.label("Image Properties:")
         
         sub = l.column()
@@ -2178,6 +2178,13 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
             c = sub.column(align=True)
             c.prop(m, 'hair_root_radius')
             c.prop(m, 'hair_tip_radius')
+        
+        '''
+        if(len(o.data.uv_textures) == 0):
+            sub.label("No UV Maps", icon='ERROR', )
+        else:
+            sub.prop_search(m, "uv_layer", o.data, "uv_textures", )
+        '''
         
         sub.separator()
         # sub.prop(m, 'display_percent')
