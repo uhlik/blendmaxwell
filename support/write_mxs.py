@@ -1331,6 +1331,8 @@ def hair(d, s):
     # p.setByteArray('HAIR_GUIDES_POINT_COUNT', d['data']['HAIR_GUIDES_POINT_COUNT'])
     m = memoryview(struct.pack("I", d['data']['HAIR_GUIDES_POINT_COUNT'][0])).tolist()
     p.setByteArray('HAIR_GUIDES_POINT_COUNT', m)
+    # TODO
+    # p.setByteArray('HAIR_GUIDES_POINT_COUNT', m * d['data']['HAIR_GUIDES_COUNT'][0])
     
     c = Cbase()
     c.origin = Cvector(0.0, 0.0, 0.0)

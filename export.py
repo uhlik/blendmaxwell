@@ -2356,6 +2356,8 @@ class MXSExportLegacy():
                 omw = o.matrix_world
                 
                 steps = 2 ** ps.settings.render_step
+                # TODO
+                # steps = 2 ** ps.settings.render_step + 1
                 num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
                 points = []
                 for p in range(0, num_curves):
@@ -2453,6 +2455,8 @@ class MXSExportLegacy():
                 points = [v.to_tuple() for v in points]
                 # just list of floats
                 locs = [v for l in points for v in l]
+                # TODO
+                # locs = [round(v, 6) for v in locs]
                 
                 p = os.path.join(self.tmp_dir, "{0}.binhair".format(q['name']))
                 w = MXSBinHairWriterLegacy(p, locs)
