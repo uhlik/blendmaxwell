@@ -2316,14 +2316,20 @@ class ExtParticlesPanel(ParticleButtonsPanel, Panel):
                 r.prop(m, 'seq_start')
                 r.prop(m, 'seq_end')
         else:
-            sub.prop(m, 'bl_use_velocity')
+            r = sub.row()
+            r.prop(m, 'bl_use_velocity')
+            r.prop(m, 'bl_use_size')
             r = sub.row()
             r.prop(m, 'bl_size')
             if(m.bl_use_size):
                 r.active = False
-            sub.prop(m, 'bl_use_size')
-            sub.prop(m, 'bin_directory')
-            sub.prop(m, 'bin_overwrite')
+            
+            
+            sub.separator()
+            sub.prop(m, 'embed')
+            if(not m.embed):
+                sub.prop(m, 'bin_directory')
+                sub.prop(m, 'bin_overwrite')
         
         sub.separator()
         # sub.label("Sequence:")

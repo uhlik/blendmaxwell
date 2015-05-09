@@ -190,6 +190,61 @@ class MXSBinHairReaderLegacy():
             raise RuntimeError("expected EOF")
 
 
+class MXSBinParticlesReaderLegacy():
+    def __init__(self, path):
+        self.offset = 0
+        with open(path, "rb") as bf:
+            self.bindata = bf.read()
+        
+        def r(f):
+            d = struct.unpack_from(f, self.bindata, self.offset)
+            self.offset += struct.calcsize(f)
+            return d
+        
+        # endianness?
+        signature = 23734338517354818
+        l = r("<q")[0]
+        self.offset = 0
+        b = r(">q")[0]
+        self.offset = 0
+        
+        if(l == signature):
+            if(sys.byteorder != "little"):
+                raise RuntimeError()
+            self.order = "<"
+        elif(b == signature):
+            if(sys.byteorder != "big"):
+                raise RuntimeError()
+            self.order = ">"
+        else:
+            raise AssertionError("{}: not a MXSBinParticles file".format(self.__class__.__name__))
+        o = self.order
+        # magic
+        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
+        if(self.magic != 'BINPART'):
+            raise RuntimeError()
+        _ = r(o + "?")
+        # 'PARTICLE_POSITIONS'
+        n = r(o + "i")[0]
+        self.PARTICLE_POSITIONS = r(o + "{}d".format(n))
+        # 'PARTICLE_SPEEDS'
+        n = r(o + "i")[0]
+        self.PARTICLE_SPEEDS = r(o + "{}d".format(n))
+        # 'PARTICLE_RADII'
+        n = r(o + "i")[0]
+        self.PARTICLE_RADII = r(o + "{}d".format(n))
+        # 'PARTICLE_NORMALS'
+        n = r(o + "i")[0]
+        self.PARTICLE_NORMALS = r(o + "{}d".format(n))
+        # 'PARTICLE_IDS'
+        n = r(o + "i")[0]
+        self.PARTICLE_IDS = r(o + "{}i".format(n))
+        # eof
+        e = r(o + "?")
+        if(self.offset != len(self.bindata)):
+            raise RuntimeError("expected EOF")
+
+
 class PercentDone():
     def __init__(self, total, prefix="> ", indent=0):
         self.current = 0
@@ -1138,7 +1193,25 @@ def particles(d, s):
     ext = mgr.createDefaultGeometryProceduralExtension('MaxwellParticles')
     params = ext.getExtensionData()
     
-    params.setString('FileName', d['bin_filename'])
+    if(d['embed'] is True):
+        bpp = d['pdata']
+        r = MXSBinParticlesReaderLegacy(bpp)
+        
+        c = Cbase()
+        c.origin = Cvector(0.0, 0.0, 0.0)
+        c.xAxis = Cvector(1.0, 0.0, 0.0)
+        c.yAxis = Cvector(0.0, 1.0, 0.0)
+        c.zAxis = Cvector(0.0, 0.0, 1.0)
+        
+        params.setFloatArray('PARTICLE_POSITIONS', list(r.PARTICLE_POSITIONS), c)
+        params.setFloatArray('PARTICLE_SPEEDS', list(r.PARTICLE_SPEEDS), c)
+        params.setFloatArray('PARTICLE_RADII', list(r.PARTICLE_RADII), c)
+        params.setIntArray('PARTICLE_IDS', list(r.PARTICLE_IDS))
+        params.setFloatArray('PARTICLE_NORMALS', list(r.PARTICLE_NORMALS), c)
+        
+    else:
+        params.setString('FileName', d['bin_filename'])
+    
     params.setFloat('Radius Factor', d['bin_radius_multiplier'])
     params.setFloat('MB Factor', d['bin_motion_blur_multiplier'])
     params.setFloat('Shutter 1/', d['bin_shutter_speed'])

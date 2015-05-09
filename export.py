@@ -83,6 +83,7 @@ class MXSExportLegacy():
         
         self.mesh_data_paths = []
         self.hair_data_paths = []
+        self.part_data_paths = []
         self.scene_data_name = "{0}-{1}.json".format(n, self.uuid)
         self.script_name = "{0}-{1}.py".format(n, self.uuid)
         
@@ -2111,6 +2112,8 @@ class MXSExportLegacy():
                     log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
                     material = ""
                 
+                pdata = {}
+                
                 if(m.source == 'BLENDER_PARTICLES'):
                     if(len(ps.particles) == 0):
                         msg = "particle system {} has no particles".format(ps.name)
@@ -2158,21 +2161,41 @@ class MXSExportLegacy():
                         pnor.normalize()
                         particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
                     
-                    if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
-                        raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
+                    if(m.embed):
+                        plocs = [v[:3] for v in locs]
+                        pvels = [v[3:6] for v in vels]
+                        pnors = []
+                        for i, v in enumerate(pvels):
+                            n = Vector(v)
+                            n.normalize()
+                            pnors.append(n)
+                        
+                        pdata = {'PARTICLE_POSITIONS': [v for l in plocs for v in l],
+                                 'PARTICLE_SPEEDS': [v for l in pvels for v in l],
+                                 'PARTICLE_RADII': [v for v in sizes],
+                                 'PARTICLE_IDS': [i for i in range(len(locs))],
+                                 'PARTICLE_NORMALS': [v for l in pnors for v in l],
+                                 # 'PARTICLE_FLAG_COLORS', [0], 0, 0, '8 BYTEARRAY', 1, 1, True)
+                                 # 'PARTICLE_COLORS', [0.0], 0.0, 0.0, '6 FLOATARRAY', 4, 1, True)
+                                 }
+                        
+                    else:
+                        if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
+                            raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
                     
-                    cf = self.context.scene.frame_current
-                    prms = {'directory': bpy.path.abspath(m.bin_directory),
-                            'name': "{}".format(dp['name']),
-                            'frame': cf,
-                            'particles': particles,
-                            'fps': self.context.scene.render.fps,
-                            'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
-                    # # v1
-                    # rfbw = rfbin.RFBinWriterLegacy(**prms)
-                    # v2, v3
-                    rfbw = rfbin.RFBinWriter(**prms)
-                    m.bin_filename = rfbw.path
+                        cf = self.context.scene.frame_current
+                        prms = {'directory': bpy.path.abspath(m.bin_directory),
+                                'name': "{}".format(dp['name']),
+                                'frame': cf,
+                                'particles': particles,
+                                'fps': self.context.scene.render.fps,
+                                'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
+                        # # v1
+                        # rfbw = rfbin.RFBinWriterLegacy(**prms)
+                        # v2, v3
+                        rfbw = rfbin.RFBinWriter(**prms)
+                        m.bin_filename = rfbw.path
+                        
                 else:
                     # external particles
                     if(m.bin_type == 'SEQUENCE'):
@@ -2234,12 +2257,23 @@ class MXSExportLegacy():
                      'hidden_zclip_planes': m.hidden_zclip_planes, 'object_id': self._color_to_rgb8(m.object_id),
                      'name': dp['name'], 'parent': dp['parent'],
                      
+                     'embed': m.embed,
+                     'pdata': pdata,
+                     
                      'material': material,
                      'material_embed': m.material_embed,
                      'backface_material': backface_material,
                      'backface_material_embed': m.backface_material_embed,
                      
                      'base': b, 'pivot': p, 'matrix': None, 'hide': m.hide, 'hide_parent': m.hide_parent, 'type': 'PARTICLES', }
+                
+                if(m.source == 'EXTERNAL_BIN'):
+                    q['embed'] = False
+                else:
+                    p = os.path.join(self.tmp_dir, "{0}.binpart".format(q['name']))
+                    w = MXSBinParticlesWriterLegacy(p, q['pdata'])
+                    q['pdata'] = p
+                    self.part_data_paths.append(p)
                 
                 if(m.private_bin_filename != ''):
                     m.bin_filename = m.private_bin_filename
@@ -2955,6 +2989,10 @@ class MXSExportLegacy():
             for p in self.hair_data_paths:
                 rm(p)
         
+        if(hasattr(self, 'part_data_paths')):
+            for p in self.part_data_paths:
+                rm(p)
+        
         if(os.path.exists(self.tmp_dir)):
             os.rmdir(self.tmp_dir)
         else:
@@ -3431,6 +3469,99 @@ class MXSBinHairReaderLegacy():
         # number floats
         self.num = r(o + "i")[0]
         self.data = r(o + "{}d".format(self.num))
+        e = r(o + "?")
+        if(self.offset != len(self.bindata)):
+            raise RuntimeError("expected EOF")
+
+
+class MXSBinParticlesWriterLegacy():
+    def __init__(self, path, data):
+        d = data
+        o = "@"
+        with open("{0}.tmp".format(path), 'wb') as f:
+            p = struct.pack
+            fw = f.write
+            # header
+            fw(p(o + "7s", 'BINPART'.encode('utf-8')))
+            fw(p(o + "?", False))
+            # 'PARTICLE_POSITIONS'
+            n = len(d['PARTICLE_POSITIONS'])
+            fw(p(o + "i", n))
+            fw(p(o + "{}d".format(n), *d['PARTICLE_POSITIONS']))
+            # 'PARTICLE_SPEEDS'
+            n = len(d['PARTICLE_SPEEDS'])
+            fw(p(o + "i", n))
+            fw(p(o + "{}d".format(n), *d['PARTICLE_SPEEDS']))
+            # 'PARTICLE_RADII'
+            n = len(d['PARTICLE_RADII'])
+            fw(p(o + "i", n))
+            fw(p(o + "{}d".format(n), *d['PARTICLE_RADII']))
+            # 'PARTICLE_NORMALS'
+            n = len(d['PARTICLE_NORMALS'])
+            fw(p(o + "i", n))
+            fw(p(o + "{}d".format(n), *d['PARTICLE_NORMALS']))
+            # 'PARTICLE_IDS'
+            n = len(d['PARTICLE_IDS'])
+            fw(p(o + "i", n))
+            fw(p(o + "{}i".format(n), *d['PARTICLE_IDS']))
+            # end
+            fw(p(o + "?", False))
+        if(os.path.exists(path)):
+            os.remove(path)
+        shutil.move("{0}.tmp".format(path), path)
+        self.path = path
+
+
+class MXSBinParticlesReaderLegacy():
+    def __init__(self, path):
+        self.offset = 0
+        with open(path, "rb") as bf:
+            self.bindata = bf.read()
+        
+        def r(f):
+            d = struct.unpack_from(f, self.bindata, self.offset)
+            self.offset += struct.calcsize(f)
+            return d
+        
+        # endianness?
+        signature = 23734338517354818
+        l = r("<q")[0]
+        self.offset = 0
+        b = r(">q")[0]
+        self.offset = 0
+        
+        if(l == signature):
+            if(sys.byteorder != "little"):
+                raise RuntimeError()
+            self.order = "<"
+        elif(b == signature):
+            if(sys.byteorder != "big"):
+                raise RuntimeError()
+            self.order = ">"
+        else:
+            raise AssertionError("{}: not a MXSBinParticles file".format(self.__class__.__name__))
+        o = self.order
+        # magic
+        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
+        if(self.magic != 'BINPART'):
+            raise RuntimeError()
+        _ = r(o + "?")
+        # 'PARTICLE_POSITIONS'
+        n = r(o + "i")[0]
+        self.PARTICLE_POSITIONS = r(o + "{}d".format(n))
+        # 'PARTICLE_SPEEDS'
+        n = r(o + "i")[0]
+        self.PARTICLE_SPEEDS = r(o + "{}d".format(n))
+        # 'PARTICLE_RADII'
+        n = r(o + "i")[0]
+        self.PARTICLE_RADII = r(o + "{}d".format(n))
+        # 'PARTICLE_NORMALS'
+        n = r(o + "i")[0]
+        self.PARTICLE_NORMALS = r(o + "{}d".format(n))
+        # 'PARTICLE_IDS'
+        n = r(o + "i")[0]
+        self.PARTICLE_IDS = r(o + "{}i".format(n))
+        # eof
         e = r(o + "?")
         if(self.offset != len(self.bindata)):
             raise RuntimeError("expected EOF")
@@ -5046,6 +5177,7 @@ class MXSExport():
         ps = o['ps']
         psm = ps.settings.maxwell_particles_extension
         
+        pdata = {}
         if(m.source == 'BLENDER_PARTICLES'):
             if(len(ps.particles) == 0):
                 msg = "particle system {} has no particles".format(ps.name)
@@ -5092,18 +5224,50 @@ class MXSExport():
                 pnor.normalize()
                 particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
             
-            if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
-                raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
+            # if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
+            #     raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
+            #
+            # cf = self.context.scene.frame_current
+            # prms = {'directory': bpy.path.abspath(m.bin_directory),
+            #         'name': "{}".format(name),
+            #         'frame': cf,
+            #         'particles': particles,
+            #         'fps': self.context.scene.render.fps,
+            #         'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
+            # rfbw = rfbin.RFBinWriter(**prms)
+            # m.bin_filename = rfbw.path
             
-            cf = self.context.scene.frame_current
-            prms = {'directory': bpy.path.abspath(m.bin_directory),
-                    'name': "{}".format(name),
-                    'frame': cf,
-                    'particles': particles,
-                    'fps': self.context.scene.render.fps,
-                    'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
-            rfbw = rfbin.RFBinWriter(**prms)
-            m.bin_filename = rfbw.path
+            if(m.embed):
+                plocs = [v[:3] for v in locs]
+                pvels = [v[3:6] for v in vels]
+                pnors = []
+                for i, v in enumerate(pvels):
+                    n = Vector(v)
+                    n.normalize()
+                    pnors.append(n)
+                
+                pdata = {'PARTICLE_POSITIONS': [v for l in plocs for v in l],
+                         'PARTICLE_SPEEDS': [v for l in pvels for v in l],
+                         'PARTICLE_RADII': [v for v in sizes],
+                         'PARTICLE_IDS': [i for i in range(len(locs))],
+                         'PARTICLE_NORMALS': [v for l in pnors for v in l],
+                         # 'PARTICLE_FLAG_COLORS', [0], 0, 0, '8 BYTEARRAY', 1, 1, True)
+                         # 'PARTICLE_COLORS', [0.0], 0.0, 0.0, '6 FLOATARRAY', 4, 1, True)
+                         }
+            else:
+                if(os.path.exists(bpy.path.abspath(m.bin_directory)) and not m.bin_overwrite):
+                    raise OSError("file: {} exists".format(bpy.path.abspath(m.bin_directory)))
+            
+                cf = self.context.scene.frame_current
+                prms = {'directory': bpy.path.abspath(m.bin_directory),
+                        'name': "{}".format(name),
+                        'frame': cf,
+                        'particles': particles,
+                        'fps': self.context.scene.render.fps,
+                        'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
+                rfbw = rfbin.RFBinWriter(**prms)
+                m.bin_filename = rfbw.path
+            
         else:
             # external particles
             if(m.bin_type == 'SEQUENCE'):
@@ -5145,7 +5309,12 @@ class MXSExport():
                 # static particles, just take what is on path
                 pass
         
-        properties = {'filename': bpy.path.abspath(m.bin_filename), 'radius_multiplier': m.bin_radius_multiplier, 'motion_blur_multiplier': m.bin_motion_blur_multiplier, 'shutter_speed': m.bin_shutter_speed,
+        properties = {'filename': bpy.path.abspath(m.bin_filename),
+                      
+                      'embed': m.embed,
+                      'pdata': pdata,
+                      
+                      'radius_multiplier': m.bin_radius_multiplier, 'motion_blur_multiplier': m.bin_motion_blur_multiplier, 'shutter_speed': m.bin_shutter_speed,
                       'load_particles': m.bin_load_particles, 'axis_system': int(m.bin_axis_system[-1:]), 'frame_number': m.bin_frame_number, 'fps': m.bin_fps, 'extra_create_np_pp': m.bin_extra_create_np_pp,
                       'extra_dispersion': m.bin_extra_dispersion, 'extra_deformation': m.bin_extra_deformation, 'load_force': int(m.bin_load_force), 'load_vorticity': int(m.bin_load_vorticity),
                       'load_normal': int(m.bin_load_normal), 'load_neighbors_num': int(m.bin_load_neighbors_num), 'load_uv': int(m.bin_load_uv), 'load_age': int(m.bin_load_age),
@@ -5156,6 +5325,9 @@ class MXSExport():
                       'max_viscosity': m.bin_max_viscosity, 'min_density': m.bin_min_density, 'max_density': m.bin_max_density, 'min_pressure': m.bin_min_pressure, 'max_pressure': m.bin_max_pressure,
                       'min_mass': m.bin_min_mass, 'max_mass': m.bin_max_mass, 'min_temperature': m.bin_min_temperature, 'max_temperature': m.bin_max_temperature, 'min_velocity': m.bin_min_velocity,
                       'max_velocity': m.bin_max_velocity, }
+        
+        if(m.source == 'EXTERNAL_BIN'):
+            properties['embed'] = False
         
         object_props = (psm.hide, psm.opacity, self.color_to_rgb8(psm.object_id), psm.hidden_camera, psm.hidden_camera_in_shadow_channel,
                         psm.hidden_global_illumination, psm.hidden_reflections_refractions, psm.hidden_zclip_planes, )

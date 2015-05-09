@@ -1242,7 +1242,20 @@ class MXSWriter():
         p = e.getExtensionData()
         d = properties
         
-        p.setString('FileName', d['filename'])
+        if(d['embed'] is True):
+            c = Cbase()
+            c.origin = Cvector(0.0, 0.0, 0.0)
+            c.xAxis = Cvector(1.0, 0.0, 0.0)
+            c.yAxis = Cvector(0.0, 1.0, 0.0)
+            c.zAxis = Cvector(0.0, 0.0, 1.0)
+            p.setFloatArray('PARTICLE_POSITIONS', list(d['pdata']['PARTICLE_POSITIONS']), c)
+            p.setFloatArray('PARTICLE_SPEEDS', list(d['pdata']['PARTICLE_SPEEDS']), c)
+            p.setFloatArray('PARTICLE_RADII', list(d['pdata']['PARTICLE_RADII']), c)
+            p.setIntArray('PARTICLE_IDS', list(d['pdata']['PARTICLE_IDS']))
+            p.setFloatArray('PARTICLE_NORMALS', list(d['pdata']['PARTICLE_NORMALS']), c)
+        else:
+            p.setString('FileName', d['filename'])
+        
         p.setFloat('Radius Factor', d['radius_multiplier'])
         p.setFloat('MB Factor', d['motion_blur_multiplier'])
         p.setFloat('Shutter 1/', d['shutter_speed'])
