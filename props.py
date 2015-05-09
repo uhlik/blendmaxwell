@@ -896,10 +896,11 @@ class ExtClonerProperties(PropertyGroup):
     directory = StringProperty(name=".bin Output Directory", default="//", subtype='DIR_PATH', description="Output directory for .bin file(s)", )
     overwrite = BoolProperty(name="Overwrite Existing", default=True, )
     bl_use_velocity = BoolProperty(name="Particle Velocity", default=True, )
-    bl_use_size = BoolProperty(name="Size Per Particle (Blender Particle Size Settings)", default=False, )
+    bl_use_size = BoolProperty(name="Size Per Particle", default=False, )
     bl_size = FloatProperty(name="Size", default=0.1, min=0.000001, max=1000000.0, step=3, precision=6, )
     
     filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
+    embed = BoolProperty(name="Embed in MXS", default=True, )
     
     radius = FloatProperty(name="Radius Multiplier", default=1.0, min=0.000001, max=1000000.0, )
     mb_factor = FloatProperty(name="Motion Blur Multiplier", default=1.0, min=0.0, max=1000000.0, )

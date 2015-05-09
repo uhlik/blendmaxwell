@@ -1623,12 +1623,12 @@ class MXSWriter():
         o.applyGeometryModifierExtension(p)
         return o
     
-    def mod_cloner(self, object_name, cloned_object, render_emitter, path, radius=1.0, mb_factor=1.0, load_percent=100.0, start_offset=0, ex_npp=0, ex_p_dispersion=0.0, ex_p_deformation=0.0, align_to_velocity=False, scale_with_radius=False, inherit_obj_id=False, frame=1, fps=24.0, display_percent=10, display_max=1000, ):
+    def mod_cloner(self, object_name, cloned_object, render_emitter, pdata, radius=1.0, mb_factor=1.0, load_percent=100.0, start_offset=0, ex_npp=0, ex_p_dispersion=0.0, ex_p_deformation=0.0, align_to_velocity=False, scale_with_radius=False, inherit_obj_id=False, frame=1, fps=24.0, display_percent=10, display_max=1000, ):
         """Create cloner object modifier extension.
         object_name         string
         cloned_object       string
         render_emitter      bool
-        path                string
+        pdata               string or dict
         radius              float
         mb_factor           float
         load_percent        float
@@ -1648,7 +1648,19 @@ class MXSWriter():
         e = self.mgr.createDefaultGeometryModifierExtension('MaxwellCloner')
         p = e.getExtensionData()
         
-        p.setString('FileName', path)
+        if(type(pdata) is dict):
+            c = Cbase()
+            c.origin = Cvector(0.0, 0.0, 0.0)
+            c.xAxis = Cvector(1.0, 0.0, 0.0)
+            c.yAxis = Cvector(0.0, 1.0, 0.0)
+            c.zAxis = Cvector(0.0, 0.0, 1.0)
+            p.setFloatArray('PARTICLE_POSITIONS', list(pdata['PARTICLE_POSITIONS']), c)
+            p.setFloatArray('PARTICLE_SPEEDS', list(pdata['PARTICLE_SPEEDS']), c)
+            p.setFloatArray('PARTICLE_RADII', list(pdata['PARTICLE_RADII']), c)
+            p.setIntArray('PARTICLE_IDS', list(pdata['PARTICLE_IDS']))
+        else:
+            p.setString('FileName', pdata)
+        
         p.setFloat('Radius Factor', radius)
         
         p.setFloat('MB Factor', mb_factor)

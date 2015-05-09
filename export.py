@@ -2163,7 +2163,7 @@ class MXSExportLegacy():
                     
                     if(m.embed):
                         plocs = [v[:3] for v in locs]
-                        pvels = [v[3:6] for v in vels]
+                        pvels = [v[:3] for v in vels]
                         pnors = []
                         for i, v in enumerate(pvels):
                             n = Vector(v)
@@ -2270,10 +2270,11 @@ class MXSExportLegacy():
                 if(m.source == 'EXTERNAL_BIN'):
                     q['embed'] = False
                 else:
-                    p = os.path.join(self.tmp_dir, "{0}.binpart".format(q['name']))
-                    w = MXSBinParticlesWriterLegacy(p, q['pdata'])
-                    q['pdata'] = p
-                    self.part_data_paths.append(p)
+                    if(m.embed):
+                        p = os.path.join(self.tmp_dir, "{0}.binpart".format(q['name']))
+                        w = MXSBinParticlesWriterLegacy(p, q['pdata'])
+                        q['pdata'] = p
+                        self.part_data_paths.append(p)
                 
                 if(m.private_bin_filename != ''):
                     m.bin_filename = m.private_bin_filename
@@ -2546,6 +2547,9 @@ class MXSExportLegacy():
             
             elif(dp['type'] == 'CLONER'):
                 o = bpy.data.objects[dp['object']]
+                
+                pdata = {}
+                
                 if(m.source == 'BLENDER_PARTICLES'):
                     if(len(ps.particles) == 0):
                         msg = "particle system {} has no particles".format(ps.name)
@@ -2579,6 +2583,7 @@ class MXSExportLegacy():
                                 sizes.append(part.size)
                             else:
                                 sizes.append(m.bl_size)
+                    
                     locs = maths.apply_matrix_for_realflow_bin_export(locs)
                     vels = maths.apply_matrix_for_realflow_bin_export(vels)
                     particles = []
@@ -2587,18 +2592,29 @@ class MXSExportLegacy():
                         pnor.normalize()
                         particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
                     
-                    if(os.path.exists(bpy.path.abspath(m.directory)) and not m.overwrite):
-                        raise OSError("file: {} exists".format(bpy.path.abspath(m.directory)))
-                    
-                    cf = self.context.scene.frame_current
-                    prms = {'directory': bpy.path.abspath(m.directory),
-                            'name': "{}".format(dp['name']),
-                            'frame': cf,
-                            'particles': particles,
-                            'fps': self.context.scene.render.fps,
-                            'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
-                    rfbw = rfbin.RFBinWriter(**prms)
-                    m.filename = rfbw.path
+                    if(m.embed):
+                        plocs = [v[:3] for v in locs]
+                        pvels = [v[:3] for v in vels]
+                        pdata = {'PARTICLE_POSITIONS': [v for l in plocs for v in l],
+                                 'PARTICLE_SPEEDS': [v for l in pvels for v in l],
+                                 'PARTICLE_RADII': [v for v in sizes],
+                                 'PARTICLE_IDS': [i for i in range(len(locs))],
+                                 'PARTICLE_NORMALS': [], }
+                        
+                        m.filename = ''
+                    else:
+                        if(os.path.exists(bpy.path.abspath(m.directory)) and not m.overwrite):
+                            raise OSError("file: {} exists".format(bpy.path.abspath(m.directory)))
+                        
+                        cf = self.context.scene.frame_current
+                        prms = {'directory': bpy.path.abspath(m.directory),
+                                'name': "{}".format(dp['name']),
+                                'frame': cf,
+                                'particles': particles,
+                                'fps': self.context.scene.render.fps,
+                                'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
+                        rfbw = rfbin.RFBinWriter(**prms)
+                        m.filename = rfbw.path
                 
                 cloned = None
                 try:
@@ -2625,7 +2641,10 @@ class MXSExportLegacy():
                      
                          'cloned_object': ps.settings.dupli_object.name,
                          'render_emitter': ps.settings.use_render_emitter,
-                     
+                         
+                         'embed': m.embed,
+                         'pdata': pdata,
+                         
                          # pass some default to skip checks this time..
                          'opacity': 100,
                          'hidden_camera': False,
@@ -2643,6 +2662,16 @@ class MXSExportLegacy():
                      
                          'object': dp['parent'],
                          'type': 'CLONER', }
+                
+                if(m.source == 'EXTERNAL_BIN'):
+                    q['embed'] = False
+                else:
+                    if(m.embed):
+                        p = os.path.join(self.tmp_dir, "{0}.binpart".format(q['name']))
+                        w = MXSBinParticlesWriterLegacy(p, q['pdata'])
+                        q['pdata'] = p
+                        self.part_data_paths.append(p)
+                
             else:
                 raise TypeError("Unsupported particles type: {}".format(dp['type']))
             
@@ -5511,6 +5540,8 @@ class MXSExport():
         ps = o['ps']
         psm = ps.settings.maxwell_cloner_extension
         
+        pdata = {}
+        
         if(m.source == 'BLENDER_PARTICLES'):
             if(len(ps.particles) == 0):
                 msg = "particle system {} has no particles".format(ps.name)
@@ -5552,18 +5583,28 @@ class MXSExport():
                 pnor.normalize()
                 particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
             
-            if(os.path.exists(bpy.path.abspath(m.directory)) and not m.overwrite):
-                raise OSError("file: {} exists".format(bpy.path.abspath(m.directory)))
+            if(m.embed):
+                plocs = [v[:3] for v in locs]
+                pvels = [v[:3] for v in vels]
+                pdata = {'PARTICLE_POSITIONS': [v for l in plocs for v in l],
+                         'PARTICLE_SPEEDS': [v for l in pvels for v in l],
+                         'PARTICLE_RADII': [v for v in sizes],
+                         'PARTICLE_IDS': [i for i in range(len(locs))],
+                         'PARTICLE_NORMALS': [], }
+                m.filename = ''
+            else:
+                if(os.path.exists(bpy.path.abspath(m.directory)) and not m.overwrite):
+                    raise OSError("file: {} exists".format(bpy.path.abspath(m.directory)))
             
-            cf = self.context.scene.frame_current
-            prms = {'directory': bpy.path.abspath(m.directory),
-                    'name': "{}".format(o['name']),
-                    'frame': cf,
-                    'particles': particles,
-                    'fps': self.context.scene.render.fps,
-                    'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
-            rfbw = rfbin.RFBinWriter(**prms)
-            m.filename = rfbw.path
+                cf = self.context.scene.frame_current
+                prms = {'directory': bpy.path.abspath(m.directory),
+                        'name': "{}".format(o['name']),
+                        'frame': cf,
+                        'particles': particles,
+                        'fps': self.context.scene.render.fps,
+                        'size': 1.0 if m.bl_use_size else m.bl_size / 2, }
+                rfbw = rfbin.RFBinWriter(**prms)
+                m.filename = rfbw.path
         
         cloned = None
         try:
@@ -5571,11 +5612,14 @@ class MXSExport():
         except AttributeError:
             log("{}: {}: Maxwell Cloner: cloned object is not available. Skipping..".format(o.name, ps.name), 1, LogStyles.WARNING, )
         
+        if(not m.embed):
+            pdata = bpy.path.abspath(m.filename)
+        
         if(cloned is not None):
             d = {'object_name': o['parent'],
                  'cloned_object': ps.settings.dupli_object.name,
                  'render_emitter': ps.settings.use_render_emitter,
-                 'path': bpy.path.abspath(m.filename),
+                 'pdata': pdata,
                  'radius': m.radius,
                  'mb_factor': m.mb_factor,
                  'load_percent': m.load_percent,

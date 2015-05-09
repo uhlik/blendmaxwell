@@ -1355,7 +1355,24 @@ def cloner(d, s):
     e = m.createDefaultGeometryModifierExtension('MaxwellCloner')
     p = e.getExtensionData()
     
-    p.setString('FileName', d['filename'])
+    if(d['embed'] is True):
+        bpp = d['pdata']
+        
+        r = MXSBinParticlesReaderLegacy(bpp)
+        
+        c = Cbase()
+        c.origin = Cvector(0.0, 0.0, 0.0)
+        c.xAxis = Cvector(1.0, 0.0, 0.0)
+        c.yAxis = Cvector(0.0, 1.0, 0.0)
+        c.zAxis = Cvector(0.0, 0.0, 1.0)
+        
+        p.setFloatArray('PARTICLE_POSITIONS', list(r.PARTICLE_POSITIONS), c)
+        p.setFloatArray('PARTICLE_SPEEDS', list(r.PARTICLE_SPEEDS), c)
+        p.setFloatArray('PARTICLE_RADII', list(r.PARTICLE_RADII), c)
+        p.setIntArray('PARTICLE_IDS', list(r.PARTICLE_IDS))
+    else:
+        p.setString('FileName', d['filename'])
+    
     p.setFloat('Radius Factor', d['radius'])
     p.setFloat('MB Factor', d['mb_factor'])
     p.setFloat('Load particles %', d['load_percent'])

@@ -2324,7 +2324,6 @@ class ExtParticlesPanel(ParticleButtonsPanel, Panel):
             if(m.bl_use_size):
                 r.active = False
             
-            
             sub.separator()
             sub.prop(m, 'embed')
             if(not m.embed):
@@ -2464,14 +2463,29 @@ class ExtClonerPanel(ParticleButtonsPanel, Panel):
         if(m.source == 'EXTERNAL_BIN'):
             sub.prop(m, 'filename')
         else:
-            sub.prop(m, 'bl_use_velocity')
+            # sub.prop(m, 'bl_use_velocity')
+            # r = sub.row()
+            # r.prop(m, 'bl_size')
+            # if(m.bl_use_size):
+            #     r.active = False
+            # sub.prop(m, 'bl_use_size')
+            # sub.prop(m, 'directory')
+            # sub.prop(m, 'overwrite')
+            
+            r = sub.row()
+            r.prop(m, 'bl_use_velocity')
+            r.prop(m, 'bl_use_size')
             r = sub.row()
             r.prop(m, 'bl_size')
             if(m.bl_use_size):
                 r.active = False
-            sub.prop(m, 'bl_use_size')
-            sub.prop(m, 'directory')
-            sub.prop(m, 'overwrite')
+            
+            sub.separator()
+            sub.prop(m, 'embed')
+            if(not m.embed):
+                sub.prop(m, 'directory')
+                sub.prop(m, 'overwrite')
+        
         sub.separator()
         
         c = sub.column()
