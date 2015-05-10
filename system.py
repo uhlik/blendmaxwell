@@ -27,6 +27,7 @@ import shutil
 import bpy
 
 from .log import log, LogStyles, LOG_FILE_PATH
+from . import mxs
 
 
 PLATFORM = platform.system()
@@ -185,9 +186,12 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, ):
         p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
         
         return path
-        
-    else:
-        pass
+    elif(PLATFORM == 'Linux'):
+        w = mxs.ExtMXMWriter(path, material_data)
+        return path
+    elif(PLATFORM == 'Windows'):
+        w = mxs.ExtMXMWriter(path, material_data)
+        return path
 
 
 def studio_open_mxs_helper(path, instance):
