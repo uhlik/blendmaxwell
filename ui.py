@@ -1797,6 +1797,10 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 r.operator('maxwell_render.create_material').backface = False
             else:
                 r.operator('maxwell_render.edit_material').backface = False
+        
+        if(m.use != 'CUSTOM'):
+            sub.separator()
+            sub.operator('maxwell_render.edit_extension_material')
 
 
 class MaterialBackfacePanel(MaterialButtonsPanel, Panel):

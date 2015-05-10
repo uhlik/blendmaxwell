@@ -20,6 +20,9 @@ import os
 import platform
 import subprocess
 import shlex
+import uuid
+import json
+import shutil
 
 import bpy
 
@@ -107,6 +110,84 @@ def mxed_edit_material_helper(path):
         command_line = 'nohup {}'.format(command_line)
     args = shlex.split(command_line, )
     p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
+
+
+def mxed_create_and_edit_ext_material_helper(path, material_data, ):
+    log("Extension Material to MXM: {} > {}".format(material_data['name'], path), 1)
+    log(material_data, 2)
+    
+    if(PLATFORM == 'Darwin'):
+        TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_ext_mxm.py")
+        
+        uid = uuid.uuid1()
+        h, t = os.path.split(path)
+        n, e = os.path.splitext(t)
+        tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, uid))
+        if(os.path.exists(tmp_dir) is False):
+            os.makedirs(tmp_dir)
+        
+        mxm_data_name = "{0}-{1}.json".format(n, uid)
+        script_name = "{0}-{1}.py".format(n, uid)
+        
+        def serialize(t, d, n):
+            if(not n.endswith(".json")):
+                n = "{}.json".format(n)
+            p = os.path.join(t, n)
+            with open("{0}.tmp".format(p), 'w', encoding='utf-8', ) as f:
+                json.dump(d, f, skipkeys=False, ensure_ascii=False, indent=4, )
+            if(os.path.exists(p)):
+                os.remove(p)
+            shutil.move("{0}.tmp".format(p), p)
+            return p
+        
+        mxm_data_path = serialize(tmp_dir, material_data, mxm_data_name)
+        
+        script_path = os.path.join(tmp_dir, script_name)
+        with open(script_path, mode='w', encoding='utf-8') as f:
+            # read template
+            with open(TEMPLATE, encoding='utf-8') as t:
+                code = "".join(t.readlines())
+            # write template to a new file
+            f.write(code)
+        
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        command_line = "{0} {1} {2} {3} {4}".format(shlex.quote(PY),
+                                                    shlex.quote(script_path),
+                                                    shlex.quote(LOG_FILE_PATH),
+                                                    shlex.quote(mxm_data_path),
+                                                    shlex.quote(path), )
+        log("command:", 2)
+        log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
+        args = shlex.split(command_line, )
+        o = subprocess.call(args, )
+        if(o != 0):
+            log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
+            raise Exception("error in {0}".format(script_path))
+        
+        def rm(p):
+            if(os.path.exists(p)):
+                os.remove(p)
+            else:
+                log("cleanup: {0} does not exist?".format(p), 1, LogStyles.WARNING, )
+        
+        rm(script_path)
+        rm(mxm_data_path)
+        
+        if(os.path.exists(tmp_dir)):
+            os.rmdir(tmp_dir)
+        else:
+            log("cleanup: {0} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
+        
+        mp = bpy.path.abspath(prefs().maxwell_path)
+        app = os.path.abspath(os.path.join(mp, 'Mxed.app', 'Contents', 'MacOS', 'Mxed', ))
+        command_line = '{0} -mxm:{1}'.format(shlex.quote(app), shlex.quote(path))
+        args = shlex.split(command_line, )
+        p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
+        
+        return path
+        
+    else:
+        pass
 
 
 def studio_open_mxs_helper(path, instance):
