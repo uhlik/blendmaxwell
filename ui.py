@@ -857,6 +857,9 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
         r.prop(o, 'lens')
         if(m.lens == 'TYPE_ORTHO_2'):
             r.enabled = False
+        
+        sub.menu("Exposure_presets", text=bpy.types.Exposure_presets.bl_label)
+        
         sub.prop(m, 'shutter')
         sub.prop(m, 'fstop')
         if(m.lens == 'TYPE_FISHEYE_3'):
@@ -2620,5 +2623,14 @@ class Emitter_presets(Menu):
     bl_label = "Emitter Presets"
     bl_idname = "Emitter_presets"
     preset_subdir = "maxwell_render/material/emitter"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Exposure_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Exposure Presets"
+    bl_idname = "Exposure_presets"
+    preset_subdir = "maxwell_render/exposure"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
