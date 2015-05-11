@@ -273,7 +273,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                     if(os.path.exists(npy)):
                         os.remove(npy)
                 else:
-                    a = mxs.read_mxm_preview(path)
+                    a = mxs.read_mxm_preview(p)
                 
                 if(a is not None):
                     w, h, _ = a.shape

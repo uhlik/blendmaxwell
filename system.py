@@ -179,18 +179,15 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, ):
         else:
             log("cleanup: {0} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
         
-        mp = bpy.path.abspath(prefs().maxwell_path)
-        app = os.path.abspath(os.path.join(mp, 'Mxed.app', 'Contents', 'MacOS', 'Mxed', ))
-        command_line = '{0} -mxm:{1}'.format(shlex.quote(app), shlex.quote(path))
-        args = shlex.split(command_line, )
-        p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
-        
+        mxed_edit_material_helper(path)
         return path
     elif(PLATFORM == 'Linux'):
         w = mxs.ExtMXMWriter(path, material_data)
+        mxed_edit_material_helper(path)
         return path
     elif(PLATFORM == 'Windows'):
         w = mxs.ExtMXMWriter(path, material_data)
+        mxed_edit_material_helper(path)
         return path
 
 
