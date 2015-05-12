@@ -966,6 +966,11 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         o = context.camera
         rp = context.scene.render
         
+        r = sub.row(align=True)
+        r.menu("CAMERA_MT_presets", text=bpy.types.CAMERA_MT_presets.bl_label)
+        # row.operator("camera.preset_add", text="", icon='ZOOMIN')
+        # row.operator("camera.preset_add", text="", icon='ZOOMOUT').remove_active = True
+        
         self.draw_blender_part(context, sub)
         
         # r = sub.row(align=True)
