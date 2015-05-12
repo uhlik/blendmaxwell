@@ -295,6 +295,7 @@ def python34_run_mxm_preview(mxm_path):
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
         command_line = "{0} {1} {2}".format(shlex.quote(PY), shlex.quote(script_path), shlex.quote(mxm_path), )
         
+        log("read material preview from mxm:", 1)
         log("command:", 2)
         log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
         args = shlex.split(command_line, )

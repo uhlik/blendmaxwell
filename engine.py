@@ -255,6 +255,12 @@ class MaxwellRenderExportEngine(RenderEngine):
                 if(not m.flag):
                     return
             
+            w = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
+            h = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
+            if(w, h) == (32, 32):
+                # skip icon rendering
+                return
+            
             bpy.data.materials[mat.name].maxwell_render.flag = False
             
             p = m.mxm_file
