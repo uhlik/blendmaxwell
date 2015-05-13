@@ -589,9 +589,7 @@ class TextureProperties(PropertyGroup):
     brick_mortar_thickness = FloatProperty(name="Mortar Thickness", default=0.012, min=0.0, max=1.0, precision=4, )
     brick_mortar_color = FloatVectorProperty(name="Mortar Color", default=(255 / 129.795, 255 / 129.795, 255 / 129.795), min=0.0, max=1.0, precision=3, subtype='COLOR', )
     brick_mortar_texture = StringProperty(name="Mortar Texture", default="", )
-    brick_disable_blending = BoolProperty(name="disable_blending", default=False, options={'HIDDEN'}, )
     
-    checker_disable_blending = BoolProperty(name="disable_blending", default=False, options={'HIDDEN'}, )
     checker_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
     checker_number_of_elements_u = IntProperty(name="Checks U", default=4, min=0, max=1000, )
     checker_number_of_elements_v = IntProperty(name="Checks V", default=4, min=0, max=1000, )
@@ -600,15 +598,98 @@ class TextureProperties(PropertyGroup):
     checker_transition_sharpness = FloatProperty(name="Sharpness", default=1.0, min=0.0, max=1.0, precision=3, )
     checker_falloff = EnumProperty(name="Fall-off", items=[('0', "Linear", ""), ('1', "Quadratic", ""), ('2', "Sinusoidal", ""), ], default='0', )
     
-    # circle_
-    # gradient3_
-    # gradient_
-    # grid_
-    # marble_
-    # noise_
-    # voronoi_
-    # tiled_
-    # wireframe_
+    circle_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    circle_background_color = FloatVectorProperty(name="Background Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    circle_circle_color = FloatVectorProperty(name="Circle Color", default=(0 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    circle_radius_u = FloatProperty(name="Radius U", default=1.0, min=0.0, max=1.0, precision=3, )
+    circle_radius_v = FloatProperty(name="Radius U", default=1.0, min=0.0, max=1.0, precision=3, )
+    circle_transition_factor = FloatProperty(name="Sharpness", default=1.0, min=0.0, max=1.0, precision=3, )
+    circle_falloff = EnumProperty(name="Fall-off", items=[('0', "Linear", ""), ('1', "Quadratic", ""), ('2', "Sinusoidal", ""), ], default='0', )
+    
+    gradient3_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    gradient3_gradient_u = BoolProperty(name="Active", default=True, )
+    gradient3_color0_u = FloatVectorProperty(name="Start Color", default=(255 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient3_color1_u = FloatVectorProperty(name="Mid Color", default=(0 / 255, 255 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient3_color2_u = FloatVectorProperty(name="End Color", default=(0 / 255, 0 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient3_gradient_type_u = EnumProperty(name="Transition Type", items=[('0', "Linear", ""), ('1', "Quadratic", ""), ('2', "Sinusoidal", ""), ], default='0', )
+    gradient3_color1_u_position = FloatProperty(name="Mid Color Position", default=0.5, min=0.0, max=1.0, precision=3, )
+    gradient3_gradient_v = BoolProperty(name="Active", default=False, )
+    gradient3_color0_v = FloatVectorProperty(name="Start Color", default=(255 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient3_color1_v = FloatVectorProperty(name="Mid Color", default=(0 / 255, 255 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient3_color2_v = FloatVectorProperty(name="End Color", default=(0 / 255, 0 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient3_gradient_type_v = EnumProperty(name="Transition Type", items=[('0', "Linear", ""), ('1', "Quadratic", ""), ('2', "Sinusoidal", ""), ], default='0', )
+    gradient3_color1_v_position = FloatProperty(name="Mid Color Position", default=0.5, min=0.0, max=1.0, precision=3, )
+    
+    gradient_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    gradient_gradient_u = BoolProperty(name="Active", default=True, )
+    gradient_color0_u = FloatVectorProperty(name="Start Color", default=(255 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient_color1_u = FloatVectorProperty(name="End Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient_gradient_type_u = EnumProperty(name="Transition Type", items=[('0', "Linear", ""), ('1', "Quadratic", ""), ('2', "Sinusoidal", ""), ], default='0', )
+    gradient_transition_factor_u = FloatProperty(name="Transition Position", default=1.0, min=0.0, max=1.0, precision=3, )
+    gradient_gradient_v = BoolProperty(name="Active", default=False, )
+    gradient_color0_v = FloatVectorProperty(name="Start Color", default=(0 / 255, 0 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient_color1_v = FloatVectorProperty(name="End Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    gradient_gradient_type_v = EnumProperty(name="Transition Type", items=[('0', "Linear", ""), ('1', "Quadratic", ""), ('2', "Sinusoidal", ""), ], default='0', )
+    gradient_transition_factor_v = FloatProperty(name="Transition Position", default=1.0, min=0.0, max=1.0, precision=3, )
+    
+    grid_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    grid_horizontal_lines = BoolProperty(name="Grid U", default=True, )
+    grid_vertical_lines = BoolProperty(name="Grid V", default=True, )
+    grid_cell_width = FloatProperty(name="Cell Width", default=0.2500, min=0.0, max=1.0, precision=4, )
+    grid_cell_height = FloatProperty(name="Cell Height", default=0.1250, min=0.0, max=1.0, precision=4, )
+    grid_boundary_thickness_u = FloatProperty(name="Background Thickness U", default=0.0650, min=0.0, max=1.0, precision=4, )
+    grid_boundary_thickness_v = FloatProperty(name="Background Thickness V", default=0.0650, min=0.0, max=1.0, precision=4, )
+    grid_transition_sharpness = FloatProperty(name="Sharpness", default=0.0, min=0.0, max=1.0, precision=4, )
+    grid_cell_color = FloatVectorProperty(name="Cell Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    grid_boundary_color = FloatVectorProperty(name="Boundary Color", default=(0 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    grid_falloff = EnumProperty(name="Fall-off", items=[('0', "Linear", ""), ('1', "Quadratic", ""), ('2', "Sinusoidal", ""), ], default='0', )
+    
+    marble_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    marble_coordinates_type = EnumProperty(name="Coordinates Type", items=[('0', "Texture coordinates", ""), ('1', "World coordinates", ""), ], default='1', )
+    marble_color0 = FloatVectorProperty(name="Vein Color 1", default=(199 / 255, 202 / 255, 210 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    marble_color1 = FloatVectorProperty(name="Vein Color 2", default=(152 / 255, 156 / 255, 168 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    marble_color2 = FloatVectorProperty(name="Vein Color 3", default=(87 / 255, 91 / 255, 98 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    marble_frequency = FloatProperty(name="Frequency", default=0.6, min=0.0, max=1000.0, precision=3, )
+    marble_detail = FloatProperty(name="Detail", default=4.0, min=0.0, max=100.0, precision=3, )
+    marble_octaves = IntProperty(name="Octaves", default=7, min=1, max=100, )
+    marble_seed = IntProperty(name="Seed", default=4372, min=1, max=1000000, )
+    
+    noise_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    noise_coordinates_type = EnumProperty(name="Coordinates Type", items=[('0', "Texture coordinates", ""), ('1', "World coordinates", ""), ], default='0', )
+    noise_noise_color = FloatVectorProperty(name="Vein Color 1", default=(0 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    noise_background_color = FloatVectorProperty(name="Vein Color 1", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    noise_detail = FloatProperty(name="Detail", default=6.2, min=1.0, max=1000.0, precision=4, )
+    noise_persistance = FloatProperty(name="Persistance", default=0.55, min=0.0, max=1.0, precision=4, )
+    noise_octaves = IntProperty(name="Octaves", default=4, min=1, max=50, )
+    noise_low_value = FloatProperty(name="Low Clip", default=0.0, min=0.0, max=1.0, precision=4, )
+    noise_high_value = FloatProperty(name="High Clip", default=1.0, min=0.0, max=1.0, precision=4, )
+    noise_seed = IntProperty(name="Seed", default=4357, min=1, max=1000000, )
+    
+    voronoi_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    voronoi_coordinates_type = EnumProperty(name="Coordinates Type", items=[('0', "Texture coordinates", ""), ('1', "World coordinates", ""), ], default='0', )
+    voronoi_color0 = FloatVectorProperty(name="Background Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    voronoi_color1 = FloatVectorProperty(name="Cell Color", default=(0 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    voronoi_detail = IntProperty(name="Detail", default=8, min=1, max=10000, )
+    voronoi_distance = EnumProperty(name="Distance", items=[('0', "Euclidian", ""), ('1', "Manhattan", ""), ('2', "Minkowski4", ""), ('3', "Chebyshev", ""), ], default='0', )
+    voronoi_combination = EnumProperty(name="Combination", items=[('0', "D1", ""), ('1', "D2", ""), ('2', "D3", ""), ('3', "D1+D2", ""), ('4', "D2-D1", ""), ('5', "D3-D2", ""),
+                                                                  ('6', "D1*D2", ""), ('7', "D1*D3", ""), ('8', "D2*D3", ""), ('9', "1-D1", ""), ('10', "1-D2", ""),
+                                                                  ('11', "1-(D1+D2)", ""), ('12', "1-(D1*D2)", ""), ], default='0', )
+    voronoi_low_value = FloatProperty(name="Low Clip", default=0.0, min=0.0, max=1.0, precision=4, )
+    voronoi_high_value = FloatProperty(name="High Clip", default=1.0, min=0.0, max=1.0, precision=4, )
+    voronoi_seed = IntProperty(name="Seed", default=4357, min=1, max=1000000, )
+    
+    tiled_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    tiled_filename = StringProperty(name="File Name", default="", subtype='FILE_PATH', )
+    tiled_token_mask = StringProperty(name="Token mask", default="texture.<UDIM>.png", )
+    tiled_base_color = FloatVectorProperty(name="Base Color", default=(204 / 255, 204 / 255, 204 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    tiled_use_base_color = BoolProperty(name="Use Base Color", default=True, )
+    
+    wireframe_fill_color = FloatVectorProperty(name="Fill Color", default=(204 / 255, 204 / 255, 204 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    wireframe_edge_color = FloatVectorProperty(name="Edge Color", default=(0 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    wireframe_coplanar_edge_color = FloatVectorProperty(name="Coplanar Edge Color", default=(76.5 / 255, 76.5 / 255, 76.5 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    wireframe_edge_width = FloatProperty(name="Edge Width (cm)", default=2.00, min=0.0, max=1000000.0, precision=3, )
+    wireframe_coplanar_edge_width = FloatProperty(name="Coplanar Edge Width (cm)", default=1.00, min=0.0, max=1000000.0, precision=3, )
+    wireframe_coplanar_threshold = FloatProperty(name="Coplanar Threshold", default=math.radians(20.000), min=math.radians(0.000), max=math.radians(100.000), precision=1, subtype='ANGLE', )
     
     @classmethod
     def register(cls):
