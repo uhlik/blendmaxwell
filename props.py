@@ -552,6 +552,64 @@ class TextureProperties(PropertyGroup):
     hue = FloatProperty(name="Hue", default=0.0, min=-180.0, max=180.0, precision=3, subtype='PERCENTAGE', )
     clamp = IntVectorProperty(name="RGB Clamp", default=(0, 255), min=0, max=255, subtype='NONE', size=2, )
     
+    # use = EnumProperty(name="Type", items=[('IMAGE', "Image", ""), ('BRICK', "Brick", ""), ('CHECKER', "Checker", ""), ('CIRCLE', "Circle", ""), ('GRADIENT3', "Gradient3", ""),
+    #                                        ('GRADIENT', "Gradient", ""), ('GRID', "Grid", ""), ('MARBLE', "Marble", ""), ('NOISE', "Noise", ""), ('VORONOI', "Voronoi", ""),
+    #                                        ('TILEDTEXTURE', "TiledTexture", ""), ('WIREFRAMETEXTURE', "WireframeTexture", ""), ], default='IMAGE', )
+    
+    use = EnumProperty(name="Type", items=[('IMAGE', "Image", ""), ], default='IMAGE', )
+    
+    brick_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    brick_brick_width = FloatProperty(name="Brick Width", default=0.21, min=0.0, max=1.0, precision=4, )
+    brick_brick_height = FloatProperty(name="Brick Height", default=0.1, min=0.0, max=1.0, precision=4, )
+    brick_brick_offset = IntProperty(name="Brick Offset", default=50, min=0, max=100, )
+    brick_random_offset = IntProperty(name="Random Offset", default=20, min=0, max=100, )
+    brick_double_brick = BoolProperty(name="Double Brick", default=False, )
+    brick_small_brick_width = FloatProperty(name="Small Brick Width", default=0.1050, min=0.0, max=1.0, precision=4, )
+    brick_round_corners = BoolProperty(name="Round Corners", default=False, )
+    brick_boundary_sharpness_u = FloatProperty(name="Transition Sharpness U", default=0.9, min=0.0, max=1.0, precision=4, )
+    brick_boundary_sharpness_v = FloatProperty(name="Transition Sharpness V", default=0.9, min=0.0, max=1.0, precision=4, )
+    brick_boundary_noise_detail = IntProperty(name="Boundary Noise Detail", default=0, min=0, max=100, )
+    brick_boundary_noise_region_u = FloatProperty(name="Boundary Noise Region U", default=0.0, min=0.0, max=1.0, precision=4, )
+    brick_boundary_noise_region_v = FloatProperty(name="Boundary Noise Region V", default=0.0, min=0.0, max=1.0, precision=4, )
+    brick_seed = IntProperty(name="Seed", default=4357, min=0, max=1000000, )
+    brick_random_rotation = BoolProperty(name="Random Rotation", default=True, )
+    brick_color_variation = IntProperty(name="Brightness Variation", default=20, min=0, max=100, )
+    brick_brick_color_0 = FloatVectorProperty(name="Brick Color 1", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    brick_brick_texture_0 = StringProperty(name="Brick Texture 1", default="", )
+    brick_sampling_factor_0 = IntProperty(name="Sample Size 1", default=10, min=0, max=100, )
+    brick_weight_0 = IntProperty(name="Weight 1", default=100, min=0, max=100, )
+    brick_brick_color_1 = FloatVectorProperty(name="Brick Color 2", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    brick_brick_texture_1 = StringProperty(name="Brick Texture 2", default="", )
+    brick_sampling_factor_1 = IntProperty(name="Sample Size 2", default=9, min=0, max=100, )
+    brick_weight_1 = IntProperty(name="Weight 2", default=100, min=0, max=100, )
+    brick_brick_color_2 = FloatVectorProperty(name="Brick Color 3", default=(255 / 89.250, 255 / 89.250, 255 / 89.250), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    brick_brick_texture_2 = StringProperty(name="Brick Texture 3", default="", )
+    brick_sampling_factor_2 = IntProperty(name="Sample Size 3", default=12, min=0, max=100, )
+    brick_weight_2 = IntProperty(name="Weight 3", default=100, min=0, max=100, )
+    brick_mortar_thickness = FloatProperty(name="Mortar Thickness", default=0.012, min=0.0, max=1.0, precision=4, )
+    brick_mortar_color = FloatVectorProperty(name="Mortar Color", default=(255 / 129.795, 255 / 129.795, 255 / 129.795), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    brick_mortar_texture = StringProperty(name="Mortar Texture", default="", )
+    brick_disable_blending = BoolProperty(name="disable_blending", default=False, options={'HIDDEN'}, )
+    
+    checker_disable_blending = BoolProperty(name="disable_blending", default=False, options={'HIDDEN'}, )
+    checker_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
+    checker_number_of_elements_u = IntProperty(name="Checks U", default=4, min=0, max=1000, )
+    checker_number_of_elements_v = IntProperty(name="Checks V", default=4, min=0, max=1000, )
+    checker_color_0 = FloatVectorProperty(name="Background Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    checker_color_1 = FloatVectorProperty(name="Checker Color", default=(0 / 255, 0 / 255, 0 / 255), min=0.0, max=1.0, precision=3, subtype='COLOR', )
+    checker_transition_sharpness = FloatProperty(name="Sharpness", default=1.0, min=0.0, max=1.0, precision=3, )
+    checker_falloff = EnumProperty(name="Fall-off", items=[('0', "Linear", ""), ('1', "Quadratic", ""), ('2', "Sinusoidal", ""), ], default='0', )
+    
+    # circle_
+    # gradient3_
+    # gradient_
+    # grid_
+    # marble_
+    # noise_
+    # voronoi_
+    # tiled_
+    # wireframe_
+    
     @classmethod
     def register(cls):
         bpy.types.Texture.maxwell_render = PointerProperty(type=cls)

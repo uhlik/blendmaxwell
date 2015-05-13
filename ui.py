@@ -1846,23 +1846,28 @@ class TexturePanel(TextureButtonsPanel, Panel):
         l = self.layout
         m = context.texture.maxwell_render
         
-        tex = None
-        ts = context.texture_slot
-        if(ts.texture is not None):
-            if(ts.texture.type == 'IMAGE'):
-                tex = ts.texture
-        if(tex is None):
-            l.active = False
+        l.label("Texture Type:")
+        l.prop(m, 'use', text="")
         
-        c = l.column()
-        if(tex is not None and tex.image):
-            image = tex.image
-            c.active = False
-            c.enabled = False
-            c.prop(image, 'filepath', text="Path:")
-            c.prop(tex, 'image')
-        else:
-            c.label("Load an image", icon='ERROR', )
+        ts = context.texture_slot
+        
+        if(m.use == 'IMAGE'):
+            tex = None
+            if(ts.texture is not None):
+                if(ts.texture.type == 'IMAGE'):
+                    tex = ts.texture
+            if(tex is None):
+                l.active = False
+        
+            c = l.column()
+            if(tex is not None and tex.image):
+                image = tex.image
+                c.active = False
+                c.enabled = False
+                c.prop(image, 'filepath', text="Path:")
+                c.prop(tex, 'image')
+            else:
+                c.label("Load an image", icon='ERROR', )
         
         l.label("Projection Properties:")
         l.prop(m, 'use_global_map')
@@ -1920,6 +1925,87 @@ class TexturePanel(TextureButtonsPanel, Panel):
         r.prop(m, 'clamp')
         
         sub.enabled = False
+
+
+class TextureProceduralPanel(TextureButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Procedural Texture"
+    
+    @classmethod
+    def poll(cls, context):
+        if(not super().poll(context)):
+            return False
+        if(context.space_data.texture_context not in ['MATERIAL', 'PARTICLES']):
+            return False
+        m = context.texture.maxwell_render
+        if(m.use == 'IMAGE'):
+            return False
+        return True
+    
+    def draw(self, context):
+        l = self.layout
+        m = context.texture.maxwell_render
+        
+        use = [('IMAGE', "Image"), ('BRICK', "Brick"), ('CHECKER', "Checker"), ('CIRCLE', "Circle"), ('GRADIENT3', "Gradient3"),
+               ('GRADIENT', "Gradient"), ('GRID', "Grid"), ('MARBLE', "Marble"), ('NOISE', "Noise"), ('VORONOI', "Voronoi"),
+               ('TILEDTEXTURE', "Tiled"), ('WIREFRAMETEXTURE', "Wireframe"), ]
+        for i, t in enumerate(use):
+            if(t[0] == m.use):
+                self.bl_label = "Maxwell {} Texture".format(t[1])
+                break
+        
+        if(m.use == 'BRICK'):
+            sub = l.column()
+            sub.prop(m, 'brick_blend_procedural')
+            sub.label("Brick:")
+            sub.prop(m, 'brick_brick_width')
+            sub.prop(m, 'brick_brick_height')
+            sub.prop(m, 'brick_brick_offset')
+            sub.prop(m, 'brick_random_offset')
+            sub.prop(m, 'brick_double_brick')
+            sub.prop(m, 'brick_small_brick_width')
+            sub.prop(m, 'brick_round_corners')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_boundary_sharpness_u')
+            r.prop(m, 'brick_boundary_sharpness_v')
+            sub.prop(m, 'brick_boundary_noise_detail')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_boundary_noise_region_u')
+            r.prop(m, 'brick_boundary_noise_region_v')
+            sub.prop(m, 'brick_seed')
+            sub.prop(m, 'brick_random_rotation')
+            sub.prop(m, 'brick_color_variation')
+            r = sub.row()
+            r.prop(m, 'brick_brick_color_0')
+            sub.prop_search(m, 'brick_brick_texture_0', bpy.data, 'textures', icon='TEXTURE')
+            sub.prop(m, 'brick_sampling_factor_0')
+            sub.prop(m, 'brick_weight_0')
+            r = sub.row()
+            r.prop(m, 'brick_brick_color_1')
+            sub.prop_search(m, 'brick_brick_texture_1', bpy.data, 'textures', icon='TEXTURE')
+            sub.prop(m, 'brick_sampling_factor_1')
+            sub.prop(m, 'brick_weight_1')
+            r = sub.row()
+            r.prop(m, 'brick_brick_color_2')
+            sub.prop_search(m, 'brick_brick_texture_2', bpy.data, 'textures', icon='TEXTURE')
+            sub.prop(m, 'brick_sampling_factor_2')
+            sub.prop(m, 'brick_weight_2')
+            sub.label("Mortar:")
+            sub.prop(m, 'brick_mortar_thickness')
+            r = sub.row()
+            r.prop(m, 'brick_mortar_color')
+            sub.prop_search(m, 'brick_mortar_texture', bpy.data, 'textures', icon='TEXTURE')
+        elif(m.use == 'CHECKER'):
+            sub = l.column()
+            sub.prop(m, 'checker_blend_procedural')
+            sub.prop(m, 'checker_number_of_elements_u')
+            sub.prop(m, 'checker_number_of_elements_v')
+            r = sub.row()
+            r.prop(m, 'checker_color_0')
+            r = sub.row()
+            r.prop(m, 'checker_color_1')
+            sub.prop(m, 'checker_transition_sharpness')
+            sub.prop(m, 'checker_falloff')
 
 
 class ParticlesPanel(ParticleButtonsPanel, Panel):
@@ -2562,7 +2648,7 @@ class Environment_presets(Menu):
 class Camera_presets(Menu):
     '''Presets for camera settings.'''
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Camera Presets"
+    bl_label = "Maxwell Camera Presets"
     bl_idname = "Camera_presets"
     preset_subdir = "maxwell_render/camera"
     preset_operator = "script.execute_preset"
