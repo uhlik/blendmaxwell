@@ -1846,8 +1846,8 @@ class TexturePanel(TextureButtonsPanel, Panel):
         l = self.layout
         m = context.texture.maxwell_render
         
-        l.label("Texture Type:")
-        l.prop(m, 'use', text="")
+        # l.label("Texture Type:")
+        # l.prop(m, 'use', text="")
         
         ts = context.texture_slot
         

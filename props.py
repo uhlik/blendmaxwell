@@ -552,11 +552,9 @@ class TextureProperties(PropertyGroup):
     hue = FloatProperty(name="Hue", default=0.0, min=-180.0, max=180.0, precision=3, subtype='PERCENTAGE', )
     clamp = IntVectorProperty(name="RGB Clamp", default=(0, 255), min=0, max=255, subtype='NONE', size=2, )
     
-    # use = EnumProperty(name="Type", items=[('IMAGE', "Image", ""), ('BRICK', "Brick", ""), ('CHECKER', "Checker", ""), ('CIRCLE', "Circle", ""), ('GRADIENT3', "Gradient3", ""),
-    #                                        ('GRADIENT', "Gradient", ""), ('GRID', "Grid", ""), ('MARBLE', "Marble", ""), ('NOISE', "Noise", ""), ('VORONOI', "Voronoi", ""),
-    #                                        ('TILEDTEXTURE', "TiledTexture", ""), ('WIREFRAMETEXTURE', "WireframeTexture", ""), ], default='IMAGE', )
-    
-    use = EnumProperty(name="Type", items=[('IMAGE', "Image", ""), ], default='IMAGE', )
+    use = EnumProperty(name="Type", items=[('IMAGE', "Image", ""), ('BRICK', "Brick", ""), ('CHECKER', "Checker", ""), ('CIRCLE', "Circle", ""), ('GRADIENT3', "Gradient3", ""),
+                                           ('GRADIENT', "Gradient", ""), ('GRID', "Grid", ""), ('MARBLE', "Marble", ""), ('NOISE', "Noise", ""), ('VORONOI', "Voronoi", ""),
+                                           ('TILEDTEXTURE', "TiledTexture", ""), ('WIREFRAMETEXTURE', "WireframeTexture", ""), ], default='IMAGE', )
     
     brick_blend_procedural = FloatProperty(name="Blending Factor", default=0.0, min=0.0, max=100.0, precision=3, subtype='PERCENTAGE', )
     brick_brick_width = FloatProperty(name="Brick Width", default=0.21, min=0.0, max=1.0, precision=4, )
