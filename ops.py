@@ -35,15 +35,38 @@ from . import import_mxs
 class ImportMXS(Operator, ImportHelper):
     bl_idname = "maxwell_render.import_mxs"
     bl_label = 'Import MXS'
+    bl_description = 'Import Maxwell Render Scene (.MXS)'
     
     filename_ext = ".mxs"
-    filter_glob = bpy.props.StringProperty(default="*.mxs", options={'HIDDEN'}, )
-    keep_intermediates = bpy.props.BoolProperty(name="Keep Intermediates", description="Keep intermediate products", default=False, )
+    filter_glob = StringProperty(default="*.mxs", options={'HIDDEN'}, )
+    keep_intermediates = BoolProperty(name="Keep Intermediates", description="Keep intermediate products", default=False, )
     check_extension = True
     
+    objects = BoolProperty(name="Objects", default=True, )
+    cameras = BoolProperty(name="Cameras", default=True, )
+    sun = BoolProperty(name="Sun (as Sun Lamp)", default=True, )
+    
+    def draw(self, context):
+        l = self.layout
+        
+        sub = l.column()
+        sub.prop(self, 'objects')
+        sub.prop(self, 'cameras')
+        sub.prop(self, 'sun')
+        
+        if(system.PLATFORM == 'Darwin'):
+            l.separator()
+            l.prop(self, 'keep_intermediates')
+    
     def execute(self, context):
+        if(not self.objects and not self.cameras and not self.sun):
+            return {'CANCELLED'}
+        
         if(system.PLATFORM == 'Darwin'):
             d = {'mxs_path': self.filepath,
+                 'objects': self.objects,
+                 'cameras': self.cameras,
+                 'sun': self.sun,
                  'keep_intermediates': self.keep_intermediates, }
             im = import_mxs.MXSImportLegacy(**d)
             

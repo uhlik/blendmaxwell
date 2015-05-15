@@ -298,17 +298,31 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, i
         raise OSError("Unknown platform: {}.".format(PLATFORM))
 
 
-def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, ):
+def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, import_objects, import_cameras, import_sun, ):
     if(PLATFORM == 'Darwin'):
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
         if(PY == ""):
             raise Exception("huh?")
         
+        switches = ''
+        if(import_objects):
+            switches += '-o'
+        if(import_cameras):
+            if(switches != ''):
+                switches += ' '
+            switches += '-c'
+        if(import_sun):
+            if(switches != ''):
+                switches += ' '
+            switches += '-s'
+        
         # execute the script
-        command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
-                                                shlex.quote(script_path),
-                                                shlex.quote(mxs_path),
-                                                shlex.quote(scene_data_path), )
+        command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
+                                                        shlex.quote(script_path),
+                                                        switches,
+                                                        shlex.quote(LOG_FILE_PATH),
+                                                        shlex.quote(mxs_path),
+                                                        shlex.quote(scene_data_path), )
         log("command:", 2)
         log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
         args = shlex.split(command_line, )

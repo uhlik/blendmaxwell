@@ -30,8 +30,20 @@ import os
 from pymaxwell import *
 
 
+quiet = False
+LOG_FILE_PATH = None
+
+
 def log(msg, indent=0):
-    print("{0}> {1}".format("    " * indent, msg))
+    if(quiet):
+        return
+    # print("{0}> {1}".format("    " * indent, msg))
+    # logger.info("{0}> {1}".format("    " * indent, msg))
+    m = "{0}> {1}".format("    " * indent, msg)
+    print(m)
+    if(LOG_FILE_PATH is not None):
+        with open(LOG_FILE_PATH, mode='a', encoding='utf-8', ) as f:
+            f.write("{}{}".format(m, "\n"))
 
 
 class PercentDone():
@@ -47,6 +59,8 @@ class PercentDone():
         self.n = "\n"
     
     def step(self, numdone=1):
+        if(quiet):
+            return
         self.current += numdone
         self.percent = int(self.current / (self.total / 100))
         if(self.percent > self.last):
@@ -55,7 +69,12 @@ class PercentDone():
             self.last = self.percent
         if(self.percent >= 100 or self.total == self.current):
             sys.stdout.write(self.r)
+            # sys.stdout.write("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n))
+            # logger.info("{0}{1}{2}%".format(self.t * self.indent, self.prefix, 100))
             sys.stdout.write("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n))
+            if(LOG_FILE_PATH is not None):
+                with open(LOG_FILE_PATH, mode='a', encoding='utf-8', ) as f:
+                    f.write("{}".format("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n)))
 
 
 def get_objects_names(scene):
@@ -270,12 +289,7 @@ def object(o):
     return r
 
 
-def main():
-    parser = argparse.ArgumentParser(description=textwrap.dedent('''Make serialized data from Maxwell meshes and cameras'''),
-                                     epilog='', formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
-    parser.add_argument('mxs_path', type=str, help='path to source .mxs')
-    parser.add_argument('scene_data_path', type=str, help='path to serialized data')
-    args = parser.parse_args()
+def main(args):
     log("maxwell meshes to data:", 1)
     # scene
     mp = args.mxs_path
@@ -291,53 +305,56 @@ def main():
     # objects
     nms = get_objects_names(scene)
     data = []
-    # objects to data
-    log("converting empties, objects and instances..", 2)
-    progress = PercentDone(len(nms), prefix="> ", indent=2, )
-    for n in nms:
-        d = None
-        o = scene.getObject(n)
-        d = object(o)
-        if(d is not None):
-            data.append(d)
-        progress.step()
-    # cameras to data
-    log("converting cameras..", 2)
-    nms = scene.getCameraNames()
-    cams = []
-    if(type(nms) == list):
+    if(args.objects):
+        # objects to data
+        log("converting empties, objects and instances..", 2)
+        progress = PercentDone(len(nms), prefix="> ", indent=2, )
         for n in nms:
-            cams.append(scene.getCamera(n))
-    for c in cams:
-        d = camera(c)
-        if(d is not None):
-            data.append(d)
-    # set active camera
-    if(len(cams) > 1):
-        # if there is just one camera, this behaves badly.
-        # use it just when there are two or more cameras..
-        active_cam = scene.getActiveCamera()
-        active_cam_name = active_cam.getName()
-        for o in data:
-            if(o['type'] == 'CAMERA'):
-                if(o['name'] == active_cam_name):
-                    o['active'] = True
-    else:
-        for o in data:
-            if(o['type'] == 'CAMERA'):
-                o['active'] = True
-    # sun
-    env = scene.getEnvironment()
-    if(env.getSunProperties()[0] == 1):
-        log("converting sun..", 2)
-        if(env.getSunPositionType() == 2):
-            v, _ = env.getSunDirection()
+            d = None
+            o = scene.getObject(n)
+            d = object(o)
+            if(d is not None):
+                data.append(d)
+            progress.step()
+    if(args.cameras):
+        # cameras to data
+        log("converting cameras..", 2)
+        nms = scene.getCameraNames()
+        cams = []
+        if(type(nms) == list):
+            for n in nms:
+                cams.append(scene.getCamera(n))
+        for c in cams:
+            d = camera(c)
+            if(d is not None):
+                data.append(d)
+        # set active camera
+        if(len(cams) > 1):
+            # if there is just one camera, this behaves badly.
+            # use it just when there are two or more cameras..
+            active_cam = scene.getActiveCamera()
+            active_cam_name = active_cam.getName()
+            for o in data:
+                if(o['type'] == 'CAMERA'):
+                    if(o['name'] == active_cam_name):
+                        o['active'] = True
         else:
-            v, _ = env.getSunDirectionUsedForRendering()
-        d = {'name': "The Sun",
-             'xyz': (v.x(), v.y(), v.z()),
-             'type': 'SUN', }
-        data.append(d)
+            for o in data:
+                if(o['type'] == 'CAMERA'):
+                    o['active'] = True
+    if(args.sun):
+        # sun
+        env = scene.getEnvironment()
+        if(env.getSunProperties()[0] == 1):
+            log("converting sun..", 2)
+            if(env.getSunPositionType() == 2):
+                v, _ = env.getSunDirection()
+            else:
+                v, _ = env.getSunDirectionUsedForRendering()
+            d = {'name': "The Sun",
+                 'xyz': (v.x(), v.y(), v.z()),
+                 'type': 'SUN', }
+            data.append(d)
     # save data
     log("serializing..", 2)
     p = args.scene_data_path
@@ -350,11 +367,37 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=textwrap.dedent('''Make serialized data from Maxwell meshes and cameras'''),
+                                     epilog='', formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
+    parser.add_argument('-q', '--quiet', action='store_true', help='no logging except errors')
+    parser.add_argument('-o', '--objects', action='store_true', help='read objects')
+    parser.add_argument('-c', '--cameras', action='store_true', help='read cameras')
+    parser.add_argument('-s', '--sun', action='store_true', help='read sun')
+    parser.add_argument('log_file', type=str, help='path to log file')
+    parser.add_argument('mxs_path', type=str, help='path to source .mxs')
+    parser.add_argument('scene_data_path', type=str, help='path to serialized data')
+    args = parser.parse_args()
+    
+    quiet = args.quiet
+    LOG_FILE_PATH = args.log_file
+    
     try:
-        main()
+        # import cProfile, pstats, io
+        # pr = cProfile.Profile()
+        # pr.enable()
+        
+        main(args)
+        
+        # pr.disable()
+        # s = io.StringIO()
+        # sortby = 'cumulative'
+        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        # ps.print_stats()
+        # print(s.getvalue())
+        
     except Exception as e:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        sys.stdout.write("".join(lines))
+        import traceback
+        m = traceback.format_exc()
+        log(m)
         sys.exit(1)
     sys.exit(0)

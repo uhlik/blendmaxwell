@@ -41,9 +41,12 @@ from . import mxs
 
 
 class MXSImportLegacy():
-    def __init__(self, mxs_path, keep_intermediates=False, ):
+    def __init__(self, mxs_path, objects, cameras, sun, keep_intermediates=False, ):
         self.TEMPLATE = system.check_for_import_template()
         self.mxs_path = os.path.realpath(mxs_path)
+        self.import_objects = objects
+        self.import_cameras = cameras
+        self.import_sun = sun
         self.keep_intermediates = keep_intermediates
         
         self._import()
@@ -344,7 +347,7 @@ class MXSImportLegacy():
             f.write(code)
         
         if(system.PLATFORM == 'Darwin'):
-            system.python34_run_script_helper_import(self.script_path, self.mxs_path, self.scene_data_path, )
+            system.python34_run_script_helper_import(self.script_path, self.mxs_path, self.scene_data_path, self.import_objects, self.import_cameras, self.import_sun, )
         elif(system.PLATFORM == 'Linux'):
             pass
         elif(system.PLATFORM == 'Windows'):
