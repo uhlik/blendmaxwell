@@ -245,6 +245,16 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         likely_materials = get_material(scene)
         
+        def fill_black():
+            xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
+            yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
+            c = xr * yr
+            b = [[0.0, 0.0, 0.0, 1.0]] * c
+            r = self.begin_result(0, 0, xr, yr)
+            l = r.layers[0]
+            l.rect = b
+            self.end_result(r)
+        
         if(likely_materials is not None):
             mat = likely_materials[0]
             m = mat.maxwell_render
@@ -253,12 +263,14 @@ class MaxwellRenderExportEngine(RenderEngine):
                 bpy.context.scene.maxwell_render_private.material = mat.name
             else:
                 if(not m.flag):
+                    fill_black()
                     return
             
             w = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
             h = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
             if(w, h) == (32, 32):
                 # skip icon rendering
+                fill_black()
                 return
             
             bpy.data.materials[mat.name].maxwell_render.flag = False
@@ -317,14 +329,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                     l.rect = b
                     self.end_result(r)
             else:
-                xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-                yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-                c = xr * yr
-                b = [[0.0, 0.0, 0.0, 1.0]] * c
-                r = self.begin_result(0, 0, xr, yr)
-                l = r.layers[0]
-                l.rect = b
-                self.end_result(r)
+                fill_black()
     
     def render_scene(self, scene):
         m = scene.maxwell_render
