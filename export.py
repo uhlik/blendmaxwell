@@ -1792,12 +1792,12 @@ class MXSExportLegacy():
             else:
                 duplis[n] += 1
         
-        m = ""
-        for k, v in duplis.items():
-            m += "{0}: {1} duplicates, ".format(k, v)
-        log(m, 2)
-        
         for o in self.duplicates:
+            if(o['object'].name in duplis):
+                # log at first instance, the delete..
+                log("{0}: {1} duplicates".format(o['object'].name, duplis[o['object'].name]), 2)
+                del duplis[o['object'].name]
+            
             if(self.use_instances):
                 ob = o['object']
                 
