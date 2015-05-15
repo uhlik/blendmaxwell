@@ -1082,6 +1082,8 @@ def scene(d, s):
     
     if(d['export_protect_mxs']):
         s.enableProtection(True)
+    else:
+        s.enableProtection(False)
     
     if(d['extra_sampling_enabled']):
         s.setRenderParameter('DO EXTRA SAMPLING', 1)

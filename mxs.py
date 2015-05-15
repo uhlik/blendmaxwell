@@ -1040,6 +1040,8 @@ class MXSWriter():
         if(other is not None):
             if(other['protect']):
                 s.enableProtection(True)
+            else:
+                s.enableProtection(False)
             
             if(other['extra_sampling_enabled']):
                 s.setRenderParameter('DO EXTRA SAMPLING', 1)
