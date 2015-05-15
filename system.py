@@ -74,6 +74,15 @@ def check_for_template():
     return TEMPLATE
 
 
+def check_for_import_template():
+    # check for template
+    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxs.py")
+    if(not os.path.exists(TEMPLATE)):
+        log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )
+        raise OSError("support directory is missing..")
+    return TEMPLATE
+
+
 def open_file_in_default_application(path):
     if(PLATFORM == 'Darwin'):
         os.system("open {}".format(shlex.quote(path)))
@@ -287,6 +296,28 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, i
         pass
     else:
         raise OSError("Unknown platform: {}.".format(PLATFORM))
+
+
+def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, ):
+    if(PLATFORM == 'Darwin'):
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        if(PY == ""):
+            raise Exception("huh?")
+        
+        # execute the script
+        command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
+                                                shlex.quote(script_path),
+                                                shlex.quote(mxs_path),
+                                                shlex.quote(scene_data_path), )
+        log("command:", 2)
+        log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
+        args = shlex.split(command_line, )
+        
+        o = subprocess.call(args, )
+        if(o != 0):
+            log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
+    else:
+        raise Exception("This is meant to be called on Mac OS X")
 
 
 def python34_run_mxm_preview(mxm_path):

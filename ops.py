@@ -25,9 +25,48 @@ from bpy.props import BoolProperty, StringProperty, EnumProperty
 from bpy.types import Operator
 from mathutils import Vector
 from bl_operators.presets import AddPresetBase
+from bpy_extras.io_utils import ImportHelper
 
 from . import maths
 from . import system
+from . import import_mxs
+
+
+class ImportMXS(Operator, ImportHelper):
+    bl_idname = "maxwell_render.import_mxs"
+    bl_label = 'Import MXS'
+    
+    filename_ext = ".mxs"
+    filter_glob = bpy.props.StringProperty(default="*.mxs", options={'HIDDEN'}, )
+    keep_intermediates = bpy.props.BoolProperty(name="Keep Intermediates", description="Keep intermediate products", default=False, )
+    check_extension = True
+    
+    def execute(self, context):
+        if(system.PLATFORM == 'Darwin'):
+            d = {'mxs_path': self.filepath,
+                 'keep_intermediates': self.keep_intermediates, }
+            im = import_mxs.MXSImportLegacy(**d)
+            
+        elif(system.PLATFORM == 'Linux'):
+            self.report({'WARNING'}, "Not available yet..")
+        elif(system.PLATFORM == 'Windows'):
+            self.report({'WARNING'}, "Not available yet..")
+        else:
+            pass
+        
+        return {'FINISHED'}
+    
+    @classmethod
+    def register(cls):
+        bpy.types.INFO_MT_file_import.append(menu_func_import)
+    
+    @classmethod
+    def unregister(cls):
+        bpy.types.INFO_MT_file_import.remove(menu_func_import)
+
+
+def menu_func_import(self, context):
+    self.layout.operator(ImportMXS.bl_idname, text="Maxwell Render Scene (.mxs)")
 
 
 class EnvironmentSetSun(Operator):
