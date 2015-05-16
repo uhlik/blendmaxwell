@@ -62,18 +62,19 @@ class ImportMXS(Operator, ImportHelper):
         if(not self.objects and not self.cameras and not self.sun):
             return {'CANCELLED'}
         
+        d = {'mxs_path': os.path.realpath(bpy.path.abspath(self.filepath)),
+             'objects': self.objects,
+             'cameras': self.cameras,
+             'sun': self.sun, }
         if(system.PLATFORM == 'Darwin'):
-            d = {'mxs_path': self.filepath,
-                 'objects': self.objects,
-                 'cameras': self.cameras,
-                 'sun': self.sun,
-                 'keep_intermediates': self.keep_intermediates, }
+            d['keep_intermediates'] = self.keep_intermediates
             im = import_mxs.MXSImportLegacy(**d)
-            
         elif(system.PLATFORM == 'Linux'):
-            self.report({'WARNING'}, "Not available yet..")
+            # self.report({'WARNING'}, "Not available yet..")
+            im = import_mxs.MXSImport(**d)
         elif(system.PLATFORM == 'Windows'):
-            self.report({'WARNING'}, "Not available yet..")
+            # self.report({'WARNING'}, "Not available yet..")
+            im = import_mxs.MXSImport(**d)
         else:
             pass
         

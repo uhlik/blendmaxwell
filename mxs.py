@@ -2136,3 +2136,291 @@ class ExtMXMWriter():
             return m
         
         return None
+
+
+class MXSReader():
+    def __init__(self, path, ):
+        if(__name__ != "__main__"):
+            if(platform.system() == 'Darwin'):
+                raise ImportError("No pymaxwell for Mac OS X..")
+        
+        log(self.__class__.__name__, 1, LogStyles.MESSAGE, prefix="* ", )
+        
+        self.path = path
+        self.mxs = Cmaxwell(mwcallback)
+        log("loading {}".format(self.path), 2, prefix="* ", )
+        self.mxs.readMXS(self.path)
+        if(self.mxs.isProtectionEnabled()):
+            raise RuntimeError("Protected MXS")
+        
+        self._prepare()
+    
+    def _mxs_get_objects_names(self):
+        s = self.mxs
+        it = CmaxwellObjectIterator()
+        o = it.first(s)
+        l = []
+        while not o.isNull():
+            name, _ = o.getName()
+            l.append(name)
+            o = it.next()
+        return l
+    
+    def _mxs_object(self, o):
+        is_instance, _ = o.isInstance()
+        is_mesh, _ = o.isMesh()
+        if(is_instance == 0 and is_mesh == 0):
+            log("WARNING: only empties, meshes and instances are supported..", 2)
+            return None
+        r = {'name': o.getName()[0],
+             'vertices': [],
+             'normals': [],
+             'triangles': [],
+             'trianglesUVW': [],
+             'matrix': (),
+             'parent': None,
+             'type': '',
+             'materials': [],
+             'nmats': 0,
+             'matnames': [], }
+        if(is_instance == 1):
+            io = o.getInstanced()
+            ion = io.getName()[0]
+            b, p = self._base_and_pivot(o)
+            r = {'name': o.getName()[0],
+                 'base': b,
+                 'pivot': p,
+                 'parent': None,
+                 'type': 'INSTANCE',
+                 'instanced': ion, }
+            # no multi material instances, always one material per instance
+            m, _ = o.getMaterial()
+            if(m.isNull() == 1):
+                r['material'] = None
+            else:
+                r['material'] = o.getName()
+            p, _ = o.getParent()
+            if(not p.isNull()):
+                r['parent'] = p.getName()[0]
+        
+            cid, _ = o.getColorID()
+            rgb8 = cid.toRGB8()
+            col = [str(rgb8.r()), str(rgb8.g()), str(rgb8.b())]
+            r['colorid'] = ", ".join(col)
+        
+            h = []
+            if(o.getHideToCamera()):
+                h.append("C")
+            if(o.getHideToGI()):
+                h.append("GI")
+            if(o.getHideToReflectionsRefractions()):
+                h.append("RR")
+            r['hidden'] = ", ".join(h)
+        
+            return r
+        # counts
+        nv, _ = o.getVerticesCount()
+        nn, _ = o.getNormalsCount()
+        nt, _ = o.getTrianglesCount()
+        nppv, _ = o.getPositionsPerVertexCount()
+        ppv = 0
+        if(nv > 0):
+            r['type'] = 'MESH'
+        
+            cid, _ = o.getColorID()
+            rgb8 = cid.toRGB8()
+            col = [str(rgb8.r()), str(rgb8.g()), str(rgb8.b())]
+            r['colorid'] = ", ".join(col)
+        
+            h = []
+            if(o.getHideToCamera()):
+                h.append("C")
+            if(o.getHideToGI()):
+                h.append("GI")
+            if(o.getHideToReflectionsRefractions()):
+                h.append("RR")
+            r['hidden'] = ", ".join(h)
+        
+        else:
+            r['type'] = 'EMPTY'
+        
+            cid, _ = o.getColorID()
+            rgb8 = cid.toRGB8()
+            col = [str(rgb8.r()), str(rgb8.g()), str(rgb8.b())]
+            r['colorid'] = ", ".join(col)
+        
+        if(nppv - 1 != ppv and nv != 0):
+            log("WARNING: only one position per vertex is supported..", 2)
+        # vertices
+        for i in range(nv):
+            v, _ = o.getVertex(i, ppv)
+            # (float x, float y, float z)
+            r['vertices'].append((v.x(), v.y(), v.z()))
+        # normals
+        for i in range(nn):
+            v, _ = o.getNormal(i, ppv)
+            # (float x, float y, float z)
+            r['normals'].append((v.x(), v.y(), v.z()))
+        # triangles
+        for i in range(nt):
+            t = o.getTriangle(i)
+            # (int v1, int v2, int v3, int n1, int n2, int n3)
+            r['triangles'].append(t)
+        # materials
+        mats = []
+        for i in range(nt):
+            m, _ = o.getTriangleMaterial(i)
+            if(m.isNull() == 1):
+                n = None
+            else:
+                n = m.getName()
+            if(n not in mats):
+                mats.append(n)
+            r['materials'].append((i, n))
+        r['nmats'] = len(mats)
+        r['matnames'] = mats
+        # uv channels
+        ncuv, _ = o.getChannelsUVWCount()
+        for cuv in range(ncuv):
+            # uv triangles
+            r['trianglesUVW'].append([])
+            for i in range(nt):
+                t = o.getTriangleUVW(i, cuv)
+                # float u1, float v1, float w1, float u2, float v2, float w2, float u3, float v3, float w3
+                r['trianglesUVW'][cuv].append(t)
+        # base and pivot to matrix
+        b, p = self._base_and_pivot(o)
+        r['base'] = b
+        r['pivot'] = p
+        # parent
+        p, _ = o.getParent()
+        if(not p.isNull()):
+            r['parent'] = p.getName()[0]
+        return r
+    
+    def _mxs_camera(self, c):
+        v = c.getValues()
+        s = c.getStep(0)
+        o = s[0]
+        f = s[1]
+        u = s[2]
+        r = {'name': v['name'],
+             'shutter': 1.0 / v['shutter'],
+             'iso': v['iso'],
+             'x_res': v['xRes'],
+             'y_res': v['yRes'],
+             'pixel_aspect': v['pixelAspect'],
+             'origin': (o.x(), o.y(), o.z()),
+             'focal_point': (f.x(), f.y(), f.z()),
+             'up': (u.x(), u.y(), u.z()),
+             'focal_length': self._uncorrect_focal_length(s) * 1000.0,
+             'f_stop': s[4],
+             'film_width': round(v['filmWidth'] * 1000.0, 3),
+             'film_height': round(v['filmHeight'] * 1000.0, 3),
+             'active': False,
+             'sensor_fit': None,
+             'shift_x': 0.0,
+             'shift_y': 0.0,
+             'zclip': False,
+             'zclip_near': 0.0,
+             'zclip_far': 1000000.0,
+             'type': 'CAMERA', }
+        if(r['film_width'] > r['film_height']):
+            r['sensor_fit'] = 'HORIZONTAL'
+        else:
+            r['sensor_fit'] = 'VERTICAL'
+        cp = c.getCutPlanes()
+        if(cp[2] is True):
+            r['zclip'] = True
+            r['zclip_near'] = cp[0]
+            r['zclip_far'] = cp[1]
+        sl = c.getShiftLens()
+        r['shift_x'] = sl[0]
+        r['shift_y'] = sl[1]
+        d = c.getDiaphragm()
+        r['diaphragm_type'] = d[0][0]
+        r['diaphragm_angle'] = d[1]
+        r['diaphragm_blades'] = d[2]
+        return r
+    
+    def _base_and_pivot(self, o):
+        b, p, _ = o.getBaseAndPivot()
+        o = b.origin
+        x = b.xAxis
+        y = b.yAxis
+        z = b.zAxis
+        rb = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
+        rp = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        return rb, rp
+
+
+    def _uncorrect_focal_length(self, step):
+        flc = step[3]
+        o = step[0]
+        fp = step[1]
+        d = Cvector()
+        d.substract(fp, o)
+        fd = d.norm()
+        fluc = 1.0 / (1.0 / flc - 1 / fd)
+        return fluc
+    
+    def _prepare(self):
+        s = self.mxs
+        self.object_names = self._mxs_get_objects_names()
+    
+    def objects(self):
+        s = self.mxs
+        data = []
+        log("converting empties, meshes and instances..", 2)
+        for n in self.object_names:
+            d = None
+            o = s.getObject(n)
+            d = self._mxs_object(o)
+            if(d is not None):
+                data.append(d)
+        return data
+    
+    def cameras(self):
+        s = self.mxs
+        data = []
+        log("converting cameras..", 2)
+        nms = s.getCameraNames()
+        cams = []
+        if(type(nms) == list):
+            for n in nms:
+                cams.append(s.getCamera(n))
+        for c in cams:
+            d = self._mxs_camera(c)
+            if(d is not None):
+                data.append(d)
+        # set active camera
+        if(len(cams) > 1):
+            # if there is just one camera, this behaves badly.
+            # use it just when there are two or more cameras..
+            active_cam = s.getActiveCamera()
+            active_cam_name = active_cam.getName()
+            for o in data:
+                if(o['type'] == 'CAMERA'):
+                    if(o['name'] == active_cam_name):
+                        o['active'] = True
+        else:
+            for o in data:
+                if(o['type'] == 'CAMERA'):
+                    o['active'] = True
+        return data
+    
+    def sun(self):
+        s = self.mxs
+        data = []
+        env = s.getEnvironment()
+        if(env.getSunProperties()[0] == 1):
+            log("converting sun..", 2)
+            if(env.getSunPositionType() == 2):
+                v, _ = env.getSunDirection()
+            else:
+                v, _ = env.getSunDirectionUsedForRendering()
+            d = {'name': "The Sun",
+                 'xyz': (v.x(), v.y(), v.z()),
+                 'type': 'SUN', }
+            data.append(d)
+        return data
