@@ -298,14 +298,18 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, i
         raise OSError("Unknown platform: {}.".format(PLATFORM))
 
 
-def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, import_objects, import_cameras, import_sun, ):
+def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, import_emitters, import_objects, import_cameras, import_sun, ):
     if(PLATFORM == 'Darwin'):
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
         if(PY == ""):
             raise Exception("huh?")
         
         switches = ''
+        if(import_emitters):
+            switches += '-e'
         if(import_objects):
+            if(switches != ''):
+                switches += ' '
             switches += '-o'
         if(import_cameras):
             if(switches != ''):

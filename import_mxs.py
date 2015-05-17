@@ -41,14 +41,14 @@ from . import mxs
 
 
 class MXSImportLegacy():
-    def __init__(self, mxs_path, objects, cameras, sun, keep_intermediates=False, ):
+    def __init__(self, mxs_path, emitters, objects, cameras, sun, keep_intermediates=False, ):
         self.TEMPLATE = system.check_for_import_template()
         self.mxs_path = os.path.realpath(mxs_path)
+        self.import_emitters = emitters
         self.import_objects = objects
         self.import_cameras = cameras
         self.import_sun = sun
         self.keep_intermediates = keep_intermediates
-        
         self._import()
     
     def _import(self):
@@ -83,9 +83,6 @@ class MXSImportLegacy():
         with open(self.scene_data_path, 'r') as f:
             data = json.load(f)
         
-        self.objects = []
-        self.materials = []
-        
         for d in data:
             t = None
             try:
@@ -94,19 +91,19 @@ class MXSImportLegacy():
                 log("element without type: {0}".format(d), 1, LogStyles.WARNING)
             if(d['type'] == 'EMPTY'):
                 o = self._empty(d)
-                self.objects.append(o)
+                d['created'] = o
             elif(d['type'] == 'MESH'):
                 o = self._mesh(d)
-                self.objects.append(o)
+                d['created'] = o
             elif(d['type'] == 'INSTANCE'):
                 o = self._instance(d)
-                self.objects.append(o)
+                d['created'] = o
             elif(d['type'] == 'CAMERA'):
                 o = self._camera(d)
-                self.objects.append(o)
+                d['created'] = o
             elif(d['type'] == 'SUN'):
                 o = self._sun(d)
-                self.objects.append(o)
+                d['created'] = o
             else:
                 log("unknown type: {0}".format(t), 1, LogStyles.WARNING)
         
@@ -265,9 +262,15 @@ class MXSImportLegacy():
         for d in data:
             t = d['type']
             if(t in types):
-                o = self._get_object_by_name(d['name'])
+                # o = self._get_object_by_name(d['name'])
+                o = d['created']
                 if(d['parent'] is not None):
-                    p = self._get_object_by_name(d['parent'])
+                    # p = self._get_object_by_name(d['parent'])
+                    p = None
+                    for q in data:
+                        if(q['name'] == d['parent']):
+                            p = q['created']
+                            break
                     o.parent = p
     
     def _transformations(self, data):
@@ -277,19 +280,13 @@ class MXSImportLegacy():
         for d in data:
             t = d['type']
             if(t in types):
-                o = self._get_object_by_name(d['name'])
+                # o = self._get_object_by_name(d['name'])
+                o = d['created']
                 m = self._base_and_pivot_to_matrix(d)
                 if(o.type == 'MESH'):
                     if(d['type'] != 'INSTANCE'):
                         o.data.transform(mrx90)
                 o.matrix_local = m
-    
-    def _get_object_by_name(self, n):
-        objs = bpy.data.objects
-        for o in objs:
-            if(o.name == n):
-                return o
-        return None
     
     def _distance(self, a, b):
         ax, ay, az = a
@@ -347,7 +344,7 @@ class MXSImportLegacy():
             f.write(code)
         
         if(system.PLATFORM == 'Darwin'):
-            system.python34_run_script_helper_import(self.script_path, self.mxs_path, self.scene_data_path, self.import_objects, self.import_cameras, self.import_sun, )
+            system.python34_run_script_helper_import(self.script_path, self.mxs_path, self.scene_data_path, self.import_emitters, self.import_objects, self.import_cameras, self.import_sun, )
         elif(system.PLATFORM == 'Linux'):
             pass
         elif(system.PLATFORM == 'Windows'):
@@ -395,9 +392,12 @@ class MXSImportLegacy():
 
 
 class MXSImport():
-    def __init__(self, mxs_path, objects=True, cameras=True, sun=True, ):
+    def __init__(self, mxs_path, emitters=True, objects=True, cameras=True, sun=True, ):
         self.mxs_path = os.path.realpath(mxs_path)
+        self.import_emitters = emitters
         self.import_objects = objects
+        if(self.import_objects):
+            self.import_emitters = False
         self.import_cameras = cameras
         self.import_sun = sun
         self._import()
@@ -406,10 +406,8 @@ class MXSImport():
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         reader = mxs.MXSReader(self.mxs_path)
         
-        self.imported = []
-        
-        if(self.import_objects):
-            data = reader.objects()
+        if(self.import_objects or self.import_emitters):
+            data = reader.objects(self.import_emitters)
             for d in data:
                 t = None
                 try:
@@ -420,13 +418,13 @@ class MXSImport():
                     continue
                 if(t == 'EMPTY'):
                     o = self._empty(d)
-                    self.imported.append(o)
+                    d['created'] = o
                 elif(t == 'MESH'):
                     o = self._mesh(d)
-                    self.imported.append(o)
+                    d['created'] = o
                 elif(t == 'INSTANCE'):
                     o = self._instance(d)
-                    self.imported.append(o)
+                    d['created'] = o
                 else:
                     log("unknown type: {0}".format(t), 1, LogStyles.WARNING)
             
@@ -449,7 +447,6 @@ class MXSImport():
                     continue
                 if(t == 'CAMERA'):
                     o = self._camera(d)
-                    self.imported.append(o)
                 else:
                     log("unknown type: {0}".format(t), 1, LogStyles.WARNING)
         
@@ -465,7 +462,6 @@ class MXSImport():
                     continue
                 if(t == 'SUN'):
                     o = self._sun(d)
-                    self.imported.append(o)
                 else:
                     log("unknown type: {0}".format(t), 1, LogStyles.WARNING)
         
@@ -613,9 +609,15 @@ class MXSImport():
         for d in data:
             t = d['type']
             if(t in types):
-                o = self._get_object_by_name(d['name'])
+                # o = self._get_object_by_name(d['name'])
+                o = d['created']
                 if(d['parent'] is not None):
-                    p = self._get_object_by_name(d['parent'])
+                    # p = self._get_object_by_name(d['parent'])
+                    p = None
+                    for q in data:
+                        if(q['name'] == d['parent']):
+                            p = q['created']
+                            break
                     o.parent = p
     
     def _transformations(self, data):
@@ -624,19 +626,13 @@ class MXSImport():
         for d in data:
             t = d['type']
             if(t in types):
-                o = self._get_object_by_name(d['name'])
+                # o = self._get_object_by_name(d['name'])
+                o = d['created']
                 m = self._base_and_pivot_to_matrix(d)
                 if(o.type == 'MESH'):
                     if(d['type'] != 'INSTANCE'):
                         o.data.transform(mrx90)
                 o.matrix_local = m
-    
-    def _get_object_by_name(self, n):
-        objs = bpy.data.objects
-        for o in objs:
-            if(o.name == n):
-                return o
-        return None
     
     def _distance(self, a, b):
         ax, ay, az = a

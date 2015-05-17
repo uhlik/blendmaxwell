@@ -289,6 +289,49 @@ def object(o):
     return r
 
 
+def is_emitter(o):
+    is_instance, _ = o.isInstance()
+    is_mesh, _ = o.isMesh()
+    if(not is_mesh and not is_instance):
+        return False
+    if(is_mesh):
+        nt, _ = o.getTrianglesCount()
+        mats = []
+        for i in range(nt):
+            m, _ = o.getTriangleMaterial(i)
+            if(not m.isNull()):
+                if(m not in mats):
+                    mats.append(m)
+        for m in mats:
+            nl, _ = m.getNumLayers()
+            for i in range(nl):
+                l = m.getLayer(i)
+                e = l.getEmitter()
+                if(not e.isNull()):
+                    return True
+    if(is_instance):
+        m, _ = o.getMaterial()
+        if(not m.isNull()):
+            nl, _ = m.getNumLayers()
+            for i in range(nl):
+                l = m.getLayer(i)
+                e = l.getEmitter()
+                if(not e.isNull()):
+                    return True
+    return False
+
+
+def global_transform(o):
+    cb, _ = o.getWorldTransform()
+    o = cb.origin
+    x = cb.xAxis
+    y = cb.yAxis
+    z = cb.zAxis
+    rb = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
+    rp = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+    return rb, rp
+
+
 def main(args):
     log("maxwell meshes to data:", 1)
     # scene
@@ -305,7 +348,21 @@ def main(args):
     # objects
     nms = get_objects_names(scene)
     data = []
-    if(args.objects):
+    if(args.emitters and not args.objects):
+        # only emitter objects
+        log("converting emitters..", 2)
+        for n in nms:
+            d = None
+            o = scene.getObject(n)
+            if(is_emitter(o)):
+                d = object(o)
+                if(d is not None):
+                    b, p = global_transform(o)
+                    d['base'] = b
+                    d['pivot'] = p
+                    d['parent'] = None
+                    data.append(d)
+    elif(args.objects):
         # objects to data
         log("converting empties, objects and instances..", 2)
         progress = PercentDone(len(nms), prefix="> ", indent=2, )
@@ -370,6 +427,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=textwrap.dedent('''Make serialized data from Maxwell meshes and cameras'''),
                                      epilog='', formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
     parser.add_argument('-q', '--quiet', action='store_true', help='no logging except errors')
+    parser.add_argument('-e', '--emitters', action='store_true', help='read emitters')
     parser.add_argument('-o', '--objects', action='store_true', help='read objects')
     parser.add_argument('-c', '--cameras', action='store_true', help='read cameras')
     parser.add_argument('-s', '--sun', action='store_true', help='read sun')

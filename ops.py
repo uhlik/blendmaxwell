@@ -42,6 +42,7 @@ class ImportMXS(Operator, ImportHelper):
     keep_intermediates = BoolProperty(name="Keep Intermediates", description="Keep intermediate products", default=False, )
     check_extension = True
     
+    emitters = BoolProperty(name="Emitters", default=True, )
     objects = BoolProperty(name="Objects", default=True, )
     cameras = BoolProperty(name="Cameras", default=True, )
     sun = BoolProperty(name="Sun (as Sun Lamp)", default=True, )
@@ -50,6 +51,10 @@ class ImportMXS(Operator, ImportHelper):
         l = self.layout
         
         sub = l.column()
+        r = sub.row()
+        r.prop(self, 'emitters')
+        if(self.objects):
+            r.active = False
         sub.prop(self, 'objects')
         sub.prop(self, 'cameras')
         sub.prop(self, 'sun')
@@ -59,10 +64,11 @@ class ImportMXS(Operator, ImportHelper):
             l.prop(self, 'keep_intermediates')
     
     def execute(self, context):
-        if(not self.objects and not self.cameras and not self.sun):
+        if(not self.objects and not self.cameras and not self.sun and not self.emitters):
             return {'CANCELLED'}
         
         d = {'mxs_path': os.path.realpath(bpy.path.abspath(self.filepath)),
+             'emitters': self.emitters,
              'objects': self.objects,
              'cameras': self.cameras,
              'sun': self.sun, }

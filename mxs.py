@@ -2368,16 +2368,73 @@ class MXSReader():
         s = self.mxs
         self.object_names = self._mxs_get_objects_names()
     
-    def objects(self):
-        s = self.mxs
-        data = []
-        log("converting empties, meshes and instances..", 2)
-        for n in self.object_names:
-            d = None
-            o = s.getObject(n)
-            d = self._mxs_object(o)
-            if(d is not None):
-                data.append(d)
+    def _is_emitter(self, o):
+        is_instance, _ = o.isInstance()
+        is_mesh, _ = o.isMesh()
+        if(not is_mesh and not is_instance):
+            return False
+        if(is_mesh):
+            nt, _ = o.getTrianglesCount()
+            mats = []
+            for i in range(nt):
+                m, _ = o.getTriangleMaterial(i)
+                if(not m.isNull()):
+                    if(m not in mats):
+                        mats.append(m)
+            for m in mats:
+                nl, _ = m.getNumLayers()
+                for i in range(nl):
+                    l = m.getLayer(i)
+                    e = l.getEmitter()
+                    if(not e.isNull()):
+                        return True
+        if(is_instance):
+            m, _ = o.getMaterial()
+            if(not m.isNull()):
+                nl, _ = m.getNumLayers()
+                for i in range(nl):
+                    l = m.getLayer(i)
+                    e = l.getEmitter()
+                    if(not e.isNull()):
+                        return True
+        return False
+    
+    def _global_transform(self, o):
+        cb, _ = o.getWorldTransform()
+        o = cb.origin
+        x = cb.xAxis
+        y = cb.yAxis
+        z = cb.zAxis
+        rb = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
+        rp = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        return rb, rp
+    
+    def objects(self, only_emitters=False):
+        if(only_emitters):
+            s = self.mxs
+            data = []
+            log("converting emitters..", 2)
+            for n in self.object_names:
+                d = None
+                o = s.getObject(n)
+                if(self._is_emitter(o)):
+                    d = self._mxs_object(o)
+                    if(d is not None):
+                        b, p = self._global_transform(o)
+                        d['base'] = b
+                        d['pivot'] = p
+                        d['parent'] = None
+                        data.append(d)
+        else:
+            s = self.mxs
+            data = []
+            log("converting empties, meshes and instances..", 2)
+            for n in self.object_names:
+                d = None
+                o = s.getObject(n)
+                d = self._mxs_object(o)
+                if(d is not None):
+                    data.append(d)
         return data
     
     def cameras(self):
