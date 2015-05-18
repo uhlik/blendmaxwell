@@ -23,6 +23,7 @@
 * Object parameters
 * Maxwell Extensions: Particles, Grass, Hair, Scatter, Subdivision, Sea, Cloner, Volumetrics
 * Wireframe scene export (all edges are converted to instanced cylinder of user defined radius)
+* Scene import (objects, emitters, cameras and sun selectively)
 
 ![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
 
@@ -50,6 +51,7 @@
 
 changelog:
 
+* 0.2.2 added: mxs import (objects, emitters, cameras and sun selectively), save extension materials to mxm, embed particles in mxs (saving of external .bin files is now optional)
 * 0.2.1 added: extension materials creation and editing inside blender
 * 0.2.0 added: much faster large mesh export on Mac OS X, Extra Sampling panel, Volumetrics extension (constant and noise 3d), external particle bin works with animation export
 * 0.1.9 added: MXS References, Windows installation simplified
