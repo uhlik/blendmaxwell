@@ -2352,8 +2352,7 @@ class MXSReader():
         rb = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
         rp = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
         return rb, rp
-
-
+    
     def _uncorrect_focal_length(self, step):
         flc = step[3]
         o = step[0]
