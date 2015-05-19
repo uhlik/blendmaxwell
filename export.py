@@ -3079,6 +3079,7 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
         self.mesh_data_paths = []
         self.hair_data_paths = []
         self.wire_data_paths = []
+        self.part_data_paths = []
         self.scene_data_name = "{0}-{1}.json".format(n, self.uuid)
         self.script_name = "{0}-{1}.py".format(n, self.uuid)
         
