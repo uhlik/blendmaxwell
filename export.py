@@ -32,7 +32,7 @@ from mathutils import Matrix, Vector
 from bpy_extras import io_utils
 import bmesh
 
-from .log import log, LogStyles
+from .log import log, clear_log, LogStyles
 from . import utils
 from . import maths
 from . import system
@@ -66,6 +66,7 @@ class MXSExportLegacy():
         self._export()
     
     def _prepare(self):
+        clear_log()
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         if(os.path.exists(self.mxs_path)):
             log("mxs file exists at {0}, will be overwritten..".format(self.mxs_path), 1, LogStyles.WARNING, )
@@ -3607,6 +3608,7 @@ class MXSExport():
         self.export()
     
     def prepare(self):
+        clear_log()
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         if(os.path.exists(self.mxs_path)):
             log("mxs file exists at {0}, will be overwritten..".format(self.mxs_path), 1, LogStyles.WARNING, )
