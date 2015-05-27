@@ -218,12 +218,12 @@ class MXSWriter():
         # t.normalMappingFullRangeBlue = 0
         t.useAlpha = d['alpha_only']
         t.typeInterpolation = d['interpolation']
-        t.saturation = d['saturation']
-        t.contrast = d['contrast']
-        t.brightness = d['brightness']
-        t.hue = d['hue']
-        t.clampMin = d['rgb_clamp'][0]
-        t.clampMax = d['rgb_clamp'][1]
+        t.saturation = d['saturation'] / 100
+        t.contrast = d['contrast'] / 100
+        t.brightness = d['brightness'] / 100
+        t.hue = d['hue'] / 180
+        t.clampMin = d['rgb_clamp'][0] / 255
+        t.clampMax = d['rgb_clamp'][1] / 255
         t.useGlobalMap = d['use_override_map']
         # t.cosA = 1.000000
         # t.sinA = 0.000000
@@ -241,11 +241,10 @@ class MXSWriter():
         
         t.uvwChannelID = d['channel']
         
-        t.brightness = d['brightness']
-        
-        t.contrast = d['contrast']
-        t.saturation = d['saturation']
-        t.hue = d['hue']
+        t.brightness = d['brightness'] / 100
+        t.contrast = d['contrast'] / 100
+        t.saturation = d['saturation'] / 100
+        t.hue = d['hue'] / 180
         
         t.useGlobalMap = d['use_override_map']
         t.useAbsoluteUnits = d['tile_method_units']
@@ -266,8 +265,8 @@ class MXSWriter():
             t.typeInterpolation = 1
         else:
             t.typeInterpolation = 0
-        t.clampMin = d['rgb_clamp'][0]
-        t.clampMax = d['rgb_clamp'][1]
+        t.clampMin = d['rgb_clamp'][0] / 255
+        t.clampMax = d['rgb_clamp'][1] / 255
         
         vec = Cvector2D()
         vec.assign(d['repeat'][0], d['repeat'][1])
@@ -1871,12 +1870,12 @@ class ExtMXMWriter():
         # t.normalMappingFullRangeBlue = 0
         t.useAlpha = d['alpha_only']
         t.typeInterpolation = d['interpolation']
-        t.saturation = d['saturation']
-        t.contrast = d['contrast']
-        t.brightness = d['brightness']
-        t.hue = d['hue']
-        t.clampMin = d['rgb_clamp'][0]
-        t.clampMax = d['rgb_clamp'][1]
+        t.saturation = d['saturation'] / 100
+        t.contrast = d['contrast'] / 100
+        t.brightness = d['brightness'] / 100
+        t.hue = d['hue'] / 180
+        t.clampMin = d['rgb_clamp'][0] / 255
+        t.clampMax = d['rgb_clamp'][1] / 255
         t.useGlobalMap = d['use_override_map']
         # t.cosA = 1.000000
         # t.sinA = 0.000000
@@ -1892,11 +1891,10 @@ class ExtMXMWriter():
         
         t.uvwChannelID = d['channel']
         
-        t.brightness = d['brightness']
-        
-        t.contrast = d['contrast']
-        t.saturation = d['saturation']
-        t.hue = d['hue']
+        t.brightness = d['brightness'] / 100
+        t.contrast = d['contrast'] / 100
+        t.saturation = d['saturation'] / 100
+        t.hue = d['hue'] / 180
         
         t.useGlobalMap = d['use_override_map']
         t.useAbsoluteUnits = d['tile_method_units']
@@ -1917,8 +1915,8 @@ class ExtMXMWriter():
             t.typeInterpolation = 1
         else:
             t.typeInterpolation = 0
-        t.clampMin = d['rgb_clamp'][0]
-        t.clampMax = d['rgb_clamp'][1]
+        t.clampMin = d['rgb_clamp'][0] / 255
+        t.clampMax = d['rgb_clamp'][1] / 255
         
         vec = Cvector2D()
         vec.assign(d['repeat'][0], d['repeat'][1])

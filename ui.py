@@ -1915,7 +1915,7 @@ class TexturePanel(TextureButtonsPanel, Panel):
         r.prop(m, 'interpolation')
         
         sub = l.column()
-        sub.label("Nothing to see here, move along..", icon='ERROR', )
+        # sub.label("Nothing to see here, move along..", icon='ERROR', )
         sub.prop(m, 'brightness')
         sub.prop(m, 'contrast')
         sub.prop(m, 'saturation')
@@ -1924,7 +1924,7 @@ class TexturePanel(TextureButtonsPanel, Panel):
         r = sub.row()
         r.prop(m, 'clamp')
         
-        sub.enabled = False
+        # sub.enabled = False
 
 
 class TextureProceduralPanel(TextureButtonsPanel, Panel):
