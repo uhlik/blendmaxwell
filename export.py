@@ -1604,7 +1604,7 @@ class MXSExportLegacy():
                  'hue': 0.0,
                  'rgb_clamp': [0.0, 255.0], }
             if(tex is not None):
-                d['path'] = bpy.path.abspath(tex.image.filepath),
+                d['path'] = bpy.path.abspath(tex.image.filepath)
                 return d
             return None
         
@@ -4502,7 +4502,7 @@ class MXSExport():
              'hue': 0.0,
              'rgb_clamp': [0.0, 255.0], }
         if(tex is not None):
-            d['path'] = bpy.path.abspath(tex.image.filepath),
+            d['path'] = bpy.path.abspath(tex.image.filepath)
             return d
         return None
         
