@@ -1419,7 +1419,46 @@ class MXSExportLegacy():
         # triangulate in advance :)
         bm = bmesh.new()
         bm.from_mesh(me)
+        
+        subd = ob.maxwell_subdivision_extension
+        # do this only when subdivision is enabled and set to catmull-clark scheme
+        if(subd.enabled and subd.scheme == '0'):
+            # make list if vertex indices lists, only for quads, for other polygons put empty list
+            fvixs = [[v.index for v in f.verts] if len(f.verts) == 4 else [] for f in bm.faces]
+        
         bmesh.ops.triangulate(bm, faces=bm.faces)
+        
+        # list of lists of triangle indices which were quads before
+        quad_pairs = None
+        # do this only when subdivision is enabled and set to catmull-clark scheme
+        if(subd.enabled and subd.scheme == '0'):
+            quadix = []
+            for f in bm.faces:
+                vixs = [v.index for v in f.verts]
+                for qi, q in enumerate(fvixs):
+                    c = 0
+                    for i in q:
+                        if(i in vixs):
+                            c += 1
+                        if(c == 3):
+                            # has 3 verts from ex-quad, is one of the pair
+                            quadix.append([qi, f.index])
+                            break
+            # make pairs
+            quadd = {}
+            for qi, fi in quadix:
+                if(str(qi) not in quadd):
+                    quadd[str(qi)] = [fi, ]
+                else:
+                    quadd[str(qi)].append(fi)
+            # quad pairs dict to list
+            quad_pairs = []
+            for k, v in quadd.items():
+                if(len(v) > 2):
+                    log("{}: WARNING: {}: triangulation result is non-manifold, Catmull-Clark subdivision will not work".format(self.__class__.__name__, ob.name), 3, LogStyles.WARNING, )
+                    v = v[:2]
+                quad_pairs.append(v)
+        
         bm.to_mesh(me)
         bm.free()
         
@@ -1610,7 +1649,7 @@ class MXSExportLegacy():
         
         sd = ob.maxwell_subdivision_extension
         if(sd.enabled):
-            d['subdiv_ext'] = [int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), ]
+            d['subdiv_ext'] = [int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), quad_pairs, ]
         else:
             d['subdiv_ext'] = None
         
@@ -4689,7 +4728,46 @@ class MXSExport():
         # triangulate in advance :)
         bm = bmesh.new()
         bm.from_mesh(me)
+        
+        subd = ob.maxwell_subdivision_extension
+        # do this only when subdivision is enabled and set to catmull-clark scheme
+        if(subd.enabled and subd.scheme == '0'):
+            # make list if vertex indices lists, only for quads, for other polygons put empty list
+            fvixs = [[v.index for v in f.verts] if len(f.verts) == 4 else [] for f in bm.faces]
+        
         bmesh.ops.triangulate(bm, faces=bm.faces)
+        
+        # list of lists of triangle indices which were quads before
+        quad_pairs = None
+        # do this only when subdivision is enabled and set to catmull-clark scheme
+        if(subd.enabled and subd.scheme == '0'):
+            quadix = []
+            for f in bm.faces:
+                vixs = [v.index for v in f.verts]
+                for qi, q in enumerate(fvixs):
+                    c = 0
+                    for i in q:
+                        if(i in vixs):
+                            c += 1
+                        if(c == 3):
+                            # has 3 verts from ex-quad, is one of the pair
+                            quadix.append([qi, f.index])
+                            break
+            # make pairs
+            quadd = {}
+            for qi, fi in quadix:
+                if(str(qi) not in quadd):
+                    quadd[str(qi)] = [fi, ]
+                else:
+                    quadd[str(qi)].append(fi)
+            # quad pairs dict to list
+            quad_pairs = []
+            for k, v in quadd.items():
+                if(len(v) > 2):
+                    log("{}: WARNING: {}: triangulation result is non-manifold, Catmull-Clark subdivision will not work".format(self.__class__.__name__, ob.name), 3, LogStyles.WARNING, )
+                    v = v[:2]
+                quad_pairs.append(v)
+        
         bm.to_mesh(me)
         bm.free()
         
@@ -4784,7 +4862,7 @@ class MXSExport():
                                 gr['objects'].append(name)
                                 break
         
-        self.object_extensions(o)
+        self.object_extensions(o, quad_pairs)
     
     def instance(self, o, iname=None, ):
         log("{0}".format(o['object'].name), 2)
@@ -5639,13 +5717,13 @@ class MXSExport():
                  'display_max': int(m.display_max), }
             self.mxs.mod_cloner(**d)
     
-    def object_extensions(self, o, ):
+    def object_extensions(self, o, qs, ):
         ob = o['object']
         
         sd = ob.maxwell_subdivision_extension
         if(sd.enabled):
             log("{0}".format("Subdivision"), 3)
-            self.mxs.mod_subdivision(ob.name, int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), )
+            self.mxs.mod_subdivision(ob.name, int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), qs, )
         
         sc = ob.maxwell_scatter_extension
         if(sc.enabled):

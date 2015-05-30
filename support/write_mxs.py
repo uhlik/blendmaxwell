@@ -754,6 +754,11 @@ def mesh(d, s):
         e = d['subdiv_ext']
         p.setUInt('Subdivision Level', e[0])
         p.setUInt('Subdivision Scheme', e[1])
+        
+        if(e[1] == 0 and e[5] is not None):
+            for t, q in e[5]:
+                o.setTriangleQuadBuddy(t, q)
+        
         p.setUInt('Interpolation', e[2])
         p.setFloat('Crease', e[3])
         p.setFloat('Smooth Angle', e[4])

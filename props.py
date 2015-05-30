@@ -982,10 +982,7 @@ class ExtScatterProperties(PropertyGroup):
 class ExtSubdivisionProperties(PropertyGroup):
     enabled = BoolProperty(name="Subdivision Modifier", default=False, )
     level = IntProperty(name="Subdivision Level", default=2, min=0, max=99, )
-    # TODO check if Maxwell can load quad based geometry, if not, Catmull-Clark is pretty useless
-    # scheme = EnumProperty(name="Subdivision Scheme", items=[('0', "Catmull-Clark", ""), ('1', "Loop", "")], default='0', )
-    # TODO therefore setting default to Loop Subdivision for now..
-    scheme = EnumProperty(name="Subdivision Scheme", items=[('0', "Catmull-Clark", ""), ('1', "Loop", "")], default='1', )
+    scheme = EnumProperty(name="Subdivision Scheme", items=[('0', "Catmull-Clark", ""), ('1', "Loop", "")], default='0', )
     interpolation = EnumProperty(name="UV Interpolation", items=[('0', "None", ""), ('1', "Edges", ""), ('2', "Edges And Corners", ""), ('3', "Sharp", "")], default='2', )
     crease = FloatProperty(name="Edge Crease (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     smooth = FloatProperty(name="Smooth Angle", default=math.radians(90.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )

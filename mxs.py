@@ -1552,7 +1552,7 @@ class MXSWriter():
         o.applyGeometryModifierExtension(p)
         return o
     
-    def mod_subdivision(self, object_name, level=2, scheme=0, interpolation=2, crease=0.0, smooth_angle=math.radians(90.0), ):
+    def mod_subdivision(self, object_name, level=2, scheme=0, interpolation=2, crease=0.0, smooth_angle=math.radians(90.0), quads=None, ):
         """Create subdivision object modifier extension.
         object_name     string
         level           int
@@ -1560,6 +1560,7 @@ class MXSWriter():
         interpolation   int     (0, "None"), (1, "Edges"), (2, "Edges And Corners"), (3, "Sharp")
         crease          float
         smooth          float
+        quads           [[int, int], ...] or None
         """
         s = self.mxs
         e = self.mgr.createDefaultGeometryModifierExtension('SubdivisionModifier')
@@ -1572,6 +1573,11 @@ class MXSWriter():
         p.setFloat('Smooth Angle', smooth_angle)
         
         o = s.getObject(object_name)
+        
+        if(scheme == 0 and quads is not None):
+            for t, q in quads:
+                o.setTriangleQuadBuddy(t, q)
+        
         o.applyGeometryModifierExtension(p)
         return o
     
