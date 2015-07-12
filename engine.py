@@ -251,7 +251,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             c = xr * yr
             b = [[0.0, 0.0, 0.0, 1.0]] * c
             r = self.begin_result(0, 0, xr, yr)
-            l = r.layers[0]
+            l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
             l.rect = b
             self.end_result(r)
         
@@ -316,7 +316,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                     # TODO sometime in future slice array to fit when frame is smaller than image
                     
                     r = self.begin_result(x, y, w, h)
-                    l = r.layers[0]
+                    l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
                     l.rect = a.tolist()
                     self.end_result(r)
                 else:
@@ -325,7 +325,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                     c = xr * yr
                     b = [[0.0, 0.0, 0.0, 1.0]] * c
                     r = self.begin_result(0, 0, xr, yr)
-                    l = r.layers[0]
+                    l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
                     l.rect = b
                     self.end_result(r)
             else:

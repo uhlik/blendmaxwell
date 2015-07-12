@@ -5,7 +5,7 @@
 ### features:
 
 * Works on Mac OS X, Linux and Windows
-* Compatible with Maxwell Render 3.1 and Blender 2.74
+* Compatible with Maxwell Render 3.1 and Blender 2.74+
 * UI as close to Maxwell Studio as possible
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
