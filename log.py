@@ -24,6 +24,7 @@ import platform
 LOG_FILE_PATH = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log.txt'))
 LOG_CONVERT = re.compile("\033\[[0-9;]+m")
 
+
 def clear_log():
     with open(LOG_FILE_PATH, mode='w', encoding='utf-8', ):
         # clear log file..
