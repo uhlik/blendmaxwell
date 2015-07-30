@@ -615,8 +615,10 @@ class SkySettingsPanel(WorldButtonsPanel, Panel):
         sub.prop(m, 'sky_type')
         if(m.sky_type == 'CONSTANT'):
             sub.prop(m, 'dome_intensity')
-            sub.prop(m, 'dome_zenith')
-            sub.prop(m, 'dome_horizon')
+            r = sub.row()
+            r.prop(m, 'dome_zenith')
+            r = sub.row()
+            r.prop(m, 'dome_horizon')
             sub.prop(m, 'dome_mid_point')
         else:
             sub.prop(m, 'sky_use_preset')

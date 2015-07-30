@@ -331,8 +331,8 @@ class EnvironmentProperties(PropertyGroup):
     sky_asymmetry = FloatProperty(name="Assymetry", default=0.7, min=-0.999, max=0.999, precision=3, )
     
     dome_intensity = FloatProperty(name="Intensity (cd/m)", default=10000.0, min=0.0, max=1000000.0, precision=1, )
-    dome_zenith = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
-    dome_horizon = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    dome_zenith = FloatVectorProperty(name="Zenith Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    dome_horizon = FloatVectorProperty(name="Horizon Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     dome_mid_point = FloatProperty(name="Mid Point", default=math.radians(45.000), min=math.radians(0.000), max=math.radians(90.000), precision=1, subtype='ANGLE', )
     
     sun_lamp_priority = BoolProperty(name="Sun Lamp Priority", default=False, description="When enabled, existing sun lamp will be used for direction", )
