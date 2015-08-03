@@ -25,11 +25,13 @@ from bpy.props import BoolProperty, StringProperty, EnumProperty
 from bpy.types import Operator
 from mathutils import Vector
 from bl_operators.presets import AddPresetBase
-from bpy_extras.io_utils import ImportHelper
+from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 from . import maths
 from . import system
 from . import import_mxs
+from . import export
+from .log import LOG_FILE_PATH
 
 
 class ImportMXS(Operator, ImportHelper):
@@ -95,8 +97,70 @@ class ImportMXS(Operator, ImportHelper):
         bpy.types.INFO_MT_file_import.remove(menu_func_import)
 
 
+class ExportMXS(Operator, ExportHelper):
+    bl_idname = "maxwell_render.export_mxs"
+    bl_label = 'Export MXS'
+    bl_description = 'Export Maxwell Render Scene (.MXS)'
+    
+    filename_ext = ".mxs"
+    filter_glob = StringProperty(default="*.mxs", options={'HIDDEN'}, )
+    check_extension = True
+    
+    open_with = EnumProperty(name="Open With", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "None", "")], default='STUDIO', description="After export, open in ...", )
+    open_log = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
+    use_instances = BoolProperty(name="Instances", description="Export multi-user meshes and dupliverts as instances.", default=True, )
+    keep_intermediates = BoolProperty(name="Keep Intermediates", description="Keep intermediate products", default=False, )
+    
+    def draw(self, context):
+        l = self.layout
+        
+        sub = l.column()
+        sub.prop(self, 'open_with')
+        sub.prop(self, 'open_log')
+        sub.prop(self, 'use_instances')
+        
+        if(system.PLATFORM == 'Darwin'):
+            sub.separator()
+            sub.prop(self, 'keep_intermediates')
+    
+    def execute(self, context):
+        p = self.filepath
+        if(system.PLATFORM == 'Darwin'):
+            d = {'context': bpy.context,
+                 'mxs_path': p,
+                 'use_instances': self.use_instances,
+                 'keep_intermediates': self.keep_intermediates, }
+            ex = export.MXSExportLegacy(**d)
+        elif(system.PLATFORM == 'Linux'):
+            ex = export.MXSExport(bpy.context, p, self.use_instances, )
+        elif(system.PLATFORM == 'Windows'):
+            ex = export.MXSExport(bpy.context, p, self.use_instances, )
+        else:
+            pass
+        
+        if(self.open_log):
+            system.open_file_in_default_application(LOG_FILE_PATH)
+        
+        if(ex is not None):
+            bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=self.open_with, instance_app=False, )
+        
+        return {'FINISHED'}
+    
+    @classmethod
+    def register(cls):
+        bpy.types.INFO_MT_file_export.append(menu_func_export)
+    
+    @classmethod
+    def unregister(cls):
+        bpy.types.INFO_MT_file_export.remove(menu_func_export)
+
+
 def menu_func_import(self, context):
     self.layout.operator(ImportMXS.bl_idname, text="Maxwell Render Scene (.mxs)")
+
+
+def menu_func_export(self, context):
+    self.layout.operator(ExportMXS.bl_idname, text="Maxwell Render Scene (.mxs)")
 
 
 class EnvironmentSetSun(Operator):
