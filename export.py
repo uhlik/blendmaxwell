@@ -1400,13 +1400,25 @@ class MXSExportLegacy():
     def _mesh_to_data(self, o):
         """Mesh to pymaxwell data."""
         ob = o['object']
+        exopts = self.context.scene.maxwell_render
         
+        extra_subdiv = False
         if(o['converted'] is True):
             # get to-mesh-conversion result, will be removed at the end..
             me = o['mesh']
         else:
             # or make new flattened mesh
+            if(exopts.export_use_subdivision):
+                if(len(ob.modifiers) > 0):
+                    lmod = ob.modifiers[-1]
+                    if(lmod.type == 'SUBSURF' and lmod.show_render and lmod.subdivision_type == 'CATMULL_CLARK'):
+                        extra_subdiv = True
+                        lmod.show_render = False
+            
             me = ob.to_mesh(self.context.scene, True, 'RENDER', )
+            
+            if(extra_subdiv):
+                lmod.show_render = True
         # mesh will be removed at the end of this..
         
         # rotate x -90
@@ -1422,7 +1434,7 @@ class MXSExportLegacy():
         
         subd = ob.maxwell_subdivision_extension
         # do this only when subdivision is enabled and set to catmull-clark scheme
-        if(subd.enabled and subd.scheme == '0'):
+        if((subd.enabled and subd.scheme == '0') or extra_subdiv):
             # make list if vertex indices lists, only for quads, for other polygons put empty list
             fvixs = [[v.index for v in f.verts] if len(f.verts) == 4 else [] for f in bm.faces]
         
@@ -1431,7 +1443,7 @@ class MXSExportLegacy():
         # list of lists of triangle indices which were quads before
         quad_pairs = None
         # do this only when subdivision is enabled and set to catmull-clark scheme
-        if(subd.enabled and subd.scheme == '0'):
+        if((subd.enabled and subd.scheme == '0') or extra_subdiv):
             quadix = []
             for f in bm.faces:
                 vixs = [v.index for v in f.verts]
@@ -1648,8 +1660,16 @@ class MXSExportLegacy():
             return None
         
         sd = ob.maxwell_subdivision_extension
-        if(sd.enabled):
-            d['subdiv_ext'] = [int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), quad_pairs, ]
+        if(sd.enabled or extra_subdiv):
+            if(extra_subdiv):
+                if(lmod.use_subsurf_uv):
+                    sub_uv = 2
+                else:
+                    sub_uv = 0
+                d['subdiv_ext'] = [lmod.render_levels, 0, sub_uv, 0.0, 90.0, quad_pairs, ]
+            if(sd.enabled):
+                # manually added subdivision extension will override automatic one
+                d['subdiv_ext'] = [int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), quad_pairs, ]
         else:
             d['subdiv_ext'] = None
         
@@ -4709,13 +4729,25 @@ class MXSExport():
     def mesh(self, o, mname=None, ):
         ob = o['object']
         log("{0}".format(ob.name), 2)
+        exopts = self.context.scene.maxwell_render
         
+        extra_subdiv = False
         if(o['converted'] is True):
             # get to-mesh-conversion result, will be removed at the end..
             me = o['mesh']
         else:
             # or make new flattened mesh
+            if(exopts.export_use_subdivision):
+                if(len(ob.modifiers) > 0):
+                    lmod = ob.modifiers[-1]
+                    if(lmod.type == 'SUBSURF' and lmod.show_render and lmod.subdivision_type == 'CATMULL_CLARK'):
+                        extra_subdiv = True
+                        lmod.show_render = False
+            
             me = ob.to_mesh(self.context.scene, True, 'RENDER', )
+            
+            if(extra_subdiv):
+                lmod.show_render = True
         # mesh will be removed at the end of this..
         
         # rotate x -90
@@ -4731,7 +4763,7 @@ class MXSExport():
         
         subd = ob.maxwell_subdivision_extension
         # do this only when subdivision is enabled and set to catmull-clark scheme
-        if(subd.enabled and subd.scheme == '0'):
+        if((subd.enabled and subd.scheme == '0') or extra_subdiv):
             # make list if vertex indices lists, only for quads, for other polygons put empty list
             fvixs = [[v.index for v in f.verts] if len(f.verts) == 4 else [] for f in bm.faces]
         
@@ -4740,7 +4772,7 @@ class MXSExport():
         # list of lists of triangle indices which were quads before
         quad_pairs = None
         # do this only when subdivision is enabled and set to catmull-clark scheme
-        if(subd.enabled and subd.scheme == '0'):
+        if((subd.enabled and subd.scheme == '0') or extra_subdiv):
             quadix = []
             for f in bm.faces:
                 vixs = [v.index for v in f.verts]
@@ -4862,7 +4894,7 @@ class MXSExport():
                                 gr['objects'].append(name)
                                 break
         
-        self.object_extensions(o, quad_pairs)
+        self.object_extensions(o, quad_pairs, extra_subdiv)
     
     def instance(self, o, iname=None, ):
         log("{0}".format(o['object'].name), 2)
@@ -5717,13 +5749,21 @@ class MXSExport():
                  'display_max': int(m.display_max), }
             self.mxs.mod_cloner(**d)
     
-    def object_extensions(self, o, qs, ):
+    def object_extensions(self, o, qs, extra_subdiv, ):
         ob = o['object']
         
         sd = ob.maxwell_subdivision_extension
-        if(sd.enabled):
+        if(sd.enabled or extra_subdiv):
             log("{0}".format("Subdivision"), 3)
-            self.mxs.mod_subdivision(ob.name, int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), qs, )
+            if(extra_subdiv):
+                lmod = ob.modifiers[-1]
+                if(lmod.use_subsurf_uv):
+                    sub_uv = 2
+                else:
+                    sub_uv = 0
+                self.mxs.mod_subdivision(ob.name, lmod.render_levels, 0, sub_uv, 0.0, 90.0, qs, )
+            if(sd.enabled):
+                self.mxs.mod_subdivision(ob.name, int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), qs, )
         
         sc = ob.maxwell_scatter_extension
         if(sc.enabled):

@@ -84,15 +84,15 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         
         sub.label("Options:")
         r = sub.row()
-        c = r.column()
-        c.prop(m, 'export_use_instances')
-        c = r.column()
-        c.prop(m, 'export_keep_intermediates')
-        if(platform.system() != 'Darwin'):
-            c.enabled = False
+        r.prop(m, 'export_use_instances')
+        r.prop(m, 'export_use_subdivision')
         r = sub.row()
-        r.prop(m, 'export_log_open', )
-        r.prop(m, 'export_protect_mxs', )
+        r.prop(m, 'export_log_open')
+        r.prop(m, 'export_protect_mxs')
+        r = sub.row()
+        r.prop(m, 'export_keep_intermediates')
+        if(platform.system() != 'Darwin'):
+            r.enabled = False
 
 
 class ExportSpecialsPanel(RenderButtonsPanel, Panel):
