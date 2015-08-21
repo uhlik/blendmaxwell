@@ -22,6 +22,7 @@
 * Environment parameters (Sun can be optionally set by Sun lamp)
 * Object parameters
 * Maxwell Extensions: Particles, Grass, Hair, Scatter, Subdivision, Sea, Cloner, Volumetrics
+* Export Subdivision modifiers if their type is Catmull-Clark and they are at the end of modifier stack on regular mesh objects (optional)
 * Wireframe scene export (all edges are converted to instanced cylinder of user defined radius)
 * Scene import (objects, emitters, cameras and sun selectively)
 
@@ -51,6 +52,7 @@
 
 changelog:
 
+* 0.2.4 added: automatic subdivision modifiers export to speed things up
 * 0.2.3 added: mxs export menu operator, quad export when using subdivision modifier, 2.75 compatibility
 * 0.2.2 added: mxs import (objects, emitters, cameras and sun selectively), save extension materials to mxm, embed particles in mxs (saving of external .bin files is now optional)
 * 0.2.1 added: extension materials creation and editing inside blender
