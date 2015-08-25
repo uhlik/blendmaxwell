@@ -5140,14 +5140,15 @@ class MXSExport():
                     sun['sun_dir_z'] = v.z
         
         # and change this, just in case..
-        import datetime
-        n = datetime.datetime.now()
-        if(sun['sun_date'] == "DD.MM.YYYY"):
-            mx.sun_date = n.strftime('%d.%m.%Y')
-            sun['sun_date'] = mx.sun_date
-        if(sun['sun_time'] == "HH:MM"):
-            mx.sun_time = n.strftime('%H:%M')
-            sun['sun_time'] = mx.sun_time
+        if(sun is not None):
+            import datetime
+            n = datetime.datetime.now()
+            if(sun['sun_date'] == "DD.MM.YYYY"):
+                mx.sun_date = n.strftime('%d.%m.%Y')
+                sun['sun_date'] = mx.sun_date
+            if(sun['sun_time'] == "HH:MM"):
+                mx.sun_time = n.strftime('%H:%M')
+                sun['sun_time'] = mx.sun_time
         
         ibl = None
         if(env_type == 'IMAGE_BASED'):
