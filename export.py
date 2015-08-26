@@ -1294,11 +1294,12 @@ class MXSExportLegacy():
              [m[0][1] * -1, m[2][1] * -1, m[1][1]], ]
         p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
         
-        # ensure positive zeros
         for i in range(len(b)):
             for j in range(len(b[i])):
-                print(i, j, '>>', b[i][j])
-                b[i][j] += 0.0
+                # consider 6 decimals enough..
+                # and ensure positive zeros, add 0.0 to switch negative zeros to positive
+                n = round(b[i][j], 6) + 0.0
+                b[i][j] = n
         
         return (b, p, )
     
