@@ -1197,11 +1197,109 @@ class MXSExportLegacy():
     
     def _matrix_to_base_and_pivot(self, m):
         """Convert Matrix to Base and Pivot"""
-        b = ((m[0][3], m[2][3], m[1][3] * -1),
-             (m[0][0], m[2][0], m[1][0] * -1),
-             (m[0][2], m[2][2], m[1][2] * -1),
-             (m[0][1] * -1, m[2][1] * -1, m[1][1]), )
+        # b = ((m[0][3], m[2][3], m[1][3] * -1),
+        #      (m[0][0], m[2][0], m[1][0] * -1),
+        #      (m[0][2], m[2][2], m[1][2] * -1),
+        #      (m[0][1] * -1, m[2][1] * -1, m[1][1]), )
+        # p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        
+        # global_scale = 1.0
+        # # axis_forward = '-Z'
+        # # axis_up = 'Y'
+        # axis_forward = 'Z'
+        # axis_up = '-Y'
+        # # global_matrix = (Matrix.Scale(global_scale, 4) * io_utils.axis_conversion(to_forward=axis_forward, to_up=axis_up, ).to_4x4())
+        # global_matrix = (Matrix.Scale(global_scale, 3) * io_utils.axis_conversion(to_forward=axis_forward, to_up=axis_up, ))
+        # # mm = m * global_matrix
+        #
+        # # x = -0.170485, y = 0.173243, z = -0.089590
+        # # x = -49.777015, y = 18.984036, z = 22.958849
+        # # x = 0.687759, y = 0.687759, z = 0.687759
+        # #
+        # # origin: x = -0.170485, y = 0.173243, z = -0.089590
+        #
+        # # xAxis:  x = 0.598833, y = 0.253682, z = -0.223731
+        # # yAxis:  x = -0.330537, y = 0.342314, z = -0.496567
+        # # zAxis:  x = -0.071804, y = 0.539888, z = 0.419973
+        # #
+        # # origin: x = 0.000000, y = 0.000000, z = 0.000000
+        # # xAxis:  x = 1.000000, y = 0.000000, z = 0.000000
+        # # yAxis:  x = 0.000000, y = 1.000000, z = 0.000000
+        # # zAxis:  x = 0.000000, y = 0.000000, z = 1.000000
+        #
+        # l, r, s = m.decompose()
+        # origin = Vector(l * global_matrix).to_tuple()
+        # scale = Vector(s * global_matrix).to_tuple()
+        #
+        # mrot = r.to_matrix() * global_matrix
+        # ms = Matrix(((scale[0], 0.0, 0.0), (0.0, scale[1], 0.0), (0.0, 0.0, scale[2])))
+        # rotation = mrot * ms
+        #
+        #
+        # a = Matrix(((0.598833, 0.253682, -0.223731), (-0.330537, 0.342314, -0.496567), (-0.071804, 0.539888, 0.419973), ))
+        # aa = a * global_matrix.inverted()
+        # aa.transpose()
+        # print(aa)
+        # print(rotation)
+        
+        # # repr
+        # Matrix(((0.5988335013389587, -0.3305366337299347, -0.07180428504943848, -0.1704845130443573),
+        #         (0.22373110055923462, 0.49656692147254944, -0.4199732840061188, 0.08959018439054489),
+        #         (0.25368228554725647, 0.3423137068748474, 0.539887547492981, 0.17324262857437134),
+        #         (0.0, 0.0, 0.0, 1.0)))
+        # # matrix
+        # <Matrix 4x4 (0.5988, -0.3305, -0.0718, -0.1705)
+        #             (0.2237,  0.4966, -0.4200,  0.0896)
+        #             (0.2537,  0.3423,  0.5399,  0.1732)
+        #             (0.0000,  0.0000,  0.0000,  1.0000)>
+        # # base
+        # origin: x = -0.170485, y = 0.173243, z = -0.089590
+        # xAxis:  x = 0.598834, y = 0.253682, z = -0.223731
+        # yAxis:  x = -0.071804, y = 0.539888, z = 0.419973
+        # zAxis:  x = 0.330537, y = -0.342314, z = 0.496567
+        # # pivot
+        # origin: x = 0.000000, y = 0.000000, z = -0.000000
+        # xAxis:  x = 1.000000, y = 0.000000, z = -0.000000
+        # yAxis:  x = 0.000000, y = 1.000000, z = -0.000000
+        # zAxis:  x = -0.000000, y = -0.000000, z = 1.000000
+        
+        # bl_parent = bl_object.parent
+        #
+        # matrix = bl_object.matrix_world
+        # if bl_parent is None:
+        #     matrix *= exporter.scale
+        # else:
+        #     matrix = bl_parent.matrix_world.inverted() * matrix
+        #     parent = exporter.objects[bl_parent]
+        #     if parent.flags & 0x3:
+        #         if parent.flags & 0x2:
+        #             parent = parent.parent
+        #         self.flags |= 0x2
+        #     self.parent = parent
+        #
+        # # cached local (related to parent) matrix,
+        # # matrix_local not suitable its has own logic
+        # self.matrix = matrix  # bl_object.matrix_local.copy()
+        
+        # o = [m[0][3], m[2][3], m[1][3] * -1, ]
+        # bx = [m[0][0], m[2][0], m[1][0] * -1, ]
+        # by = [m[0][2], m[2][2], m[1][2] * -1, ]
+        # bz = [m[0][1] * -1, m[2][1] * -1, m[1][1], ]
+        # b = [o, bx, by, bz]
+        # p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        
+        b = [[m[0][3], m[2][3], m[1][3] * -1],
+             [m[0][0], m[2][0], m[1][0] * -1],
+             [m[0][2], m[2][2], m[1][2] * -1],
+             [m[0][1] * -1, m[2][1] * -1, m[1][1]], ]
         p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        
+        # ensure positive zeros
+        for i in range(len(b)):
+            for j in range(len(b[i])):
+                print(i, j, '>>', b[i][j])
+                b[i][j] += 0.0
+        
         return (b, p, )
     
     def _color_to_rgb8(self, c):
@@ -1421,9 +1519,17 @@ class MXSExportLegacy():
                 lmod.show_render = True
         # mesh will be removed at the end of this..
         
-        # rotate x -90
-        mr90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
-        me.transform(mr90)
+        # # rotate x -90
+        # mr90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+        # me.transform(mr90)
+        
+        global_scale = 1.0
+        axis_forward = '-Z'
+        axis_up = 'Y'
+        global_matrix = (Matrix.Scale(global_scale, 4) * io_utils.axis_conversion(to_forward=axis_forward, to_up=axis_up, ).to_4x4())
+        me.transform(global_matrix)
+        # print(mr90)
+        # print(global_matrix)
         
         # here, in triangulating, i experienced crash from not so well mesh, validating before prevents it..
         me.validate()
