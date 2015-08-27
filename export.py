@@ -1288,18 +1288,35 @@ class MXSExportLegacy():
         # b = [o, bx, by, bz]
         # p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
         
+        hacks = self.context.scene.maxwell_render.export_use_transformation_hacks
+        if(hacks):
+            # change all -180 degrees rotations to 180
+            l, r, s = m.decompose()
+            e = r.to_euler()
+            if(round(math.degrees(e.x)) == -180.0):
+                e.x = math.radians(180.0)
+            if(round(math.degrees(e.y)) == -180.0):
+                e.y = math.radians(180.0)
+            if(round(math.degrees(e.z)) == -180.0):
+                e.z = math.radians(180.0)
+            lm = Matrix.Translation(l).to_4x4()
+            rm = e.to_matrix().to_4x4()
+            sm = Matrix(((s.x, 0.0, 0.0, 0.0), (0.0, s.y, 0.0, 0.0), (0.0, 0.0, s.z, 0.0), (0.0, 0.0, 0.0, 1.0)))
+            m = lm * rm * sm
+        
         b = [[m[0][3], m[2][3], m[1][3] * -1],
              [m[0][0], m[2][0], m[1][0] * -1],
              [m[0][2], m[2][2], m[1][2] * -1],
              [m[0][1] * -1, m[2][1] * -1, m[1][1]], ]
         p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
         
-        for i in range(len(b)):
-            for j in range(len(b[i])):
-                # consider 6 decimals enough..
-                # and ensure positive zeros, add 0.0 to switch negative zeros to positive
-                n = round(b[i][j], 6) + 0.0
-                b[i][j] = n
+        if(hacks):
+            for i in range(len(b)):
+                for j in range(len(b[i])):
+                    # consider 6 decimals enough..
+                    # and ensure positive zeros, add 0.0 to all, negative zeros will change to positive
+                    n = round(b[i][j], 6) + 0.0
+                    b[i][j] = n
         
         return (b, p, )
     
@@ -4419,11 +4436,43 @@ class MXSExport():
         return h
     
     def matrix_to_base_and_pivot(self, m, ):
-        b = ((m[0][3], m[2][3], m[1][3] * -1),
-             (m[0][0], m[2][0], m[1][0] * -1),
-             (m[0][2], m[2][2], m[1][2] * -1),
-             (m[0][1] * -1, m[2][1] * -1, m[1][1]), )
+        # b = ((m[0][3], m[2][3], m[1][3] * -1),
+        #      (m[0][0], m[2][0], m[1][0] * -1),
+        #      (m[0][2], m[2][2], m[1][2] * -1),
+        #      (m[0][1] * -1, m[2][1] * -1, m[1][1]), )
+        # p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        # return (b, p, )
+        
+        hacks = self.context.scene.maxwell_render.export_use_transformation_hacks
+        if(hacks):
+            # change all -180 degrees rotations to 180
+            l, r, s = m.decompose()
+            e = r.to_euler()
+            if(round(math.degrees(e.x)) == -180.0):
+                e.x = math.radians(180.0)
+            if(round(math.degrees(e.y)) == -180.0):
+                e.y = math.radians(180.0)
+            if(round(math.degrees(e.z)) == -180.0):
+                e.z = math.radians(180.0)
+            lm = Matrix.Translation(l).to_4x4()
+            rm = e.to_matrix().to_4x4()
+            sm = Matrix(((s.x, 0.0, 0.0, 0.0), (0.0, s.y, 0.0, 0.0), (0.0, 0.0, s.z, 0.0), (0.0, 0.0, 0.0, 1.0)))
+            m = lm * rm * sm
+        
+        b = [[m[0][3], m[2][3], m[1][3] * -1],
+             [m[0][0], m[2][0], m[1][0] * -1],
+             [m[0][2], m[2][2], m[1][2] * -1],
+             [m[0][1] * -1, m[2][1] * -1, m[1][1]], ]
         p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        
+        if(hacks):
+            for i in range(len(b)):
+                for j in range(len(b[i])):
+                    # consider 6 decimals enough..
+                    # and ensure positive zeros, add 0.0 to all, negative zeros will change to positive
+                    n = round(b[i][j], 6) + 0.0
+                    b[i][j] = n
+        
         return (b, p, )
     
     def get_object_props(self, o, ):

@@ -87,12 +87,14 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         r.prop(m, 'export_use_instances')
         r.prop(m, 'export_use_subdivision')
         r = sub.row()
-        r.prop(m, 'export_log_open')
+        r.prop(m, 'export_use_transformation_hacks')
         r.prop(m, 'export_protect_mxs')
         r = sub.row()
-        r.prop(m, 'export_keep_intermediates')
+        r.prop(m, 'export_log_open')
+        c = r.column()
+        c.prop(m, 'export_keep_intermediates')
         if(platform.system() != 'Darwin'):
-            r.enabled = False
+            c.enabled = False
 
 
 class ExportSpecialsPanel(RenderButtonsPanel, Panel):
