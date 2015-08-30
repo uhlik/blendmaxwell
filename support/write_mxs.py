@@ -602,6 +602,14 @@ def base_and_pivot(o, d):
     pp.yAxis = Cvector(*p[2])
     pp.zAxis = Cvector(*p[3])
     o.setBaseAndPivot(bb, pp)
+    l = d['location']
+    r = d['rotation']
+    s = d['scale']
+    o.setPivotPosition(Cvector(*l))
+    o.setPivotRotation(Cvector(*r))
+    o.setPosition(Cvector(*l))
+    o.setRotation(Cvector(*r))
+    o.setScale(Cvector(*s))
 
 
 def object_props(o, d):

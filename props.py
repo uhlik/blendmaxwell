@@ -272,8 +272,6 @@ class SceneProperties(PropertyGroup):
     export_keep_intermediates = BoolProperty(name="Keep Intermediates", default=False, description="Do not remove intermediate files used for scene export (usable only for debugging purposes)", )
     # export_auto_open = BoolProperty(name="Open In Studio", description="", default=True, )
     
-    export_use_transformation_hacks = BoolProperty(name="Use Transformation Hacks", default=True, description="Try to fix transformation errors in Studio", )
-    
     export_open_with = EnumProperty(name="Open With", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "None", "")], default='STUDIO', description="After export, open in ...", )
     instance_app = BoolProperty(name="Open a new instance of application", default=False, description="Open a new instance of the application even if one is already running", )
     

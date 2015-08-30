@@ -1196,129 +1196,49 @@ class MXSExportLegacy():
             # print()
     
     def _matrix_to_base_and_pivot(self, m):
-        """Convert Matrix to Base and Pivot"""
-        # b = ((m[0][3], m[2][3], m[1][3] * -1),
-        #      (m[0][0], m[2][0], m[1][0] * -1),
-        #      (m[0][2], m[2][2], m[1][2] * -1),
-        #      (m[0][1] * -1, m[2][1] * -1, m[1][1]), )
-        # p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        """Convert Matrix to Base and Pivot and Position, Rotation and Scale for Studio"""
+        cm = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).to_4x4()
+        mm = m.copy()
         
-        # global_scale = 1.0
-        # # axis_forward = '-Z'
-        # # axis_up = 'Y'
-        # axis_forward = 'Z'
-        # axis_up = '-Y'
-        # # global_matrix = (Matrix.Scale(global_scale, 4) * io_utils.axis_conversion(to_forward=axis_forward, to_up=axis_up, ).to_4x4())
-        # global_matrix = (Matrix.Scale(global_scale, 3) * io_utils.axis_conversion(to_forward=axis_forward, to_up=axis_up, ))
-        # # mm = m * global_matrix
-        #
-        # # x = -0.170485, y = 0.173243, z = -0.089590
-        # # x = -49.777015, y = 18.984036, z = 22.958849
-        # # x = 0.687759, y = 0.687759, z = 0.687759
-        # #
-        # # origin: x = -0.170485, y = 0.173243, z = -0.089590
-        #
-        # # xAxis:  x = 0.598833, y = 0.253682, z = -0.223731
-        # # yAxis:  x = -0.330537, y = 0.342314, z = -0.496567
-        # # zAxis:  x = -0.071804, y = 0.539888, z = 0.419973
-        # #
-        # # origin: x = 0.000000, y = 0.000000, z = 0.000000
-        # # xAxis:  x = 1.000000, y = 0.000000, z = 0.000000
-        # # yAxis:  x = 0.000000, y = 1.000000, z = 0.000000
-        # # zAxis:  x = 0.000000, y = 0.000000, z = 1.000000
-        #
-        # l, r, s = m.decompose()
-        # origin = Vector(l * global_matrix).to_tuple()
-        # scale = Vector(s * global_matrix).to_tuple()
-        #
-        # mrot = r.to_matrix() * global_matrix
-        # ms = Matrix(((scale[0], 0.0, 0.0), (0.0, scale[1], 0.0), (0.0, 0.0, scale[2])))
-        # rotation = mrot * ms
-        #
-        #
-        # a = Matrix(((0.598833, 0.253682, -0.223731), (-0.330537, 0.342314, -0.496567), (-0.071804, 0.539888, 0.419973), ))
-        # aa = a * global_matrix.inverted()
-        # aa.transpose()
-        # print(aa)
-        # print(rotation)
+        # # i've rotated mesh x-90, so rotate matrix x+90 to compensate..
+        # mr90 = Matrix.Rotation(math.radians(-90.0 * -1), 4, 'X')
+        # mm *= mr90
         
-        # # repr
-        # Matrix(((0.5988335013389587, -0.3305366337299347, -0.07180428504943848, -0.1704845130443573),
-        #         (0.22373110055923462, 0.49656692147254944, -0.4199732840061188, 0.08959018439054489),
-        #         (0.25368228554725647, 0.3423137068748474, 0.539887547492981, 0.17324262857437134),
-        #         (0.0, 0.0, 0.0, 1.0)))
-        # # matrix
-        # <Matrix 4x4 (0.5988, -0.3305, -0.0718, -0.1705)
-        #             (0.2237,  0.4966, -0.4200,  0.0896)
-        #             (0.2537,  0.3423,  0.5399,  0.1732)
-        #             (0.0000,  0.0000,  0.0000,  1.0000)>
-        # # base
-        # origin: x = -0.170485, y = 0.173243, z = -0.089590
-        # xAxis:  x = 0.598834, y = 0.253682, z = -0.223731
-        # yAxis:  x = -0.071804, y = 0.539888, z = 0.419973
-        # zAxis:  x = 0.330537, y = -0.342314, z = 0.496567
-        # # pivot
-        # origin: x = 0.000000, y = 0.000000, z = -0.000000
-        # xAxis:  x = 1.000000, y = 0.000000, z = -0.000000
-        # yAxis:  x = 0.000000, y = 1.000000, z = -0.000000
-        # zAxis:  x = -0.000000, y = -0.000000, z = 1.000000
-        
-        # bl_parent = bl_object.parent
-        #
-        # matrix = bl_object.matrix_world
-        # if bl_parent is None:
-        #     matrix *= exporter.scale
-        # else:
-        #     matrix = bl_parent.matrix_world.inverted() * matrix
-        #     parent = exporter.objects[bl_parent]
-        #     if parent.flags & 0x3:
-        #         if parent.flags & 0x2:
-        #             parent = parent.parent
-        #         self.flags |= 0x2
-        #     self.parent = parent
-        #
-        # # cached local (related to parent) matrix,
-        # # matrix_local not suitable its has own logic
-        # self.matrix = matrix  # bl_object.matrix_local.copy()
-        
-        # o = [m[0][3], m[2][3], m[1][3] * -1, ]
-        # bx = [m[0][0], m[2][0], m[1][0] * -1, ]
-        # by = [m[0][2], m[2][2], m[1][2] * -1, ]
-        # bz = [m[0][1] * -1, m[2][1] * -1, m[1][1], ]
-        # b = [o, bx, by, bz]
-        # p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
-        
-        hacks = self.context.scene.maxwell_render.export_use_transformation_hacks
-        if(hacks):
-            # change all -180 degrees rotations to 180
-            l, r, s = m.decompose()
-            e = r.to_euler()
-            if(round(math.degrees(e.x)) == -180.0):
-                e.x = math.radians(180.0)
-            if(round(math.degrees(e.y)) == -180.0):
-                e.y = math.radians(180.0)
-            if(round(math.degrees(e.z)) == -180.0):
-                e.z = math.radians(180.0)
-            lm = Matrix.Translation(l).to_4x4()
-            rm = e.to_matrix().to_4x4()
-            sm = Matrix(((s.x, 0.0, 0.0, 0.0), (0.0, s.y, 0.0, 0.0), (0.0, 0.0, s.z, 0.0), (0.0, 0.0, 0.0, 1.0)))
-            m = lm * rm * sm
-        
-        b = [[m[0][3], m[2][3], m[1][3] * -1],
-             [m[0][0], m[2][0], m[1][0] * -1],
-             [m[0][2], m[2][2], m[1][2] * -1],
-             [m[0][1] * -1, m[2][1] * -1, m[1][1]], ]
+        l, r, s = mm.decompose()
+        # location
+        ml = cm * l
+        # print(ml.to_tuple())
+        # rotate
+        e = r.to_euler()
+        e.rotate(cm)
+        # print((math.degrees(e[0]), math.degrees(e[1]), math.degrees(e[2]), ))
+        mr = e.to_matrix()
+        # scale
+        ms = Matrix(((s.x, 0.0, 0.0), (0.0, s.y, 0.0), (0.0, 0.0, s.z)))
+        # print(s.to_tuple())
+        # combine rotation + scale
+        rs = mr * ms
+        rs.transpose()
+        # convert data
+        bx = rs.row[0].to_tuple()
+        by = rs.row[1].to_tuple()
+        bz = rs.row[2].to_tuple()
+        b = (ml.to_tuple(), ) + (bx, by, bz)
         p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        # print(b)
+        # print(p)
         
-        if(hacks):
-            for i in range(len(b)):
-                for j in range(len(b[i])):
-                    # consider 6 decimals enough..
-                    # and ensure positive zeros, add 0.0 to all, negative zeros will change to positive
-                    n = round(b[i][j], 6) + 0.0
-                    b[i][j] = n
+        l = ml.to_tuple()
+        r = (math.degrees(e[0]), math.degrees(e[1]), math.degrees(e[2]), )
+        s = s.to_tuple()
         
-        return (b, p, )
+        # print(b)
+        # print(p)
+        # print(l)
+        # print(r)
+        # print(s)
+        
+        return (b, p, l, r, s, )
     
     def _color_to_rgb8(self, c):
         return tuple([int(255 * v) for v in c])
@@ -1501,11 +1421,36 @@ class MXSExportLegacy():
                 apmw = ob.parent.matrix_world.copy()
                 apmw.invert()
                 amw = apmw * oamw
-                b, p = self._matrix_to_base_and_pivot(amw)
+                b, p, l, r, s = self._matrix_to_base_and_pivot(amw)
             else:
-                b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+                # b, p, l, r, s = self._matrix_to_base_and_pivot(ob.matrix_local)
+                
+                # matrix = ob.matrix_world.copy()
+                # if(ob.parent is not None):
+                #     matrix = ob.parent.matrix_world.inverted() * matrix
+                # b, p, l, r, s = self._matrix_to_base_and_pivot(matrix)
+                
+                # m = ob.matrix_world
+                
+                mw = ob.matrix_world.copy()
+                if(ob.parent):
+                    mb = ob.parent.matrix_world.inverted() * mw
+                else:
+                    mb = mw
+                m = mb
+                # rotate it in the other way the mesh is transformed
+                mr90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
+                m *= mr90
+                
+                b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+                
+                # print(self._matrix_to_base_and_pivot(ob.matrix_world.inverted()))
+            
             d['base'] = b
             d['pivot'] = p
+            d['location'] = l
+            d['rotation'] = r
+            d['scale'] = s
             
             self.data.append(d)
             
@@ -1537,10 +1482,11 @@ class MXSExportLegacy():
                 lmod.show_render = True
         # mesh will be removed at the end of this..
         
-        # # rotate x -90
-        # mr90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
-        # me.transform(mr90)
+        # rotate x -90
+        mr90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+        me.transform(mr90)
         
+        '''
         global_scale = 1.0
         axis_forward = '-Z'
         axis_up = 'Y'
@@ -1548,6 +1494,7 @@ class MXSExportLegacy():
         me.transform(global_matrix)
         # print(mr90)
         # print(global_matrix)
+        '''
         
         # here, in triangulating, i experienced crash from not so well mesh, validating before prevents it..
         me.validate()
@@ -1653,12 +1600,35 @@ class MXSExportLegacy():
             apmw = ob.parent.matrix_world.copy()
             apmw.invert()
             amw = apmw * oamw
-            b, p = self._matrix_to_base_and_pivot(amw)
+            b, p, l, r, s = self._matrix_to_base_and_pivot(amw)
         else:
-            b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+            # b, p, l, r, s = self._matrix_to_base_and_pivot(ob.matrix_local)
+            
+            # matrix = ob.matrix_world.copy()
+            # if(ob.parent is not None):
+            #     matrix = ob.parent.matrix_world.inverted() * matrix
+            # b, p, l, r, s = self._matrix_to_base_and_pivot(matrix)
+            
+            mw = ob.matrix_world.copy()
+            if(ob.parent):
+                mb = ob.parent.matrix_world.inverted() * mw
+            else:
+                mb = mw
+            m = mb
+            # i've rotated mesh x-90, so rotate matrix x+90 to compensate..
+            mr90 = Matrix.Rotation(math.radians(-90.0 * -1), 4, 'X')
+            m *= mr90
+            
+            
+            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+            
+            # print(self._matrix_to_base_and_pivot(ob.matrix_world.inverted()))
         
         d['base'] = b
         d['pivot'] = p
+        d['location'] = l
+        d['rotation'] = r
+        d['scale'] = s
         
         # # mesh data
         # for ti, uvt in enumerate(me.uv_textures):
@@ -1941,12 +1911,27 @@ class MXSExportLegacy():
                 apmw = ob.parent.matrix_world.copy()
                 apmw.invert()
                 amw = apmw * oamw
-                b, p = self._matrix_to_base_and_pivot(amw)
+                b, p, l, r, s = self._matrix_to_base_and_pivot(amw)
             else:
-                b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+                # b, p, l, r, s = self._matrix_to_base_and_pivot(ob.matrix_local)
+                
+                mw = ob.matrix_world.copy()
+                if(ob.parent):
+                    mb = ob.parent.matrix_world.inverted() * mw
+                else:
+                    mb = mw
+                m = mb
+                # rotate it in the same way as mesh is transformed
+                mr90 = Matrix.Rotation(math.radians(-90.0 * -1), 4, 'X')
+                m *= mr90
+                
+                b, p, l, r, s = self._matrix_to_base_and_pivot(m)
             
             d['base'] = b
             d['pivot'] = p
+            d['location'] = l
+            d['rotation'] = r
+            d['scale'] = s
             
             def find_base_object_name(mnm):
                 for o in self.bases:
@@ -2023,10 +2008,25 @@ class MXSExportLegacy():
                 # mwi = find_base_object_matrix(o['mesh'].name).inverted()
                 # d = self._object_transform(ob, d, mwi * o['dupli_matrix'])
                 
-                mwi = find_base_object_matrix(o['mesh'].name).inverted()
-                b, p = self._matrix_to_base_and_pivot(mwi * o['dupli_matrix'])
+                # mwi = find_base_object_matrix(o['mesh'].name).inverted()
+                # dm = mwi * o['dupli_matrix']
+                # b, p, l, r, s = self._matrix_to_base_and_pivot(dm)
+                
+                mw = o['dupli_matrix'].copy()
+                mb = find_base_object_matrix(o['mesh'].name).copy().inverted() * mw
+                m = mb
+                # rotate it in the same way as mesh is transformed
+                mr90 = Matrix.Rotation(math.radians(-90.0 * -1), 4, 'X')
+                m *= mr90
+                
+                b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+                
+                
                 d['base'] = b
                 d['pivot'] = p
+                d['location'] = l
+                d['rotation'] = r
+                d['scale'] = s
                 
                 self.data.append(d)
             else:
@@ -2050,9 +2050,12 @@ class MXSExportLegacy():
                     pmw = bpy.context.scene.objects[d['parent']].matrix_world.copy()
                     pmw.invert()
                     m = pmw * dmw
-                    b, p = self._matrix_to_base_and_pivot(m)
+                    b, p, l, r, s = self._matrix_to_base_and_pivot(m)
                     d['base'] = b
                     d['pivot'] = p
+                    d['location'] = l
+                    d['rotation'] = r
+                    d['scale'] = s
                     
                     self.data.append(d)
                 else:
@@ -2282,7 +2285,13 @@ class MXSExportLegacy():
             
             q = None
             log("{0} ({1})".format(dp['name'], dp['type']), 2)
-            b, p = self._matrix_to_base_and_pivot(dp['matrix'])
+            
+            mat = dp['matrix']
+            mr90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
+            mat *= mr90
+            b, p, studio_l, studio_r, studio_s = self._matrix_to_base_and_pivot(mat)
+            
+            # b, p, studio_l, studio_r, studio_s = self._matrix_to_base_and_pivot(dp['matrix'])
             m = dp['props']
             ps = dp['ps']
             
@@ -2449,7 +2458,13 @@ class MXSExportLegacy():
                      'backface_material': backface_material,
                      'backface_material_embed': m.backface_material_embed,
                      
-                     'base': b, 'pivot': p, 'matrix': None, 'hide': m.hide, 'hide_parent': m.hide_parent, 'type': 'PARTICLES', }
+                     'base': b,
+                     'pivot': p,
+                     'location': studio_l,
+                     'rotation': studio_r,
+                     'scale': studio_s,
+                     
+                     'matrix': None, 'hide': m.hide, 'hide_parent': m.hide_parent, 'type': 'PARTICLES', }
                 
                 if(m.source == 'EXTERNAL_BIN'):
                     q['embed'] = False
@@ -2522,14 +2537,25 @@ class MXSExportLegacy():
                     log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
                     material = ""
                 
-                b, p = self._matrix_to_base_and_pivot(Matrix())
+                
+                mat = Matrix()
+                mr90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
+                mat *= mr90
+                b, p, studio_l, studio_r, studio_s = self._matrix_to_base_and_pivot(mat)
                 
                 q = {'material': material, 'material_embed': m.material_embed,
                      'backface_material': backface_material, 'backface_material_embed': m.backface_material_embed,
                      'opacity': m.opacity, 'hidden_camera': m.hidden_camera, 'hidden_camera_in_shadow_channel': m.hidden_camera_in_shadow_channel,
                      'hidden_global_illumination': m.hidden_global_illumination, 'hidden_reflections_refractions': m.hidden_reflections_refractions,
                      'hidden_zclip_planes': m.hidden_zclip_planes, 'object_id': self._color_to_rgb8(m.object_id), 'hide': m.hide,
-                     'hide_parent': m.hide_parent, 'name': dp['name'], 'parent': dp['parent'], 'base': b, 'pivot': p, 'matrix': None,
+                     'hide_parent': m.hide_parent, 'name': dp['name'], 'parent': dp['parent'],
+                     'base': b,
+                     'pivot': p,
+                     'location': studio_l,
+                     'rotation': studio_r,
+                     'scale': studio_s,
+                     
+                     'matrix': None,
                      
                      'display_percent': int(m.display_percent),
                      
@@ -2730,6 +2756,8 @@ class MXSExportLegacy():
                 q['data'] = data
             
             elif(dp['type'] == 'CLONER'):
+                # FIXME wrong transformation of particles on cloned object
+                
                 o = bpy.data.objects[dp['object']]
                 
                 pdata = {}
@@ -2905,11 +2933,26 @@ class MXSExportLegacy():
                 apmw = ob.parent.matrix_world.copy()
                 apmw.invert()
                 amw = apmw * oamw
-                b, p = self._matrix_to_base_and_pivot(amw)
+                b, p, l, r, s = self._matrix_to_base_and_pivot(amw)
             else:
-                b, p = self._matrix_to_base_and_pivot(ob.matrix_local)
+                # b, p, l, r, s = self._matrix_to_base_and_pivot(ob.matrix_local)
+                
+                mw = ob.matrix_world.copy()
+                if(ob.parent):
+                    mb = ob.parent.matrix_world.inverted() * mw
+                else:
+                    mb = mw
+                m = mb
+                mr90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
+                m *= mr90
+                
+                b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+                
             d['base'] = b
             d['pivot'] = p
+            d['location'] = l
+            d['rotation'] = r
+            d['scale'] = s
             
             self.data.append(d)
     
@@ -2980,10 +3023,13 @@ class MXSExportLegacy():
             f = ob.empty_draw_size
             mat = mat * Matrix.Scale(f, 4)
             
-            b, p = self._matrix_to_base_and_pivot(mat)
+            b, p, l, r, s = self._matrix_to_base_and_pivot(mat)
             
             d['base'] = b
             d['pivot'] = p
+            d['location'] = l
+            d['rotation'] = r
+            d['scale'] = s
             
             self.data.append(d)
     
@@ -4443,6 +4489,7 @@ class MXSExport():
         # p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
         # return (b, p, )
         
+        '''
         hacks = self.context.scene.maxwell_render.export_use_transformation_hacks
         if(hacks):
             # change all -180 degrees rotations to 180
@@ -4472,6 +4519,7 @@ class MXSExport():
                     # and ensure positive zeros, add 0.0 to all, negative zeros will change to positive
                     n = round(b[i][j], 6) + 0.0
                     b[i][j] = n
+        '''
         
         return (b, p, )
     
