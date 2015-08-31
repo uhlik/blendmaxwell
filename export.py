@@ -40,6 +40,621 @@ from . import rfbin
 from . import mxs
 
 
+class MXSExport():
+    def __init__(self, mxs_path, ):
+        clear_log()
+        log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
+        
+        self.uuid = uuid.uuid1()
+        self.mxs_path = os.path.realpath(mxs_path)
+        self.context = bpy.context
+        
+        mx = self.context.scene.maxwell_render
+        self.use_instances = mx.export_use_instances
+        
+        self._export()
+    
+    def _collect(self):
+        """Collect scene objects.
+        what it does (unordered):
+            - Filter all scene objects and collect only objects needed for scene export. Meshes (and instances), empties, cameras and sun.
+            - Remove all objects on hidden layers and with hide_render: True, substitute with an empty if needed for correct hierarchy.
+            - Sort all objects by type, determine base meshes for instanced objects (if use_instances: True).
+            - Try to convert non-mesh objects to mesh and if result is renderable, include them as well.
+            - Covert dupli-objects to real meshes or instances.
+        Return filtered scene hierarchy.
+        """
+        objs = self.context.scene.objects
+        
+        # sort objects
+        def sort_objects():
+            meshes = []
+            empties = []
+            cameras = []
+            bases = []
+            instances = []
+            convertibles = []
+            others = []
+            
+            might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
+            for o in objs:
+                if(o.type == 'MESH'):
+                    if(self.use_instances):
+                        if(o.data.users > 1):
+                            instances.append(o)
+                        else:
+                            meshes.append(o)
+                    else:
+                        meshes.append(o)
+                elif(o.type == 'EMPTY'):
+                    empties.append(o)
+                elif(o.type == 'CAMERA'):
+                    cameras.append(o)
+                elif(o.type in might_be_renderable):
+                    convertibles.append(o)
+                else:
+                    others.append(o)
+            instance_groups = {}
+            for o in instances:
+                if(o.data.name not in instance_groups):
+                    instance_groups[o.data.name] = [o, ]
+                else:
+                    instance_groups[o.data.name].append(o)
+            bases_names = []
+            for n, g in instance_groups.items():
+                nms = [o.name for o in g]
+                ls = sorted(nms)
+                bases_names.append(ls[0])
+            insts = instances[:]
+            instances = []
+            for o in insts:
+                if(o.name in bases_names):
+                    bases.append(o)
+                else:
+                    instances.append(o)
+            return {'meshes': meshes,
+                    'empties': empties,
+                    'cameras': cameras,
+                    'bases': bases,
+                    'instances': instances,
+                    'convertibles': convertibles,
+                    'others': others, }
+        
+        so = sort_objects()
+        
+        # visibility
+        mx = self.context.scene.maxwell_render
+        layers = self.context.scene.layers
+        render_layers = self.context.scene.render.layers.active.layers
+        
+        def check_visibility(o):
+            """Objects which are in visible layers and have hide_render: False are considered visible,
+               objects which are only hidden from viewport are renderable, therefore visible."""
+            # if(mx.render_use_layers == 'RENDER'):
+            #     for i, l in enumerate(o.layers):
+            #         if(render_layers[i] is True and l is True and o.hide_render is False):
+            #             return True
+            # else:
+            #     for i, l in enumerate(o.layers):
+            #         if(layers[i] is True and l is True and o.hide_render is False):
+            #             return True
+            
+            if(o.hide_render is True):
+                return False
+            
+            s = None
+            r = None
+            for i, l in enumerate(o.layers):
+                if(layers[i] is True and l is True):
+                    s = True
+                    break
+            for i, l in enumerate(o.layers):
+                if(render_layers[i] is True and l is True):
+                    r = True
+                    break
+            if(s and r):
+                return True
+            return False
+        
+        # export type
+        might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
+        
+        def export_type(o):
+            """determine export type, if convertible, try convert to mesh and store result"""
+            t = 'EMPTY'
+            m = None
+            c = False
+            if(o.type == 'MESH'):
+                m = o.data
+                if(self.use_instances):
+                    if(o.data.users > 1):
+                        if(o in so['bases']):
+                            t = 'BASE_INSTANCE'
+                        else:
+                            t = 'INSTANCE'
+                    else:
+                        if(len(o.data.polygons) > 0):
+                            t = 'MESH'
+                        else:
+                            # case when object has no polygons, but with modifiers applied it will have..
+                            me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                            if(len(me.polygons) > 0):
+                                t = 'MESH'
+                                # remove mesh, was created only for testing..
+                                bpy.data.meshes.remove(me)
+                        # else:
+                        #     t = 'EMPTY'
+                else:
+                    if(len(o.data.polygons) > 0):
+                        t = 'MESH'
+                    else:
+                        # case when object has no polygons, but with modifiers applied it will have..
+                        me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                        if(len(me.polygons) > 0):
+                            t = 'MESH'
+                            # remove mesh, was created only for testing..
+                            bpy.data.meshes.remove(me)
+                    # else:
+                    #     t = 'EMPTY'
+            elif(o.type == 'EMPTY'):
+                # t = 'EMPTY'
+                if(o.maxwell_render_reference.enabled):
+                    t = 'REFERENCE'
+                elif(o.maxwell_volumetrics_extension.enabled):
+                    t = 'VOLUMETRICS'
+                else:
+                    pass
+            elif(o.type == 'CAMERA'):
+                t = 'CAMERA'
+            elif(o.type in might_be_renderable):
+                me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                if(me is not None):
+                    if(len(me.polygons) > 0):
+                        t = 'MESH'
+                        m = me
+                        c = True
+                    # else:
+                    #     t = 'EMPTY'
+                # else:
+                #     t = 'EMPTY'
+            elif(o.type == 'LAMP'):
+                if(o.data.type == 'SUN'):
+                    t = 'SUN'
+            # else:
+            #     t = 'EMPTY'
+            return t, m, c
+        
+        # object hierarchy
+        def hierarchy():
+            h = []
+            
+            def get_object_hiearchy(o):
+                r = []
+                for ch in o.children:
+                    t, m, c = export_type(ch)
+                    p = {'object': ch,
+                         'children': get_object_hiearchy(ch),
+                         'export': check_visibility(ch),
+                         'export_type': t,
+                         'mesh': m,
+                         'converted': c,
+                         'parent': o,
+                         'type': ch.type, }
+                    r.append(p)
+                return r
+            
+            for ob in objs:
+                if(ob.parent is None):
+                    t, m, c = export_type(ob)
+                    p = {'object': ob,
+                         'children': get_object_hiearchy(ob),
+                         'export': check_visibility(ob),
+                         'export_type': t,
+                         'mesh': m,
+                         'converted': c,
+                         'parent': None,
+                         'type': ob.type, }
+                    h.append(p)
+            return h
+        
+        h = hierarchy()
+        
+        # if object is not visible and has renderable children, swap type to EMPTY and mark for export
+        def renderable_children(o):
+            r = False
+            for c in o['children']:
+                if(c['export'] is True):
+                    r = True
+            return r
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            ob = o['object']
+            if(o['export'] is False and renderable_children(o)):
+                o['export_type'] = 'EMPTY'
+                o['export'] = True
+        
+        for o in h:
+            walk(o)
+        
+        # mark to remove all redundant empties
+        append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'VOLUMETRICS', ]
+        
+        def check_renderables_in_tree(oo):
+            ov = []
+            
+            def walk(o):
+                for c in o['children']:
+                    walk(c)
+                if((o['export_type'] in append_types) and o['export'] is True):
+                    # keep instances (Maxwell 3)
+                    # keep: meshes, bases - both with export: True
+                    # (export: False are hidden objects, and should be already swapped to empties if needed for hiearchy)
+                    # > meshes..
+                    # > bases can have children, bases are real meshes
+                    ov.append(True)
+                else:
+                    # remove: empties, bases, instances, suns, meshes and bases with export: False (hidden objects) and reference enabled: False
+                    # > empties can be removed
+                    # > instances are moved to base level, because with instances hiearchy is irrelevant
+                    # > suns are not objects
+                    # > meshes and bases, see above
+                    ov.append(False)
+            for o in oo['children']:
+                walk(o)
+            
+            if(len(ov) == 0):
+                # nothing found, can be removed
+                return False
+            if(sum(ov) == 0):
+                # found only object which can be removed
+                return False
+            # otherwise always True
+            return True
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            # current object is empty
+            if(o['export_type'] == 'EMPTY'):
+                # check all children if there are some renderable one, if so, keep current empty
+                keep = check_renderables_in_tree(o)
+                if(keep is False):
+                    # if not, do not export it
+                    o['export'] = False
+        
+        for o in h:
+            walk(o)
+        
+        # split objects to lists, instances already are
+        # Maxwell 3, instances are not..
+        instances = []
+        meshes = []
+        empties = []
+        cameras = []
+        bases = []
+        suns = []
+        references = []
+        volumetrics = []
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            if(o['export'] is not False):
+                # only object marked for export..
+                if(o['export_type'] == 'MESH'):
+                    meshes.append(o)
+                elif(o['export_type'] == 'EMPTY'):
+                    empties.append(o)
+                elif(o['export_type'] == 'CAMERA'):
+                    cameras.append(o)
+                elif(o['export_type'] == 'BASE_INSTANCE'):
+                    bases.append(o)
+                elif(o['export_type'] == 'INSTANCE'):
+                    instances.append(o)
+                elif(o['export_type'] == 'SUN'):
+                    suns.append(o)
+                elif(o['export_type'] == 'REFERENCE'):
+                    references.append(o)
+                elif(o['export_type'] == 'VOLUMETRICS'):
+                    volumetrics.append(o)
+        
+        for o in h:
+            walk(o)
+        
+        self._meshes = meshes
+        self._bases = bases
+        self._instances = instances
+        self._empties = empties
+        self._cameras = cameras
+        self._references = references
+        self._volumetrics = volumetrics
+        
+        # no visible camera
+        if(len(self._cameras) == 0):
+            log("No visible and active camera in scene!", 2, LogStyles.WARNING)
+            log("Trying to find hidden active camera..", 3, LogStyles.WARNING)
+            ac = self.context.scene.camera
+            if(ac is not None):
+                # there is one active in scene, try to find it
+                def walk(o):
+                    for c in o['children']:
+                        walk(c)
+                    ob = o['object']
+                    if(ob == ac):
+                        cam = o
+                        cam['export'] = True
+                        self._cameras.append(cam)
+                        log("Found active camera: '{0}' and added to scene.".format(cam['object'].name), 3, LogStyles.WARNING)
+                for o in h:
+                    walk(o)
+        
+        # dupliverts / duplifaces
+        self._duplicates = []
+        
+        def find_dupli_object(obj):
+            for o in self._meshes:
+                ob = o['object']
+                if(ob == obj):
+                    return o
+            for o in self._bases:
+                ob = o['object']
+                if(ob == obj):
+                    return o
+            return None
+        
+        def put_to_bases(o):
+            if(o not in self._bases and o in self._meshes):
+                self._meshes.remove(o)
+                self._bases.append(o)
+        
+        for o in self._meshes:
+            ob = o['object']
+            if(ob.dupli_type != 'NONE'):
+                if(ob.dupli_type == 'FACES' or ob.dupli_type == 'VERTS'):
+                    ob.dupli_list_create(self.context.scene, settings='RENDER')
+                    for dli in ob.dupli_list:
+                        do = dli.object
+                        # i've just spent half an hour trying to understand why these lousy matrices does not work
+                        # then suddenly i realized that calling dupli_list_clear might remove them from memory
+                        # and i am just getting some garbage data..
+                        # remember this in future, and do NOT use data after freeing them from memory
+                        dm = dli.matrix.copy()
+                        di = dli.index
+                        io = find_dupli_object(do)
+                        if(self.use_instances):
+                            put_to_bases(io)
+                        if(io is not None):
+                            nm = "{0}-duplicator-{1}-{2}".format(ob.name, io['object'].name, di)
+                            d = {'object': do,
+                                 'dupli_name': nm,
+                                 'dupli_matrix': dm,
+                                 'children': [],
+                                 'export': True,
+                                 'export_type': 'INSTANCE',
+                                 'mesh': io['mesh'],
+                                 'converted': False,
+                                 # 'parent': None,
+                                 'parent': o,
+                                 'type': 'MESH', }
+                            self._duplicates.append(d)
+                    ob.dupli_list_clear()
+        
+        # find instances without base and change first one to base, quick and dirty..
+        # this case happens when object (by name chosen as base) is on hidden layer and marked to be not exported
+        # also, hope this is the last change of this nasty piece of code..
+        def find_base_object_name(mnm):
+            for bo in self._bases:
+                if(bo['mesh'].name == mnm):
+                    return bo['object'].name
+        
+        instances2 = self._instances[:]
+        for o in instances2:
+            if(find_base_object_name(o['mesh'].name) is None):
+                o['export_type'] = 'BASE_INSTANCE'
+                self._bases.append(o)
+                self._instances.remove(o)
+        
+        # overriden instances
+        instances2 = self._instances[:]
+        for o in instances2:
+            m = o['object'].maxwell_render
+            if(m.override_instance):
+                o['export_type'] = 'MESH'
+                o['override_instance'] = o['object'].data
+                self._meshes.append(o)
+                self._instances.remove(o)
+        
+        # other objects and modifiers
+        particles = []
+        modifiers = []
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            if(o['export'] is not False):
+                ob = o['object']
+                if(len(ob.particle_systems) != 0):
+                    for ps in ob.particle_systems:
+                        mx = ps.settings.maxwell_render
+                        mod = None
+                        for m in ob.modifiers:
+                            if(m.particle_system == ps):
+                                mod = m
+                                break
+                        if(not mod.show_render):
+                            # not renderable, skip
+                            continue
+                        p = {'object': ps,
+                             'children': [],
+                             'export': mod.show_render,
+                             'export_type': '',
+                             'parent': ob,
+                             'type': None, }
+                        p['export_type'] = mx.use
+                        if(mx.use in ['PARTICLES', 'HAIR', ]):
+                            particles.append(p)
+                            # those two should be put into hiearchy, they are real objects.. the rest are just modifiers
+                            o['children'].append(p)
+                        else:
+                            modifiers.append(p)
+                if(ob.maxwell_scatter_extension.enabled):
+                    p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'SCATTER', }
+                    modifiers.append(p)
+                if(ob.maxwell_subdivision_extension.enabled):
+                    p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'SUBDIVISION', }
+                    modifiers.append(p)
+                if(ob.maxwell_sea_extension.enabled):
+                    p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'SEA', }
+                    modifiers.append(p)
+        
+        for o in h:
+            walk(o)
+        
+        self._particles = particles
+        self._modifiers = modifiers
+        
+        # ----------------------------------------------------------------------------------
+        # (everything above this line is pure magic, below is just standard code)
+        
+        # import pprint
+        # pp = pprint.PrettyPrinter(indent=4)
+        # pp.pprint(h)
+        
+        # print("-" * 100)
+        # raise Exception()
+        
+        return h
+    
+    def _export(self):
+        # collect all objects to be exported, split them by type. keep this dict if hiearchy would be needed
+        # (note: does not contain modifiers and particles which are modifiers)
+        self.tree = self._collect()
+        
+        # self._cameras
+        # self._empties
+        # self._meshes
+        # self._bases
+        # self._instances
+        # self._duplicates
+        # self._references
+        # self._particles
+        # self._volumetrics
+        # self._modifiers
+
+
+class MXSScene():
+    def __init__(self):
+        pass
+
+
+class MXSEnvironment():
+    def __init__(self):
+        pass
+
+
+class MXSCamera():
+    def __init__(self):
+        pass
+
+
+class MXSObject():
+    def __init__(self):
+        pass
+    
+    def _serialize(self):
+        # Mac OS X
+        pass
+    
+    def _write(self):
+        # Windows / Linux
+        pass
+
+
+class MXSEmpty(MXSObject):
+    def __init__(self):
+        pass
+
+
+class MXSMesh(MXSObject):
+    def __init__(self):
+        pass
+
+
+class MXSMeshInstance(MXSObject):
+    def __init__(self):
+        pass
+
+
+class MXSReference(MXSObject):
+    def __init__(self):
+        pass
+
+
+class MXSExtension():
+    def __init__(self):
+        pass
+
+
+class MXSParticles(MXSObject, MXSExtension):
+    def __init__(self):
+        pass
+
+
+class MXSHair(MXSObject, MXSExtension):
+    def __init__(self):
+        pass
+
+
+class MXSVolumetrics(MXSObject, MXSExtension):
+    def __init__(self):
+        pass
+
+
+class MXSExtensionModifier(MXSExtension):
+    def __init__(self):
+        pass
+
+
+class MXSGrass(MXSExtensionModifier):
+    def __init__(self):
+        pass
+
+
+class MXSCloner(MXSExtensionModifier):
+    def __init__(self):
+        pass
+
+
+class MXSScatter(MXSExtensionModifier):
+    def __init__(self):
+        pass
+
+
+class MXSSubdivision(MXSExtensionModifier):
+    def __init__(self):
+        pass
+
+
+class MXSSea(MXSExtensionModifier):
+    def __init__(self):
+        pass
+
+
+class MXSMaterial():
+    def __init__(self):
+        pass
+
+
+class MXSTexture():
+    def __init__(self):
+        pass
+
+
+# --
+
+
 class MXSExportLegacy():
     def __init__(self, context, mxs_path, use_instances=True, keep_intermediates=False, ):
         """
@@ -3827,6 +4442,7 @@ class MXSBinParticlesReaderLegacy():
             raise RuntimeError("expected EOF")
 
 
+'''
 class MXSExport():
     def __init__(self, context, mxs_path, use_instances=True, ):
         self.context = context
@@ -4489,7 +5105,7 @@ class MXSExport():
         # p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
         # return (b, p, )
         
-        '''
+        """
         hacks = self.context.scene.maxwell_render.export_use_transformation_hacks
         if(hacks):
             # change all -180 degrees rotations to 180
@@ -4519,7 +5135,7 @@ class MXSExport():
                     # and ensure positive zeros, add 0.0 to all, negative zeros will change to positive
                     n = round(b[i][j], 6) + 0.0
                     b[i][j] = n
-        '''
+        """
         
         return (b, p, )
     
@@ -4769,7 +5385,7 @@ class MXSExport():
             return d
         return None
         
-        '''
+        """
         tex = None
         for t in bpy.data.textures:
             if(t.name == name):
@@ -4821,7 +5437,7 @@ class MXSExport():
             d['rgb_clamp'] = [m.clamp[0], m.clamp[1]]
             return d
         return None
-        '''
+        """
     
     def camera(self, o, ):
         log("{0}".format(o['object'].name), 2)
@@ -6285,3 +6901,4 @@ class MXSExportWireframe(MXSExport):
             matrices.append(m)
         
         return matrices
+'''

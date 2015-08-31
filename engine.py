@@ -405,6 +405,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             else:
                 pass
         else:
+            '''
             if(system.PLATFORM == 'Darwin'):
                 d = {'context': bpy.context,
                      'mxs_path': p,
@@ -430,6 +431,9 @@ class MaxwellRenderExportEngine(RenderEngine):
                 ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
             else:
                 pass
+            '''
+            
+            ex = export.MXSExport(mxs_path=p, )
         
         if((m.exporting_animation_now and scene.frame_current == scene.frame_end) or not m.exporting_animation_now):
             if(m.export_log_open):
