@@ -40,17 +40,30 @@ from . import rfbin
 from . import mxs
 
 
+AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).to_4x4()
+ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
+ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+
+
 class MXSExport():
     def __init__(self, mxs_path, ):
         clear_log()
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         
-        self.uuid = uuid.uuid1()
         self.mxs_path = os.path.realpath(mxs_path)
         self.context = bpy.context
         
         mx = self.context.scene.maxwell_render
         self.use_instances = mx.export_use_instances
+        
+        if(system.PLATFORM == 'Darwin'):
+            # Mac OS X specific
+            self.uuid = uuid.uuid1()
+            self.data = []
+        elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+            # send objects directly to mxs writer
+            # # self.mxs = MXSWriter()
+            pass
         
         self._export()
     
@@ -529,57 +542,732 @@ class MXSExport():
     
     def _export(self):
         # collect all objects to be exported, split them by type. keep this dict if hiearchy would be needed
-        # (note: does not contain modifiers and particles which are modifiers)
         self.tree = self._collect()
         
-        # self._cameras
-        # self._empties
-        # self._meshes
+        # o = MXSScene()
+        # self._write(o)
+        
+        o = MXSEnvironment()
+        self._write(o)
+        # for k, v in o._dict().items():
+        #     print(k, ': ', v)
+        # print('-' * 30)
+        
+        for d in self._cameras:
+            o = MXSCamera(d)
+            self._write(o)
+        
+        for d in self._empties:
+            o = MXSEmpty(d)
+            self._write(o)
+        
+        for d in self._meshes:
+            o = MXSMesh(d)
+            self._write(o)
+            # for k, v in o._dict().items():
+            #     if(type(v) == list):
+            #         if(len(v) > 5):
+            #             v = '[{}, ..., {}, ]'.format(v[0], v[-1])
+            #         elif(len(str(v)) > 100):
+            #             s = str(v)
+            #             v = '[{} ////// {}]'.format(s[:50], s[-50:])
+            #     print(k, ': ', v)
+            # print('-' * 30)
+        
         # self._bases
+        
         # self._instances
+        
         # self._duplicates
-        # self._references
+        
+        for d in self._references:
+            o = MXSReference(d)
+            self._write(o)
+        
         # self._particles
+        
         # self._volumetrics
+        
         # self._modifiers
-
-
-class MXSScene():
-    def __init__(self):
-        pass
-
-
-class MXSEnvironment():
-    def __init__(self):
-        pass
-
-
-class MXSCamera():
-    def __init__(self):
-        pass
-
-
-class MXSObject():
-    def __init__(self):
-        pass
+        # should be written when encountered on object, writing them separatedly is silly..
     
-    def _serialize(self):
-        # Mac OS X
-        pass
+    def _write(self, o, ):
+        if(system.PLATFORM == 'Darwin'):
+            # append object, at the end it will be serialized and written to be read by helper script
+            self.data.append(o)
+        elif(system.PLATFORM == 'Linux'):
+            # # directly write to mxs
+            # self.mxs.write(o)
+            pass
+        elif(system.PLATFORM == 'Windows'):
+            # # directly write to mxs
+            # self.mxs.write(o)
+            pass
+
+
+class Serializable():
+    def _fields(self):
+        r = list(self.__dict__.keys())
+        r = [i for i in r if i.startswith('m_')]
+        return r
     
-    def _write(self):
-        # Windows / Linux
+    def _dict(self):
+        d = {}
+        fs = self._fields()
+        for f in fs:
+            d[f] = getattr(self, f)
+        return d
+
+
+class MXSScene(Serializable):
+    def __init__(self):
         pass
+
+
+class MXSEnvironment(Serializable):
+    def __init__(self):
+        # TODO: maybe split this to world / sun (/ ibl)?
+        
+        mx = bpy.context.scene.world.maxwell_render
+        self.m_type = 'ENVIRONMENT'
+        
+        self.m_env_type = mx.env_type
+        
+        self.m_sky_type = mx.sky_type
+        self.m_sky_use_preset = mx.sky_use_preset
+        self.m_sky_preset = bpy.path.abspath(mx.sky_preset)
+        self.m_sky_intensity = mx.sky_intensity
+        self.m_sky_planet_refl = mx.sky_planet_refl / 100.0
+        self.m_sky_ozone = mx.sky_ozone
+        self.m_sky_water = mx.sky_water
+        self.m_sky_turbidity_coeff = mx.sky_turbidity_coeff
+        self.m_sky_wavelength_exp = mx.sky_wavelength_exp
+        self.m_sky_reflectance = mx.sky_reflectance / 100.0
+        self.m_sky_asymmetry = mx.sky_asymmetry
+        
+        self.m_dome_intensity = mx.dome_intensity
+        self.m_dome_zenith = self._color_to_rgb8(mx.dome_zenith)
+        self.m_dome_horizon = self._color_to_rgb8(mx.dome_horizon)
+        self.m_dome_mid_point = math.degrees(mx.dome_mid_point)
+        
+        self.m_sun_lamp_priority = mx.sun_lamp_priority
+        self.m_sun_type = mx.sun_type
+        self.m_sun_power = mx.sun_power
+        self.m_sun_radius_factor = mx.sun_radius_factor
+        self.m_sun_temp = mx.sun_temp
+        self.m_sun_color = self._color_to_rgb8(mx.sun_color)
+        self.m_sun_location_type = mx.sun_location_type
+        self.m_sun_latlong_lat = mx.sun_latlong_lat
+        self.m_sun_latlong_lon = mx.sun_latlong_lon
+        self.m_sun_date = mx.sun_date
+        self.m_sun_time = mx.sun_time
+        self.m_sun_latlong_gmt = mx.sun_latlong_gmt
+        self.m_sun_latlong_ground_rotation = mx.sun_latlong_ground_rotation
+        self.m_sun_angles_zenith = mx.sun_angles_zenith
+        self.m_sun_angles_azimuth = mx.sun_angles_azimuth
+        
+        v = Vector((mx.sun_dir_x, mx.sun_dir_y, mx.sun_dir_z))
+        v = AXIS_CONVERSION * v
+        self.m_sun_dir_x = v.x
+        self.m_sun_dir_y = v.y
+        self.m_sun_dir_z = v.z
+        
+        self.m_ibl_intensity = mx.ibl_intensity
+        self.m_ibl_interpolation = mx.ibl_interpolation
+        self.m_ibl_screen_mapping = mx.ibl_screen_mapping
+        self.m_ibl_bg_type = mx.ibl_bg_type
+        self.m_ibl_bg_map = bpy.path.abspath(mx.ibl_bg_map)
+        self.m_ibl_bg_intensity = mx.ibl_bg_intensity
+        self.m_ibl_bg_scale_x = mx.ibl_bg_scale_x
+        self.m_ibl_bg_scale_y = mx.ibl_bg_scale_y
+        self.m_ibl_bg_offset_x = mx.ibl_bg_offset_x
+        self.m_ibl_bg_offset_y = mx.ibl_bg_offset_y
+        self.m_ibl_refl_type = mx.ibl_refl_type
+        self.m_ibl_refl_map = bpy.path.abspath(mx.ibl_refl_map)
+        self.m_ibl_refl_intensity = mx.ibl_refl_intensity
+        self.m_ibl_refl_scale_x = mx.ibl_refl_scale_x
+        self.m_ibl_refl_scale_y = mx.ibl_refl_scale_y
+        self.m_ibl_refl_offset_x = mx.ibl_refl_offset_x
+        self.m_ibl_refl_offset_y = mx.ibl_refl_offset_y
+        self.m_ibl_refr_type = mx.ibl_refr_type
+        self.m_ibl_refr_map = bpy.path.abspath(mx.ibl_refr_map)
+        self.m_ibl_refr_intensity = mx.ibl_refr_intensity
+        self.m_ibl_refr_scale_x = mx.ibl_refr_scale_x
+        self.m_ibl_refr_scale_y = mx.ibl_refr_scale_y
+        self.m_ibl_refr_offset_x = mx.ibl_refr_offset_x
+        self.m_ibl_refr_offset_y = mx.ibl_refr_offset_y
+        self.m_ibl_illum_type = mx.ibl_illum_type
+        self.m_ibl_illum_map = bpy.path.abspath(mx.ibl_illum_map)
+        self.m_ibl_illum_intensity = mx.ibl_illum_intensity
+        self.m_ibl_illum_scale_x = mx.ibl_illum_scale_x
+        self.m_ibl_illum_scale_y = mx.ibl_illum_scale_y
+        self.m_ibl_illum_offset_x = mx.ibl_illum_offset_x
+        self.m_ibl_illum_offset_y = mx.ibl_illum_offset_y
+        
+        if(mx.sun_lamp_priority):
+            # extract suns from objects
+            objs = self.context.scene.objects
+            suns = []
+            for o in objs:
+                if(o.type == 'LAMP'):
+                    if(o.data.type == 'SUN'):
+                        suns.append(o)
+            
+            # use just one sun. decide which one here..
+            def get_sun(suns):
+                if(len(suns) == 0):
+                    return None
+                if(len(suns) == 1):
+                    return suns[0]
+                else:
+                    log("more than one sun in scene", 1, LogStyles.WARNING)
+                    nm = []
+                    for o in suns:
+                        nm.append(o['object'].name)
+                    snm = sorted(nm)
+                    n = snm[0]
+                    for o in suns:
+                        if(o['object'].name == n):
+                            log("using {0} as sun".format(n), 1, LogStyles.WARNING)
+                            return o
+            
+            sun = get_sun(suns)
+            if(sun is None):
+                log("'Sun Lamp Priority' is True, but there is not Sun object in scene. Using World settings..", 1, LogStyles.WARNING)
+                self.m_sun_lamp_priority = False
+            else:
+                # direction from matrix
+                mw = sun.matrix_world
+                loc, rot, sca = mw.decompose()
+                v = Vector((0.0, 0.0, 1.0))
+                v.rotate(rot)
+                v = AXIS_CONVERSION * v
+                mx.sun_dir_x = v.x
+                mx.sun_dir_y = v.y
+                mx.sun_dir_z = v.z
+                
+                self.m_sun_location_type = 'DIRECTION'
+                self.m_sun_dir_x = v.x
+                self.m_sun_dir_y = v.y
+                self.m_sun_dir_z = v.z
+        else:
+            # sun_lamp_priority is false, use already processed environment options
+            pass
+        
+        # and change this, just in case..
+        import datetime
+        n = datetime.datetime.now()
+        if(self.m_sun_date == "DD.MM.YYYY"):
+            if(mx is not None):
+                mx.sun_date = n.strftime('%d.%m.%Y')
+                self.m_sun_date = mx.sun_date
+            else:
+                self.m_sun_date = n.strftime('%d.%m.%Y')
+        if(self.m_sun_time == "HH:MM"):
+            if(mx is not None):
+                mx.sun_time = n.strftime('%H:%M')
+                self.m_sun_time = mx.sun_time
+            else:
+                self.m_sun_time = n.strftime('%H:%M')
+    
+    def _color_to_rgb8(self, c):
+        return tuple([int(255 * v) for v in c])
+
+
+class MXSCamera(Serializable):
+    def __init__(self, o, ):
+        ob = o['object']
+        self.b_object = ob
+        self.b_matrix_world = ob.matrix_world.copy()
+        cd = ob.data
+        rp = bpy.context.scene.render
+        mx = ob.data.maxwell_render
+        
+        # object
+        self.m_name = ob.name
+        self.m_type = 'CAMERA'
+        self.m_parent = None
+        self.m_active = (bpy.context.scene.camera == ob)
+        self.m_hide = mx.hide
+        
+        # optics
+        self.m_lens = int(mx.lens[-1:])
+        self.m_shutter = 1 / mx.shutter
+        self.m_fov = mx.fov
+        self.m_azimuth = mx.azimuth
+        self.m_angle = mx.angle
+        
+        # sensor
+        self.m_iso = mx.iso
+        self.m_response = mx.response
+        self.m_resolution_x = int(rp.resolution_x * rp.resolution_percentage / 100.0)
+        self.m_resolution_y = int(rp.resolution_y * rp.resolution_percentage / 100.0)
+        self.m_pixel_aspect = rp.pixel_aspect_x / rp.pixel_aspect_y
+        self.m_screen_region = mx.screen_region
+        self.m_screen_region_xywh = ()
+        if(self.m_screen_region != 'NONE'):
+            x = int(self.m_resolution_x * rp.border_min_x)
+            h = self.m_resolution_y - int(self.m_resolution_y * rp.border_min_y)
+            w = int(self.m_resolution_x * rp.border_max_x)
+            y = self.m_resolution_y - int(self.m_resolution_y * rp.border_max_y)
+            self.m_screen_region_xywh = (x, y, w, h)
+        
+        # options
+        self.m_aperture = mx.aperture
+        self.m_diaphragm_blades = mx.diaphragm_blades
+        self.m_diaphragm_angle = mx.diaphragm_angle
+        self.m_custom_bokeh = mx.custom_bokeh
+        self.m_bokeh_ratio = mx.bokeh_ratio
+        self.m_bokeh_angle = mx.bokeh_angle
+        self.m_shutter_angle = mx.shutter_angle
+        self.m_frame_rate = mx.frame_rate
+        self.m_set_cut_planes = (cd.clip_start, cd.clip_end, int(mx.zclip))
+        self.m_set_shift_lens = (cd.shift_x * 10.0, cd.shift_y * 10.0)
+        
+        # film width / height: width / height ratio a ==  x_res / y_res ratio
+        # x_res / y_res is more important than sensor size, depending on sensor fit the other one is calculated
+        sf = cd.sensor_fit
+        film_height = cd.sensor_height / 1000.0
+        film_width = cd.sensor_width / 1000.0
+        if(sf == 'AUTO'):
+            if(self.m_resolution_x > self.m_resolution_y):
+                # horizontal
+                film_width = cd.sensor_width / 1000.0
+                sf = 'HORIZONTAL'
+            else:
+                # vertical
+                film_height = cd.sensor_width / 1000.0
+                sf = 'VERTICAL'
+        if(sf == 'VERTICAL'):
+            film_width = (film_height * self.m_resolution_x) / self.m_resolution_y
+        else:
+            film_height = (film_width * self.m_resolution_y) / self.m_resolution_x
+        
+        self.m_film_width = film_width
+        self.m_film_height = film_height
+        
+        # add current automatically
+        self.m_steps = []
+        self.set_step()
+    
+    def set_step(self, step_number=0, step_time=0.0, ):
+        ob = self.b_object
+        cd = ob.data
+        rp = bpy.context.scene.render
+        mx = ob.data.maxwell_render
+        
+        mw_loc, mw_rot, _ = ob.matrix_world.decompose()
+        mw_location = Matrix.Translation(mw_loc).to_4x4()
+        mw_rotation = mw_rot.to_matrix().to_4x4()
+        mw_scale = Matrix.Identity(4)
+        mw = mw_location * mw_rotation * mw_scale
+        origin = mw.to_translation()
+        if(ob.data.dof_object):
+            dof_distance = (origin - ob.data.dof_object.matrix_world.to_translation()).length
+        else:
+            dof_distance = ob.data.dof_distance
+            if(dof_distance == 0.0):
+                dof_distance = 1.0
+        focal_point = mw * Vector((0.0, 0.0, -dof_distance))
+        up = mw * Vector((0.0, 1.0, 0.0)) - origin
+        
+        origin = Vector(AXIS_CONVERSION * origin).to_tuple()
+        focal_point = Vector(AXIS_CONVERSION * focal_point).to_tuple()
+        up = Vector(AXIS_CONVERSION * up).to_tuple()
+        
+        # step, Cvector origin, Cvector focalPoint, Cvector, up, focalLenght, fStop, stepTime, focalLengthNeedCorrection = 1
+        self.m_steps.append((step_number, origin, focal_point, up, cd.lens / 1000.0, mx.fstop, step_time, 1, ))
+        self.m_number_of_steps = len(self.m_steps)
+
+
+class MXSObject(Serializable):
+    def __init__(self, o, ):
+        self.o = o
+        ob = self.o['object']
+        self.b_object = ob
+        self.b_matrix_world = ob.matrix_world.copy()
+        mx = ob.maxwell_render
+        
+        self.m_name = ob.name
+        self.m_type = None
+        self.m_parent = None
+        if(ob.parent):
+            self.m_parent = ob.parent.name
+        
+        self._object_properties()
+        self._transformation()
+    
+    def _color_to_rgb8(self, c):
+        return tuple([int(255 * v) for v in c])
+    
+    def _object_properties(self):
+        mx = self.b_object.maxwell_render
+        
+        self.m_hide = mx.hide
+        self.m_opacity = mx.opacity
+        self.m_hidden_camera = mx.hidden_camera
+        self.m_hidden_camera_in_shadow_channel = mx.hidden_camera_in_shadow_channel
+        self.m_hidden_global_illumination = mx.hidden_global_illumination
+        self.m_hidden_reflections_refractions = mx.hidden_reflections_refractions
+        self.m_hidden_zclip_planes = mx.hidden_zclip_planes
+        self.m_object_id = self._color_to_rgb8(mx.object_id)
+    
+    def _matrix_to_base_and_pivot(self, m):
+        """Convert Matrix to Base and Pivot and Position, Rotation and Scale for Studio"""
+        cm = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).to_4x4()
+        mm = m.copy()
+        
+        # # i've rotated mesh x-90, so rotate matrix x+90 to compensate..
+        # mr90 = Matrix.Rotation(math.radians(-90.0 * -1), 4, 'X')
+        # mm *= mr90
+        
+        l, r, s = mm.decompose()
+        # location
+        ml = cm * l
+        # print(ml.to_tuple())
+        # rotate
+        e = r.to_euler()
+        e.rotate(cm)
+        # print((math.degrees(e[0]), math.degrees(e[1]), math.degrees(e[2]), ))
+        mr = e.to_matrix()
+        # scale
+        ms = Matrix(((s.x, 0.0, 0.0), (0.0, s.y, 0.0), (0.0, 0.0, s.z)))
+        # print(s.to_tuple())
+        # combine rotation + scale
+        rs = mr * ms
+        rs.transpose()
+        # convert data
+        bx = rs.row[0].to_tuple()
+        by = rs.row[1].to_tuple()
+        bz = rs.row[2].to_tuple()
+        b = (ml.to_tuple(), ) + (bx, by, bz)
+        p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        # print(b)
+        # print(p)
+        
+        l = ml.to_tuple()
+        r = (math.degrees(e[0]), math.degrees(e[1]), math.degrees(e[2]), )
+        s = s.to_tuple()
+        
+        # print(b)
+        # print(p)
+        # print(l)
+        # print(r)
+        # print(s)
+        
+        return (b, p, l, r, s, )
+    
+    def _transformation(self):
+        ob = self.b_object
+        mx = ob.maxwell_render
+        
+        if(ob.parent_type == 'BONE'):
+            # TODO object parented to a bone, maybe have a look to another parenting scenarios..
+            pass
+        else:
+            mw = ob.matrix_world.copy()
+            if(ob.parent):
+                mb = ob.parent.matrix_world.inverted() * mw
+            else:
+                mb = mw
+            m = mb
+            m *= ROTATE_X_90
+            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+        
+        self.m_base = b
+        self.m_pivot = p
+        self.m_location = l
+        self.m_rotation = r
+        self.m_scale = s
 
 
 class MXSEmpty(MXSObject):
-    def __init__(self):
-        pass
+    def __init__(self, o, ):
+        super(MXSEmpty, self).__init__(o)
+        self.m_type = 'EMPTY'
 
 
 class MXSMesh(MXSObject):
-    def __init__(self):
+    def __init__(self, o, ):
+        super(MXSMesh, self).__init__(o)
+        self.m_type = 'MESH'
+        
+        # TODO: re-implement overriden instances
+        # is_overriden_instance = False
+        # try:
+        #     o['override_instance']
+        #     is_overriden_instance = True
+        # except:
+        #     pass
+        #
+        # if(is_overriden_instance):
+        #     o['object'].data = o['object'].data.copy()
+        #     d, md = self._mesh_to_data(o)
+        #     p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
+        #     # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+        #     w = MXSBinMeshWriterLegacy(p, **md)
+        #     rm = o['object'].data
+        #     o['object'].data = o['override_instance']
+        #     bpy.data.meshes.remove(rm)
+        # else:
+        #     d, md = self._mesh_to_data(o)
+        #     p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
+        #     # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
+        #     w = MXSBinMeshWriterLegacy(p, **md)
+        #
+        # self.mesh_data_paths.append(p)
+        # d['mesh_data_path'] = p
+        # self.data.append(d)
+        
+        me = self._prepare_mesh()
+        self._mesh_to_data(me)
+        self._materials()
+        self._modifiers()
+        # cleanup
+        bpy.data.meshes.remove(me)
+        
+        # # mac os x export stuff
+        # nm = "{}-{}".format(ob.data.name, uuid.uuid1())
+        # if(self.use_instances is False):
+        #     nm = "{}-{}".format(ob.name, uuid.uuid1())
+    
+    def _prepare_mesh(self):
+        ob = self.b_object
+        mx = ob.maxwell_render
+        o = self.o
+        
+        # TODO: extra subdivision modifiers logic
+        extra_subdiv = False
+        '''
+        exopts = self.context.scene.maxwell_render
+        extra_subdiv = False
+        if(o['converted'] is True):
+            # get to-mesh-conversion result, will be removed at the end..
+            me = o['mesh']
+        else:
+            # or make new flattened mesh
+            if(exopts.export_use_subdivision):
+                if(len(ob.modifiers) > 0):
+                    lmod = ob.modifiers[-1]
+                    if(lmod.type == 'SUBSURF' and lmod.show_render and lmod.subdivision_type == 'CATMULL_CLARK'):
+                        extra_subdiv = True
+                        lmod.show_render = False
+            me = ob.to_mesh(self.context.scene, True, 'RENDER', )
+            if(extra_subdiv):
+                lmod.show_render = True
+        '''
+        
+        if(o['converted'] is True):
+            # get to-mesh-conversion result (curves, texts, etc..)
+            me = o['mesh']
+        else:
+            # or make new flattened mesh (regular meshes, with modifiers applied)
+            me = ob.to_mesh(bpy.context.scene, True, 'RENDER', )
+        
+        # transform
+        me.transform(ROTATE_X_MINUS_90)
+        
+        # here, in triangulating, i experienced crash from not so well mesh, validating before prevents it..
+        me.validate()
+        
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        # store quads if needed
+        subd = ob.maxwell_subdivision_extension
+        # do this only when subdivision is enabled and set to catmull-clark scheme
+        if((subd.enabled and subd.scheme == '0') or extra_subdiv):
+            # make list if vertex indices lists, only for quads, for other polygons put empty list
+            fvixs = [[v.index for v in f.verts] if len(f.verts) == 4 else [] for f in bm.faces]
+        
+        # triangulate now in bmesh
+        bmesh.ops.triangulate(bm, faces=bm.faces)
+        
+        # quads again: list of lists of triangle indices which were quads before
+        quad_pairs = None
+        # do this only when subdivision is enabled and set to catmull-clark scheme
+        if((subd.enabled and subd.scheme == '0') or extra_subdiv):
+            quadix = []
+            for f in bm.faces:
+                vixs = [v.index for v in f.verts]
+                for qi, q in enumerate(fvixs):
+                    c = 0
+                    for i in q:
+                        if(i in vixs):
+                            c += 1
+                        if(c == 3):
+                            # has 3 verts from ex-quad, is one of the pair
+                            quadix.append([qi, f.index])
+                            break
+            # make pairs
+            quadd = {}
+            for qi, fi in quadix:
+                if(str(qi) not in quadd):
+                    quadd[str(qi)] = [fi, ]
+                else:
+                    quadd[str(qi)].append(fi)
+            # quad pairs dict to list
+            quad_pairs = []
+            for k, v in quadd.items():
+                if(len(v) > 2):
+                    log("{}: WARNING: {}: triangulation result is non-manifold, Catmull-Clark subdivision will not work".format(self.__class__.__name__, ob.name), 3, LogStyles.WARNING, )
+                    v = v[:2]
+                quad_pairs.append(v)
+        
+        bm.to_mesh(me)
+        bm.free()
+        
+        me.calc_tessface()
+        me.calc_normals()
+        
+        return me
+    
+    def _mesh_to_data(self, me, ):
+        # vertices
+        vertices = [[v.co.to_tuple() for v in me.vertices], ]
+        # vertex normals
+        normals = [[v.normal.to_tuple() for v in me.vertices], ]
+        # triangles and triangle normals
+        triangles = []
+        triangle_normals = []
+        ni = len(me.vertices) - 1
+        tns = []
+        for fi, f in enumerate(me.tessfaces):
+            ni = ni + 1
+            tns.append(f.normal.to_tuple())
+            fv = f.vertices
+            # smoothing
+            if(f.use_smooth):
+                # vertex normals
+                nix = (fv[0], fv[1], fv[2], )
+            else:
+                # face normal
+                nix = (ni, ni, ni, )
+            t = tuple(fv) + nix
+            triangles.append(t)
+        
+        triangle_normals.append(tns)
+        # uv channels
+        uv_channels = []
+        for tix, uvtex in enumerate(me.tessface_uv_textures):
+            uv = []
+            for fi, f in enumerate(me.tessfaces):
+                duv = uvtex.data[fi].uv
+                uv.append((duv[0][0], 1.0 - duv[0][1], 0.0, duv[1][0], 1.0 - duv[1][1], 0.0, duv[2][0], 1.0 - duv[2][1], 0.0, ))
+            uv_channels.append(uv)
+        # triangle materials
+        triangle_materials = []
+        for fi, f in enumerate(me.tessfaces):
+            triangle_materials.append((fi, f.material_index, ))
+        
+        # TODO: implement more positions per vertex (needed for motion blur i guess)
+        self.m_num_positions = 1
+        self.m_vertices = vertices
+        self.m_normals = normals
+        self.m_triangles = triangles
+        self.m_triangle_normals = triangle_normals
+        self.m_uv_channels = uv_channels
+        self.m_triangle_materials = triangle_materials
+    
+    def _materials(self):
+        # just do materials, triangle assignmens of slots is already done
+        ob = self.b_object
+        self.m_num_materials = len(ob.material_slots)
+        self.m_materials = []
+    
+    def _modifiers(self):
+        # TODO: reimplement modifiers
         pass
+        '''
+        def texture_to_data(name):
+            tex = None
+            for t in bpy.data.textures:
+                if(t.type == 'IMAGE'):
+                    if(t.name == name):
+                        tex = t
+            
+            d = {'type': 'IMAGE',
+                 'path': "",
+                 'channel': 0,
+                 'use_override_map': False,
+                 'tile_method_type': [True, True],
+                 'tile_method_units': 0,
+                 'repeat': [1.0, 1.0],
+                 'mirror': [False, False],
+                 'offset': [0.0, 0.0],
+                 'rotation': 0.0,
+                 'invert': False,
+                 'alpha_only': False,
+                 'interpolation': False,
+                 'brightness': 0.0,
+                 'contrast': 0.0,
+                 'saturation': 0.0,
+                 'hue': 0.0,
+                 'rgb_clamp': [0.0, 255.0], }
+            if(tex is not None):
+                d['path'] = bpy.path.abspath(tex.image.filepath)
+                return d
+            return None
+        
+        sd = ob.maxwell_subdivision_extension
+        if(sd.enabled or extra_subdiv):
+            if(extra_subdiv):
+                if(lmod.use_subsurf_uv):
+                    sub_uv = 2
+                else:
+                    sub_uv = 0
+                d['subdiv_ext'] = [lmod.render_levels, 0, sub_uv, 0.0, 90.0, quad_pairs, ]
+            if(sd.enabled):
+                # manually added subdivision extension will override automatic one
+                d['subdiv_ext'] = [int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), quad_pairs, ]
+        else:
+            d['subdiv_ext'] = None
+        
+        sc = ob.maxwell_scatter_extension
+        if(sc.enabled):
+            if(sc.scatter_object is ''):
+                log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(ob.name), 3, LogStyles.WARNING, )
+                d['scatter_ext'] = None
+            else:
+                d['scatter_ext'] = {'scatter_object': sc.scatter_object,
+                                    'inherit_objectid': sc.inherit_objectid,
+                                    'density': sc.density,
+                                    'density_map': texture_to_data(sc.density_map),
+                                    'seed': int(sc.seed),
+                                    'scale_x': sc.scale_x,
+                                    'scale_y': sc.scale_y,
+                                    'scale_z': sc.scale_z,
+                                    'scale_map': texture_to_data(sc.scale_map),
+                                    'scale_variation_x': sc.scale_variation_x,
+                                    'scale_variation_y': sc.scale_variation_y,
+                                    'scale_variation_z': sc.scale_variation_z,
+                                    'rotation_x': math.degrees(sc.rotation_x),
+                                    'rotation_y': math.degrees(sc.rotation_y),
+                                    'rotation_z': math.degrees(sc.rotation_z),
+                                    'rotation_map': texture_to_data(sc.rotation_map),
+                                    'rotation_variation_x': sc.rotation_variation_x,
+                                    'rotation_variation_y': sc.rotation_variation_y,
+                                    'rotation_variation_z': sc.rotation_variation_z,
+                                    'rotation_direction': int(sc.rotation_direction),
+                                    'lod': sc.lod,
+                                    'lod_min_distance': sc.lod_min_distance,
+                                    'lod_max_distance': sc.lod_max_distance,
+                                    'lod_max_distance_density': sc.lod_max_distance_density,
+                                    'display_percent': int(sc.display_percent),
+                                    'display_max_blades': int(sc.display_max_blades), }
+        else:
+            d['scatter_ext'] = None
+        
+        ms = ob.maxwell_sea_extension
+        if(ms.enabled):
+            name = "{}-MaxwellSea".format(ob.name)
+            d['sea_ext'] = [name, ms.hide_parent, ms.reference_time, int(ms.resolution), ms.ocean_depth, ms.vertical_scale, ms.ocean_dim,
+                            ms.ocean_seed, ms.enable_choppyness, ms.choppy_factor, ms.ocean_wind_mod, math.degrees(ms.ocean_wind_dir),
+                            ms.ocean_wind_alignment, ms.ocean_min_wave_length, ms.damp_factor_against_wind, ms.enable_white_caps, ]
+        else:
+            d['sea_ext'] = None
+        
+        # return d, md
+        '''
 
 
 class MXSMeshInstance(MXSObject):
@@ -588,11 +1276,26 @@ class MXSMeshInstance(MXSObject):
 
 
 class MXSReference(MXSObject):
-    def __init__(self):
-        pass
+    def __init__(self, o, ):
+        super(MXSReference, self).__init__(o)
+        self.m_type = 'REFERENCE'
+        
+        ob = self.b_object
+        mx = ob.maxwell_render_reference
+        
+        # TODO: solve skipping of invalid objects, or if it is poaaible to make reference without valid path, so be it..
+        log("{0} -> {1}".format(o['object'].name, bpy.path.abspath(mx.path)), 2)
+        if(not os.path.exists(bpy.path.abspath(mx.path))):
+            log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
+        
+        self.m_path = bpy.path.abspath(mx.path)
+        self.m_flag_override_hide = mx.flag_override_hide
+        self.m_flag_override_hide_to_camera = mx.flag_override_hide_to_camera
+        self.m_flag_override_hide_to_refl_refr = mx.flag_override_hide_to_refl_refr
+        self.m_flag_override_hide_to_gi = mx.flag_override_hide_to_gi
 
 
-class MXSExtension():
+class MXSExtension(Serializable):
     def __init__(self):
         pass
 
@@ -642,12 +1345,12 @@ class MXSSea(MXSExtensionModifier):
         pass
 
 
-class MXSMaterial():
+class MXSMaterial(Serializable):
     def __init__(self):
         pass
 
 
-class MXSTexture():
+class MXSTexture(Serializable):
     def __init__(self):
         pass
 
