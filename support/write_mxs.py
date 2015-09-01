@@ -649,14 +649,24 @@ def camera(d, s):
     if(d['custom_bokeh']):
         c.setCustomBokeh(d['bokeh_ratio'], d['bokeh_angle'], True)
     
-    o = Cvector()
-    o.assign(*d['origin'])
-    f = Cvector()
-    f.assign(*d['focal_point'])
-    u = Cvector()
-    u.assign(*d['up'])
-    # hard coded: (step: 0, _, _, _, _, _, stepTime: 1, focalLengthNeedCorrection: 1, )
-    c.setStep(0, o, f, u, d['focal_length'], d['fstop'], 1, 1, )
+    for s in d['steps']:
+        o = Cvector()
+        o.assign(*s[1])
+        f = Cvector()
+        f.assign(*s[2])
+        u = Cvector()
+        u.assign(*s[3])
+        c.setStep(s[0], o, f, u, s[4], s[5], s[6], s[7], )
+    
+    # o = Cvector()
+    # o.assign(*d['origin'])
+    # f = Cvector()
+    # f.assign(*d['focal_point'])
+    # u = Cvector()
+    # u.assign(*d['up'])
+    # # hard coded: (step: 0, _, _, _, _, _, stepTime: 1, focalLengthNeedCorrection: 1, )
+    # c.setStep(0, o, f, u, d['focal_length'], d['fstop'], 1, 1, )
+    
     if(d['lens'] == 3):
         c.setFishLensProperties(d['fov'])
     if(d['lens'] == 4):
@@ -684,7 +694,6 @@ def empty(d, s):
 def mesh(d, s):
     r = MXSBinMeshReaderLegacy(d['mesh_data_path'])
     m = r.data
-    
     o = s.createMesh(d['name'], d['num_vertexes'], d['num_normals'], d['num_triangles'], d['num_positions_per_vertex'], )
     
     for i in range(len(m['uv_channels'])):
@@ -1541,7 +1550,7 @@ def volumetrics(d, s):
 
 def hierarchy(d, s):
     log("setting object hierarchy..", 2)
-    object_types = ['EMPTY', 'MESH', 'INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', ]
+    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', ]
     exclude = ['SCENE', 'ENVIRONMENT', 'GRASS', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types and d[i]['type'] not in exclude):
@@ -1589,7 +1598,7 @@ def wireframe_hierarchy(d, s, ws):
            'hide': False,
            'type': 'EMPTY', }
     we = empty(wed, s)
-    object_types = ['EMPTY', 'MESH', 'INSTANCE', 'WIREFRAME_EDGE', 'WIREFRAME', ]
+    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'WIREFRAME_EDGE', 'WIREFRAME', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types):
             if(d[i]['type'] == 'WIREFRAME'):
@@ -1666,7 +1675,7 @@ def wireframe_assign_materials(d, s, ws, wm, cm):
     if(wm is None or cm is None):
         raise RuntimeError("wire or clay material is missing..")
     
-    object_types = ['EMPTY', 'MESH', 'INSTANCE', 'WIREFRAME_EDGE', 'WIREFRAME', ]
+    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'WIREFRAME_EDGE', 'WIREFRAME', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types):
             if(d[i]['type'] == 'WIREFRAME'):
@@ -1755,7 +1764,7 @@ def main(args):
                 name = d['name']
                 ob = mxs.getObject(d['name'])
                 ob.setScale(Cvector(0.0, 0.0, 0.0))
-        elif(d['type'] == 'INSTANCE'):
+        elif(d['type'] == 'MESH_INSTANCE'):
             try:
                 if(d['base']):
                     mesh(d, mxs)

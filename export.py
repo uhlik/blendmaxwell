@@ -56,16 +56,34 @@ class MXSExport():
         mx = self.context.scene.maxwell_render
         self.use_instances = mx.export_use_instances
         
+        self._prepare()
+        self._export()
+        self._finish()
+    
+    def _prepare(self):
         if(system.PLATFORM == 'Darwin'):
             # Mac OS X specific
-            self.uuid = uuid.uuid1()
             self.data = []
+            self.serialized_data = []
+            
+            mx = self.context.scene.maxwell_render
+            self.keep_intermediates = mx.export_keep_intermediates
+            
+            self.uuid = uuid.uuid1()
+            h, t = os.path.split(self.mxs_path)
+            n, e = os.path.splitext(t)
+            self.tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, self.uuid))
+            if(os.path.exists(self.tmp_dir) is False):
+                os.makedirs(self.tmp_dir)
+            
+            self.mesh_data_paths = []
+            self.hair_data_paths = []
+            self.part_data_paths = []
+            self.scene_data_name = "{0}-{1}.json".format(n, self.uuid)
+            self.script_name = "{0}-{1}.py".format(n, self.uuid)
+            
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
-            # send objects directly to mxs writer
-            # # self.mxs = MXSWriter()
             pass
-        
-        self._export()
     
     def _collect(self):
         """Collect scene objects.
@@ -77,6 +95,9 @@ class MXSExport():
             - Covert dupli-objects to real meshes or instances.
         Return filtered scene hierarchy.
         """
+        
+        # FIXME: instancing of curves
+        
         objs = self.context.scene.objects
         
         # sort objects
@@ -544,15 +565,6 @@ class MXSExport():
         # collect all objects to be exported, split them by type. keep this dict if hiearchy would be needed
         self.tree = self._collect()
         
-        # o = MXSScene()
-        # self._write(o)
-        
-        o = MXSEnvironment()
-        self._write(o)
-        # for k, v in o._dict().items():
-        #     print(k, ': ', v)
-        # print('-' * 30)
-        
         for d in self._cameras:
             o = MXSCamera(d)
             self._write(o)
@@ -574,11 +586,28 @@ class MXSExport():
             #     print(k, ': ', v)
             # print('-' * 30)
         
-        # self._bases
+        bases = []
         
-        # self._instances
+        for d in self._bases:
+            o = MXSMesh(d)
+            self._write(o)
+            
+            bases.append(o)
         
-        # self._duplicates
+        def find_base(mnm):
+            for b in bases:
+                if(b.mesh_name == mnm):
+                    return b
+        
+        for d in self._instances:
+            b = find_base(d['mesh'].name)
+            o = MXSMeshInstance(d, b, )
+            self._write(o)
+        
+        for d in self._duplicates:
+            b = find_base(d['mesh'].name)
+            o = MXSMeshInstance(d, b, )
+            self._write(o)
         
         for d in self._references:
             o = MXSReference(d)
@@ -590,11 +619,94 @@ class MXSExport():
         
         # self._modifiers
         # should be written when encountered on object, writing them separatedly is silly..
+        
+        o = MXSEnvironment()
+        self._write(o)
+        
+        # all object are processed now, i can work with all object which have made it through
+        groups = []
+        allowed = ['MESH', 'MESH_INSTANCE', ]
+        for g in bpy.data.groups:
+            gmx = g.maxwell_render
+            if(gmx.custom_alpha_use):
+                a = {'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
+                for o in g.objects:
+                    for mo in self.data:
+                        if(mo.m_type in allowed):
+                            if(o.name == mo.m_name):
+                                a['objects'].append(o.name)
+                groups.append(a)
+        
+        o = MXSScene(self.mxs_path, groups, )
+        self._write(o)
     
     def _write(self, o, ):
         if(system.PLATFORM == 'Darwin'):
             # append object, at the end it will be serialized and written to be read by helper script
-            self.data.append(o)
+            # self.data.append(o)
+            
+            if(o.m_type == 'MESH'):
+                nm = "{}-{}".format(o.m_name, uuid.uuid1())
+                
+                # split data to mesh / properties
+                md = {'name': o.m_name,
+                      'num_positions': o.m_num_positions,
+                      'vertices': o.m_vertices,
+                      'normals': o.m_normals,
+                      'triangles': o.m_triangles,
+                      'triangle_normals': o.m_triangle_normals,
+                      'uv_channels': o.m_uv_channels,
+                      'num_materials': o.m_num_materials,
+                      'triangle_materials': o.m_triangle_materials, }
+                p = os.path.join(self.tmp_dir, "{0}.binmesh".format(nm))
+                w = MXSBinMeshWriterLegacy(p, **md)
+                
+                d = {'name': o.m_name,
+                     'num_vertexes': len(o.m_vertices[0]),
+                     'num_normals': len(o.m_normals[0]) + len(o.m_triangles),
+                     'num_triangles': len(o.m_triangles),
+                     'num_positions_per_vertex': o.m_num_positions,
+                     'mesh_data': nm,
+                     'parent': o.m_parent,
+                     'opacity': o.m_opacity,
+                     'hidden_camera': o.m_hidden_camera,
+                     'hidden_camera_in_shadow_channel': o.m_hidden_camera_in_shadow_channel,
+                     'hidden_global_illumination': o.m_hidden_global_illumination,
+                     'hidden_reflections_refractions': o.m_hidden_reflections_refractions,
+                     'hidden_zclip_planes': o.m_hidden_zclip_planes,
+                     'object_id': o.m_object_id,
+                     'num_materials': o.m_num_materials,
+                     'materials': o.m_materials,
+                     'backface_material': o.m_backface_material,
+                     'hide': o.m_hide,
+                     'mesh_data_path': p,
+                     'base' : o.m_base,
+                     'pivot' : o.m_pivot,
+                     'location' : o.m_location,
+                     'rotation' : o.m_rotation,
+                     'scale' : o.m_scale,
+                     
+                     'sea_ext': None,
+                     'scatter_ext': None,
+                     'subdiv_ext': None,
+                     
+                     'type': 'MESH', }
+                
+                self.mesh_data_paths.append(p)
+                self.serialized_data.append(d)
+                
+            elif(o.m_type == 'HAIR'):
+                pass
+            elif(o.m_type == 'PARTICLES'):
+                pass
+            else:
+                d = o._dict()
+                a = {}
+                for k, v in d.items():
+                    a[k[2:]] = v
+                
+                self.serialized_data.append(a)
+            
         elif(system.PLATFORM == 'Linux'):
             # # directly write to mxs
             # self.mxs.write(o)
@@ -603,6 +715,78 @@ class MXSExport():
             # # directly write to mxs
             # self.mxs.write(o)
             pass
+    
+    def _finish(self):
+        if(system.PLATFORM == 'Darwin'):
+            # Mac OS X specific
+            p = self._serialize(self.serialized_data, self.scene_data_name)
+            self.scene_data_path = p
+            # generate and execute py32 script
+            self._pymaxwell()
+            # remove all generated files
+            self._cleanup()
+        elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+            pass
+    
+    def _serialize(self, d, n, ):
+        if(not n.endswith(".json")):
+            n = "{}.json".format(n)
+        p = os.path.join(self.tmp_dir, n)
+        with open("{0}.tmp".format(p), 'w', encoding='utf-8', ) as f:
+            json.dump(d, f, skipkeys=False, ensure_ascii=False, indent=4, )
+        if(os.path.exists(p)):
+            os.remove(p)
+        shutil.move("{0}.tmp".format(p), p)
+        return p
+    
+    def _pymaxwell(self, append=False, instancer=False, wireframe=False, ):
+        # generate script
+        self.script_path = os.path.join(self.tmp_dir, self.script_name)
+        with open(self.script_path, mode='w', encoding='utf-8') as f:
+            # read template
+            with open(system.check_for_template(), encoding='utf-8') as t:
+                code = "".join(t.readlines())
+            # write template to a new file
+            f.write(code)
+        
+        system.python34_run_script_helper(self.script_path, self.scene_data_path, self.mxs_path, append, instancer, wireframe, )
+    
+    def _cleanup(self):
+        """Remove all intermediate products."""
+        if(self.keep_intermediates):
+            return
+        
+        # remove script, data files and temp directory
+        def rm(p):
+            if(os.path.exists(p)):
+                os.remove(p)
+            else:
+                log("{1}: WARNING: _cleanup(): {0} does not exist?".format(p, self.__class__.__name__), 1, LogStyles.WARNING, )
+        
+        rm(self.script_path)
+        rm(self.scene_data_path)
+        
+        if(hasattr(self, 'mesh_data_paths')):
+            for p in self.mesh_data_paths:
+                rm(p)
+        
+        if(hasattr(self, 'wire_base_data')):
+            rm(self.wire_base_data)
+            for p in self.wire_data_paths:
+                rm(p)
+        
+        if(hasattr(self, 'hair_data_paths')):
+            for p in self.hair_data_paths:
+                rm(p)
+        
+        if(hasattr(self, 'part_data_paths')):
+            for p in self.part_data_paths:
+                rm(p)
+        
+        if(os.path.exists(self.tmp_dir)):
+            os.rmdir(self.tmp_dir)
+        else:
+            log("{1}: WARNING: _cleanup(): {0} does not exist?".format(self.tmp_dir, self.__class__.__name__), 1, LogStyles.WARNING, )
 
 
 class Serializable():
@@ -620,8 +804,101 @@ class Serializable():
 
 
 class MXSScene(Serializable):
-    def __init__(self):
-        pass
+    def __init__(self, mxs_path, groups, ):
+        h, t = os.path.split(mxs_path)
+        n, e = os.path.splitext(t)
+        mx = bpy.context.scene.maxwell_render
+        
+        self.m_type = 'SCENE'
+        self.m_scene_time = mx.scene_time
+        self.m_scene_sampling_level = mx.scene_sampling_level
+        self.m_scene_multilight = int(mx.scene_multilight[-1:])
+        self.m_scene_multilight_type = int(mx.scene_multilight_type[-1:])
+        self.m_scene_cpu_threads = mx.scene_cpu_threads
+        self.m_scene_quality = mx.scene_quality
+        self.m_output_depth = mx.output_depth
+        self.m_output_image_enabled = mx.output_image_enabled
+        if(mx.output_image != ''):
+            self.m_output_image = bpy.path.abspath(mx.output_image)
+        self.m_output_mxi_enabled = mx.output_mxi_enabled
+        if(mx.output_mxi != ''):
+            self.m_output_mxi = bpy.path.abspath(mx.output_mxi)
+        self.m_materials_override = mx.materials_override
+        self.m_materials_override_path = bpy.path.abspath(mx.materials_override_path)
+        self.m_materials_search_path = bpy.path.abspath(mx.materials_search_path)
+        self.m_globals_motion_blur = mx.globals_motion_blur
+        self.m_globals_diplacement = mx.globals_diplacement
+        self.m_globals_dispersion = mx.globals_dispersion
+        self.m_channels_output_mode = int(mx.channels_output_mode[-1:])
+        self.m_channels_render = mx.channels_render
+        self.m_channels_render_type = int(mx.channels_render_type[-1:])
+        self.m_channels_alpha = mx.channels_alpha
+        self.m_channels_alpha_file = mx.channels_alpha_file
+        self.m_channels_alpha_opaque = mx.channels_alpha_opaque
+        self.m_channels_z_buffer = mx.channels_z_buffer
+        self.m_channels_z_buffer_file = mx.channels_z_buffer_file
+        self.m_channels_z_buffer_near = mx.channels_z_buffer_near
+        self.m_channels_z_buffer_far = mx.channels_z_buffer_far
+        self.m_channels_shadow = mx.channels_shadow
+        self.m_channels_shadow_file = mx.channels_shadow_file
+        self.m_channels_material_id = mx.channels_material_id
+        self.m_channels_material_id_file = mx.channels_material_id_file
+        self.m_channels_object_id = mx.channels_object_id
+        self.m_channels_object_id_file = mx.channels_object_id_file
+        self.m_channels_motion_vector = mx.channels_motion_vector
+        self.m_channels_motion_vector_file = mx.channels_motion_vector_file
+        self.m_channels_roughness = mx.channels_roughness
+        self.m_channels_roughness_file = mx.channels_roughness_file
+        self.m_channels_fresnel = mx.channels_fresnel
+        self.m_channels_fresnel_file = mx.channels_fresnel_file
+        self.m_channels_normals = mx.channels_normals
+        self.m_channels_normals_file = mx.channels_normals_file
+        self.m_channels_normals_space = int(mx.channels_normals_space[-1:])
+        self.m_channels_position = mx.channels_position
+        self.m_channels_position_file = mx.channels_position_file
+        self.m_channels_position_space = int(mx.channels_position_space[-1:])
+        self.m_channels_deep = mx.channels_deep
+        self.m_channels_deep_file = mx.channels_deep_file
+        self.m_channels_deep_type = int(mx.channels_deep_type[-1:])
+        self.m_channels_deep_min_dist = mx.channels_deep_min_dist
+        self.m_channels_deep_max_samples = mx.channels_deep_max_samples
+        self.m_channels_uv = mx.channels_uv
+        self.m_channels_uv_file = mx.channels_uv_file
+        self.m_channels_custom_alpha = mx.channels_custom_alpha
+        self.m_channels_custom_alpha_file = mx.channels_custom_alpha_file
+        self.m_channels_custom_alpha_groups = groups
+        self.m_tone_color_space = int(mx.tone_color_space.split('_')[1])
+        self.m_tone_whitepoint = mx.tone_whitepoint
+        self.m_tone_tint = mx.tone_tint
+        self.m_tone_burn = mx.tone_burn
+        self.m_tone_gamma = mx.tone_gamma
+        self.m_tone_sharpness = mx.tone_sharpness
+        self.m_tone_sharpness_value = mx.tone_sharpness_value / 100.0
+        self.m_simulens_aperture_map = bpy.path.abspath(mx.simulens_aperture_map)
+        self.m_simulens_obstacle_map = bpy.path.abspath(mx.simulens_obstacle_map)
+        self.m_simulens_diffraction = mx.simulens_diffraction
+        self.m_simulens_diffraction_value = maths.remap(mx.simulens_diffraction_value, 0.0, 2500.0, 0.0, 1.0)
+        self.m_simulens_frequency = maths.remap(mx.simulens_frequency, 0.0, 2500.0, 0.0, 1.0)
+        self.m_simulens_scattering = mx.simulens_scattering
+        self.m_simulens_scattering_value = maths.remap(mx.simulens_scattering_value, 0.0, 2500.0, 0.0, 1.0)
+        self.m_simulens_devignetting = mx.simulens_devignetting
+        self.m_simulens_devignetting_value = mx.simulens_devignetting_value / 100.0
+        self.m_illum_caustics_illumination = int(mx.illum_caustics_illumination[-1:])
+        self.m_illum_caustics_refl_caustics = int(mx.illum_caustics_refl_caustics[-1:])
+        self.m_illum_caustics_refr_caustics = int(mx.illum_caustics_refr_caustics[-1:])
+        # self.m_overlay_enabled = mx.overlay_enabled
+        # self.m_overlay_text = mx.overlay_text
+        # self.m_overlay_position = mx.overlay_position
+        # self.m_overlay_color = self._color_to_rgb8(mx.overlay_color)
+        # self.m_overlay_background = mx.overlay_background
+        # self.m_overlay_background_color = self._color_to_rgb8(mx.overlay_background_color)
+        self.m_export_protect_mxs = mx.export_protect_mxs
+        self.m_extra_sampling_enabled = mx.extra_sampling_enabled
+        self.m_extra_sampling_sl = mx.extra_sampling_sl
+        self.m_extra_sampling_mask = int(mx.extra_sampling_mask[-1:])
+        self.m_extra_sampling_custom_alpha = mx.extra_sampling_custom_alpha
+        self.m_extra_sampling_user_bitmap = bpy.path.abspath(mx.extra_sampling_user_bitmap)
+        self.m_extra_sampling_invert = mx.extra_sampling_invert
 
 
 class MXSEnvironment(Serializable):
@@ -770,7 +1047,7 @@ class MXSEnvironment(Serializable):
             else:
                 self.m_sun_time = n.strftime('%H:%M')
     
-    def _color_to_rgb8(self, c):
+    def _color_to_rgb8(self, c, ):
         return tuple([int(255 * v) for v in c])
 
 
@@ -897,7 +1174,7 @@ class MXSObject(Serializable):
         self._object_properties()
         self._transformation()
     
-    def _color_to_rgb8(self, c):
+    def _color_to_rgb8(self, c, ):
         return tuple([int(255 * v) for v in c])
     
     def _object_properties(self):
@@ -912,7 +1189,7 @@ class MXSObject(Serializable):
         self.m_hidden_zclip_planes = mx.hidden_zclip_planes
         self.m_object_id = self._color_to_rgb8(mx.object_id)
     
-    def _matrix_to_base_and_pivot(self, m):
+    def _matrix_to_base_and_pivot(self, m, ):
         """Convert Matrix to Base and Pivot and Position, Rotation and Scale for Studio"""
         cm = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).to_4x4()
         mm = m.copy()
@@ -1020,6 +1297,7 @@ class MXSMesh(MXSObject):
         # self.data.append(d)
         
         me = self._prepare_mesh()
+        
         self._mesh_to_data(me)
         self._materials()
         self._modifiers()
@@ -1035,6 +1313,8 @@ class MXSMesh(MXSObject):
         ob = self.b_object
         mx = ob.maxwell_render
         o = self.o
+        
+        self.mesh_name = ob.data.name
         
         # TODO: extra subdivision modifiers logic
         extra_subdiv = False
@@ -1173,6 +1453,10 @@ class MXSMesh(MXSObject):
         ob = self.b_object
         self.m_num_materials = len(ob.material_slots)
         self.m_materials = []
+        self.m_backface_material = []
+        
+        for i in range(self.m_num_materials):
+            self.m_materials.append((False, "", ))
     
     def _modifiers(self):
         # TODO: reimplement modifiers
@@ -1271,8 +1555,40 @@ class MXSMesh(MXSObject):
 
 
 class MXSMeshInstance(MXSObject):
-    def __init__(self):
-        pass
+    def __init__(self, o, base, ):
+        super(MXSMeshInstance, self).__init__(o)
+        self.m_type = 'MESH_INSTANCE'
+        self.m_instanced = base.m_name
+        
+        self._materials()
+        
+        self.dupli = False
+        if('dupli_matrix' in self.o):
+            self.dupli = True
+        
+        if(self.dupli):
+            self.m_name = self.o['dupli_name']
+            
+            mw = self.o['dupli_matrix'].copy()
+            m = self.o['parent']['object'].matrix_world.inverted() * mw
+            m *= ROTATE_X_90
+            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+            
+            self.m_base = b
+            self.m_pivot = p
+            self.m_location = l
+            self.m_rotation = r
+            self.m_scale = s
+    
+    def _materials(self):
+        # just do materials, triangle assignmens of slots is already done
+        ob = self.b_object
+        self.m_num_materials = len(ob.material_slots)
+        self.m_materials = []
+        self.m_backface_material = []
+        
+        for i in range(self.m_num_materials):
+            self.m_materials.append((False, "", ))
 
 
 class MXSReference(MXSObject):
@@ -1288,11 +1604,13 @@ class MXSReference(MXSObject):
         if(not os.path.exists(bpy.path.abspath(mx.path))):
             log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
         
-        self.m_path = bpy.path.abspath(mx.path)
+        self.m_path = bpy.path.abspath(bpy.path.abspath(mx.path))
         self.m_flag_override_hide = mx.flag_override_hide
         self.m_flag_override_hide_to_camera = mx.flag_override_hide_to_camera
         self.m_flag_override_hide_to_refl_refr = mx.flag_override_hide_to_refl_refr
         self.m_flag_override_hide_to_gi = mx.flag_override_hide_to_gi
+        
+        # TODO reference object material and backface material (if it is possible)
 
 
 class MXSExtension(Serializable):
