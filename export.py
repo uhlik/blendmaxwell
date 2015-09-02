@@ -1847,6 +1847,7 @@ class MXSParticles(MXSObject):
 
 class MXSHair(MXSObject):
     def __init__(self, o, ):
+        # TODO: fix the mess of blender x maxwell objects and real x to be created objects. even now i don't much remember how it works. and i did it yesterday..
         mw = Matrix.Identity(4)
         mx = o['object'].settings.maxwell_hair_extension
         super(MXSHair, self).__init__(o, mw, mx, )
@@ -1926,13 +1927,49 @@ class MXSHair(MXSObject):
         # TODO to do what?
         # locs = [round(v, 6) for v in locs]
         
+        if(m.uv_layer is not ""):
+            nc0 = len(ps.particles)
+            nc1 = len(ps.child_particles) - nc0
+            
+            uv_no = 0
+            for i, uv in enumerate(o.data.uv_textures):
+                if(m.uv_layer == uv.name):
+                    uv_no = i
+                    break
+            mod = None
+            for m in o.modifiers:
+                if(m.type == 'PARTICLE_SYSTEM'):
+                    if(m.particle_system == ps):
+                        mod = m
+                        break
+            uv_locs = tuple()
+            for i, p in enumerate(ps.particles):
+                co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
+                uv_locs += co.to_tuple()
+            # for i, p in enumerate(ps.child_particles):
+            #     co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
+            #     uv_locs += co.to_tuple()
+            if(nc1 != 0):
+                ex = int(nc1 / nc0)
+            for i in range(ex):
+                uv_locs += uv_locs
+            
+            # data['HAIR_FLAG_ROOT_UVS'] = [1]
+            # data['HAIR_ROOT_UVS'] = uv_locs
+            root_uvs = 1
+        else:
+            root_uvs = 0
+            uv_locs = []
+        
         data = {'HAIR_MAJOR_VER': [1, 0, 0, 0],
                 'HAIR_MINOR_VER': [0, 0, 0, 0],
-                'HAIR_FLAG_ROOT_UVS': [0],
+                'HAIR_FLAG_ROOT_UVS': [root_uvs],
                 'HAIR_GUIDES_COUNT': [num_curves],
                 'HAIR_GUIDES_POINT_COUNT': [steps],
                 # 'HAIR_POINTS': locs,
+                'HAIR_ROOT_UVS': uv_locs,
                 'HAIR_NORMALS': [1.0], }
+        
         self.m_data = data
         self.data_locs = locs
     

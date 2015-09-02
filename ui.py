@@ -2467,8 +2467,8 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
             r.label("No UV Maps", icon='ERROR', )
         else:
             r.prop_search(m, "uv_layer", o.data, "uv_textures", )
-        r.enabled = False
-        sub.label("UVs needs to be fixed..", icon='ERROR', )
+        # r.enabled = False
+        # sub.label("UVs needs to be fixed..", icon='ERROR', )
         
         sub.separator()
         # sub.prop(m, 'display_percent')

@@ -638,7 +638,7 @@ def camera(d, s):
                     d['aperture'], d['diaphragm_angle'], d['diaphragm_blades'], d['frame_rate'],
                     d['resolution_x'], d['resolution_y'], d['pixel_aspect'], d['lens'], )
     
-    # shutter_angle !!!!!!!!!!!!!!!!!!!!
+    # TODO: how to set shutter_angle?
     
     # will crash, just set it without asking for the list
     # l, _ = c.getCameraResponsePresetsList()
@@ -1361,6 +1361,26 @@ def hair(d, s):
     if(d['extension'] == 'MGrassP'):
         e = m.createDefaultGeometryProceduralExtension('MGrassP')
     
+    # print()
+    # n = e.getNumberOfUVGenerators()
+    # # 13
+    # for i in range(n):
+    #     print(i, ': ', e.getUVGeneratorName(i))
+    #     # 0 :  lengthwise U
+    #     # 1 :  hair root UV
+    #     # 2 :  radial U
+    #     # 3 :  HAIR_ROOT_UVS_1
+    #     # 4 :  HAIR_ROOT_UVS_2
+    #     # 5 :  HAIR_ROOT_UVS_3
+    #     # 6 :  HAIR_ROOT_UVS_4
+    #     # 7 :  HAIR_ROOT_UVS_5
+    #     # 8 :  HAIR_ROOT_UVS_6
+    #     # 9 :  HAIR_ROOT_UVS_7
+    #     # 10 :  HAIR_ROOT_UVS_8
+    #     # 11 :  HAIR_ROOT_UVS_9
+    #     # 12 :  HAIR_ROOT_UVS_10
+    # print()
+    
     p = e.getExtensionData()
     p.setByteArray('HAIR_MAJOR_VER', d['data']['HAIR_MAJOR_VER'])
     p.setByteArray('HAIR_MINOR_VER', d['data']['HAIR_MINOR_VER'])
@@ -1389,10 +1409,10 @@ def hair(d, s):
     # p.setFloatArray('HAIR_POINTS', d['data']['HAIR_POINTS'], c)
     p.setFloatArray('HAIR_NORMALS', d['data']['HAIR_NORMALS'], c)
     
-    '''
+    # '''
     if(d['data']['HAIR_FLAG_ROOT_UVS'][0] == 1):
         p.setFloatArray('HAIR_ROOT_UVS', list(d['data']['HAIR_ROOT_UVS']), c)
-    '''
+    # '''
     
     p.setUInt('Display Percent', d['display_percent'])
     if(d['extension'] == 'MaxwellHair'):
@@ -1404,22 +1424,13 @@ def hair(d, s):
         p.setDouble('Root Radius', d['grass_root_width'])
         p.setDouble('Tip Radius', d['grass_tip_width'])
     
-    # # for i in range(p.getNumItems()):
-    # #     print(p.getByIndex(i))
-    #
-    # # print(p.getByName('HAIR_GUIDES_COUNT')[0])
-    # # print(p.getByName('HAIR_GUIDES_POINT_COUNT')[0])
-    # print()
-    # print(d['data']['HAIR_GUIDES_COUNT'][0])
-    # print(d['data']['HAIR_GUIDES_COUNT'][0] * d['data']['HAIR_GUIDES_POINT_COUNT'][0] * 3)
-    # print(p.getByName('HAIR_GUIDES_COUNT'))
-    # print(p.getByName('HAIR_GUIDES_POINT_COUNT'))
-    # # print(p.getByName('HAIR_GUIDES_COUNT')[0][0] * p.getByName('HAIR_GUIDES_POINT_COUNT')[0][0] * 3)
-    # print(len(p.getByName('HAIR_POINTS')[0]))
-    # # print(p.getByName('HAIR_NORMALS')[0])
-    # print()
-    
     o = s.createGeometryProceduralObject(d['name'], p)
+    a, _ = o.addChannelUVW()
+    o.generateCustomUVW(0, a)
+    b, _ = o.addChannelUVW()
+    o.generateCustomUVW(1, b)
+    c, _ = o.addChannelUVW()
+    o.generateCustomUVW(2, c)
     
     if(d['material'] != ""):
         mat = material(d['material'], s, d['material_embed'])
