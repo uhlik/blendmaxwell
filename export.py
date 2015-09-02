@@ -525,6 +525,7 @@ class MXSExport():
                              'export': mod.show_render,
                              'export_type': '',
                              'parent': ob,
+                             'psys': ps,
                              'type': None, }
                         p['export_type'] = mx.use
                         
@@ -533,6 +534,7 @@ class MXSExport():
                             # those two should be put into hiearchy, they are real objects.. the rest are just modifiers
                             o['children'].append(p)
                         else:
+                            # in case of cloner..
                             modifiers.append(p)
                 if(ob.maxwell_scatter_extension.enabled):
                     p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'SCATTER', }
@@ -642,7 +644,8 @@ class MXSExport():
         
         for d in self._modifiers:
             if(d['export_type'] == 'CLONER'):
-                pass
+                o = MXSCloner(d)
+                self._write(o)
             elif(d['export_type'] == 'GRASS'):
                 o = MXSGrass(d)
                 self._write(o)
@@ -661,6 +664,9 @@ class MXSExport():
                         qp = me.quad_pairs
                     o = MXSSubdivision(d, qp, )
                     self._write(o)
+            elif(d['export_type'] == 'SEA'):
+                o = MXSSea(d)
+                self._write(o)
         
         o = MXSEnvironment()
         self._write(o)
@@ -740,7 +746,8 @@ class MXSExport():
                 self.serialized_data.append(d)
                 
             elif(o.m_type == 'HAIR'):
-                p = os.path.join(self.tmp_dir, "{0}.binhair".format(o.m_name))
+                nm = "{}-{}".format(o.m_name, uuid.uuid1())
+                p = os.path.join(self.tmp_dir, "{0}.binhair".format(nm))
                 w = MXSBinHairWriterLegacy(p, o.data_locs)
                 d = o._dict()
                 a = {}
@@ -760,6 +767,21 @@ class MXSExport():
                         w = MXSBinParticlesWriterLegacy(p, o.m_pdata)
                         o.m_pdata = p
                         self.part_data_paths.append(p)
+                d = o._dict()
+                a = {}
+                for k, v in d.items():
+                    a[k[2:]] = v
+                
+                self.serialized_data.append(a)
+            elif(o.m_type == 'CLONER'):
+                if(o.mx.source != 'EXTERNAL_BIN'):
+                    if(o.m_embed):
+                        nm = "{}-{}".format(o.m_name, uuid.uuid1())
+                        p = os.path.join(self.tmp_dir, "{0}.binpart".format(nm))
+                        w = MXSBinParticlesWriterLegacy(p, o.m_pdata)
+                        o.m_pdata = p
+                        self.part_data_paths.append(p)
+                
                 d = o._dict()
                 a = {}
                 for k, v in d.items():
@@ -1420,7 +1442,6 @@ class MXSMesh(MXSObject):
         
         self._mesh_to_data(me)
         self._materials()
-        # self._modifiers()
         # cleanup
         bpy.data.meshes.remove(me)
         
@@ -1569,101 +1590,6 @@ class MXSMesh(MXSObject):
         self.m_triangle_normals = triangle_normals
         self.m_uv_channels = uv_channels
         self.m_triangle_materials = triangle_materials
-    
-    def _modifiers(self):
-        # TODO: reimplement modifiers >> moved to their own classes..
-        pass
-        '''
-        def texture_to_data(name):
-            tex = None
-            for t in bpy.data.textures:
-                if(t.type == 'IMAGE'):
-                    if(t.name == name):
-                        tex = t
-            
-            d = {'type': 'IMAGE',
-                 'path': "",
-                 'channel': 0,
-                 'use_override_map': False,
-                 'tile_method_type': [True, True],
-                 'tile_method_units': 0,
-                 'repeat': [1.0, 1.0],
-                 'mirror': [False, False],
-                 'offset': [0.0, 0.0],
-                 'rotation': 0.0,
-                 'invert': False,
-                 'alpha_only': False,
-                 'interpolation': False,
-                 'brightness': 0.0,
-                 'contrast': 0.0,
-                 'saturation': 0.0,
-                 'hue': 0.0,
-                 'rgb_clamp': [0.0, 255.0], }
-            if(tex is not None):
-                d['path'] = bpy.path.abspath(tex.image.filepath)
-                return d
-            return None
-        
-        sd = ob.maxwell_subdivision_extension
-        if(sd.enabled or extra_subdiv):
-            if(extra_subdiv):
-                if(lmod.use_subsurf_uv):
-                    sub_uv = 2
-                else:
-                    sub_uv = 0
-                d['subdiv_ext'] = [lmod.render_levels, 0, sub_uv, 0.0, 90.0, quad_pairs, ]
-            if(sd.enabled):
-                # manually added subdivision extension will override automatic one
-                d['subdiv_ext'] = [int(sd.level), int(sd.scheme), int(sd.interpolation), sd.crease, math.degrees(sd.smooth), quad_pairs, ]
-        else:
-            d['subdiv_ext'] = None
-        
-        sc = ob.maxwell_scatter_extension
-        if(sc.enabled):
-            if(sc.scatter_object is ''):
-                log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(ob.name), 3, LogStyles.WARNING, )
-                d['scatter_ext'] = None
-            else:
-                d['scatter_ext'] = {'scatter_object': sc.scatter_object,
-                                    'inherit_objectid': sc.inherit_objectid,
-                                    'density': sc.density,
-                                    'density_map': texture_to_data(sc.density_map),
-                                    'seed': int(sc.seed),
-                                    'scale_x': sc.scale_x,
-                                    'scale_y': sc.scale_y,
-                                    'scale_z': sc.scale_z,
-                                    'scale_map': texture_to_data(sc.scale_map),
-                                    'scale_variation_x': sc.scale_variation_x,
-                                    'scale_variation_y': sc.scale_variation_y,
-                                    'scale_variation_z': sc.scale_variation_z,
-                                    'rotation_x': math.degrees(sc.rotation_x),
-                                    'rotation_y': math.degrees(sc.rotation_y),
-                                    'rotation_z': math.degrees(sc.rotation_z),
-                                    'rotation_map': texture_to_data(sc.rotation_map),
-                                    'rotation_variation_x': sc.rotation_variation_x,
-                                    'rotation_variation_y': sc.rotation_variation_y,
-                                    'rotation_variation_z': sc.rotation_variation_z,
-                                    'rotation_direction': int(sc.rotation_direction),
-                                    'lod': sc.lod,
-                                    'lod_min_distance': sc.lod_min_distance,
-                                    'lod_max_distance': sc.lod_max_distance,
-                                    'lod_max_distance_density': sc.lod_max_distance_density,
-                                    'display_percent': int(sc.display_percent),
-                                    'display_max_blades': int(sc.display_max_blades), }
-        else:
-            d['scatter_ext'] = None
-        
-        ms = ob.maxwell_sea_extension
-        if(ms.enabled):
-            name = "{}-MaxwellSea".format(ob.name)
-            d['sea_ext'] = [name, ms.hide_parent, ms.reference_time, int(ms.resolution), ms.ocean_depth, ms.vertical_scale, ms.ocean_dim,
-                            ms.ocean_seed, ms.enable_choppyness, ms.choppy_factor, ms.ocean_wind_mod, math.degrees(ms.ocean_wind_dir),
-                            ms.ocean_wind_alignment, ms.ocean_min_wave_length, ms.damp_factor_against_wind, ms.enable_white_caps, ]
-        else:
-            d['sea_ext'] = None
-        
-        # return d, md
-        '''
 
 
 class MXSMeshInstance(MXSObject):
@@ -1701,7 +1627,7 @@ class MXSReference(MXSObject):
         ob = self.b_object
         mx = ob.maxwell_render_reference
         
-        # TODO: solve skipping of invalid objects, or if it is poaaible to make reference without valid path, so be it..
+        # TODO: solve skipping of invalid objects, or if it is possible to make reference without valid path, so be it..
         # log("{0} -> {1}".format(o['object'].name, bpy.path.abspath(mx.path)), 2)
         if(not os.path.exists(bpy.path.abspath(mx.path))):
             log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
@@ -1727,8 +1653,6 @@ class MXSParticles(MXSObject):
         self._materials()
     
     def _to_data(self):
-        self.m_name = "{}-{}".format(self.m_parent, self.m_name)
-        
         mx = self.mx
         ps = self.b_object
         
@@ -2172,8 +2096,141 @@ class MXSGrass(MXSModifier):
 
 
 class MXSCloner(MXSModifier):
-    def __init__(self):
-        pass
+    def __init__(self, o, ):
+        super(MXSCloner, self).__init__(o)
+        self.m_type = 'CLONER'
+        
+        self.b_object = self.o['parent']
+        self.m_object = self.b_object.name
+        
+        self.ps = self.o['object']
+        self.mx = self.ps.settings.maxwell_cloner_extension
+        
+        self.m_parent = self.o['parent'].name
+        self.m_name = "{}-{}".format(self.m_parent, self.ps.name)
+        
+        self._to_data()
+    
+    def _to_data(self):
+        o = self.b_object
+        mx = self.mx
+        ps = self.ps
+        
+        pdata = {}
+        if(mx.source == 'BLENDER_PARTICLES'):
+            def check(ps):
+                if(len(ps.particles) == 0):
+                    raise ValueError("particle system {} has no particles".format(ps.name))
+                ok = False
+                for p in ps.particles:
+                    if(p.alive_state == "ALIVE"):
+                        ok = True
+                        break
+                if(not ok):
+                    raise ValueError("particle system {} has no 'ALIVE' particles".format(ps.name))
+            
+            check(ps)
+            
+            # i get particle locations in global coordinates, so need to fix that
+            # TODO: get rid of all of this kind of particle system container object access, it's ugly..
+            # mat = bpy.data.objects[self.m_parent].matrix_world.copy()
+            # mat.invert()
+            
+            locs = []
+            vels = []
+            sizes = []
+            
+            for part in ps.particles:
+                if(part.alive_state == "ALIVE"):
+                    l = part.location.copy()
+                    # l = mat * l
+                    locs.append(l)
+                    if(mx.bl_use_velocity):
+                        v = part.velocity.copy()
+                        # v = mat * v
+                        vels.append(v)
+                    else:
+                        vels.append(Vector((0.0, 0.0, 0.0)))
+                    # size per particle
+                    if(mx.bl_use_size):
+                        sizes.append(part.size / 2)
+                    else:
+                        sizes.append(mx.bl_size / 2)
+            
+            # fix rotation of .bin
+            for i, l in enumerate(locs):
+                locs[i] = Vector(l * ROTATE_X_90).to_tuple()
+            if(mx.bl_use_velocity):
+                for i, v in enumerate(vels):
+                    vels[i] = Vector(v * ROTATE_X_90).to_tuple()
+            
+            particles = []
+            for i, ploc in enumerate(locs):
+                # normal from velocity
+                pnor = Vector(vels[i])
+                pnor.normalize()
+                particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
+            
+            if(mx.embed):
+                plocs = [v for v in locs]
+                pvels = [v for v in vels]
+                pnors = []
+                for i, v in enumerate(pvels):
+                    n = Vector(v)
+                    n.normalize()
+                    pnors.append(n)
+                
+                pdata = {'PARTICLE_POSITIONS': [v for l in plocs for v in l],
+                         'PARTICLE_SPEEDS': [v for l in pvels for v in l],
+                         'PARTICLE_RADII': [v for v in sizes],
+                         'PARTICLE_IDS': [i for i in range(len(locs))],
+                         'PARTICLE_NORMALS': [v for l in pnors for v in l], }
+            else:
+                if(os.path.exists(bpy.path.abspath(mx.directory)) and not mx.overwrite):
+                    raise OSError("file: {} exists".format(bpy.path.abspath(mx.directory)))
+                
+                cf = bpy.context.scene.frame_current
+                prms = {'directory': bpy.path.abspath(mx.directory),
+                        'name': "{}".format(self.m_name),
+                        'frame': cf,
+                        'particles': particles,
+                        'fps': bpy.context.scene.render.fps,
+                        'size': 1.0 if mx.bl_use_size else mx.bl_size / 2, }
+                rfbw = rfbin.RFBinWriter(**prms)
+                mx.filename = rfbw.path
+                # self.m_bin_path = rfbw.path
+        else:
+            pass
+        
+        cloned = None
+        try:
+            cloned = ps.settings.dupli_object.name
+        except AttributeError:
+            log("{}: {}: Maxwell Cloner: cloned object is not available. Skipping..".format(o.name, ps.name), 1, LogStyles.WARNING, )
+        
+        m = mx
+        self.m_filename = bpy.path.abspath(m.filename)
+        self.m_radius = m.radius
+        self.m_mb_factor = m.mb_factor
+        self.m_load_percent = m.load_percent
+        self.m_start_offset = m.start_offset
+        self.m_extra_npp = m.extra_npp
+        self.m_extra_p_dispersion = m.extra_p_dispersion
+        self.m_extra_p_deformation = m.extra_p_deformation
+        self.m_align_to_velocity = m.align_to_velocity
+        self.m_scale_with_radius = m.scale_with_radius
+        self.m_inherit_obj_id = m.inherit_obj_id
+        self.m_frame = bpy.context.scene.frame_current
+        self.m_fps = bpy.context.scene.render.fps
+        self.m_display_percent = int(m.display_percent)
+        self.m_display_max = int(m.display_max)
+        if(cloned is not None):
+            self.m_cloned_object = ps.settings.dupli_object.name
+        else:
+            self.m_cloned_object = ''
+        self.m_render_emitter = ps.settings.use_render_emitter
+        self.m_embed = m.embed
+        self.m_pdata = pdata
 
 
 class MXSScatter(MXSModifier):
@@ -2226,10 +2283,43 @@ class MXSSubdivision(MXSModifier):
         self.m_quad_pairs = quad_pairs
 
 
-class MXSSea(MXSModifier):
-    def __init__(self):
-        pass
-
+class MXSSea(MXSObject):
+    def __init__(self, o, ):
+        mw = Matrix.Identity(4)
+        super(MXSSea, self).__init__(o, mw, )
+        self.m_type = 'SEA'
+        self.m_parent = self.b_object.name
+        self.m_name = "{}-{}".format(self.m_parent, 'MaxwellSea', )
+        
+        ob = self.b_object
+        mx = ob.maxwell_sea_extension
+        
+        # self.m_enabled = mx.enabled
+        self.m_hide_parent = mx.hide_parent
+        
+        self.m_resolution = int(mx.resolution)
+        self.m_reference_time = mx.reference_time
+        self.m_ocean_wind_mod = mx.ocean_wind_mod
+        self.m_ocean_wind_dir = math.degrees(mx.ocean_wind_dir)
+        self.m_vertical_scale = mx.vertical_scale
+        self.m_damp_factor_against_wind = mx.damp_factor_against_wind
+        self.m_ocean_wind_alignment = mx.ocean_wind_alignment
+        self.m_ocean_min_wave_length = mx.ocean_min_wave_length
+        self.m_ocean_dim = mx.ocean_dim
+        self.m_ocean_depth = mx.ocean_depth
+        self.m_ocean_seed = mx.ocean_seed
+        self.m_enable_choppyness = mx.enable_choppyness
+        self.m_choppy_factor = mx.choppy_factor
+        self.m_enable_white_caps = mx.enable_white_caps
+        
+        self._materials()
+    
+    def _materials(self):
+        mx = self.b_object.maxwell_sea_extension
+        self.m_material = bpy.path.abspath(mx.material)
+        self.m_material_embed = mx.material_embed
+        self.m_backface_material = bpy.path.abspath(mx.backface_material)
+        self.m_backface_material_embed = mx.backface_material_embed
 
 class MXSMaterial(Serializable):
     def __init__(self):

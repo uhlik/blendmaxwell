@@ -1333,11 +1333,10 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
     
     @classmethod
     def poll(cls, context):
-        # e = context.scene.render.engine
-        # o = context.active_object
-        # ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
-        # return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
-        return False
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
     
     def draw_header(self, context):
         m = context.object.maxwell_sea_extension
@@ -1349,6 +1348,20 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
         sub = l.column()
         if(not m.enabled):
             sub.active = False
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'material')
+        c = s.column()
+        c.prop(m, 'material_embed', text='Embed', )
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'backface_material')
+        c = s.column()
+        c.prop(m, 'backface_material_embed', text='Embed', )
+        
+        sub.separator()
         
         sub.prop(m, 'hide_parent')
         

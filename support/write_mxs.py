@@ -1321,6 +1321,7 @@ def cloner(d, s):
         p.setFloatArray('PARTICLE_SPEEDS', list(r.PARTICLE_SPEEDS), c)
         p.setFloatArray('PARTICLE_RADII', list(r.PARTICLE_RADII), c)
         p.setIntArray('PARTICLE_IDS', list(r.PARTICLE_IDS))
+        
     else:
         p.setString('FileName', d['filename'])
     
@@ -1608,18 +1609,57 @@ def grass(d, s):
     o.applyGeometryModifierExtension(p)
 
 
+def sea(d, s):
+    m = CextensionManager.instance()
+    m.loadAllExtensions()
+    
+    e = m.createDefaultGeometryLoaderExtension('MaxwellSea')
+    
+    p = e.getExtensionData()
+    p.setUInt('Resolution', d['resolution'])
+    p.setFloat('Reference Time', d['reference_time'])
+    p.setFloat('Ocean Wind Mod.', d['ocean_wind_mod'])
+    p.setFloat('Ocean Wind Dir.', d['ocean_wind_dir'])
+    p.setFloat('Vertical Scale', d['vertical_scale'])
+    p.setFloat('Damp Factor Against Wind', d['damp_factor_against_wind'])
+    p.setFloat('Ocean Wind Alignment', d['ocean_wind_alignment'])
+    p.setFloat('Ocean Min. Wave Length', d['ocean_min_wave_length'])
+    p.setFloat('Ocean Dim', d['ocean_dim'])
+    p.setFloat('Ocean Depth', d['ocean_depth'])
+    p.setInt('Ocean Seed', d['ocean_seed'])
+    p.setByte('Enable Choppyness', d['enable_choppyness'])
+    p.setFloat('Choppy factor', d['choppy_factor'])
+    p.setByte('Enable White Caps', d['enable_white_caps'])
+    
+    o = s.createGeometryLoaderObject(d['name'], p)
+    
+    if(d['material'] != ""):
+        mat = material(d['material'], s, d['material_embed'])
+        o.setMaterial(mat)
+    if(d['backface_material'] != ""):
+        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
+        o.setBackfaceMaterial(bm)
+    
+    base_and_pivot(o, d)
+    object_props(o, d)
+
+
 def hierarchy(d, s):
     log("setting object hierarchy..", 2)
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', ]
-    exclude = ['SCENE', 'ENVIRONMENT', 'GRASS', ]
+    
+    a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
+         'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
+         'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', ]
+    
+    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
     for i in range(len(d)):
-        if(d[i]['type'] in object_types and d[i]['type'] not in exclude):
+        if(d[i]['type'] in object_types):
             if(d[i]['parent'] is not None):
                 ch = s.getObject(d[i]['name'])
                 p = s.getObject(d[i]['parent'])
                 ch.setParent(p)
     
-    object_types = ['PARTICLES', 'HAIR', ]
+    object_types = ['PARTICLES', 'HAIR', 'SEA', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types):
             if(d[i]['parent'] is not None):
@@ -1841,8 +1881,8 @@ def main(args):
         #     grass(d, mxs)
         elif(d['type'] == 'HAIR'):
             hair(d, mxs)
-        elif(d['type'] == 'CLONER'):
-            cloner(d, mxs)
+        # elif(d['type'] == 'CLONER'):
+        #     cloner(d, mxs)
         elif(d['type'] == 'REFERENCE'):
             reference(d, mxs)
         elif(d['type'] == 'VOLUMETRICS'):
@@ -1854,6 +1894,11 @@ def main(args):
             scatter(d, mxs)
         elif(d['type'] == 'GRASS'):
             grass(d, mxs)
+        elif(d['type'] == 'CLONER'):
+            cloner(d, mxs)
+        
+        elif(d['type'] == 'SEA'):
+            sea(d, mxs)
         
         elif(d['type'] == 'WIREFRAME_MATERIAL'):
             mat = wireframe_material(d, mxs)
