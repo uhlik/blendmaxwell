@@ -1374,6 +1374,124 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
         c.separator()
 
 
+class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Grass Modifier"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
+    
+    def draw_header(self, context):
+        m = context.object.maxwell_grass_extension
+        self.layout.prop(m, "enabled", text="")
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        
+        m = context.object.maxwell_grass_extension
+        
+        sub.label("Primitive:")
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'material')
+        c = s.column()
+        c.prop(m, 'material_embed', text='Embed', )
+        
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'backface_material')
+        c = s.column()
+        c.prop(m, 'backface_material_embed', text='Embed', )
+        sub.separator()
+        
+        sub.prop(m, 'points_per_blade')
+        r = sub.row()
+        r.label("Primitive Type:")
+        r.prop(m, 'primitive_type', expand=True, )
+        sub.separator()
+        
+        sub.label("Grass Density:")
+        sub.prop(m, 'density')
+        r = sub.row()
+        # r.prop_search(m, 'density_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop_search(m, 'density_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+        r.prop(m, 'seed')
+        sub.separator()
+        
+        sub.label("Blade Length:")
+        sub.prop(m, 'length')
+        r = sub.row()
+        # r.prop_search(m, 'length_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop_search(m, 'length_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+        r.prop(m, 'length_variation')
+        sub.separator()
+        
+        sub.label("Width:")
+        sub.prop(m, 'root_width')
+        sub.prop(m, 'tip_width')
+        sub.separator()
+        
+        sub.label("Angle:")
+        sub.prop(m, 'direction_type')
+        sub.prop(m, 'initial_angle')
+        r = sub.row()
+        # r.prop_search(m, 'initial_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop_search(m, 'initial_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+        r.prop(m, 'initial_angle_variation')
+        sub.separator()
+        
+        sub.label("Bend:")
+        sub.prop(m, 'start_bend')
+        r = sub.row()
+        # r.prop_search(m, 'start_bend_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop_search(m, 'start_bend_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+        r.prop(m, 'start_bend_variation')
+        
+        sub.prop(m, 'bend_radius')
+        r = sub.row()
+        # r.prop_search(m, 'bend_radius_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop_search(m, 'bend_radius_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+        r.prop(m, 'bend_radius_variation')
+        
+        sub.prop(m, 'bend_angle')
+        r = sub.row()
+        # r.prop_search(m, 'bend_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop_search(m, 'bend_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+        r.prop(m, 'bend_angle_variation')
+        sub.separator()
+        
+        sub.label("Cut Off:")
+        sub.prop(m, 'cut_off')
+        r = sub.row()
+        # r.prop_search(m, 'cut_off_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
+        r.prop_search(m, 'cut_off_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+        r.prop(m, 'cut_off_variation')
+        sub.separator()
+        
+        sub.prop(m, 'lod')
+        r = sub.row(align=True)
+        r.prop(m, 'lod_min_distance')
+        r.prop(m, 'lod_max_distance')
+        if(not m.lod):
+            r.enabled = False
+        r = sub.row()
+        r.prop(m, 'lod_max_distance_density')
+        if(not m.lod):
+            r.enabled = False
+        sub.separator()
+        
+        sub.label("Display:")
+        c = sub.column(align=True)
+        c.prop(m, 'display_percent')
+        c.prop(m, 'display_max_blades')
+
+
 class MaterialsPanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_options = {'HIDE_HEADER'}
@@ -2167,131 +2285,6 @@ class ParticlesPanel(ParticleButtonsPanel, Panel):
         r = sub.row()
         r.prop(m, 'use', expand=True, )
         # sub.label("Particle system will be skipped.", icon='ERROR', )
-
-
-class ExtGrassPanel(ParticleButtonsPanel, Panel):
-    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Grass"
-    
-    @classmethod
-    def poll(cls, context):
-        psys = context.particle_system
-        engine = context.scene.render.engine
-        settings = 0
-        
-        if psys:
-            settings = psys.settings
-        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
-            settings = context.space_data.pin_id
-        
-        if not settings:
-            return False
-        
-        m = context.particle_system.settings.maxwell_render
-        if(m.use != 'GRASS'):
-            return False
-        
-        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
-    
-    def draw(self, context):
-        l = self.layout
-        sub = l.column()
-        
-        o = context.object
-        p = context.particle_system
-        if(p is None):
-            return
-        
-        ps = context.particle_system.settings
-        m = context.particle_system.settings.maxwell_grass_extension
-        
-        sub.label("Primitive:")
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'material')
-        c = s.column()
-        c.prop(m, 'material_embed', text='Embed', )
-        
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'backface_material')
-        c = s.column()
-        c.prop(m, 'backface_material_embed', text='Embed', )
-        sub.separator()
-        
-        sub.prop(m, 'points_per_blade')
-        r = sub.row()
-        r.label("Primitive Type:")
-        r.prop(m, 'primitive_type', expand=True, )
-        sub.separator()
-        
-        sub.label("Grass Density:")
-        sub.prop(m, 'density')
-        r = sub.row()
-        r.prop_search(m, 'density_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
-        r.prop(m, 'seed')
-        sub.separator()
-        
-        sub.label("Blade Length:")
-        sub.prop(m, 'length')
-        r = sub.row()
-        r.prop_search(m, 'length_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
-        r.prop(m, 'length_variation')
-        sub.separator()
-        
-        sub.label("Width:")
-        sub.prop(m, 'root_width')
-        sub.prop(m, 'tip_width')
-        sub.separator()
-        
-        sub.label("Angle:")
-        sub.prop(m, 'direction_type')
-        sub.prop(m, 'initial_angle')
-        r = sub.row()
-        r.prop_search(m, 'initial_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
-        r.prop(m, 'initial_angle_variation')
-        sub.separator()
-        
-        sub.label("Bend:")
-        sub.prop(m, 'start_bend')
-        r = sub.row()
-        r.prop_search(m, 'start_bend_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
-        r.prop(m, 'start_bend_variation')
-        
-        sub.prop(m, 'bend_radius')
-        r = sub.row()
-        r.prop_search(m, 'bend_radius_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
-        r.prop(m, 'bend_radius_variation')
-        
-        sub.prop(m, 'bend_angle')
-        r = sub.row()
-        r.prop_search(m, 'bend_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
-        r.prop(m, 'bend_angle_variation')
-        sub.separator()
-        
-        sub.label("Cut Off:")
-        sub.prop(m, 'cut_off')
-        r = sub.row()
-        r.prop_search(m, 'cut_off_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
-        r.prop(m, 'cut_off_variation')
-        sub.separator()
-        
-        sub.prop(m, 'lod')
-        r = sub.row(align=True)
-        r.prop(m, 'lod_min_distance')
-        r.prop(m, 'lod_max_distance')
-        if(not m.lod):
-            r.enabled = False
-        r = sub.row()
-        r.prop(m, 'lod_max_distance_density')
-        if(not m.lod):
-            r.enabled = False
-        sub.separator()
-        
-        sub.label("Display:")
-        c = sub.column(align=True)
-        c.prop(m, 'display_percent')
-        c.prop(m, 'display_max_blades')
 
 
 class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):

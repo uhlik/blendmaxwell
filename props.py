@@ -725,8 +725,8 @@ class SunProperties(PropertyGroup):
 
 
 class ParticlesProperties(PropertyGroup):
-    use = EnumProperty(name="Type", items=[('GRASS', "Grass", ""),
-                                           ('HAIR', "Hair", ""),
+    use = EnumProperty(name="Type", items=[('HAIR', "Hair", ""),
+                                           # ('GRASS', "Grass", ""),
                                            ('PARTICLES', "Particles", ""),
                                            # ('MESHER', "Mesher", ""),
                                            ('CLONER', "Cloner", ""),
@@ -742,6 +742,8 @@ class ParticlesProperties(PropertyGroup):
 
 
 class ExtGrassProperties(PropertyGroup):
+    enabled = BoolProperty(name="Maxwell Grass", default=False, )
+    
     material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
     material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
@@ -793,11 +795,11 @@ class ExtGrassProperties(PropertyGroup):
     
     @classmethod
     def register(cls):
-        bpy.types.ParticleSettings.maxwell_grass_extension = PointerProperty(type=cls)
+        bpy.types.Object.maxwell_grass_extension = PointerProperty(type=cls)
     
     @classmethod
     def unregiser(cls):
-        del bpy.types.ParticleSettings.maxwell_grass_extension
+        del bpy.types.Object.maxwell_grass_extension
 
 
 class ExtParticlesProperties(PropertyGroup):

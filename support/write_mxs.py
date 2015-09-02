@@ -755,6 +755,7 @@ def mesh(d, s):
     base_and_pivot(o, d)
     object_props(o, d)
     
+    '''
     if(d['subdiv_ext'] is not None):
         # 0: ('Subdivision Level', [2], 0, 99, '1 UINT', 4, 1, True)
         # 1: ('Subdivision Scheme', [0], 0, 2, '1 UINT', 4, 1, True)
@@ -879,6 +880,7 @@ def mesh(d, s):
         so.setParent(o)
         if(hide_parent):
             o.setHide(True)
+    '''
     
     return o
 
@@ -1297,80 +1299,6 @@ def particles(d, s):
     object_props(o, d)
 
 
-def grass(d, s):
-    m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
-    e = m.createDefaultGeometryModifierExtension('MaxwellGrass')
-    p = e.getExtensionData()
-    
-    # data = [(0, 'UCHAR'), (1, 'UINT'), (2, 'INT'), (3, 'FLOAT'), (4, 'DOUBLE'), (5, 'STRING'), (6, 'FLOATARRAY'), (7, 'DOUBLEARRAY'),
-    #         (8, 'BYTEARRAY'), (9, 'INTARRAY'), (10, 'MXPARAMLIST'), (11, 'MXPARAMLISTARRAY'), (12, 'RGB'), ]
-    # mp = p.getByIndex(3)[1]
-    # for i in range(mp.getNumItems()):
-    #     s = list(mp.getByIndex(i))
-    #     for di, dt in data:
-    #         if(di == s[4]):
-    #             s[4] = "{} ({})".format(di, dt)
-    #     print(str(tuple(s)))
-    
-    if(d['material'] != ""):
-        mat = material(d['material'], s, d['material_embed'])
-        p.setString('Material', mat.getName())
-    
-    if(d['backface_material'] != ""):
-        bmat = material(d['backface_material'], s, d['backface_material_embed'])
-        p.setString('Double Sided Material', bmat.getName())
-    
-    p.setUInt('Density', d['density'])
-    texture_data_to_mxparams(d['density_map'], p, 'Density Map')
-    
-    p.setFloat('Length', d['length'])
-    texture_data_to_mxparams(d['length_map'], p, 'Length Map')
-    p.setFloat('Length Variation', d['length_variation'])
-    
-    p.setFloat('Root Width', d['root_width'])
-    p.setFloat('Tip Width', d['tip_width'])
-    
-    p.setUInt('Direction Type', d['direction_type'])
-    
-    p.setFloat('Initial Angle', d['initial_angle'])
-    p.setFloat('Initial Angle Variation', d['initial_angle_variation'])
-    texture_data_to_mxparams(d['initial_angle_map'], p, 'Initial Angle Map')
-    
-    p.setFloat('Start Bend', d['start_bend'])
-    p.setFloat('Start Bend Variation', d['start_bend_variation'])
-    texture_data_to_mxparams(d['start_bend_map'], p, 'Start Bend Map')
-    
-    p.setFloat('Bend Radius', d['bend_radius'])
-    p.setFloat('Bend Radius Variation', d['bend_radius_variation'])
-    texture_data_to_mxparams(d['bend_radius_map'], p, 'Bend Radius Map')
-    
-    p.setFloat('Bend Angle', d['bend_angle'])
-    p.setFloat('Bend Angle Variation', d['bend_angle_variation'])
-    texture_data_to_mxparams(d['bend_angle_map'], p, 'Bend Angle Map')
-    
-    p.setFloat('Cut Off', d['cut_off'])
-    p.setFloat('Cut Off Variation', d['cut_off_variation'])
-    texture_data_to_mxparams(d['cut_off_map'], p, 'Cut Off Map')
-    
-    p.setUInt('Points per Blade', d['points_per_blade'])
-    p.setUInt('Primitive Type', d['primitive_type'])
-    
-    p.setUInt('Seed', d['seed'])
-    
-    p.setByte('Enable LOD', d['lod'])
-    p.setFloat('LOD Min Distance', d['lod_min_distance'])
-    p.setFloat('LOD Max Distance', d['lod_max_distance'])
-    p.setFloat('LOD Max Distance Density', d['lod_max_distance_density'])
-    
-    p.setUInt('Display Percent', d['display_percent'])
-    p.setUInt('Display Max. Blades', d['display_max_blades'])
-    
-    o = s.getObject(d['object'])
-    o.applyGeometryModifierExtension(p)
-
-
 def cloner(d, s):
     m = CextensionManager.instance()
     m.loadAllExtensions()
@@ -1546,6 +1474,138 @@ def volumetrics(d, s):
     base_and_pivot(o, d)
     object_props(o, d)
     return o
+
+
+def subdivision(d, s):
+    # 0: ('Subdivision Level', [2], 0, 99, '1 UINT', 4, 1, True)
+    # 1: ('Subdivision Scheme', [0], 0, 2, '1 UINT', 4, 1, True)
+    # 2: ('Interpolation', [2], 0, 3, '1 UINT', 4, 1, True)
+    # 3: ('Crease', [0.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
+    # 4: ('Smooth Angle', [90.0], 0.0, 360.0, '3 FLOAT', 4, 1, True)
+    # 5: ('EXTENSION_NAME', 'SubdivisionModifier', '', '', '5 STRING', 1, 20, True)
+    # 6: ('EXTENSION_VERSION', [1], 0, 1000000, '1 UINT', 4, 1, True)
+    # 7: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
+    
+    m = CextensionManager.instance()
+    m.loadAllExtensions()
+    e = m.createDefaultGeometryModifierExtension('SubdivisionModifier')
+    p = e.getExtensionData()
+    
+    o = s.getObject(d['object'])
+    
+    p.setUInt('Subdivision Level', d['level'])
+    p.setUInt('Subdivision Scheme', d['scheme'])
+    
+    if(d['scheme'] == 0 and d['quad_pairs'] is not None):
+        for t, q in d['quad_pairs']:
+            o.setTriangleQuadBuddy(t, q)
+    
+    p.setUInt('Interpolation', d['interpolation'])
+    p.setFloat('Crease', d['crease'])
+    p.setFloat('Smooth Angle', d['smooth'])
+    o.applyGeometryModifierExtension(p)
+
+
+def scatter(d, s):
+    m = CextensionManager.instance()
+    m.loadAllExtensions()
+    e = m.createDefaultGeometryModifierExtension('MaxwellScatter')
+    p = e.getExtensionData()
+    
+    o = s.getObject(d['object'])
+    e = d
+    
+    p.setString('Object', e['scatter_object'])
+    p.setByte('Inherit ObjectID', e['inherit_objectid'])
+    p.setFloat('Density', e['density'])
+    texture_data_to_mxparams(e['density_map'], p, 'Density Map', )
+    p.setUInt('Seed', e['seed'])
+    p.setFloat('Scale X', e['scale_x'])
+    p.setFloat('Scale Y', e['scale_y'])
+    p.setFloat('Scale Z', e['scale_z'])
+    texture_data_to_mxparams(e['scale_map'], p, 'Scale Map', )
+    p.setFloat('Scale X Variation', e['scale_variation_x'])
+    p.setFloat('Scale Y Variation', e['scale_variation_y'])
+    p.setFloat('Scale Z Variation', e['scale_variation_z'])
+    p.setFloat('Rotation X', e['rotation_x'])
+    p.setFloat('Rotation Y', e['rotation_y'])
+    p.setFloat('Rotation Z', e['rotation_z'])
+    texture_data_to_mxparams(e['rotation_map'], p, 'Rotation Map', )
+    p.setFloat('Rotation X Variation', e['rotation_variation_x'])
+    p.setFloat('Rotation Y Variation', e['rotation_variation_y'])
+    p.setFloat('Rotation Z Variation', e['rotation_variation_z'])
+    p.setUInt('Direction Type', e['rotation_direction'])
+    p.setByte('Enable LOD', e['lod'])
+    p.setFloat('LOD Min Distance', e['lod_min_distance'])
+    p.setFloat('LOD Max Distance', e['lod_max_distance'])
+    p.setFloat('LOD Max Distance Density', e['lod_max_distance_density'])
+    p.setUInt('Display Percent', e['display_percent'])
+    p.setUInt('Display Max. Blades', e['display_max_blades'])
+    o.applyGeometryModifierExtension(p)
+
+
+def grass(d, s):
+    m = CextensionManager.instance()
+    m.loadAllExtensions()
+    
+    e = m.createDefaultGeometryModifierExtension('MaxwellGrass')
+    p = e.getExtensionData()
+    
+    if(d['material'] != ""):
+        mat = material(d['material'], s, d['material_embed'])
+        p.setString('Material', mat.getName())
+    
+    if(d['backface_material'] != ""):
+        bmat = material(d['backface_material'], s, d['backface_material_embed'])
+        p.setString('Double Sided Material', bmat.getName())
+    
+    p.setUInt('Density', d['density'])
+    texture_data_to_mxparams(d['density_map'], p, 'Density Map')
+    
+    p.setFloat('Length', d['length'])
+    texture_data_to_mxparams(d['length_map'], p, 'Length Map')
+    p.setFloat('Length Variation', d['length_variation'])
+    
+    p.setFloat('Root Width', d['root_width'])
+    p.setFloat('Tip Width', d['tip_width'])
+    
+    p.setUInt('Direction Type', d['direction_type'])
+    
+    p.setFloat('Initial Angle', d['initial_angle'])
+    p.setFloat('Initial Angle Variation', d['initial_angle_variation'])
+    texture_data_to_mxparams(d['initial_angle_map'], p, 'Initial Angle Map')
+    
+    p.setFloat('Start Bend', d['start_bend'])
+    p.setFloat('Start Bend Variation', d['start_bend_variation'])
+    texture_data_to_mxparams(d['start_bend_map'], p, 'Start Bend Map')
+    
+    p.setFloat('Bend Radius', d['bend_radius'])
+    p.setFloat('Bend Radius Variation', d['bend_radius_variation'])
+    texture_data_to_mxparams(d['bend_radius_map'], p, 'Bend Radius Map')
+    
+    p.setFloat('Bend Angle', d['bend_angle'])
+    p.setFloat('Bend Angle Variation', d['bend_angle_variation'])
+    texture_data_to_mxparams(d['bend_angle_map'], p, 'Bend Angle Map')
+    
+    p.setFloat('Cut Off', d['cut_off'])
+    p.setFloat('Cut Off Variation', d['cut_off_variation'])
+    texture_data_to_mxparams(d['cut_off_map'], p, 'Cut Off Map')
+    
+    p.setUInt('Points per Blade', d['points_per_blade'])
+    p.setUInt('Primitive Type', d['primitive_type'])
+    
+    p.setUInt('Seed', d['seed'])
+    
+    p.setByte('Enable LOD', d['lod'])
+    p.setFloat('LOD Min Distance', d['lod_min_distance'])
+    p.setFloat('LOD Max Distance', d['lod_max_distance'])
+    p.setFloat('LOD Max Distance Density', d['lod_max_distance_density'])
+    
+    p.setUInt('Display Percent', d['display_percent'])
+    p.setUInt('Display Max. Blades', d['display_max_blades'])
+    
+    o = s.getObject(d['object'])
+    o.applyGeometryModifierExtension(p)
 
 
 def hierarchy(d, s):
@@ -1777,8 +1837,8 @@ def main(args):
             environment(d, mxs)
         elif(d['type'] == 'PARTICLES'):
             particles(d, mxs)
-        elif(d['type'] == 'GRASS'):
-            grass(d, mxs)
+        # elif(d['type'] == 'GRASS'):
+        #     grass(d, mxs)
         elif(d['type'] == 'HAIR'):
             hair(d, mxs)
         elif(d['type'] == 'CLONER'):
@@ -1787,6 +1847,14 @@ def main(args):
             reference(d, mxs)
         elif(d['type'] == 'VOLUMETRICS'):
             volumetrics(d, mxs)
+        
+        elif(d['type'] == 'SUBDIVISION'):
+            subdivision(d, mxs)
+        elif(d['type'] == 'SCATTER'):
+            scatter(d, mxs)
+        elif(d['type'] == 'GRASS'):
+            grass(d, mxs)
+        
         elif(d['type'] == 'WIREFRAME_MATERIAL'):
             mat = wireframe_material(d, mxs)
             m = {'name': d['name'], 'data': mat, }

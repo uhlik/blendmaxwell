@@ -527,6 +527,7 @@ class MXSExport():
                              'parent': ob,
                              'type': None, }
                         p['export_type'] = mx.use
+                        
                         if(mx.use in ['PARTICLES', 'HAIR', ]):
                             particles.append(p)
                             # those two should be put into hiearchy, they are real objects.. the rest are just modifiers
@@ -541,6 +542,9 @@ class MXSExport():
                     modifiers.append(p)
                 if(ob.maxwell_sea_extension.enabled):
                     p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'SEA', }
+                    modifiers.append(p)
+                if(ob.maxwell_grass_extension.enabled):
+                    p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'GRASS', }
                     modifiers.append(p)
         
         for o in h:
@@ -573,6 +577,8 @@ class MXSExport():
             o = MXSEmpty(d)
             self._write(o)
         
+        meshes = []
+        
         for d in self._meshes:
             o = MXSMesh(d)
             self._write(o)
@@ -585,6 +591,8 @@ class MXSExport():
             #             v = '[{} ////// {}]'.format(s[:50], s[-50:])
             #     print(k, ': ', v)
             # print('-' * 30)
+            
+            meshes.append(o)
         
         bases = []
         
@@ -593,6 +601,7 @@ class MXSExport():
             self._write(o)
             
             bases.append(o)
+            meshes.append(o)
         
         def find_base(mnm):
             for b in bases:
@@ -626,8 +635,32 @@ class MXSExport():
             o = MXSVolumetrics(d)
             self._write(o)
         
-        # self._modifiers
-        # should be written when encountered on object, writing them separatedly is silly..
+        def find_mesh(nm):
+            for m in meshes:
+                if(m.m_name == nm):
+                    return m
+        
+        for d in self._modifiers:
+            if(d['export_type'] == 'CLONER'):
+                pass
+            elif(d['export_type'] == 'GRASS'):
+                o = MXSGrass(d)
+                self._write(o)
+            elif(d['export_type'] == 'SCATTER'):
+                so = d['object'].maxwell_scatter_extension.scatter_object
+                if(so is ''):
+                    log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(d['object'].name), 3, LogStyles.WARNING, )
+                else:
+                    o = MXSScatter(d)
+                    self._write(o)
+            elif(d['export_type'] == 'SUBDIVISION'):
+                me = find_mesh(d['object'].name)
+                if(me):
+                    qp = None
+                    if(me.quad_pairs):
+                        qp = me.quad_pairs
+                    o = MXSSubdivision(d, qp, )
+                    self._write(o)
         
         o = MXSEnvironment()
         self._write(o)
@@ -1193,6 +1226,7 @@ class MXSCamera(Serializable):
 
 class MXSObject(Serializable):
     def __init__(self, o, mw=None, mx=None, ):
+        self.m_type = '__OBJECT__'
         self.o = o
         self.b_object = self.o['object']
         if(mw is not None):
@@ -1386,7 +1420,7 @@ class MXSMesh(MXSObject):
         
         self._mesh_to_data(me)
         self._materials()
-        self._modifiers()
+        # self._modifiers()
         # cleanup
         bpy.data.meshes.remove(me)
         
@@ -1479,6 +1513,8 @@ class MXSMesh(MXSObject):
                     v = v[:2]
                 quad_pairs.append(v)
         
+        self.quad_pairs = quad_pairs
+        
         bm.to_mesh(me)
         bm.free()
         
@@ -1535,7 +1571,7 @@ class MXSMesh(MXSObject):
         self.m_triangle_materials = triangle_materials
     
     def _modifiers(self):
-        # TODO: reimplement modifiers
+        # TODO: reimplement modifiers >> moved to their own classes..
         pass
         '''
         def texture_to_data(name):
@@ -2040,32 +2076,157 @@ class MXSVolumetrics(MXSObject):
         self.m_scale = s
 
 
-class MXSExtensionModifier(Serializable):
+class MXSModifier(Serializable):
+    def __init__(self, o, ):
+        self.m_type = '__MODIFIER__'
+        self.o = o
+        self.b_object = self.o['object']
+        self.m_object = self.b_object.name
+    
+    def _texture_to_data(self, name, ):
+        tex = None
+        for t in bpy.data.textures:
+            if(t.type == 'IMAGE'):
+                if(t.name == name):
+                    tex = t
+        
+        d = {'type': 'IMAGE',
+             'path': "",
+             'channel': 0,
+             'use_override_map': False,
+             'tile_method_type': [True, True],
+             'tile_method_units': 0,
+             'repeat': [1.0, 1.0],
+             'mirror': [False, False],
+             'offset': [0.0, 0.0],
+             'rotation': 0.0,
+             'invert': False,
+             'alpha_only': False,
+             'interpolation': False,
+             'brightness': 0.0,
+             'contrast': 0.0,
+             'saturation': 0.0,
+             'hue': 0.0,
+             'rgb_clamp': [0.0, 255.0], }
+        if(tex is not None):
+            d['path'] = bpy.path.abspath(tex.image.filepath)
+            return d
+        return None
+
+
+class MXSGrass(MXSModifier):
+    def __init__(self, o, ):
+        super(MXSGrass, self).__init__(o)
+        self.m_type = 'GRASS'
+        self.mx = self.b_object.maxwell_grass_extension
+        
+        m = self.mx
+        
+        material = bpy.path.abspath(m.material)
+        if(material != "" and not os.path.exists(material)):
+            log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
+            material = ""
+        backface_material = bpy.path.abspath(m.backface_material)
+        if(backface_material != "" and not os.path.exists(backface_material)):
+            log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
+            material = ""
+        
+        o = self.o['object']
+        
+        self.m_material = material
+        self.m_material_embed = m.material_embed
+        self.m_backface_material = backface_material
+        self.m_backface_material_embed = m.backface_material_embed
+        self.m_density = int(m.density)
+        self.m_density_map = self._texture_to_data(m.density_map)
+        self.m_length = m.length
+        self.m_length_map = self._texture_to_data(m.length_map)
+        self.m_length_variation = m.length_variation
+        self.m_root_width = m.root_width
+        self.m_tip_width = m.tip_width
+        self.m_direction_type = int(m.direction_type)
+        self.m_initial_angle = math.degrees(m.initial_angle)
+        self.m_initial_angle_variation = m.initial_angle_variation
+        self.m_initial_angle_map = self._texture_to_data(m.initial_angle_map)
+        self.m_start_bend = m.start_bend
+        self.m_start_bend_variation = m.start_bend_variation
+        self.m_start_bend_map = self._texture_to_data(m.start_bend_map)
+        self.m_bend_radius = m.bend_radius
+        self.m_bend_radius_variation = m.bend_radius_variation
+        self.m_bend_radius_map = self._texture_to_data(m.bend_radius_map)
+        self.m_bend_angle = math.degrees(m.bend_angle)
+        self.m_bend_angle_variation = m.bend_angle_variation
+        self.m_bend_angle_map = self._texture_to_data(m.bend_angle_map)
+        self.m_cut_off = m.cut_off
+        self.m_cut_off_variation = m.cut_off_variation
+        self.m_cut_off_map = self._texture_to_data(m.cut_off_map)
+        self.m_points_per_blade = int(m.points_per_blade)
+        self.m_primitive_type = int(m.primitive_type)
+        self.m_seed = m.seed
+        self.m_lod = m.lod
+        self.m_lod_min_distance = m.lod_min_distance
+        self.m_lod_max_distance = m.lod_max_distance
+        self.m_lod_max_distance_density = m.lod_max_distance_density
+        self.m_display_percent = int(m.display_percent)
+        self.m_display_max_blades = int(m.display_max_blades)
+
+
+class MXSCloner(MXSModifier):
     def __init__(self):
         pass
 
 
-class MXSGrass(MXSExtensionModifier):
-    def __init__(self):
-        pass
+class MXSScatter(MXSModifier):
+    def __init__(self, o, ):
+        super(MXSScatter, self).__init__(o)
+        self.m_type = 'SCATTER'
+        self.mx = self.b_object.maxwell_scatter_extension
+        
+        sc = self.mx
+        self.m_scatter_object = sc.scatter_object
+        self.m_inherit_objectid = sc.inherit_objectid
+        self.m_density = sc.density
+        self.m_density_map = self._texture_to_data(sc.density_map)
+        self.m_seed = int(sc.seed)
+        self.m_scale_x = sc.scale_x
+        self.m_scale_y = sc.scale_y
+        self.m_scale_z = sc.scale_z
+        self.m_scale_map = self._texture_to_data(sc.scale_map)
+        self.m_scale_variation_x = sc.scale_variation_x
+        self.m_scale_variation_y = sc.scale_variation_y
+        self.m_scale_variation_z = sc.scale_variation_z
+        self.m_rotation_x = math.degrees(sc.rotation_x)
+        self.m_rotation_y = math.degrees(sc.rotation_y)
+        self.m_rotation_z = math.degrees(sc.rotation_z)
+        self.m_rotation_map = self._texture_to_data(sc.rotation_map)
+        self.m_rotation_variation_x = sc.rotation_variation_x
+        self.m_rotation_variation_y = sc.rotation_variation_y
+        self.m_rotation_variation_z = sc.rotation_variation_z
+        self.m_rotation_direction = int(sc.rotation_direction)
+        self.m_lod = sc.lod
+        self.m_lod_min_distance = sc.lod_min_distance
+        self.m_lod_max_distance = sc.lod_max_distance
+        self.m_lod_max_distance_density = sc.lod_max_distance_density
+        self.m_display_percent = int(sc.display_percent)
+        self.m_display_max_blades = int(sc.display_max_blades)
 
 
-class MXSCloner(MXSExtensionModifier):
-    def __init__(self):
-        pass
+class MXSSubdivision(MXSModifier):
+    def __init__(self, o, quad_pairs, ):
+        super(MXSSubdivision, self).__init__(o)
+        self.m_type = 'SUBDIVISION'
+        self.mx = self.b_object.maxwell_subdivision_extension
+        
+        sd = self.mx
+        self.m_level = int(sd.level)
+        self.m_scheme = int(sd.scheme)
+        self.m_interpolation = int(sd.interpolation)
+        self.m_crease = sd.crease
+        self.m_smooth = math.degrees(sd.smooth)
+        self.m_quad_pairs = quad_pairs
 
 
-class MXSScatter(MXSExtensionModifier):
-    def __init__(self):
-        pass
-
-
-class MXSSubdivision(MXSExtensionModifier):
-    def __init__(self):
-        pass
-
-
-class MXSSea(MXSExtensionModifier):
+class MXSSea(MXSModifier):
     def __init__(self):
         pass
 
