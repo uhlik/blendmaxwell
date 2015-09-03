@@ -44,6 +44,10 @@ AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).t
 ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
+# FIXME: instancing of curves
+# TODO: restore logging
+# TODO: fix messed basic properties (parenting / transformations / ...) setting to special objects
+
 
 class MXSExport():
     def __init__(self, mxs_path, ):
@@ -95,8 +99,6 @@ class MXSExport():
             - Covert dupli-objects to real meshes or instances.
         Return filtered scene hierarchy.
         """
-        
-        # FIXME: instancing of curves
         
         objs = self.context.scene.objects
         
@@ -2186,8 +2188,11 @@ class MXSCloner(MXSModifier):
             
             check(ps)
             
-            # i get particle locations in global coordinates, so need to fix that
             # TODO: get rid of all of this kind of particle system container object access, it's ugly..
+            # TODO: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
+            # FIXME: using not embedded particles result in bad transformation
+            
+            # i get particle locations in global coordinates, so need to fix that
             # mat = bpy.data.objects[self.m_parent].matrix_world.copy()
             # mat.invert()
             
@@ -2201,6 +2206,7 @@ class MXSCloner(MXSModifier):
             for part in ps.particles:
                 if(part.alive_state == "ALIVE"):
                     l = part.location.copy()
+                    
                     # l = mat * l
                     locs.append(l)
                     if(mx.bl_use_velocity):
@@ -2397,6 +2403,7 @@ class MXSSea(MXSObject):
         self.m_material_embed = mx.material_embed
         self.m_backface_material = bpy.path.abspath(mx.backface_material)
         self.m_backface_material_embed = mx.backface_material_embed
+
 
 class MXSMaterial(Serializable):
     def __init__(self):
