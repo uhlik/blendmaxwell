@@ -504,6 +504,11 @@ class ReferenceProperties(PropertyGroup):
     flag_override_hide_to_refl_refr = BoolProperty(name="Reflections/Refractions", default=False, )
     flag_override_hide_to_gi = BoolProperty(name="Global Illumination", default=False, )
     
+    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
+    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    
     @classmethod
     def register(cls):
         bpy.types.Object.maxwell_render_reference = PointerProperty(type=cls)

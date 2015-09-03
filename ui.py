@@ -1134,6 +1134,19 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         
         sub.prop(m, 'path')
         
+        sub.separator()
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'material')
+        c = s.column()
+        c.prop(m, 'material_embed', text='Embed', )
+        s = sub.split(percentage=0.8)
+        c = s.column()
+        c.prop(m, 'backface_material')
+        c = s.column()
+        c.prop(m, 'backface_material_embed', text='Embed', )
+        sub.separator()
+        
         q = 0.33
         
         r = sub.row()

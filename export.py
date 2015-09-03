@@ -1258,6 +1258,8 @@ class MXSObject(Serializable):
     def __init__(self, o, mw=None, mx=None, ):
         super().__init__()
         
+        # TODO: because of quite high number of irregularities in transformation approaches, redesign coomon props. m_name, m_parent, b_object, b_parent, ... for easy access of clearly defined properties. now it is a bit messy
+        
         self.m_type = '__OBJECT__'
         self.o = o
         self.b_object = self.o['object']
@@ -1275,7 +1277,7 @@ class MXSObject(Serializable):
             self.mx = self.b_object.maxwell_render
         
         self.m_name = self.b_object.name
-        self.m_type = None
+        # self.m_type = None
         
         self.m_parent = None
         if(type(self.b_object) != bpy.types.Object):
@@ -1649,7 +1651,10 @@ class MXSReference(MXSObject):
         self.m_flag_override_hide_to_refl_refr = mx.flag_override_hide_to_refl_refr
         self.m_flag_override_hide_to_gi = mx.flag_override_hide_to_gi
         
-        # TODO reference object material and backface material (if it is possible)
+        self.m_material = mx.material
+        self.m_material_embed = mx.material_embed
+        self.m_backface_material = mx.backface_material
+        self.m_backface_material_embed = mx.backface_material_embed
 
 
 class MXSParticles(MXSObject):
@@ -1897,7 +1902,7 @@ class MXSHair(MXSObject):
         omw = o.matrix_world
         
         steps = 2 ** ps.settings.render_step
-        # TODO to do what? something related to commented line below?
+        # TODO to do what? something related to commented line below? (old todo)
         # steps = 2 ** ps.settings.render_step + 1
         num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
         points = []
@@ -1935,7 +1940,7 @@ class MXSHair(MXSObject):
         points = [v.to_tuple() for v in points]
         # just list of floats
         locs = [v for l in points for v in l]
-        # TODO to do what?
+        # TODO to do what? (old todo)
         # locs = [round(v, 6) for v in locs]
         
         if(m.uv_layer is not ""):
@@ -5046,7 +5051,7 @@ class MXSExportLegacy():
                 '''
                 
                 # get fresh object reference
-                # FIXME why the it has been somewhere lost??? remove this line will result in segmentation fault
+                # why the it has been somewhere lost??? remove this line will result in segmentation fault
                 o = bpy.data.objects[q['parent']]
                 ps.set_resolution(self.context.scene, o, 'RENDER')
                 
@@ -5210,7 +5215,7 @@ class MXSExportLegacy():
                 q['data'] = data
             
             elif(dp['type'] == 'CLONER'):
-                # FIXME wrong transformation of particles on cloned object
+                # wrong transformation of particles on cloned object
                 
                 o = bpy.data.objects[dp['object']]
                 

@@ -1456,6 +1456,14 @@ def reference(d, s):
         o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_REFL_REFR)
     if(d['flag_override_hide_to_gi']):
         o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_GI)
+    
+    if(d['material'] != ""):
+        mat = material(d['material'], s, d['material_embed'])
+        o.setMaterial(mat)
+    if(d['backface_material'] != ""):
+        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
+        o.setBackfaceMaterial(bm)
+    
     return o
 
 
