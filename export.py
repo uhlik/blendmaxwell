@@ -650,12 +650,8 @@ class MXSExport():
                 o = MXSGrass(d)
                 self._write(o)
             elif(d['export_type'] == 'SCATTER'):
-                so = d['object'].maxwell_scatter_extension.scatter_object
-                if(so is ''):
-                    log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(d['object'].name), 3, LogStyles.WARNING, )
-                else:
-                    o = MXSScatter(d)
-                    self._write(o)
+                o = MXSScatter(d)
+                self._write(o)
             elif(d['export_type'] == 'SUBDIVISION'):
                 me = find_mesh(d['object'].name)
                 if(me):
@@ -691,6 +687,10 @@ class MXSExport():
     
     def _write(self, o, ):
         if(system.PLATFORM == 'Darwin'):
+            # skip marked
+            if(o.skip):
+                return
+            
             # append object, at the end it will be serialized and written to be read by helper script
             # self.data.append(o)
             
@@ -798,11 +798,11 @@ class MXSExport():
             
         elif(system.PLATFORM == 'Linux'):
             # # directly write to mxs
-            # self.mxs.write(o)
+            # self.mxs.write(**o._dict())
             pass
         elif(system.PLATFORM == 'Windows'):
             # # directly write to mxs
-            # self.mxs.write(o)
+            # self.mxs.write(**o._dict())
             pass
     
     def _finish(self):
@@ -879,6 +879,9 @@ class MXSExport():
 
 
 class Serializable():
+    def __init__(self):
+        self.skip = False
+    
     def _fields(self):
         r = list(self.__dict__.keys())
         r = [i for i in r if i.startswith('m_')]
@@ -894,6 +897,8 @@ class Serializable():
 
 class MXSScene(Serializable):
     def __init__(self, mxs_path, groups, ):
+        super().__init__()
+        
         h, t = os.path.split(mxs_path)
         n, e = os.path.splitext(t)
         mx = bpy.context.scene.maxwell_render
@@ -992,6 +997,7 @@ class MXSScene(Serializable):
 
 class MXSEnvironment(Serializable):
     def __init__(self):
+        super().__init__()
         # TODO: maybe split this to world / sun (/ ibl)?
         
         mx = bpy.context.scene.world.maxwell_render
@@ -1142,6 +1148,8 @@ class MXSEnvironment(Serializable):
 
 class MXSCamera(Serializable):
     def __init__(self, o, ):
+        super().__init__()
+        
         ob = o['object']
         self.b_object = ob
         self.b_matrix_world = ob.matrix_world.copy()
@@ -1248,6 +1256,8 @@ class MXSCamera(Serializable):
 
 class MXSObject(Serializable):
     def __init__(self, o, mw=None, mx=None, ):
+        super().__init__()
+        
         self.m_type = '__OBJECT__'
         self.o = o
         self.b_object = self.o['object']
@@ -1402,13 +1412,13 @@ class MXSObject(Serializable):
 
 class MXSEmpty(MXSObject):
     def __init__(self, o, ):
-        super(MXSEmpty, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'EMPTY'
 
 
 class MXSMesh(MXSObject):
     def __init__(self, o, ):
-        super(MXSMesh, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'MESH'
         
         # TODO: re-implement overriden instances
@@ -1594,7 +1604,7 @@ class MXSMesh(MXSObject):
 
 class MXSMeshInstance(MXSObject):
     def __init__(self, o, base, ):
-        super(MXSMeshInstance, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'MESH_INSTANCE'
         self.m_instanced = base.m_name
         
@@ -1621,7 +1631,7 @@ class MXSMeshInstance(MXSObject):
 
 class MXSReference(MXSObject):
     def __init__(self, o, ):
-        super(MXSReference, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'REFERENCE'
         
         ob = self.b_object
@@ -1631,6 +1641,7 @@ class MXSReference(MXSObject):
         # log("{0} -> {1}".format(o['object'].name, bpy.path.abspath(mx.path)), 2)
         if(not os.path.exists(bpy.path.abspath(mx.path))):
             log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
+            self.skip = True
         
         self.m_path = bpy.path.abspath(bpy.path.abspath(mx.path))
         self.m_flag_override_hide = mx.flag_override_hide
@@ -1645,7 +1656,7 @@ class MXSParticles(MXSObject):
     def __init__(self, o, ):
         mw = Matrix.Identity(4)
         mx = o['object'].settings.maxwell_particles_extension
-        super(MXSParticles, self).__init__(o, mw, mx, )
+        super().__init__(o, mw, mx, )
         self.m_type = 'PARTICLES'
         self.m_name = "{}-{}".format(self.m_parent, self.m_name)
         
@@ -1850,7 +1861,7 @@ class MXSHair(MXSObject):
         # TODO: fix the mess of blender x maxwell objects and real x to be created objects. even now i don't much remember how it works. and i did it yesterday..
         mw = Matrix.Identity(4)
         mx = o['object'].settings.maxwell_hair_extension
-        super(MXSHair, self).__init__(o, mw, mx, )
+        super().__init__(o, mw, mx, )
         self.m_type = 'HAIR'
         self.m_name = "{}-{}".format(self.m_parent, self.m_name)
         
@@ -1982,7 +1993,7 @@ class MXSHair(MXSObject):
 
 class MXSVolumetrics(MXSObject):
     def __init__(self, o, ):
-        super(MXSVolumetrics, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'VOLUMETRICS'
         
         ob = self.b_object
@@ -2039,6 +2050,8 @@ class MXSVolumetrics(MXSObject):
 
 class MXSModifier(Serializable):
     def __init__(self, o, ):
+        super().__init__()
+        
         self.m_type = '__MODIFIER__'
         self.o = o
         self.b_object = self.o['object']
@@ -2077,7 +2090,7 @@ class MXSModifier(Serializable):
 
 class MXSGrass(MXSModifier):
     def __init__(self, o, ):
-        super(MXSGrass, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'GRASS'
         self.mx = self.b_object.maxwell_grass_extension
         
@@ -2134,7 +2147,7 @@ class MXSGrass(MXSModifier):
 
 class MXSCloner(MXSModifier):
     def __init__(self, o, ):
-        super(MXSCloner, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'CLONER'
         
         self.b_object = self.o['parent']
@@ -2177,6 +2190,9 @@ class MXSCloner(MXSModifier):
             vels = []
             sizes = []
             
+            # mat = o.matrix_world.copy().inverted()
+            mat = ps.settings.dupli_object.matrix_world.copy().inverted()
+            
             for part in ps.particles:
                 if(part.alive_state == "ALIVE"):
                     l = part.location.copy()
@@ -2197,6 +2213,7 @@ class MXSCloner(MXSModifier):
             # fix rotation of .bin
             for i, l in enumerate(locs):
                 locs[i] = Vector(l * ROTATE_X_90).to_tuple()
+            
             if(mx.bl_use_velocity):
                 for i, v in enumerate(vels):
                     vels[i] = Vector(v * ROTATE_X_90).to_tuple()
@@ -2272,12 +2289,17 @@ class MXSCloner(MXSModifier):
 
 class MXSScatter(MXSModifier):
     def __init__(self, o, ):
-        super(MXSScatter, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'SCATTER'
         self.mx = self.b_object.maxwell_scatter_extension
         
         sc = self.mx
         self.m_scatter_object = sc.scatter_object
+        
+        if(self.m_scatter_object is ''):
+            log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(self.b_object.name), 3, LogStyles.WARNING, )
+            self.skip = True
+        
         self.m_inherit_objectid = sc.inherit_objectid
         self.m_density = sc.density
         self.m_density_map = self._texture_to_data(sc.density_map)
@@ -2307,7 +2329,7 @@ class MXSScatter(MXSModifier):
 
 class MXSSubdivision(MXSModifier):
     def __init__(self, o, quad_pairs, ):
-        super(MXSSubdivision, self).__init__(o)
+        super().__init__(o)
         self.m_type = 'SUBDIVISION'
         self.mx = self.b_object.maxwell_subdivision_extension
         
@@ -2323,7 +2345,7 @@ class MXSSubdivision(MXSModifier):
 class MXSSea(MXSObject):
     def __init__(self, o, ):
         mw = Matrix.Identity(4)
-        super(MXSSea, self).__init__(o, mw, )
+        super().__init__(o, mw, )
         self.m_type = 'SEA'
         self.m_parent = self.b_object.name
         self.m_name = "{}-{}".format(self.m_parent, 'MaxwellSea', )
@@ -2351,6 +2373,19 @@ class MXSSea(MXSObject):
         
         self._materials()
     
+    def _transformation(self):
+        ob = self.b_object
+        
+        m = self.b_matrix_world.copy()
+        m *= ROTATE_X_90
+        b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+        
+        self.m_base = b
+        self.m_pivot = p
+        self.m_location = l
+        self.m_rotation = r
+        self.m_scale = s
+    
     def _materials(self):
         mx = self.b_object.maxwell_sea_extension
         self.m_material = bpy.path.abspath(mx.material)
@@ -2360,7 +2395,98 @@ class MXSSea(MXSObject):
 
 class MXSMaterial(Serializable):
     def __init__(self):
-        pass
+        self.m_type = 'MATERIAL'
+
+
+class MXSMaterialCustom(MXSMaterial):
+    def __init__(self):
+        super().__init__()
+        
+        self.m_kind = 'CUSTOM'
+        self.m_mxm = ''
+        self.m_embed = True
+
+
+class MXSMaterialExtension(MXSMaterial):
+    def __init__(self, o, ):
+        super().__init__()
+        self.o = o
+        self.m_override_map = o['override_map']
+        self.m_bump = o['bump']
+        self.m_bump_value = o['bump_value']
+        self.m_bump_map = o['bump_map']
+        self.m_dispersion = o['dispersion']
+        self.m_shadow = o['shadow']
+        self.m_matte = o['matte']
+        self.m_priority = o['priority']
+        self.m_id = o['id']
+    
+    def _texture_to_data(self, name, ):
+        if(name == ""):
+            return None
+        tex = bpy.data.textures[name]
+        if(tex.type != 'IMAGE'):
+            return None
+        
+        m = tex.maxwell_render
+        d = {'type': 'IMAGE',
+             'path': bpy.path.abspath(tex.image.filepath),
+             'channel': 0,
+             'use_override_map': m.use_global_map,
+             'tile_method_type': [True, True],
+             'tile_method_units': int(m.tiling_units[-1:]),
+             'repeat': [m.repeat[0], m.repeat[1]],
+             'mirror': [m.mirror_x, m.mirror_y],
+             'offset': [m.offset[0], m.offset[1]],
+             'rotation': m.rotation,
+             'invert': m.invert,
+             'alpha_only': m.use_alpha,
+             'interpolation': m.interpolation,
+             'brightness': m.brightness,
+             'contrast': m.contrast,
+             'saturation': m.saturation,
+             'hue': m.hue,
+             'rgb_clamp': [m.clamp[0], m.clamp[1]], }
+        
+        if(m.tiling_method == 'NO_TILING'):
+            tm = [False, False]
+        elif(m.tiling_method == 'TILE_X'):
+            tm = [True, False]
+        elif(m.tiling_method == 'TILE_Y'):
+            tm = [False, True]
+        else:
+            tm = [True, True]
+        d['tile_method_type'] = tm
+        
+        slot = None
+        for ts in mat.texture_slots:
+            if(ts is not None):
+                if(ts.texture is not None):
+                    if(ts.texture.name == name):
+                        slot = ts
+                        break
+        
+        for i, uv in enumerate(ob.data.uv_textures):
+            if(uv.name == slot.uv_layer):
+                d['channel'] = i
+                break
+        
+        return d
+
+
+class MXSMaterialOpaque(MXSMaterialExtension):
+    def __init__(self, o, ):
+        super().__init__(o)
+        self.m_color_type = o['opaque_color_type']
+        self.m_color = o['opaque_color']
+        self.m_color_map = self._texture_to_data(o['opaque_color_map'])
+        self.m_shininess_type = o['opaque_shininess_type']
+        self.m_shininess = o['opaque_shininess']
+        self.m_shininess_map = self._texture_to_data(o['opaque_shininess_map'])
+        self.m_roughness_type = o['opaque_roughness_type']
+        self.m_roughness = o['opaque_roughness']
+        self.m_roughness_map = self._texture_to_data(o['opaque_roughness_map'])
+        self.m_clearcoat = o['opaque_clearcoat']
 
 
 class MXSTexture(Serializable):
