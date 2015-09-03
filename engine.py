@@ -313,7 +313,6 @@ class MaxwellRenderExportEngine(RenderEngine):
                     yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
                     x = int((xr - w) / 2)
                     y = int((yr - h) / 2)
-                    # TODO sometime in future slice array to fit when frame is smaller than image
                     
                     r = self.begin_result(x, y, w, h)
                     l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
@@ -433,7 +432,18 @@ class MaxwellRenderExportEngine(RenderEngine):
                 pass
             '''
             
+            # import cProfile, pstats, io
+            # pr = cProfile.Profile()
+            # pr.enable()
+            
             ex = export.MXSExport(mxs_path=p, )
+            
+            # pr.disable()
+            # s = io.StringIO()
+            # sortby = 'cumulative'
+            # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            # ps.print_stats()
+            # print(s.getvalue())
         
         if((m.exporting_animation_now and scene.frame_current == scene.frame_end) or not m.exporting_animation_now):
             if(m.export_log_open):

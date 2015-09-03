@@ -586,16 +586,6 @@ class MXSExport():
         for d in self._meshes:
             o = MXSMesh(d)
             self._write(o)
-            # for k, v in o._dict().items():
-            #     if(type(v) == list):
-            #         if(len(v) > 5):
-            #             v = '[{}, ..., {}, ]'.format(v[0], v[-1])
-            #         elif(len(str(v)) > 100):
-            #             s = str(v)
-            #             v = '[{} ////// {}]'.format(s[:50], s[-50:])
-            #     print(k, ': ', v)
-            # print('-' * 30)
-            
             meshes.append(o)
         
         bases = []
@@ -671,17 +661,25 @@ class MXSExport():
         
         # all object are processed now, i can work with all object which have made it through
         groups = []
-        # TODO: add possibility to add extension objects here
-        allowed = ['MESH', 'MESH_INSTANCE', ]
+        allowed = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+        children = ['PARTICLES', 'HAIR', 'SEA', ]
+        # my humble apologies for following if-for-if-for.. loop
         for g in bpy.data.groups:
             gmx = g.maxwell_render
             if(gmx.custom_alpha_use):
                 a = {'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
                 for o in g.objects:
-                    for mo in self.data:
-                        if(mo.m_type in allowed):
-                            if(o.name == mo.m_name):
+                    for mo in self.serialized_data:
+                        if(mo['type'] in allowed):
+                            if(o.name == mo['name']):
                                 a['objects'].append(o.name)
+                                for ch in self.serialized_data:
+                                    if(ch['type'] in allowed):
+                                        if(ch['parent'] == mo['name']):
+                                            if(ch['type'] in children):
+                                                a['objects'].append(ch['name'])
+                                                break
+                                        
                 groups.append(a)
         
         o = MXSScene(self.mxs_path, groups, )
@@ -1000,7 +998,7 @@ class MXSScene(Serializable):
 class MXSEnvironment(Serializable):
     def __init__(self):
         super().__init__()
-        # TODO: maybe split this to world / sun (/ ibl)?
+        # maybe split this to world / sun (/ ibl) classes?
         
         mx = bpy.context.scene.world.maxwell_render
         self.m_type = 'ENVIRONMENT'
@@ -1351,7 +1349,7 @@ class MXSObject(Serializable):
     def _transformation(self):
         # possible parent/child scenarios: object parent_type can be one of following: ['OBJECT', 'ARMATURE', 'LATTICE', 'VERTEX', 'VERTEX_3', 'BONE'] default 'OBJECT'
         if(self.b_parent_type == 'BONE'):
-            # TODO object parented to a bone, maybe have a look to another parenting scenarios..
+            # TODO object parented to a bone, maybe also have a look to another parenting scenarios..
             pass
         else:
             m = self.b_matrix_world.copy()
@@ -1409,44 +1407,12 @@ class MXSMesh(MXSObject):
         super().__init__(o)
         self.m_type = 'MESH'
         
-        # TODO: re-implement overriden instances
-        # is_overriden_instance = False
-        # try:
-        #     o['override_instance']
-        #     is_overriden_instance = True
-        # except:
-        #     pass
-        #
-        # if(is_overriden_instance):
-        #     o['object'].data = o['object'].data.copy()
-        #     d, md = self._mesh_to_data(o)
-        #     p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-        #     # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
-        #     w = MXSBinMeshWriterLegacy(p, **md)
-        #     rm = o['object'].data
-        #     o['object'].data = o['override_instance']
-        #     bpy.data.meshes.remove(rm)
-        # else:
-        #     d, md = self._mesh_to_data(o)
-        #     p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-        #     # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
-        #     w = MXSBinMeshWriterLegacy(p, **md)
-        #
-        # self.mesh_data_paths.append(p)
-        # d['mesh_data_path'] = p
-        # self.data.append(d)
-        
         me = self._prepare_mesh()
         
         self._mesh_to_data(me)
         self._materials()
         # cleanup
         bpy.data.meshes.remove(me)
-        
-        # # mac os x export stuff
-        # nm = "{}-{}".format(ob.data.name, uuid.uuid1())
-        # if(self.use_instances is False):
-        #     nm = "{}-{}".format(ob.name, uuid.uuid1())
     
     def _prepare_mesh(self):
         ob = self.b_object
@@ -1627,8 +1593,6 @@ class MXSReference(MXSObject):
         ob = self.b_object
         mx = ob.maxwell_render_reference
         
-        # TODO: solve skipping of invalid objects, or if it is possible to make reference without valid path, so be it..
-        # log("{0} -> {1}".format(o['object'].name, bpy.path.abspath(mx.path)), 2)
         if(not os.path.exists(bpy.path.abspath(mx.path))):
             log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
             self.skip = True
@@ -2338,7 +2302,36 @@ class MXSSubdivision(MXSModifier):
         self.m_smooth = math.degrees(mxex.smooth)
         self.m_quad_pairs = quad_pairs
         
-        # TODO: do check if mesh is non-manifold, if not warn user and skip modifier
+        # do check if mesh is non-manifold, if not warn user and skip modifier
+        def is_non_manifold(me):
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            for v in bm.verts:
+                if(not v.is_manifold):
+                    bm.free()
+                    return False
+            for e in bm.edges:
+                if(not e.is_manifold):
+                    bm.free()
+                    return False
+            bm.free()
+            return True
+        
+        if(self.m_scheme == 0):
+            types = ['CURVE', 'SURFACE', 'FONT', ]
+            if(self.b_object.type in types):
+                # # those are always non manifold (i think)
+                # me = self.b_object.to_mesh(bpy.context.scene, True, 'RENDER', )
+                # nm = is_non_manifold(me)
+                # bpy.data.meshes.remove(me)
+                self.m_scheme = 1
+                nm = True
+                log("{}: WARNING: {}: Subdivision modifier on non-mesh object, Catmull-Clark subdivision will not work, switching to Loop Subdivision".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+            else:
+                nm = is_non_manifold(self.b_object.data)
+            if(not nm):
+                log("{}: WARNING: {}: Subdivision modifier on non-manifold object, Catmull-Clark subdivision will not work".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                self.skip = True
 
 
 class MXSSea(MXSObject):
@@ -2391,6 +2384,7 @@ class MXSSea(MXSObject):
         self.m_backface_material_embed = mx.backface_material_embed
 
 
+# --
 class MXSMaterial(Serializable):
     def __init__(self):
         self.m_type = 'MATERIAL'

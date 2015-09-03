@@ -893,7 +893,6 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         else:
             fps_rate = round(fps / fps_base, 2)
         
-        # TODO: Change the following to iterate over existing presets
         custom_framerate = (fps_rate not in {23.98, 24, 25, 29.97, 30, 50, 59.94, 60})
         
         if custom_framerate is True:
