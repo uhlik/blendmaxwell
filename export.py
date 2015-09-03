@@ -1592,6 +1592,8 @@ class MXSMesh(MXSObject):
 
 class MXSMeshInstance(MXSObject):
     def __init__(self, o, base, ):
+        # FIXME: different result when instance has different modifiers / modifier settings then other instance, fix: reimplement instance override
+        
         super().__init__(o)
         self.m_type = 'MESH_INSTANCE'
         self.m_instanced = base.m_name
