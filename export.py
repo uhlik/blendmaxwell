@@ -46,7 +46,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # FIXME: instancing of curves
 # TODO: restore logging
-# TODO: fix messed basic properties (parenting / transformations / ...) setting to special objects
 # TODO: materials
 
 
@@ -1289,40 +1288,6 @@ class MXSObject(Serializable):
         
         self._object_properties()
         self._transformation()
-        
-        # special objects: PARTICLES, HAIR, REFERENCE, VOLUMETRICS, SUBDIVISION, SCATTER, GRASS, CLONER, SEA
-        # PARTICLES:    b particle system on b object >> m particles parented to m object (visible/hidden)
-        #               data are stored in special property group on psys together with regular one on b object
-        #               transformation of particles is Matrix.Identity (not counting axis conversion in export to bin)
-        # HAIR:         b particle system on b object >> m particles parented to m object (visible/hidden)
-        #               data are stored in special property group on psys together with regular one on b object
-        #               transformation of particles is Matrix.Identity (not counting axis conversion in export to bin)
-        # VOLUMETRICS:  b empty >> m volumetrics object
-        #               data are stored in special property group on object together with regular one
-        # SUBDIVISION:  b special properties and b object >> m object + modifier
-        #               data are stored in special property group on object together with regular one
-        # SCATTER:      b special properties, b object to scatter and b object container >> m container object + modifier and scattered object
-        #               data are stored in special property group on object together with regular one
-        # GRASS:        b special properties and b object >> m object + modifier
-        #               data are stored in special property group on object together with regular one
-        # CLONER:       b particle system on b object and cloned b object >> modifier on cloned m object
-        #               data are stored in special property group on psys together with regular one on b object
-        #               transformation to fit object with particle system but converted to reflect new transformation of parent
-        # SEA:          b special properties and b object >> m extension object parented to m object (hidden)
-        #               data are stored in special property group on object together with regular one
-        #               transformation is Matrix.Identity (not counting axis conversion in export to bin)
-        
-        # others no handled here: CAMERA, SCENE, ENVIRONMENT, WIREFRAME_MATERIAL, WIREFRAME_EDGE, WIREFRAME
-        
-        # so i've got 2 ways i guess..
-        # 1. change MXSObject to be always configurable and do the magic in __init__ without changes, only by object type if logic (current not so well approach, in fact it is combination with 2nd option)
-        # 2. no messing with MXSObject, at it's pristine state it will work withou changes only on regular objects, move all the magic to special object classes in __init__ by rewriting fields and calling methods again if needed..
-        
-        # Ah, thank god for that.  Right -- as far as I can see it, we have two options:  One, we take it on and kill it; or Two, run away.  Who's for Two?
-        # Two sounds pretty good to me, sir.
-        # It's always been _my_ lucky number.
-        
-        # TODO: because of quite high number of irregularities in transformation approaches, redesign coomon props. m_name, m_parent, b_object, b_parent, ... for easy access of clearly defined properties. now it is a bit messy
     
     def _color_to_rgb8(self, c, ):
         return tuple([int(255 * v) for v in c])
@@ -1728,8 +1693,6 @@ class MXSParticles(MXSObject):
             check(ps)
             
             # i get particle locations in global coordinates, so need to fix that
-            # TODO: get rid of all of this kind of particle system container object access, it's ugly..
-            # mat = bpy.data.objects[self.m_parent].matrix_world.copy()
             mat = self.b_parent_matrix_world.copy()
             mat.invert()
             
@@ -2215,7 +2178,6 @@ class MXSCloner(MXSModifier):
             
             check(ps)
             
-            # TODO: get rid of all of this kind of particle system container object access, it's ugly..
             # TODO: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
             # FIXME: using not embedded particles result in bad transformation
             # FIXME: also here i have 10 particles, but only 8 clones is rendered in place and one clone is far away, reimporting bin show all 10 particles are where they should be
