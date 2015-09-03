@@ -47,6 +47,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # FIXME: instancing of curves
 # TODO: restore logging
 # TODO: fix messed basic properties (parenting / transformations / ...) setting to special objects
+# TODO: materials
 
 
 class MXSExport():
@@ -760,7 +761,7 @@ class MXSExport():
                 
                 self.serialized_data.append(a)
             elif(o.m_type == 'PARTICLES'):
-                if(o.mx.source != 'EXTERNAL_BIN'):
+                if(o.mxex.source != 'EXTERNAL_BIN'):
                     # not existing external .bin
                     if(o.m_embed):
                         # and data will be embedded in mxs (no external bin created)
@@ -776,7 +777,7 @@ class MXSExport():
                 
                 self.serialized_data.append(a)
             elif(o.m_type == 'CLONER'):
-                if(o.mx.source != 'EXTERNAL_BIN'):
+                if(o.mxex.source != 'EXTERNAL_BIN'):
                     if(o.m_embed):
                         nm = "{}-{}".format(o.m_name, uuid.uuid1())
                         p = os.path.join(self.tmp_dir, "{0}.binpart".format(nm))
@@ -1257,42 +1258,71 @@ class MXSCamera(Serializable):
 
 
 class MXSObject(Serializable):
-    def __init__(self, o, mw=None, mx=None, ):
+    def __init__(self, o, do_not_set_anything_yet=False, ):
         super().__init__()
-        
-        # TODO: because of quite high number of irregularities in transformation approaches, redesign coomon props. m_name, m_parent, b_object, b_parent, ... for easy access of clearly defined properties. now it is a bit messy
         
         self.m_type = '__OBJECT__'
         self.o = o
+        
+        if(do_not_set_anything_yet):
+            return
+        
+        # regular objects: EMPTY, MESH, MESH_INSTANCE, REFERENCE
         self.b_object = self.o['object']
-        if(mw is not None):
-            # special objects (particles, etc.)
-            self.b_matrix_world = mw.copy()
-        else:
-            # regular objects
-            self.b_matrix_world = self.b_object.matrix_world.copy()
-        if(mx is not None):
-            # special objects (particles, etc.)
-            self.mx = mx
-        else:
-            # regular objects
-            self.mx = self.b_object.maxwell_render
+        self.b_name = self.b_object.name
+        self.b_matrix_world = self.b_object.matrix_world.copy()
+        self.b_parent = None
+        self.b_parent_matrix_world = None
+        self.b_parent_type = None
         
-        self.m_name = self.b_object.name
-        # self.m_type = None
-        
+        self.m_name = self.b_name
         self.m_parent = None
-        if(type(self.b_object) != bpy.types.Object):
-            # special objects (particles, etc.)
-            if(self.o['parent']):
-                self.m_parent = self.o['parent'].name
-        else:
-            # regular objects
-            if(self.b_object.parent):
-                self.m_parent = self.b_object.parent.name
+        
+        if(self.b_object.parent):
+            self.b_parent = self.b_object.parent
+            self.b_parent_matrix_world = self.b_parent.matrix_world.copy()
+            self.b_parent_type = self.b_object.parent_type
+            
+            self.m_parent = self.b_parent.name
+        
+        self.mx = self.b_object.maxwell_render
         
         self._object_properties()
         self._transformation()
+        
+        # special objects: PARTICLES, HAIR, REFERENCE, VOLUMETRICS, SUBDIVISION, SCATTER, GRASS, CLONER, SEA
+        # PARTICLES:    b particle system on b object >> m particles parented to m object (visible/hidden)
+        #               data are stored in special property group on psys together with regular one on b object
+        #               transformation of particles is Matrix.Identity (not counting axis conversion in export to bin)
+        # HAIR:         b particle system on b object >> m particles parented to m object (visible/hidden)
+        #               data are stored in special property group on psys together with regular one on b object
+        #               transformation of particles is Matrix.Identity (not counting axis conversion in export to bin)
+        # VOLUMETRICS:  b empty >> m volumetrics object
+        #               data are stored in special property group on object together with regular one
+        # SUBDIVISION:  b special properties and b object >> m object + modifier
+        #               data are stored in special property group on object together with regular one
+        # SCATTER:      b special properties, b object to scatter and b object container >> m container object + modifier and scattered object
+        #               data are stored in special property group on object together with regular one
+        # GRASS:        b special properties and b object >> m object + modifier
+        #               data are stored in special property group on object together with regular one
+        # CLONER:       b particle system on b object and cloned b object >> modifier on cloned m object
+        #               data are stored in special property group on psys together with regular one on b object
+        #               transformation to fit object with particle system but converted to reflect new transformation of parent
+        # SEA:          b special properties and b object >> m extension object parented to m object (hidden)
+        #               data are stored in special property group on object together with regular one
+        #               transformation is Matrix.Identity (not counting axis conversion in export to bin)
+        
+        # others no handled here: CAMERA, SCENE, ENVIRONMENT, WIREFRAME_MATERIAL, WIREFRAME_EDGE, WIREFRAME
+        
+        # so i've got 2 ways i guess..
+        # 1. change MXSObject to be always configurable and do the magic in __init__ without changes, only by object type if logic (current not so well approach, in fact it is combination with 2nd option)
+        # 2. no messing with MXSObject, at it's pristine state it will work withou changes only on regular objects, move all the magic to special object classes in __init__ by rewriting fields and calling methods again if needed..
+        
+        # Ah, thank god for that.  Right -- as far as I can see it, we have two options:  One, we take it on and kill it; or Two, run away.  Who's for Two?
+        # Two sounds pretty good to me, sir.
+        # It's always been _my_ lucky number.
+        
+        # TODO: because of quite high number of irregularities in transformation approaches, redesign coomon props. m_name, m_parent, b_object, b_parent, ... for easy access of clearly defined properties. now it is a bit messy
     
     def _color_to_rgb8(self, c, ):
         return tuple([int(255 * v) for v in c])
@@ -1354,36 +1384,16 @@ class MXSObject(Serializable):
         return (b, p, l, r, s, )
     
     def _transformation(self):
-        ob = self.b_object
-        if(type(ob) != bpy.types.Object):
-            # special objects like particles etc..
-            # mw = self.b_matrix_world.copy()
-            # if(self.m_parent):
-            #     mb = bpy.data.objects[self.m_parent].matrix_world.inverted() * mw
-            # else:
-            #     mb = mw
-            # m = mb
+        # possible parent/child scenarios: object parent_type can be one of following: ['OBJECT', 'ARMATURE', 'LATTICE', 'VERTEX', 'VERTEX_3', 'BONE'] default 'OBJECT'
+        if(self.b_parent_type == 'BONE'):
+            # TODO object parented to a bone, maybe have a look to another parenting scenarios..
+            pass
+        else:
             m = self.b_matrix_world.copy()
+            if(self.b_parent):
+                m = self.b_parent_matrix_world.copy().inverted() * m
             m *= ROTATE_X_90
             b, p, l, r, s = self._matrix_to_base_and_pivot(m)
-        else:
-            # regular objects
-            if(ob.parent_type == 'BONE'):
-                # TODO object parented to a bone, maybe have a look to another parenting scenarios..
-                pass
-            else:
-                # mw = ob.matrix_world.copy()
-                mw = self.b_matrix_world.copy()
-                # if(ob.parent):
-                #     mb = ob.parent.matrix_world.inverted() * mw
-                if(self.m_parent):
-                    # TODO: get rid of all of this kind of particle system container object access, it's ugly..
-                    mb = bpy.data.objects[self.m_parent].matrix_world.inverted() * mw
-                else:
-                    mb = mw
-                m = mb
-                m *= ROTATE_X_90
-                b, p, l, r, s = self._matrix_to_base_and_pivot(m)
         
         self.m_base = b
         self.m_pivot = p
@@ -1392,6 +1402,14 @@ class MXSObject(Serializable):
         self.m_scale = s
     
     def _materials(self):
+        # TODO: finish material exporting
+        self.m_num_materials = len(self.b_object.material_slots)
+        self.m_materials = []
+        self.m_backface_material = []
+        for i in range(self.m_num_materials):
+            self.m_materials.append((False, "", ))
+        
+        '''
         ob = None
         if(type(self.b_object) != bpy.types.Object):
             # special objects (particles, etc.)
@@ -1412,6 +1430,7 @@ class MXSObject(Serializable):
             self.m_num_materials = 1
             self.m_materials = []
             self.m_backface_material = []
+        '''
 
 
 class MXSEmpty(MXSObject):
@@ -1661,21 +1680,40 @@ class MXSReference(MXSObject):
 
 class MXSParticles(MXSObject):
     def __init__(self, o, ):
-        mw = Matrix.Identity(4)
-        mx = o['object'].settings.maxwell_particles_extension
-        super().__init__(o, mw, mx, )
+        super().__init__(o, True, )
+        
         self.m_type = 'PARTICLES'
-        self.m_name = "{}-{}".format(self.m_parent, self.m_name)
+        
+        self.b_object = self.o['parent']
+        self.b_name = self.b_object.name
+        self.b_matrix_world = Matrix.Identity(4)
+        
+        self.b_parent = None
+        self.b_parent_matrix_world = self.b_object.matrix_world.copy()
+        self.b_parent_type = 'OBJECT'
+        
+        self.m_parent = self.b_object.name
+        self.m_name = "{}-{}".format(self.m_parent, self.o['object'].name)
+        
+        self.mx = self.b_object.maxwell_render
+        
+        self.ps = self.o['object']
+        self.mxex = self.ps.settings.maxwell_particles_extension
+        
+        self._object_properties()
+        self._transformation()
         
         self._to_data()
         self._materials()
     
     def _to_data(self):
-        mx = self.mx
-        ps = self.b_object
+        mxex = self.mxex
+        ps = self.ps
+        
+        # FIXME: somehow, in test scene with 10 particles, number of rendere is 9, have a look into it
         
         pdata = {}
-        if(mx.source == 'BLENDER_PARTICLES'):
+        if(mxex.source == 'BLENDER_PARTICLES'):
             def check(ps):
                 if(len(ps.particles) == 0):
                     raise ValueError("particle system {} has no particles".format(ps.name))
@@ -1691,7 +1729,8 @@ class MXSParticles(MXSObject):
             
             # i get particle locations in global coordinates, so need to fix that
             # TODO: get rid of all of this kind of particle system container object access, it's ugly..
-            mat = bpy.data.objects[self.m_parent].matrix_world.copy()
+            # mat = bpy.data.objects[self.m_parent].matrix_world.copy()
+            mat = self.b_parent_matrix_world.copy()
             mat.invert()
             
             locs = []
@@ -1703,22 +1742,22 @@ class MXSParticles(MXSObject):
                     l = part.location.copy()
                     l = mat * l
                     locs.append(l)
-                    if(mx.bl_use_velocity):
+                    if(mxex.bl_use_velocity):
                         v = part.velocity.copy()
                         v = mat * v
                         vels.append(v)
                     else:
                         vels.append(Vector((0.0, 0.0, 0.0)))
                     # size per particle
-                    if(mx.bl_use_size):
+                    if(mxex.bl_use_size):
                         sizes.append(part.size / 2)
                     else:
-                        sizes.append(mx.bl_size / 2)
+                        sizes.append(mxex.bl_size / 2)
             
             # fix rotation of .bin
             for i, l in enumerate(locs):
                 locs[i] = Vector(l * ROTATE_X_90).to_tuple()
-            if(mx.bl_use_velocity):
+            if(mxex.bl_use_velocity):
                 for i, v in enumerate(vels):
                     vels[i] = Vector(v * ROTATE_X_90).to_tuple()
             
@@ -1729,7 +1768,7 @@ class MXSParticles(MXSObject):
                 pnor.normalize()
                 particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
             
-            if(mx.embed):
+            if(mxex.embed):
                 plocs = [v for v in locs]
                 pvels = [v for v in vels]
                 pnors = []
@@ -1747,26 +1786,26 @@ class MXSParticles(MXSObject):
                          # 'PARTICLE_COLORS', [0.0], 0.0, 0.0, '6 FLOATARRAY', 4, 1, True)
                          }
             else:
-                if(os.path.exists(bpy.path.abspath(mx.bin_directory)) and not mx.bin_overwrite):
-                    raise OSError("file: {} exists".format(bpy.path.abspath(mx.bin_directory)))
+                if(os.path.exists(bpy.path.abspath(mxex.bin_directory)) and not mxex.bin_overwrite):
+                    raise OSError("file: {} exists".format(bpy.path.abspath(mxex.bin_directory)))
                 
                 cf = bpy.context.scene.frame_current
-                prms = {'directory': bpy.path.abspath(mx.bin_directory),
+                prms = {'directory': bpy.path.abspath(mxex.bin_directory),
                         'name': "{}".format(self.m_name),
                         'frame': cf,
                         'particles': particles,
                         'fps': bpy.context.scene.render.fps,
-                        'size': 1.0 if mx.bl_use_size else mx.bl_size / 2, }
+                        'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2, }
                 rfbw = rfbin.RFBinWriter(**prms)
-                mx.bin_filename = rfbw.path
+                mxex.bin_filename = rfbw.path
         else:
             # external particles
-            if(mx.bin_type == 'SEQUENCE'):
+            if(mxex.bin_type == 'SEQUENCE'):
                 # sequence
                 cf = bpy.context.scene.frame_current
-                if(mx.seq_limit):
+                if(mxex.seq_limit):
                     # get frame number from defined range
-                    rng = [i for i in range(mx.seq_start, mx.seq_end + 1)]
+                    rng = [i for i in range(mxex.seq_start, mxex.seq_end + 1)]
                     try:
                         gf = rng[cf - 1]
                     except IndexError:
@@ -1777,15 +1816,15 @@ class MXSParticles(MXSObject):
                     gf = cf
                 if(gf >= 0):
                     # try to find correct bin
-                    mx.private_bin_filename = mx.bin_filename
-                    sqpath = bpy.path.abspath(mx.bin_filename)
+                    mxex.private_bin_filename = mxex.bin_filename
+                    sqpath = bpy.path.abspath(mxex.bin_filename)
                     fnm_re = r'^.*\d{5}\.bin$'
                     dnm, fnm = os.path.split(sqpath)
                     if(re.match(fnm_re, fnm)):
                         bnm = fnm[:-10]
                         sqbp = os.path.join(dnm, "{}-{}.bin".format(bnm, str(gf).zfill(5)))
                         if(os.path.exists(sqbp)):
-                            mx.bin_filename = sqbp
+                            mxex.bin_filename = sqbp
                         else:
                             # skip if not found
                             log("cannot find .bin file for frame: {} at path: '{}'. skipping..".format(gf, sqbp), 3, LogStyles.WARNING, )
@@ -1800,102 +1839,116 @@ class MXSParticles(MXSObject):
                 # static particles, just take what is on path
                 pass
         
-        m = mx
-        self.m_bin_filename = bpy.path.abspath(m.bin_filename)
-        self.m_bin_radius_multiplier = m.bin_radius_multiplier
-        self.m_bin_motion_blur_multiplier = m.bin_motion_blur_multiplier
-        self.m_bin_shutter_speed = m.bin_shutter_speed
-        self.m_bin_load_particles = m.bin_load_particles
-        self.m_bin_axis_system = int(m.bin_axis_system[-1:])
-        self.m_bin_frame_number = m.bin_frame_number
-        self.m_bin_fps = m.bin_fps
-        self.m_bin_extra_create_np_pp = m.bin_extra_create_np_pp
-        self.m_bin_extra_dispersion = m.bin_extra_dispersion
-        self.m_bin_extra_deformation = m.bin_extra_deformation
-        self.m_bin_load_force = int(m.bin_load_force)
-        self.m_bin_load_vorticity = int(m.bin_load_vorticity)
-        self.m_bin_load_normal = int(m.bin_load_normal)
-        self.m_bin_load_neighbors_num = int(m.bin_load_neighbors_num)
-        self.m_bin_load_uv = int(m.bin_load_uv)
-        self.m_bin_load_age = int(m.bin_load_age)
-        self.m_bin_load_isolation_time = int(m.bin_load_isolation_time)
-        self.m_bin_load_viscosity = int(m.bin_load_viscosity)
-        self.m_bin_load_density = int(m.bin_load_density)
-        self.m_bin_load_pressure = int(m.bin_load_pressure)
-        self.m_bin_load_mass = int(m.bin_load_mass)
-        self.m_bin_load_temperature = int(m.bin_load_temperature)
-        self.m_bin_load_id = int(m.bin_load_id)
-        self.m_bin_min_force = m.bin_min_force
-        self.m_bin_max_force = m.bin_max_force
-        self.m_bin_min_vorticity = m.bin_min_vorticity
-        self.m_bin_max_vorticity = m.bin_max_vorticity
-        self.m_bin_min_nneighbors = m.bin_min_nneighbors
-        self.m_bin_max_nneighbors = m.bin_max_nneighbors
-        self.m_bin_min_age = m.bin_min_age
-        self.m_bin_max_age = m.bin_max_age
-        self.m_bin_min_isolation_time = m.bin_min_isolation_time
-        self.m_bin_max_isolation_time = m.bin_max_isolation_time
-        self.m_bin_min_viscosity = m.bin_min_viscosity
-        self.m_bin_max_viscosity = m.bin_max_viscosity
-        self.m_bin_min_density = m.bin_min_density
-        self.m_bin_max_density = m.bin_max_density
-        self.m_bin_min_pressure = m.bin_min_pressure
-        self.m_bin_max_pressure = m.bin_max_pressure
-        self.m_bin_min_mass = m.bin_min_mass
-        self.m_bin_max_mass = m.bin_max_mass
-        self.m_bin_min_temperature = m.bin_min_temperature
-        self.m_bin_max_temperature = m.bin_max_temperature
-        self.m_bin_min_velocity = m.bin_min_velocity
-        self.m_bin_max_velocity = m.bin_max_velocity
-        self.m_embed = m.embed
+        self.m_bin_filename = bpy.path.abspath(mxex.bin_filename)
+        self.m_bin_radius_multiplier = mxex.bin_radius_multiplier
+        self.m_bin_motion_blur_multiplier = mxex.bin_motion_blur_multiplier
+        self.m_bin_shutter_speed = mxex.bin_shutter_speed
+        self.m_bin_load_particles = mxex.bin_load_particles
+        self.m_bin_axis_system = int(mxex.bin_axis_system[-1:])
+        self.m_bin_frame_number = mxex.bin_frame_number
+        self.m_bin_fps = mxex.bin_fps
+        self.m_bin_extra_create_np_pp = mxex.bin_extra_create_np_pp
+        self.m_bin_extra_dispersion = mxex.bin_extra_dispersion
+        self.m_bin_extra_deformation = mxex.bin_extra_deformation
+        self.m_bin_load_force = int(mxex.bin_load_force)
+        self.m_bin_load_vorticity = int(mxex.bin_load_vorticity)
+        self.m_bin_load_normal = int(mxex.bin_load_normal)
+        self.m_bin_load_neighbors_num = int(mxex.bin_load_neighbors_num)
+        self.m_bin_load_uv = int(mxex.bin_load_uv)
+        self.m_bin_load_age = int(mxex.bin_load_age)
+        self.m_bin_load_isolation_time = int(mxex.bin_load_isolation_time)
+        self.m_bin_load_viscosity = int(mxex.bin_load_viscosity)
+        self.m_bin_load_density = int(mxex.bin_load_density)
+        self.m_bin_load_pressure = int(mxex.bin_load_pressure)
+        self.m_bin_load_mass = int(mxex.bin_load_mass)
+        self.m_bin_load_temperature = int(mxex.bin_load_temperature)
+        self.m_bin_load_id = int(mxex.bin_load_id)
+        self.m_bin_min_force = mxex.bin_min_force
+        self.m_bin_max_force = mxex.bin_max_force
+        self.m_bin_min_vorticity = mxex.bin_min_vorticity
+        self.m_bin_max_vorticity = mxex.bin_max_vorticity
+        self.m_bin_min_nneighbors = mxex.bin_min_nneighbors
+        self.m_bin_max_nneighbors = mxex.bin_max_nneighbors
+        self.m_bin_min_age = mxex.bin_min_age
+        self.m_bin_max_age = mxex.bin_max_age
+        self.m_bin_min_isolation_time = mxex.bin_min_isolation_time
+        self.m_bin_max_isolation_time = mxex.bin_max_isolation_time
+        self.m_bin_min_viscosity = mxex.bin_min_viscosity
+        self.m_bin_max_viscosity = mxex.bin_max_viscosity
+        self.m_bin_min_density = mxex.bin_min_density
+        self.m_bin_max_density = mxex.bin_max_density
+        self.m_bin_min_pressure = mxex.bin_min_pressure
+        self.m_bin_max_pressure = mxex.bin_max_pressure
+        self.m_bin_min_mass = mxex.bin_min_mass
+        self.m_bin_max_mass = mxex.bin_max_mass
+        self.m_bin_min_temperature = mxex.bin_min_temperature
+        self.m_bin_max_temperature = mxex.bin_max_temperature
+        self.m_bin_min_velocity = mxex.bin_min_velocity
+        self.m_bin_max_velocity = mxex.bin_max_velocity
+        self.m_embed = mxex.embed
         self.m_pdata = pdata
-        self.m_hide_parent = m.hide_parent
+        self.m_hide_parent = mxex.hide_parent
         self.m_type = 'PARTICLES'
         
-        if(mx.private_bin_filename != ''):
-            mx.bin_filename = mx.private_bin_filename
-            mx.private_bin_filename = ''
+        if(mxex.private_bin_filename != ''):
+            mxex.bin_filename = mxex.private_bin_filename
+            mxex.private_bin_filename = ''
     
     def _materials(self):
-        self.m_material = bpy.path.abspath(self.mx.material)
-        self.m_material_embed = self.mx.material_embed
-        self.m_backface_material = bpy.path.abspath(self.mx.backface_material)
-        self.m_backface_material_embed = self.mx.backface_material_embed
+        mxex = self.mxex
+        self.m_material = bpy.path.abspath(mxex.material)
+        self.m_material_embed = mxex.material_embed
+        self.m_backface_material = bpy.path.abspath(mxex.backface_material)
+        self.m_backface_material_embed = mxex.backface_material_embed
 
 
 class MXSHair(MXSObject):
     def __init__(self, o, ):
-        # TODO: fix the mess of blender x maxwell objects and real x to be created objects. even now i don't much remember how it works. and i did it yesterday..
-        mw = Matrix.Identity(4)
-        mx = o['object'].settings.maxwell_hair_extension
-        super().__init__(o, mw, mx, )
+        super().__init__(o, True, )
+        
         self.m_type = 'HAIR'
-        self.m_name = "{}-{}".format(self.m_parent, self.m_name)
+        
+        self.b_object = self.o['parent']
+        self.b_name = self.b_object.name
+        self.b_matrix_world = Matrix.Identity(4)
+        
+        self.b_parent = None
+        self.b_parent_matrix_world = self.b_object.matrix_world.copy()
+        self.b_parent_type = 'OBJECT'
+        
+        self.m_parent = self.b_object.name
+        self.m_name = "{}-{}".format(self.m_parent, self.o['object'].name)
+        
+        self.mx = self.b_object.maxwell_render
+        
+        self.ps = self.o['object']
+        self.mxex = self.ps.settings.maxwell_hair_extension
+        
+        self._object_properties()
+        self._transformation()
         
         self._to_data()
         self._materials()
     
     def _to_data(self):
-        mx = self.mx
-        ps = self.b_object
-        # TODO: get rid of all of this kind of particle system container object access, it's ugly..
-        o = bpy.data.objects[self.m_parent]
+        mxex = self.mxex
+        ps = self.ps
+        o = self.b_object
         
-        m = mx
-        self.m_hide_parent = m.hide_parent
-        self.m_display_percent = int(m.display_percent)
+        self.m_hide_parent = mxex.hide_parent
+        self.m_display_percent = int(mxex.display_percent)
         
         pmw = o.matrix_world
-        if(m.hair_type == 'GRASS'):
+        if(mxex.hair_type == 'GRASS'):
             self.m_extension = 'MGrassP'
-            self.m_grass_root_width = maths.real_length_to_relative(pmw, m.grass_root_width) / 1000
-            self.m_grass_tip_width = maths.real_length_to_relative(pmw, m.grass_tip_width) / 1000
-            self.m_display_max_blades = m.display_max_blades
+            self.m_grass_root_width = maths.real_length_to_relative(pmw, mxex.grass_root_width) / 1000
+            self.m_grass_tip_width = maths.real_length_to_relative(pmw, mxex.grass_tip_width) / 1000
+            self.m_display_max_blades = mxex.display_max_blades
         else:
             self.m_extension = 'MaxwellHair'
-            self.m_hair_root_radius = maths.real_length_to_relative(pmw, m.hair_root_radius) / 1000
-            self.m_hair_tip_radius = maths.real_length_to_relative(pmw, m.hair_tip_radius) / 1000
-            self.m_display_max_hairs = m.display_max_hairs
+            self.m_hair_root_radius = maths.real_length_to_relative(pmw, mxex.hair_root_radius) / 1000
+            self.m_hair_tip_radius = maths.real_length_to_relative(pmw, mxex.hair_tip_radius) / 1000
+            self.m_display_max_hairs = mxex.display_max_hairs
         
         ps.set_resolution(bpy.context.scene, o, 'RENDER')
         
@@ -1945,13 +1998,13 @@ class MXSHair(MXSObject):
         # TODO to do what? (old todo)
         # locs = [round(v, 6) for v in locs]
         
-        if(m.uv_layer is not ""):
+        if(mxex.uv_layer is not ""):
             nc0 = len(ps.particles)
             nc1 = len(ps.child_particles) - nc0
             
             uv_no = 0
             for i, uv in enumerate(o.data.uv_textures):
-                if(m.uv_layer == uv.name):
+                if(mxex.uv_layer == uv.name):
                     uv_no = i
                     break
             mod = None
@@ -1992,10 +2045,11 @@ class MXSHair(MXSObject):
         self.data_locs = locs
     
     def _materials(self):
-        self.m_material = bpy.path.abspath(self.mx.material)
-        self.m_material_embed = self.mx.material_embed
-        self.m_backface_material = bpy.path.abspath(self.mx.backface_material)
-        self.m_backface_material_embed = self.mx.backface_material_embed
+        mxex = self.mxex
+        self.m_material = bpy.path.abspath(mxex.material)
+        self.m_material_embed = mxex.material_embed
+        self.m_backface_material = bpy.path.abspath(mxex.backface_material)
+        self.m_backface_material_embed = mxex.backface_material_embed
 
 
 class MXSVolumetrics(MXSObject):
@@ -2003,56 +2057,34 @@ class MXSVolumetrics(MXSObject):
         super().__init__(o)
         self.m_type = 'VOLUMETRICS'
         
-        ob = self.b_object
-        m = ob.maxwell_volumetrics_extension
-        self.mx_ext = m
+        mxex = self.b_object.maxwell_volumetrics_extension
+        self.mxex = mxex
+        self.m_vtype = int(mxex.vtype[-1:])
+        self.m_density = mxex.density
+        self.m_noise_seed = mxex.noise_seed
+        self.m_noise_low = mxex.noise_low
+        self.m_noise_high = mxex.noise_high
+        self.m_noise_detail = mxex.noise_detail
+        self.m_noise_octaves = mxex.noise_octaves
+        self.m_noise_persistence = mxex.noise_persistence
         
         self._materials()
         
-        self.m_vtype = int(m.vtype[-1:])
-        self.m_density = m.density
-        self.m_noise_seed = m.noise_seed
-        self.m_noise_low = m.noise_low
-        self.m_noise_high = m.noise_high
-        self.m_noise_detail = m.noise_detail
-        self.m_noise_octaves = m.noise_octaves
-        self.m_noise_persistence = m.noise_persistence
+        # repeat transformation with new data
+        mw = self.b_matrix_world.copy()
+        f = 2
+        mw = mw * Matrix.Scale(f, 4)
+        f = self.b_object.empty_draw_size
+        mw = mw * Matrix.Scale(f, 4)
+        self.b_matrix_world = mw
+        self._transformation()
     
     def _materials(self):
-        mx = self.mx_ext
-        self.m_material = bpy.path.abspath(mx.material)
-        self.m_material_embed = mx.material_embed
-        self.m_backface_material = bpy.path.abspath(mx.backface_material)
-        self.m_backface_material_embed = mx.backface_material_embed
-    
-    def _transformation(self):
-        ob = self.b_object
-        
-        if(ob.parent_type == 'BONE'):
-            # TODO object parented to a bone, maybe have a look to another parenting scenarios..
-            pass
-        else:
-            mw = self.b_matrix_world.copy()
-            
-            f = 2
-            mw *= Matrix.Scale(f, 4)
-            f = ob.empty_draw_size
-            mw *= Matrix.Scale(f, 4)
-            
-            if(self.m_parent):
-                # TODO: get rid of all of this kind of particle system container object access, it's ugly..
-                mb = bpy.data.objects[self.m_parent].matrix_world.inverted() * mw
-            else:
-                mb = mw
-            m = mb
-            m *= ROTATE_X_90
-            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
-        
-        self.m_base = b
-        self.m_pivot = p
-        self.m_location = l
-        self.m_rotation = r
-        self.m_scale = s
+        mxex = self.mxex
+        self.m_material = bpy.path.abspath(mxex.material)
+        self.m_material_embed = mxex.material_embed
+        self.m_backface_material = bpy.path.abspath(mxex.backface_material)
+        self.m_backface_material_embed = mxex.backface_material_embed
 
 
 class MXSModifier(Serializable):
@@ -2099,69 +2131,64 @@ class MXSGrass(MXSModifier):
     def __init__(self, o, ):
         super().__init__(o)
         self.m_type = 'GRASS'
-        self.mx = self.b_object.maxwell_grass_extension
+        self.mxex = self.b_object.maxwell_grass_extension
         
-        m = self.mx
+        mxex = self.mxex
         
-        material = bpy.path.abspath(m.material)
+        material = bpy.path.abspath(mxex.material)
         if(material != "" and not os.path.exists(material)):
             log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
             material = ""
-        backface_material = bpy.path.abspath(m.backface_material)
+        backface_material = bpy.path.abspath(mxex.backface_material)
         if(backface_material != "" and not os.path.exists(backface_material)):
             log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
             material = ""
         
-        o = self.o['object']
-        
         self.m_material = material
-        self.m_material_embed = m.material_embed
+        self.m_material_embed = mxex.material_embed
         self.m_backface_material = backface_material
-        self.m_backface_material_embed = m.backface_material_embed
-        self.m_density = int(m.density)
-        self.m_density_map = self._texture_to_data(m.density_map)
-        self.m_length = m.length
-        self.m_length_map = self._texture_to_data(m.length_map)
-        self.m_length_variation = m.length_variation
-        self.m_root_width = m.root_width
-        self.m_tip_width = m.tip_width
-        self.m_direction_type = int(m.direction_type)
-        self.m_initial_angle = math.degrees(m.initial_angle)
-        self.m_initial_angle_variation = m.initial_angle_variation
-        self.m_initial_angle_map = self._texture_to_data(m.initial_angle_map)
-        self.m_start_bend = m.start_bend
-        self.m_start_bend_variation = m.start_bend_variation
-        self.m_start_bend_map = self._texture_to_data(m.start_bend_map)
-        self.m_bend_radius = m.bend_radius
-        self.m_bend_radius_variation = m.bend_radius_variation
-        self.m_bend_radius_map = self._texture_to_data(m.bend_radius_map)
-        self.m_bend_angle = math.degrees(m.bend_angle)
-        self.m_bend_angle_variation = m.bend_angle_variation
-        self.m_bend_angle_map = self._texture_to_data(m.bend_angle_map)
-        self.m_cut_off = m.cut_off
-        self.m_cut_off_variation = m.cut_off_variation
-        self.m_cut_off_map = self._texture_to_data(m.cut_off_map)
-        self.m_points_per_blade = int(m.points_per_blade)
-        self.m_primitive_type = int(m.primitive_type)
-        self.m_seed = m.seed
-        self.m_lod = m.lod
-        self.m_lod_min_distance = m.lod_min_distance
-        self.m_lod_max_distance = m.lod_max_distance
-        self.m_lod_max_distance_density = m.lod_max_distance_density
-        self.m_display_percent = int(m.display_percent)
-        self.m_display_max_blades = int(m.display_max_blades)
+        self.m_backface_material_embed = mxex.backface_material_embed
+        self.m_density = int(mxex.density)
+        self.m_density_map = self._texture_to_data(mxex.density_map)
+        self.m_length = mxex.length
+        self.m_length_map = self._texture_to_data(mxex.length_map)
+        self.m_length_variation = mxex.length_variation
+        self.m_root_width = mxex.root_width
+        self.m_tip_width = mxex.tip_width
+        self.m_direction_type = int(mxex.direction_type)
+        self.m_initial_angle = math.degrees(mxex.initial_angle)
+        self.m_initial_angle_variation = mxex.initial_angle_variation
+        self.m_initial_angle_map = self._texture_to_data(mxex.initial_angle_map)
+        self.m_start_bend = mxex.start_bend
+        self.m_start_bend_variation = mxex.start_bend_variation
+        self.m_start_bend_map = self._texture_to_data(mxex.start_bend_map)
+        self.m_bend_radius = mxex.bend_radius
+        self.m_bend_radius_variation = mxex.bend_radius_variation
+        self.m_bend_radius_map = self._texture_to_data(mxex.bend_radius_map)
+        self.m_bend_angle = math.degrees(mxex.bend_angle)
+        self.m_bend_angle_variation = mxex.bend_angle_variation
+        self.m_bend_angle_map = self._texture_to_data(mxex.bend_angle_map)
+        self.m_cut_off = mxex.cut_off
+        self.m_cut_off_variation = mxex.cut_off_variation
+        self.m_cut_off_map = self._texture_to_data(mxex.cut_off_map)
+        self.m_points_per_blade = int(mxex.points_per_blade)
+        self.m_primitive_type = int(mxex.primitive_type)
+        self.m_seed = mxex.seed
+        self.m_lod = mxex.lod
+        self.m_lod_min_distance = mxex.lod_min_distance
+        self.m_lod_max_distance = mxex.lod_max_distance
+        self.m_lod_max_distance_density = mxex.lod_max_distance_density
+        self.m_display_percent = int(mxex.display_percent)
+        self.m_display_max_blades = int(mxex.display_max_blades)
 
 
 class MXSCloner(MXSModifier):
     def __init__(self, o, ):
         super().__init__(o)
         self.m_type = 'CLONER'
-        
         self.b_object = self.o['parent']
-        self.m_object = self.b_object.name
-        
         self.ps = self.o['object']
-        self.mx = self.ps.settings.maxwell_cloner_extension
+        self.mxex = self.ps.settings.maxwell_cloner_extension
         
         self.m_parent = self.o['parent'].name
         self.m_name = "{}-{}".format(self.m_parent, self.ps.name)
@@ -2170,11 +2197,11 @@ class MXSCloner(MXSModifier):
     
     def _to_data(self):
         o = self.b_object
-        mx = self.mx
+        mxex = self.mxex
         ps = self.ps
         
         pdata = {}
-        if(mx.source == 'BLENDER_PARTICLES'):
+        if(mxex.source == 'BLENDER_PARTICLES'):
             def check(ps):
                 if(len(ps.particles) == 0):
                     raise ValueError("particle system {} has no particles".format(ps.name))
@@ -2191,6 +2218,7 @@ class MXSCloner(MXSModifier):
             # TODO: get rid of all of this kind of particle system container object access, it's ugly..
             # TODO: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
             # FIXME: using not embedded particles result in bad transformation
+            # FIXME: also here i have 10 particles, but only 8 clones is rendered in place and one clone is far away, reimporting bin show all 10 particles are where they should be
             
             # i get particle locations in global coordinates, so need to fix that
             # mat = bpy.data.objects[self.m_parent].matrix_world.copy()
@@ -2200,23 +2228,19 @@ class MXSCloner(MXSModifier):
             vels = []
             sizes = []
             
-            # mat = o.matrix_world.copy().inverted()
             mat = ps.settings.dupli_object.matrix_world.copy().inverted()
             
             for part in ps.particles:
                 if(part.alive_state == "ALIVE"):
                     l = part.location.copy()
-                    
-                    # l = mat * l
                     locs.append(l)
-                    if(mx.bl_use_velocity):
+                    if(mxex.bl_use_velocity):
                         v = part.velocity.copy()
-                        # v = mat * v
                         vels.append(v)
                     else:
                         vels.append(Vector((0.0, 0.0, 0.0)))
                     # size per particle
-                    if(mx.bl_use_size):
+                    if(mxex.bl_use_size):
                         sizes.append(part.size / 2)
                     else:
                         sizes.append(mx.bl_size / 2)
@@ -2225,7 +2249,7 @@ class MXSCloner(MXSModifier):
             for i, l in enumerate(locs):
                 locs[i] = Vector(l * ROTATE_X_90).to_tuple()
             
-            if(mx.bl_use_velocity):
+            if(mxex.bl_use_velocity):
                 for i, v in enumerate(vels):
                     vels[i] = Vector(v * ROTATE_X_90).to_tuple()
             
@@ -2236,7 +2260,7 @@ class MXSCloner(MXSModifier):
                 pnor.normalize()
                 particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
             
-            if(mx.embed):
+            if(mxex.embed):
                 plocs = [v for v in locs]
                 pvels = [v for v in vels]
                 pnors = []
@@ -2251,19 +2275,18 @@ class MXSCloner(MXSModifier):
                          'PARTICLE_IDS': [i for i in range(len(locs))],
                          'PARTICLE_NORMALS': [v for l in pnors for v in l], }
             else:
-                if(os.path.exists(bpy.path.abspath(mx.directory)) and not mx.overwrite):
-                    raise OSError("file: {} exists".format(bpy.path.abspath(mx.directory)))
+                if(os.path.exists(bpy.path.abspath(mxex.directory)) and not mxex.overwrite):
+                    raise OSError("file: {} exists".format(bpy.path.abspath(mxex.directory)))
                 
                 cf = bpy.context.scene.frame_current
-                prms = {'directory': bpy.path.abspath(mx.directory),
+                prms = {'directory': bpy.path.abspath(mxex.directory),
                         'name': "{}".format(self.m_name),
                         'frame': cf,
                         'particles': particles,
                         'fps': bpy.context.scene.render.fps,
-                        'size': 1.0 if mx.bl_use_size else mx.bl_size / 2, }
+                        'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2, }
                 rfbw = rfbin.RFBinWriter(**prms)
                 mx.filename = rfbw.path
-                # self.m_bin_path = rfbw.path
         else:
             pass
         
@@ -2273,28 +2296,27 @@ class MXSCloner(MXSModifier):
         except AttributeError:
             log("{}: {}: Maxwell Cloner: cloned object is not available. Skipping..".format(o.name, ps.name), 1, LogStyles.WARNING, )
         
-        m = mx
-        self.m_filename = bpy.path.abspath(m.filename)
-        self.m_radius = m.radius
-        self.m_mb_factor = m.mb_factor
-        self.m_load_percent = m.load_percent
-        self.m_start_offset = m.start_offset
-        self.m_extra_npp = m.extra_npp
-        self.m_extra_p_dispersion = m.extra_p_dispersion
-        self.m_extra_p_deformation = m.extra_p_deformation
-        self.m_align_to_velocity = m.align_to_velocity
-        self.m_scale_with_radius = m.scale_with_radius
-        self.m_inherit_obj_id = m.inherit_obj_id
+        self.m_filename = bpy.path.abspath(mxex.filename)
+        self.m_radius = mxex.radius
+        self.m_mb_factor = mxex.mb_factor
+        self.m_load_percent = mxex.load_percent
+        self.m_start_offset = mxex.start_offset
+        self.m_extra_npp = mxex.extra_npp
+        self.m_extra_p_dispersion = mxex.extra_p_dispersion
+        self.m_extra_p_deformation = mxex.extra_p_deformation
+        self.m_align_to_velocity = mxex.align_to_velocity
+        self.m_scale_with_radius = mxex.scale_with_radius
+        self.m_inherit_obj_id = mxex.inherit_obj_id
         self.m_frame = bpy.context.scene.frame_current
         self.m_fps = bpy.context.scene.render.fps
-        self.m_display_percent = int(m.display_percent)
-        self.m_display_max = int(m.display_max)
+        self.m_display_percent = int(mxex.display_percent)
+        self.m_display_max = int(mxex.display_max)
         if(cloned is not None):
             self.m_cloned_object = ps.settings.dupli_object.name
         else:
             self.m_cloned_object = ''
         self.m_render_emitter = ps.settings.use_render_emitter
-        self.m_embed = m.embed
+        self.m_embed = mxex.embed
         self.m_pdata = pdata
 
 
@@ -2302,100 +2324,100 @@ class MXSScatter(MXSModifier):
     def __init__(self, o, ):
         super().__init__(o)
         self.m_type = 'SCATTER'
-        self.mx = self.b_object.maxwell_scatter_extension
+        self.mxex = self.b_object.maxwell_scatter_extension
         
-        sc = self.mx
-        self.m_scatter_object = sc.scatter_object
+        mxex = self.mxex
         
+        self.m_scatter_object = mxex.scatter_object
         if(self.m_scatter_object is ''):
             log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(self.b_object.name), 3, LogStyles.WARNING, )
             self.skip = True
         
-        self.m_inherit_objectid = sc.inherit_objectid
-        self.m_density = sc.density
-        self.m_density_map = self._texture_to_data(sc.density_map)
-        self.m_seed = int(sc.seed)
-        self.m_scale_x = sc.scale_x
-        self.m_scale_y = sc.scale_y
-        self.m_scale_z = sc.scale_z
-        self.m_scale_map = self._texture_to_data(sc.scale_map)
-        self.m_scale_variation_x = sc.scale_variation_x
-        self.m_scale_variation_y = sc.scale_variation_y
-        self.m_scale_variation_z = sc.scale_variation_z
-        self.m_rotation_x = math.degrees(sc.rotation_x)
-        self.m_rotation_y = math.degrees(sc.rotation_y)
-        self.m_rotation_z = math.degrees(sc.rotation_z)
-        self.m_rotation_map = self._texture_to_data(sc.rotation_map)
-        self.m_rotation_variation_x = sc.rotation_variation_x
-        self.m_rotation_variation_y = sc.rotation_variation_y
-        self.m_rotation_variation_z = sc.rotation_variation_z
-        self.m_rotation_direction = int(sc.rotation_direction)
-        self.m_lod = sc.lod
-        self.m_lod_min_distance = sc.lod_min_distance
-        self.m_lod_max_distance = sc.lod_max_distance
-        self.m_lod_max_distance_density = sc.lod_max_distance_density
-        self.m_display_percent = int(sc.display_percent)
-        self.m_display_max_blades = int(sc.display_max_blades)
+        self.m_inherit_objectid = mxex.inherit_objectid
+        self.m_density = mxex.density
+        self.m_density_map = self._texture_to_data(mxex.density_map)
+        self.m_seed = int(mxex.seed)
+        self.m_scale_x = mxex.scale_x
+        self.m_scale_y = mxex.scale_y
+        self.m_scale_z = mxex.scale_z
+        self.m_scale_map = self._texture_to_data(mxex.scale_map)
+        self.m_scale_variation_x = mxex.scale_variation_x
+        self.m_scale_variation_y = mxex.scale_variation_y
+        self.m_scale_variation_z = mxex.scale_variation_z
+        self.m_rotation_x = math.degrees(mxex.rotation_x)
+        self.m_rotation_y = math.degrees(mxex.rotation_y)
+        self.m_rotation_z = math.degrees(mxex.rotation_z)
+        self.m_rotation_map = self._texture_to_data(mxex.rotation_map)
+        self.m_rotation_variation_x = mxex.rotation_variation_x
+        self.m_rotation_variation_y = mxex.rotation_variation_y
+        self.m_rotation_variation_z = mxex.rotation_variation_z
+        self.m_rotation_direction = int(mxex.rotation_direction)
+        self.m_lod = mxex.lod
+        self.m_lod_min_distance = mxex.lod_min_distance
+        self.m_lod_max_distance = mxex.lod_max_distance
+        self.m_lod_max_distance_density = mxex.lod_max_distance_density
+        self.m_display_percent = int(mxex.display_percent)
+        self.m_display_max_blades = int(mxex.display_max_blades)
 
 
 class MXSSubdivision(MXSModifier):
     def __init__(self, o, quad_pairs, ):
         super().__init__(o)
         self.m_type = 'SUBDIVISION'
-        self.mx = self.b_object.maxwell_subdivision_extension
+        self.mxex = self.b_object.maxwell_subdivision_extension
         
-        sd = self.mx
-        self.m_level = int(sd.level)
-        self.m_scheme = int(sd.scheme)
-        self.m_interpolation = int(sd.interpolation)
-        self.m_crease = sd.crease
-        self.m_smooth = math.degrees(sd.smooth)
+        mxex = self.mxex
+        self.m_level = int(mxex.level)
+        self.m_scheme = int(mxex.scheme)
+        self.m_interpolation = int(mxex.interpolation)
+        self.m_crease = mxex.crease
+        self.m_smooth = math.degrees(mxex.smooth)
         self.m_quad_pairs = quad_pairs
+        
+        # TODO: do check if mesh is non-manifold, if not warn user and skip modifier
 
 
 class MXSSea(MXSObject):
     def __init__(self, o, ):
-        mw = Matrix.Identity(4)
-        super().__init__(o, mw, )
+        super().__init__(o, True, )
         self.m_type = 'SEA'
+        
+        self.b_object = self.o['object']
+        self.b_name = self.b_object.name
+        self.b_matrix_world = Matrix.Identity(4)
+        
+        self.b_parent = self.b_object
+        self.b_parent_matrix_world = Matrix.Identity(4)
+        self.b_parent_type = 'OBJECT'
         self.m_parent = self.b_object.name
         self.m_name = "{}-{}".format(self.m_parent, 'MaxwellSea', )
         
-        ob = self.b_object
-        mx = ob.maxwell_sea_extension
+        self.mx = self.b_object.maxwell_render
+        self.mxex = self.b_object.maxwell_sea_extension
         
-        # self.m_enabled = mx.enabled
-        self.m_hide_parent = mx.hide_parent
+        self._object_properties()
+        self._transformation()
         
-        self.m_resolution = int(mx.resolution)
-        self.m_reference_time = mx.reference_time
-        self.m_ocean_wind_mod = mx.ocean_wind_mod
-        self.m_ocean_wind_dir = math.degrees(mx.ocean_wind_dir)
-        self.m_vertical_scale = mx.vertical_scale
-        self.m_damp_factor_against_wind = mx.damp_factor_against_wind
-        self.m_ocean_wind_alignment = mx.ocean_wind_alignment
-        self.m_ocean_min_wave_length = mx.ocean_min_wave_length
-        self.m_ocean_dim = mx.ocean_dim
-        self.m_ocean_depth = mx.ocean_depth
-        self.m_ocean_seed = mx.ocean_seed
-        self.m_enable_choppyness = mx.enable_choppyness
-        self.m_choppy_factor = mx.choppy_factor
-        self.m_enable_white_caps = mx.enable_white_caps
+        mxex = self.mxex
+        
+        self.m_hide_parent = mxex.hide_parent
+        
+        self.m_resolution = int(mxex.resolution)
+        self.m_reference_time = mxex.reference_time
+        self.m_ocean_wind_mod = mxex.ocean_wind_mod
+        self.m_ocean_wind_dir = math.degrees(mxex.ocean_wind_dir)
+        self.m_vertical_scale = mxex.vertical_scale
+        self.m_damp_factor_against_wind = mxex.damp_factor_against_wind
+        self.m_ocean_wind_alignment = mxex.ocean_wind_alignment
+        self.m_ocean_min_wave_length = mxex.ocean_min_wave_length
+        self.m_ocean_dim = mxex.ocean_dim
+        self.m_ocean_depth = mxex.ocean_depth
+        self.m_ocean_seed = mxex.ocean_seed
+        self.m_enable_choppyness = mxex.enable_choppyness
+        self.m_choppy_factor = mxex.choppy_factor
+        self.m_enable_white_caps = mxex.enable_white_caps
         
         self._materials()
-    
-    def _transformation(self):
-        ob = self.b_object
-        
-        m = self.b_matrix_world.copy()
-        m *= ROTATE_X_90
-        b, p, l, r, s = self._matrix_to_base_and_pivot(m)
-        
-        self.m_base = b
-        self.m_pivot = p
-        self.m_location = l
-        self.m_rotation = r
-        self.m_scale = s
     
     def _materials(self):
         mx = self.b_object.maxwell_sea_extension
