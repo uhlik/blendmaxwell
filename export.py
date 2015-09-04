@@ -1349,15 +1349,27 @@ class MXSObject(Serializable):
     
     def _transformation(self):
         # possible parent/child scenarios: object parent_type can be one of following: ['OBJECT', 'ARMATURE', 'LATTICE', 'VERTEX', 'VERTEX_3', 'BONE'] default 'OBJECT'
+        '''
         if(self.b_parent_type == 'BONE'):
-            # TODO object parented to a bone, maybe also have a look to another parenting scenarios..
-            pass
+            # seems like it works without any other modifications
+            m = self.b_matrix_world.copy()
+            if(self.b_parent):
+                m = self.b_parent_matrix_world.copy().inverted() * m
+            m *= ROTATE_X_90
+            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
         else:
             m = self.b_matrix_world.copy()
             if(self.b_parent):
                 m = self.b_parent_matrix_world.copy().inverted() * m
             m *= ROTATE_X_90
             b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+        '''
+        
+        m = self.b_matrix_world.copy()
+        if(self.b_parent):
+            m = self.b_parent_matrix_world.copy().inverted() * m
+        m *= ROTATE_X_90
+        b, p, l, r, s = self._matrix_to_base_and_pivot(m)
         
         self.m_base = b
         self.m_pivot = p
@@ -1422,26 +1434,7 @@ class MXSMesh(MXSObject):
         
         self.mesh_name = ob.data.name
         
-        # TODO: extra subdivision modifiers logic
         extra_subdiv = False
-        '''
-        exopts = self.context.scene.maxwell_render
-        extra_subdiv = False
-        if(o['converted'] is True):
-            # get to-mesh-conversion result, will be removed at the end..
-            me = o['mesh']
-        else:
-            # or make new flattened mesh
-            if(exopts.export_use_subdivision):
-                if(len(ob.modifiers) > 0):
-                    lmod = ob.modifiers[-1]
-                    if(lmod.type == 'SUBSURF' and lmod.show_render and lmod.subdivision_type == 'CATMULL_CLARK'):
-                        extra_subdiv = True
-                        lmod.show_render = False
-            me = ob.to_mesh(self.context.scene, True, 'RENDER', )
-            if(extra_subdiv):
-                lmod.show_render = True
-        '''
         
         if(o['converted'] is True):
             # get to-mesh-conversion result (curves, texts, etc..)
@@ -1887,7 +1880,6 @@ class MXSHair(MXSObject):
         omw = o.matrix_world
         
         steps = 2 ** ps.settings.render_step
-        # TODO to do what? something related to commented line below? (old todo)
         # steps = 2 ** ps.settings.render_step + 1
         num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
         points = []
@@ -1925,7 +1917,6 @@ class MXSHair(MXSObject):
         points = [v.to_tuple() for v in points]
         # just list of floats
         locs = [v for l in points for v in l]
-        # TODO to do what? (old todo)
         # locs = [round(v, 6) for v in locs]
         
         if(mxex.uv_layer is not ""):

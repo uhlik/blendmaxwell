@@ -638,8 +638,6 @@ def camera(d, s):
                     d['aperture'], d['diaphragm_angle'], d['diaphragm_blades'], d['frame_rate'],
                     d['resolution_x'], d['resolution_y'], d['pixel_aspect'], d['lens'], )
     
-    # TODO: how to set shutter_angle?
-    
     # will crash, just set it without asking for the list
     # l, _ = c.getCameraResponsePresetsList()
     # if(d['response'] in l):

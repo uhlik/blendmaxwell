@@ -562,9 +562,6 @@ class MXSWriter():
         cut_planes      (float near, float far, bool enabled) or None
         shift_lens      (float x, float y) or None
         """
-        
-        # TODO how to set shutter_angle?
-        
         s = self.mxs
         c = s.addCamera(*props)
         for step in steps:
