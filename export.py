@@ -47,6 +47,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # FIXME: instancing of curves
 # TODO: restore logging
 # TODO: materials
+# TODO: unify error reporting: warning: write to console, fatal: raise exception
 
 
 class MXSExport():
@@ -2304,16 +2305,20 @@ class MXSSubdivision(MXSModifier):
         
         # do check if mesh is non-manifold, if not warn user and skip modifier
         def is_non_manifold(me):
+            # [Extension SubdivisionModifier] A non-manifold edge incident to more than 2 faces was found
+            # [Extension SubdivisionModifier] This object cannot be subdivided.
             bm = bmesh.new()
             bm.from_mesh(me)
-            for v in bm.verts:
-                if(not v.is_manifold):
-                    bm.free()
-                    return False
+            # for v in bm.verts:
+            #     if(not v.is_manifold):
+            #         bm.free()
+            #         return False
+            # seems like mesh with one nonemanifold edge or vertex works ok, the problem is non manifold face
             for e in bm.edges:
                 if(not e.is_manifold):
-                    bm.free()
-                    return False
+                    if(len(e.link_faces) > 2):
+                        bm.free()
+                        return False
             bm.free()
             return True
         
@@ -2324,13 +2329,14 @@ class MXSSubdivision(MXSModifier):
                 # me = self.b_object.to_mesh(bpy.context.scene, True, 'RENDER', )
                 # nm = is_non_manifold(me)
                 # bpy.data.meshes.remove(me)
-                self.m_scheme = 1
+                
+                # self.m_scheme = 1
                 nm = True
-                log("{}: WARNING: {}: Subdivision modifier on non-mesh object, Catmull-Clark subdivision will not work, switching to Loop Subdivision".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                log("{}: WARNING: {}: Subdivision modifier on non-mesh object, Catmull-Clark subdivision may not work, if so, switch to Loop Subdivision".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
             else:
                 nm = is_non_manifold(self.b_object.data)
             if(not nm):
-                log("{}: WARNING: {}: Subdivision modifier on non-manifold object, Catmull-Clark subdivision will not work".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                log("{}: WARNING: {}: Subdivision modifier on non-manifold object, a non-manifold edge incident to more than 2 faces was found, Catmull-Clark subdivision will not work, switching it off.".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
                 self.skip = True
 
 
