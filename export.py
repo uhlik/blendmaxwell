@@ -1552,8 +1552,6 @@ class MXSMesh(MXSObject):
 
 class MXSMeshInstance(MXSObject):
     def __init__(self, o, base, ):
-        # FIXME: different result when instance has different modifiers / modifier settings then other instance, fix: reimplement instance override
-        
         super().__init__(o)
         self.m_type = 'MESH_INSTANCE'
         self.m_instanced = base.m_name
@@ -2137,7 +2135,6 @@ class MXSCloner(MXSModifier):
             check(ps)
             
             # TODO: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
-            # FIXME: when using external bin, result is in bad position
             # FIXME: also here i have 10 particles, but only 8 clones is rendered in place and one clone is far away, reimporting bin show all 10 particles are where they should be
             
             # i get particle locations in global coordinates, so need to fix that
@@ -2148,7 +2145,7 @@ class MXSCloner(MXSModifier):
             vels = []
             sizes = []
             
-            mat = ps.settings.dupli_object.matrix_world.copy().inverted()
+            # mat = ps.settings.dupli_object.matrix_world.copy().inverted()
             
             for part in ps.particles:
                 if(part.alive_state == "ALIVE"):
@@ -2165,13 +2162,19 @@ class MXSCloner(MXSModifier):
                     else:
                         sizes.append(mxex.bl_size / 2)
             
-            # fix rotation of .bin
+            mry90 = Matrix.Rotation(math.radians(90.0), 4, 'Y')
             for i, l in enumerate(locs):
-                locs[i] = Vector(l * ROTATE_X_90).to_tuple()
+                if(mxex.embed):
+                    locs[i] = Vector(l * ROTATE_X_90).to_tuple()
+                else:
+                    locs[i] = Vector(l * ROTATE_X_90 * mry90).to_tuple()
             
             if(mxex.bl_use_velocity):
                 for i, v in enumerate(vels):
-                    vels[i] = Vector(v * ROTATE_X_90).to_tuple()
+                    if(mxex.embed):
+                        vels[i] = Vector(v * ROTATE_X_90).to_tuple()
+                    else:
+                        vels[i] = Vector(v * ROTATE_X_90 * mry90).to_tuple()
             
             particles = []
             for i, ploc in enumerate(locs):
