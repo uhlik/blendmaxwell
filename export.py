@@ -2146,7 +2146,7 @@ class MXSCloner(MXSModifier):
             check(ps)
             
             # TODO: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
-            # FIXME: using not embedded particles result in bad transformation
+            # FIXME: when using external bin, result is in bad position
             # FIXME: also here i have 10 particles, but only 8 clones is rendered in place and one clone is far away, reimporting bin show all 10 particles are where they should be
             
             # i get particle locations in global coordinates, so need to fix that
@@ -2172,7 +2172,7 @@ class MXSCloner(MXSModifier):
                     if(mxex.bl_use_size):
                         sizes.append(part.size / 2)
                     else:
-                        sizes.append(mx.bl_size / 2)
+                        sizes.append(mxex.bl_size / 2)
             
             # fix rotation of .bin
             for i, l in enumerate(locs):
@@ -2215,7 +2215,7 @@ class MXSCloner(MXSModifier):
                         'fps': bpy.context.scene.render.fps,
                         'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2, }
                 rfbw = rfbin.RFBinWriter(**prms)
-                mx.filename = rfbw.path
+                mxex.filename = rfbw.path
         else:
             pass
         
