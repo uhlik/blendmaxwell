@@ -538,6 +538,9 @@ class MaterialProperties(PropertyGroup):
 class TextureProperties(PropertyGroup):
     path = StringProperty(name="Path", default="", subtype='FILE_PATH', description="", )
     use_global_map = BoolProperty(name="Use Override Map", default=False, )
+    
+    channel = IntProperty(name="Channel", default=0, min=0, max=254, )
+    
     tiling_method = EnumProperty(name="Tiling Method", items=[('TILE_XY', "Tile XY", ""), ('TILE_X', "Tile X", ""), ('TILE_Y', "Tile Y", ""), ('NO_TILING', "No Tiling", ""), ], default='TILE_XY', )
     tiling_units = EnumProperty(name="Tiling Units", items=[('0', "Relative", ""), ('1', "Meters", ""), ], default='0', )
     repeat = FloatVectorProperty(name="Repeat", default=(1.0, 1.0), min=-1000.0, max=1000.0, precision=3, size=2, )
@@ -1088,6 +1091,16 @@ class ExtVolumetricsProperties(PropertyGroup):
 
 
 class ExtMaterialProperties(PropertyGroup):
+    global_override_map = StringProperty(name="Override Map", default="", )
+    global_bump = BoolProperty(name="Global Bump", default=False, )
+    global_bump_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=1, )
+    global_bump_map = StringProperty(name="Global Bump Map", default="", )
+    global_dispersion = BoolProperty(name="Dispersion", default=False, )
+    global_shadow = BoolProperty(name="Shadow", default=False, )
+    global_matte = BoolProperty(name="Matte", default=False, )
+    global_priority = IntProperty(name="Nested Priority", default=0, min=0, max=1000, )
+    global_id = FloatVectorProperty(name="Material Id", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    
     emitter_type = EnumProperty(name="Type", items=[('0', "Area", ""), ('1', "IES", ""), ('2', "Spot", ""), ], default='0', )
     emitter_ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
     emitter_ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )

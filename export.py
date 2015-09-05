@@ -45,7 +45,6 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # TODO: restore logging
-# TODO: extension materials
 # TODO: unify error reporting: warning: write to console, fatal: raise exception, if something can't be exported: skip and print warning or raise exception?
 # TODO: do not export unused materials
 
@@ -643,7 +642,8 @@ class MXSExport():
                 mxm = MXSMaterialMXM(mat.name, path=mx.mxm_file, embed=mx.embed, )
                 self._write(mxm)
             else:
-                pass    # extension material
+                exmat = MXSMaterialExtension(mat.name)
+                self._write(exmat)
         
         for d in self._cameras:
             o = MXSCamera(d)
@@ -2083,34 +2083,14 @@ class MXSModifier(Serializable):
         self.m_object = self.b_object.name
     
     def _texture_to_data(self, name, ):
-        tex = None
-        for t in bpy.data.textures:
-            if(t.type == 'IMAGE'):
-                if(t.name == name):
-                    tex = t
-        
-        d = {'type': 'IMAGE',
-             'path': "",
-             'channel': 0,
-             'use_override_map': False,
-             'tile_method_type': [True, True],
-             'tile_method_units': 0,
-             'repeat': [1.0, 1.0],
-             'mirror': [False, False],
-             'offset': [0.0, 0.0],
-             'rotation': 0.0,
-             'invert': False,
-             'alpha_only': False,
-             'interpolation': False,
-             'brightness': 0.0,
-             'contrast': 0.0,
-             'saturation': 0.0,
-             'hue': 0.0,
-             'rgb_clamp': [0.0, 255.0], }
-        if(tex is not None):
-            d['path'] = bpy.path.abspath(tex.image.filepath)
-            return d
-        return None
+        if(name == ''):
+            return None
+        t = MXSTexture(name)
+        d = t._dict()
+        a = {}
+        for k, v in d.items():
+            a[k[2:]] = v
+        return a
 
 
 class MXSGrass(MXSModifier):
@@ -2473,115 +2453,230 @@ class MXSMaterial(Serializable):
 class MXSMaterialMXM(MXSMaterial):
     def __init__(self, name, path='', embed=True, ):
         super().__init__(name)
-        
         self.m_subtype = 'EXTERNAL'
-        
         if(path != ''):
             path = bpy.path.abspath(path)
             if(not os.path.exists(path)):
                 log("{1}: mxm ('{0}') does not exist.".format(path, self.__class__.__name__), 2, LogStyles.WARNING, )
                 path = ''
-        
         self.m_path = path
         self.m_embed = embed
 
 
-'''
-class MXSMaterialCustom(MXSMaterial):
+class MXSMaterialExtension(MXSMaterial):
     def __init__(self, name, ):
         super().__init__(name)
+        self.m_subtype = 'EXTENSION'
         
-        self.m_kind = 'CUSTOM'
-        self.m_mxm = ''
-        self.m_embed = True
-
-
-class MXSMaterialExtension(MXSMaterial):
-    def __init__(self, name, o, ):
-        super().__init__(name)
-        self.o = o
-        self.m_override_map = o['override_map']
-        self.m_bump = o['bump']
-        self.m_bump_value = o['bump_value']
-        self.m_bump_map = o['bump_map']
-        self.m_dispersion = o['dispersion']
-        self.m_shadow = o['shadow']
-        self.m_matte = o['matte']
-        self.m_priority = o['priority']
-        self.m_id = o['id']
+        mat = bpy.data.materials[name]
+        m = mat.maxwell_render
+        mx = mat.maxwell_material_extension
+        
+        self.m = m
+        self.mx = mx
+        
+        # TODO: set global material properties
+        self.m_override_map = self._texture_to_data(mx.global_override_map)
+        self.m_bump = mx.global_bump
+        self.m_bump_value = mx.global_bump_value
+        self.m_bump_map = self._texture_to_data(mx.global_bump_map)
+        self.m_dispersion = mx.global_dispersion
+        self.m_shadow = mx.global_shadow
+        self.m_matte = mx.global_matte
+        self.m_priority = mx.global_priority
+        self.m_id = self._color_to_rgb8(mx.global_id)
+        
+        self.m_use = m.use
+        if(self.m_use == 'EMITTER'):
+            self._emitter()
+        elif(self.m_use == 'AGS'):
+            self._ags()
+        elif(self.m_use == 'OPAQUE'):
+            self._opaque()
+        elif(self.m_use == 'TRANSPARENT'):
+            self._transparent()
+        elif(self.m_use == 'METAL'):
+            self._metal()
+        elif(self.m_use == 'TRANSLUCENT'):
+            self._translucent()
+        elif(self.m_use == 'CARPAINT'):
+            self._carpaint()
+        else:
+            raise TypeError("{}: ({}): Unsupported extension material type: {}".format(self.__class__.__name__, self.m_name, self.m_use, ))
+    
+    def _color_to_rgb8(self, c, ):
+        return tuple([int(255 * v) for v in c])
     
     def _texture_to_data(self, name, ):
-        if(name == ""):
+        if(name == ''):
             return None
-        tex = bpy.data.textures[name]
-        if(tex.type != 'IMAGE'):
-            return None
-        
-        m = tex.maxwell_render
-        d = {'type': 'IMAGE',
-             'path': bpy.path.abspath(tex.image.filepath),
-             'channel': 0,
-             'use_override_map': m.use_global_map,
-             'tile_method_type': [True, True],
-             'tile_method_units': int(m.tiling_units[-1:]),
-             'repeat': [m.repeat[0], m.repeat[1]],
-             'mirror': [m.mirror_x, m.mirror_y],
-             'offset': [m.offset[0], m.offset[1]],
-             'rotation': m.rotation,
-             'invert': m.invert,
-             'alpha_only': m.use_alpha,
-             'interpolation': m.interpolation,
-             'brightness': m.brightness,
-             'contrast': m.contrast,
-             'saturation': m.saturation,
-             'hue': m.hue,
-             'rgb_clamp': [m.clamp[0], m.clamp[1]], }
-        
-        if(m.tiling_method == 'NO_TILING'):
-            tm = [False, False]
-        elif(m.tiling_method == 'TILE_X'):
-            tm = [True, False]
-        elif(m.tiling_method == 'TILE_Y'):
-            tm = [False, True]
-        else:
-            tm = [True, True]
-        d['tile_method_type'] = tm
-        
-        slot = None
-        for ts in mat.texture_slots:
-            if(ts is not None):
-                if(ts.texture is not None):
-                    if(ts.texture.name == name):
-                        slot = ts
-                        break
-        
-        for i, uv in enumerate(ob.data.uv_textures):
-            if(uv.name == slot.uv_layer):
-                d['channel'] = i
-                break
-        
-        return d
-
-
-class MXSMaterialOpaque(MXSMaterialExtension):
-    def __init__(self, name, o, ):
-        super().__init__(name, o, )
-        self.m_color_type = o['opaque_color_type']
-        self.m_color = o['opaque_color']
-        self.m_color_map = self._texture_to_data(o['opaque_color_map'])
-        self.m_shininess_type = o['opaque_shininess_type']
-        self.m_shininess = o['opaque_shininess']
-        self.m_shininess_map = self._texture_to_data(o['opaque_shininess_map'])
-        self.m_roughness_type = o['opaque_roughness_type']
-        self.m_roughness = o['opaque_roughness']
-        self.m_roughness_map = self._texture_to_data(o['opaque_roughness_map'])
-        self.m_clearcoat = o['opaque_clearcoat']
+        t = MXSTexture(name)
+        d = t._dict()
+        a = {}
+        for k, v in d.items():
+            a[k[2:]] = v
+        return a
+    
+    def _emitter(self):
+        mx = self.mx
+        self.m_emitter_type = int(mx.emitter_type)
+        self.m_emitter_ies_data = bpy.path.abspath(mx.emitter_ies_data)
+        self.m_emitter_ies_intensity = mx.emitter_ies_intensity
+        self.m_emitter_spot_map_enabled = mx.emitter_spot_map_enabled
+        self.m_emitter_spot_map = self._texture_to_data(mx.emitter_spot_map)
+        self.m_emitter_spot_cone_angle = math.degrees(mx.emitter_spot_cone_angle)
+        self.m_emitter_spot_falloff_angle = math.degrees(mx.emitter_spot_falloff_angle)
+        self.m_emitter_spot_falloff_type = int(mx.emitter_spot_falloff_type)
+        self.m_emitter_spot_blur = mx.emitter_spot_blur
+        self.m_emitter_emission = int(mx.emitter_emission)
+        self.m_emitter_color = self._color_to_rgb8(mx.emitter_color)
+        self.m_emitter_color_black_body_enabled = mx.emitter_color_black_body_enabled
+        self.m_emitter_color_black_body = mx.emitter_color_black_body
+        self.m_emitter_luminance = int(mx.emitter_luminance)
+        self.m_emitter_luminance_power = mx.emitter_luminance_power
+        self.m_emitter_luminance_efficacy = mx.emitter_luminance_efficacy
+        self.m_emitter_luminance_output = mx.emitter_luminance_output
+        self.m_emitter_temperature_value = mx.emitter_temperature_value
+        self.m_emitter_hdr_map = self._texture_to_data(mx.emitter_hdr_map)
+        self.m_emitter_hdr_intensity = mx.emitter_hdr_intensity
+    
+    def _ags(self):
+        mx = self.mx
+        self.m_ags_color = self._color_to_rgb8(mx.ags_color)
+        self.m_ags_reflection = mx.ags_reflection
+        self.m_ags_type = int(mx.ags_type)
+    
+    def _opaque(self):
+        mx = self.mx
+        self.m_opaque_color_type = mx.opaque_color_type
+        self.m_opaque_color = self._color_to_rgb8(mx.opaque_color)
+        self.m_opaque_color_map = self._texture_to_data(mx.opaque_color_map)
+        self.m_opaque_shininess_type = mx.opaque_shininess_type
+        self.m_opaque_shininess = mx.opaque_shininess
+        self.m_opaque_shininess_map = self._texture_to_data(mx.opaque_shininess_map)
+        self.m_opaque_roughness_type = mx.opaque_roughness_type
+        self.m_opaque_roughness = mx.opaque_roughness
+        self.m_opaque_roughness_map = self._texture_to_data(mx.opaque_roughness_map)
+        self.m_opaque_clearcoat = mx.opaque_clearcoat
+    
+    def _transparent(self):
+        mx = self.mx
+        self.m_transparent_color_type = mx.transparent_color_type
+        self.m_transparent_color = self._color_to_rgb8(mx.transparent_color)
+        self.m_transparent_color_map = self._texture_to_data(mx.transparent_color_map)
+        self.m_transparent_ior = mx.transparent_ior
+        self.m_transparent_transparency = mx.transparent_transparency
+        self.m_transparent_roughness_type = mx.transparent_roughness_type
+        self.m_transparent_roughness = mx.transparent_roughness
+        self.m_transparent_roughness_map = self._texture_to_data(mx.transparent_roughness_map)
+        self.m_transparent_specular_tint = mx.transparent_specular_tint
+        self.m_transparent_dispersion = mx.transparent_dispersion
+        self.m_transparent_clearcoat = mx.transparent_clearcoat
+    
+    def _metal(self):
+        mx = self.mx
+        self.m_metal_ior = int(mx.metal_ior)
+        self.m_metal_tint = mx.metal_tint
+        self.m_metal_color_type = mx.metal_color_type
+        self.m_metal_color = self._color_to_rgb8(mx.metal_color)
+        self.m_metal_color_map = self._texture_to_data(mx.metal_color_map)
+        self.m_metal_roughness_type = mx.metal_roughness_type
+        self.m_metal_roughness = mx.metal_roughness
+        self.m_metal_roughness_map = self._texture_to_data(mx.metal_roughness_map)
+        self.m_metal_anisotropy_type = mx.metal_anisotropy_type
+        self.m_metal_anisotropy = mx.metal_anisotropy
+        self.m_metal_anisotropy_map = self._texture_to_data(mx.metal_anisotropy_map)
+        self.m_metal_angle_type = mx.metal_angle_type
+        self.m_metal_angle = math.degrees(mx.metal_angle)
+        self.m_metal_angle_map = self._texture_to_data(mx.metal_angle_map)
+        self.m_metal_dust_type = mx.metal_dust_type
+        self.m_metal_dust = mx.metal_dust
+        self.m_metal_dust_map = self._texture_to_data(mx.metal_dust_map)
+        self.m_metal_perforation_enabled = mx.metal_perforation_enabled
+        self.m_metal_perforation_map = self._texture_to_data(mx.metal_perforation_map)
+    
+    def _translucent(self):
+        mx = self.mx
+        self.m_translucent_scale = mx.translucent_scale
+        self.m_translucent_ior = mx.translucent_ior
+        self.m_translucent_color_type = mx.translucent_color_type
+        self.m_translucent_color = self._color_to_rgb8(mx.translucent_color)
+        self.m_translucent_color_map = self._texture_to_data(mx.translucent_color_map)
+        self.m_translucent_hue_shift = mx.translucent_hue_shift
+        self.m_translucent_invert_hue = mx.translucent_invert_hue
+        self.m_translucent_vibrance = mx.translucent_vibrance
+        self.m_translucent_density = mx.translucent_density
+        self.m_translucent_opacity = mx.translucent_opacity
+        self.m_translucent_roughness_type = mx.translucent_roughness_type
+        self.m_translucent_roughness = mx.translucent_roughness
+        self.m_translucent_roughness_map = self._texture_to_data(mx.translucent_roughness_map)
+        self.m_translucent_specular_tint = mx.translucent_specular_tint
+        self.m_translucent_clearcoat = mx.translucent_clearcoat
+        self.m_translucent_clearcoat_ior = mx.translucent_clearcoat_ior
+    
+    def _carpaint(self):
+        mx = self.mx
+        self.m_carpaint_color = self._color_to_rgb8(mx.carpaint_color)
+        self.m_carpaint_metallic = mx.carpaint_metallic
+        self.m_carpaint_topcoat = mx.carpaint_topcoat
 
 
 class MXSTexture(Serializable):
-    def __init__(self):
-        pass
-'''
+    def __init__(self, name, ):
+        self.m_name = name
+        self.m_type = 'TEXTURE'
+        self.m_subtype = 'IMAGE'
+        
+        tex = bpy.data.textures[name]
+        if(tex.type != 'IMAGE'):
+            raise TypeError("{}: ({}): Unsupported texture type: {}".format(self.__class__.__name__, self.m_name, tex.type, ))
+        m = tex.maxwell_render
+        
+        self.m_type = 'IMAGE'
+        self.m_path = bpy.path.abspath(tex.image.filepath)
+        # self.m_channel = 0
+        self.m_use_override_map = m.use_global_map
+        # self.m_tile_method_type = (True, True, )
+        self.m_channel = m.channel
+        self.m_tile_method_units = int(m.tiling_units[-1:])
+        self.m_repeat = (m.repeat[0], m.repeat[1], )
+        self.m_mirror = (m.mirror_x, m.mirror_y, )
+        self.m_offset = (m.offset[0], m.offset[1], )
+        self.m_rotation = m.rotation
+        self.m_invert = m.invert
+        self.m_alpha_only = m.use_alpha
+        self.m_interpolation = m.interpolation
+        self.m_brightness = m.brightness
+        self.m_contrast = m.contrast
+        self.m_saturation = m.saturation
+        self.m_hue = m.hue
+        self.m_rgb_clamp = (m.clamp[0], m.clamp[1], )
+        
+        if(m.tiling_method == 'NO_TILING'):
+            tm = (False, False, )
+        elif(m.tiling_method == 'TILE_X'):
+            tm = (True, False, )
+        elif(m.tiling_method == 'TILE_Y'):
+            tm = (False, True, )
+        else:
+            tm = (True, True, )
+        self.m_tile_method_type = tm
+        
+        # self.m_channel = channel
+        # if(material_name is not None and object_name is not None):
+        #     mat = bpy.data.materials[material_name]
+        #     slot = None
+        #     for ts in mat.texture_slots:
+        #         if(ts is not None):
+        #             if(ts.texture is not None):
+        #                 if(ts.texture.name == name):
+        #                     slot = ts
+        #                     break
+        #     for i, uv in enumerate(ob.data.uv_textures):
+        #         if(uv.name == slot.uv_layer):
+        #             self.m_channel = i
+        #             break
+
 
 # --
 

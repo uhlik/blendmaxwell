@@ -1432,17 +1432,19 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         m = context.object.maxwell_grass_extension
         
         sub.label("Primitive:")
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'material')
-        c = s.column()
-        c.prop(m, 'material_embed', text='Embed', )
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'material')
+        # c = s.column()
+        # c.prop(m, 'material_embed', text='Embed', )
+        sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL', )
         
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'backface_material')
-        c = s.column()
-        c.prop(m, 'backface_material_embed', text='Embed', )
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'backface_material')
+        # c = s.column()
+        # c.prop(m, 'backface_material_embed', text='Embed', )
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         sub.separator()
         
         sub.prop(m, 'points_per_blade')
@@ -1583,6 +1585,47 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         l.prop(bpy.context.scene.maxwell_render_private, 'material')
 
 
+class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Material Global Properties"
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        
+        sub.prop(m, 'use', text="Material Type", )
+        sub.separator()
+        
+        if(m.use == 'CUSTOM'):
+            sub = sub.column()
+            sub.enabled = False
+        
+        sub.prop_search(mx, 'global_override_map', mat, 'texture_slots', icon='TEXTURE', )
+        
+        r = sub.row()
+        s = r.split(percentage=0.2)
+        c = s.column()
+        c.label("Bump:")
+        c = s.column()
+        r = c.row()
+        r.prop(mx, 'global_bump_value', text="", )
+        r.prop(mx, 'global_bump', text="", )
+        r.prop_search(mx, 'global_bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        r = sub.row()
+        r.prop(mx, 'global_dispersion')
+        r.prop(mx, 'global_shadow')
+        r.prop(mx, 'global_matte')
+        
+        sub.prop(mx, 'global_priority')
+        
+        r = sub.row()
+        r.prop(mx, 'global_id')
+
+
 class MaterialPanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Material"
@@ -1594,8 +1637,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
         mx = context.material.maxwell_material_extension
         mat = context.material
         
-        sub.prop(m, 'use', text="Material Type", )
-        sub.separator()
+        # sub.prop(m, 'use', text="Material Type", )
+        # sub.separator()
         
         if(m.use == 'EMITTER'):
             sub.prop(mx, 'emitter_type')
@@ -2040,13 +2083,15 @@ class TexturePanel(TextureButtonsPanel, Panel):
         tex = context.texture
         ob = context.object
         
-        r = sub.row()
-        s = r.split(percentage=0.25)
-        s.label(text="Channel:")
-        if(len(ob.data.uv_textures) == 0):
-            s.label("No UV Maps", icon='ERROR', )
-        else:
-            s.prop_search(ts, "uv_layer", ob.data, "uv_textures", text="")
+        # r = sub.row()
+        # s = r.split(percentage=0.25)
+        # s.label(text="Channel:")
+        # if(len(ob.data.uv_textures) == 0):
+        #     s.label("No UV Maps", icon='ERROR', )
+        # else:
+        #     s.prop_search(ts, "uv_layer", ob.data, "uv_textures", text="")
+        # sub.separator()
+        sub.prop(m, 'channel')
         sub.separator()
         
         r = sub.row()
