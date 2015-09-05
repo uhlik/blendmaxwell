@@ -44,7 +44,6 @@ AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).t
 ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
-# FIXME: instancing of curves
 # TODO: restore logging
 # TODO: materials
 # TODO: unify error reporting: warning: write to console, fatal: raise exception
@@ -110,7 +109,9 @@ class MXSExport():
             cameras = []
             bases = []
             instances = []
-            convertibles = []
+            convertible_meshes = []
+            convertible_bases = []
+            convertible_instances = []
             others = []
             
             might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
@@ -128,7 +129,14 @@ class MXSExport():
                 elif(o.type == 'CAMERA'):
                     cameras.append(o)
                 elif(o.type in might_be_renderable):
-                    convertibles.append(o)
+                    # convertibles.append(o)
+                    if(self.use_instances):
+                        if(o.data.users > 1):
+                            convertible_instances.append(o)
+                        else:
+                            convertible_meshes.append(o)
+                    else:
+                        convertible_meshes.append(o)
                 else:
                     others.append(o)
             instance_groups = {}
@@ -149,12 +157,34 @@ class MXSExport():
                     bases.append(o)
                 else:
                     instances.append(o)
+            
+            convertible_instance_groups = {}
+            for o in convertible_instances:
+                if(o.data.name not in convertible_instance_groups):
+                    convertible_instance_groups[o.data.name] = [o, ]
+                else:
+                    convertible_instance_groups[o.data.name].append(o)
+            convertible_bases_names = []
+            for n, g in convertible_instance_groups.items():
+                nms = [o.name for o in g]
+                ls = sorted(nms)
+                convertible_bases_names.append(ls[0])
+            convertible_insts = convertible_instances[:]
+            convertible_instances = []
+            for o in convertible_insts:
+                if(o.name in convertible_bases_names):
+                    convertible_bases.append(o)
+                else:
+                    convertible_instances.append(o)
+            
             return {'meshes': meshes,
                     'empties': empties,
                     'cameras': cameras,
                     'bases': bases,
                     'instances': instances,
-                    'convertibles': convertibles,
+                    'convertible_meshes': convertible_meshes,
+                    'convertible_bases': convertible_bases,
+                    'convertible_instances': convertible_instances,
                     'others': others, }
         
         so = sort_objects()
@@ -195,6 +225,7 @@ class MXSExport():
         
         # export type
         might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
+        c_bases_meshes = []
         
         def export_type(o):
             """determine export type, if convertible, try convert to mesh and store result"""
@@ -246,14 +277,45 @@ class MXSExport():
             elif(o.type in might_be_renderable):
                 me = o.to_mesh(self.context.scene, True, 'RENDER', )
                 if(me is not None):
-                    if(len(me.polygons) > 0):
-                        t = 'MESH'
-                        m = me
-                        c = True
-                    # else:
-                    #     t = 'EMPTY'
-                # else:
-                #     t = 'EMPTY'
+                    if(self.use_instances):
+                        if(len(me.polygons) > 0):
+                            if(o.data.users > 1):
+                                if(o in so['convertible_bases']):
+                                    t = 'BASE_INSTANCE'
+                                    m = me
+                                    c = True
+                                    c_bases_meshes.append([o, me])
+                                else:
+                                    t = 'INSTANCE'
+                                    # m = me
+                                    m = None
+                                    for cbmo, cbmme in c_bases_meshes:
+                                        if(cbmo.data == o.data):
+                                            m = cbmme
+                                            break
+                                    if(m is None):
+                                        m = me
+                                    c = True
+                            else:
+                                t = 'MESH'
+                                m = me
+                                c = True
+                    else:
+                        if(len(o.data.polygons) > 0):
+                            t = 'MESH'
+                            m = me
+                            c = True
+                
+                # me = o.to_mesh(self.context.scene, True, 'RENDER', )
+                # if(me is not None):
+                #     if(len(me.polygons) > 0):
+                #         t = 'MESH'
+                #         m = me
+                #         c = True
+                #     # else:
+                #     #     t = 'EMPTY'
+                # # else:
+                # #     t = 'EMPTY'
             elif(o.type == 'LAMP'):
                 if(o.data.type == 'SUN'):
                     t = 'SUN'
@@ -364,8 +426,7 @@ class MXSExport():
         for o in h:
             walk(o)
         
-        # split objects to lists, instances already are
-        # Maxwell 3, instances are not..
+        # split objects to lists
         instances = []
         meshes = []
         empties = []
@@ -604,7 +665,10 @@ class MXSExport():
                     return b
         
         for d in self._instances:
-            b = find_base(d['mesh'].name)
+            if(d['converted']):
+                b = find_base(d['object'].data.name)
+            else:
+                b = find_base(d['mesh'].name)
             o = MXSMeshInstance(d, b, )
             self._write(o)
         
