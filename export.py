@@ -826,10 +826,7 @@ class MXSExport():
                 nm = "{}-{}".format(o.m_name, uuid.uuid1())
                 p = os.path.join(self.tmp_dir, "{0}.binhair".format(nm))
                 w = MXSBinHairWriterLegacy(p, o.data_locs)
-                d = o._dict()
-                a = {}
-                for k, v in d.items():
-                    a[k[2:]] = v
+                a = o._repr()
                 a['hair_data_path'] = p
                 self.hair_data_paths.append(p)
                 
@@ -844,11 +841,7 @@ class MXSExport():
                         w = MXSBinParticlesWriterLegacy(p, o.m_pdata)
                         o.m_pdata = p
                         self.part_data_paths.append(p)
-                d = o._dict()
-                a = {}
-                for k, v in d.items():
-                    a[k[2:]] = v
-                
+                a = o._repr()
                 self.serialized_data.append(a)
             elif(o.m_type == 'CLONER'):
                 if(o.mxex.source != 'EXTERNAL_BIN'):
@@ -858,19 +851,10 @@ class MXSExport():
                         w = MXSBinParticlesWriterLegacy(p, o.m_pdata)
                         o.m_pdata = p
                         self.part_data_paths.append(p)
-                
-                d = o._dict()
-                a = {}
-                for k, v in d.items():
-                    a[k[2:]] = v
-                
+                a = o._repr()
                 self.serialized_data.append(a)
             else:
-                d = o._dict()
-                a = {}
-                for k, v in d.items():
-                    a[k[2:]] = v
-                
+                a = o._repr()
                 self.serialized_data.append(a)
             
         elif(system.PLATFORM == 'Linux'):
@@ -970,6 +954,13 @@ class Serializable():
         for f in fs:
             d[f] = getattr(self, f)
         return d
+    
+    def _repr(self):
+        d = self._dict()
+        a = {}
+        for k, v in d.items():
+            a[k[2:]] = v
+        return a
 
 
 class MXSScene(Serializable):
@@ -2086,10 +2077,7 @@ class MXSModifier(Serializable):
         if(name == ''):
             return None
         t = MXSTexture(name)
-        d = t._dict()
-        a = {}
-        for k, v in d.items():
-            a[k[2:]] = v
+        a = t._repr()
         return a
 
 
@@ -2511,10 +2499,7 @@ class MXSMaterialExtension(MXSMaterial):
         if(name == ''):
             return None
         t = MXSTexture(name)
-        d = t._dict()
-        a = {}
-        for k, v in d.items():
-            a[k[2:]] = v
+        a = t._repr()
         return a
     
     def _emitter(self):
@@ -2678,9 +2663,154 @@ class MXSTexture(Serializable):
         #             break
 
 
+class MXSExportWireframe(MXSExport):
+    def __init__(self, mxs_path, ):
+        # TODO: finish wire export..
+        raise Exception("Wire export disabled at this time..")
+        
+        super().__init__(mxs_path)
+        mx = self.context.scene.maxwell_render
+        
+        self.edge_radius = mx.export_edge_radius
+        self.edge_resolution = mx.export_edge_resolution
+        self.wire_mat = {'name': 'wire',
+                         'type': 'WIREFRAME_MATERIAL',
+                         'data': {'reflectance_0': self._color_to_rgb8(mx.export_wire_mat_reflectance_0),
+                                  'reflectance_90': self._color_to_rgb8(mx.export_wire_mat_reflectance_90),
+                                  'id': self._color_to_rgb8(mx.export_wire_mat_color_id),
+                                  'roughness': mx.export_wire_mat_roughness, }, }
+        self.clay_mat = {'name': 'clay',
+                         'type': 'WIREFRAME_MATERIAL',
+                         'data': {'reflectance_0': self._color_to_rgb8(mx.export_clay_mat_reflectance_0),
+                                  'reflectance_90': self._color_to_rgb8(mx.export_clay_mat_reflectance_90),
+                                  'id': self._color_to_rgb8(mx.export_clay_mat_color_id),
+                                  'roughness': mx.export_clay_mat_roughness, }, }
+        
+        self.serialized_data.append(self.wire_mat)
+        self.serialized_data.append(self.clay_mat)
+        self._wire_base()
+        self._wire_objects()
+    
+    def _color_to_rgb8(self, c, ):
+        return tuple([int(255 * v) for v in c])
+    
+    def _wire_base(self):
+        """Create and set to export base wire edge cylinder."""
+        gen = utils.CylinderMeshGenerator(height=1, radius=self.edge_radius, sides=self.edge_resolution, )
+        n = "wireframe_edge_{0}".format(self.uuid)
+        me = bpy.data.meshes.new(n)
+        v, e, f = gen.generate()
+        me.from_pydata(v, [], f)
+        log("{0}".format(n), 2)
+        ob = utils.add_object(n, me)
+        
+        o = {'children': [], 'export': True, 'export_type': 'BASE_INSTANCE', 'converted': False, 'object': ob, 'type': 'MESH', 'mesh': ob.data, 'parent': None, }
+        m = MXSMesh(o)
+        m.m_type = 'WIREFRAME_EDGE'
+        self._write(o)
+        
+        self.wireframe_edge_name = ob.name
+        utils.wipe_out_object(ob, and_data=True)
+    
+    def _wire_objects(self):
+        """Loop over all renderable objects and prepare wire data for pymaxwell."""
+        eo = self._meshes[:] + self._bases[:] + self._instances[:] + self._duplicates[:]
+        for o in eo:
+            # log("{0}".format(o['object'].name), 2)
+            d, md = self._wire_to_data(o)
+            nm = md['name']
+            try:
+                # duplicates are handled differently
+                nm = o['dupli_name']
+            except KeyError:
+                pass
+            p = self._serialize(md, "{0}.json".format(nm))
+            self.mesh_data_paths.append(p)
+            d['matrices_path'] = p
+            self.data.append(d)
+    
+    def _wire_to_data(self, o):
+        """Make wire data from object data."""
+        ob = o['object']
+        me = ob.to_mesh(self.context.scene, True, 'RENDER', )
+        mw = ob.matrix_world
+        try:
+            # duplicates are handled differently
+            mw = o['dupli_matrix']
+        except KeyError:
+            pass
+        me.transform(mw)
+        
+        vs = tuple([v.co.copy() for v in me.vertices])
+        es = tuple([tuple([i for i in e.vertices]) for e in me.edges])
+        
+        ms = self._calc_marices(vs=vs, es=es, )
+        
+        dt = []
+        for m in ms:
+            b, p = self._matrix_to_base_and_pivot(m)
+            dt.append((b, p, ))
+        
+        d = {'name': ob.name,
+             'matrix': None,
+             'parent': None,
+             'opacity': 100.0,
+             'hidden_camera': False,
+             'hidden_camera_in_shadow_channel': False,
+             'hidden_global_illumination': False,
+             'hidden_reflections_refractions': False,
+             'hidden_zclip_planes': False,
+             'object_id': (255, 255, 255),
+             'num_materials': len(ob.material_slots),
+             'materials': [],
+             'hide': False,
+             'instanced': None,
+             'type': 'INSTANCE', }
+        
+        d['name'] = "{0}-wire".format(ob.name)
+        d['instanced'] = self.wireframe_edge_name
+        d['object_id'] = self.wire_mat['id']
+        d['type'] = 'WIREFRAME'
+        
+        md = {'name': "{0}-wire".format(ob.name),
+              'matrices': dt, }
+        
+        bpy.data.meshes.remove(me)
+        return d, md
+    
+    def _calc_marices(self, vs, es, ):
+        """Calculate wire matrices."""
+        
+        def distance(a, b):
+            return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2) ** 0.5
+        
+        matrices = []
+        up = Vector((0, 0, 1))
+        for i, e in enumerate(es):
+            a = vs[e[0]]
+            b = vs[e[1]]
+            d = distance(a, b)
+            
+            # v1
+            quat = maths.rotation_to(Vector((0, 0, 1)), b - a)
+            mr = quat.to_matrix().to_4x4()
+            mt = Matrix.Translation(a)
+            mtr = mt * mr
+            
+            # # v2
+            # mtr = maths.look_at_matrix(a, Vector(maths.shift_vert_along_normal(a, b-a, -1.0)), up, )
+            
+            # add scale as well
+            ms = Matrix.Scale(d, 4, up)
+            m = mtr * ms
+            matrices.append(m)
+        
+        return matrices
+
+
 # --
 
-
+'''
 class MXSExportLegacy():
     def __init__(self, context, mxs_path, use_instances=True, keep_intermediates=False, ):
         """
@@ -4127,7 +4257,7 @@ class MXSExportLegacy():
         mr90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
         me.transform(mr90)
         
-        '''
+        """
         global_scale = 1.0
         axis_forward = '-Z'
         axis_up = 'Y'
@@ -4135,7 +4265,7 @@ class MXSExportLegacy():
         me.transform(global_matrix)
         # print(mr90)
         # print(global_matrix)
-        '''
+        """
         
         # here, in triangulating, i experienced crash from not so well mesh, validating before prevents it..
         me.validate()
@@ -5209,7 +5339,7 @@ class MXSExportLegacy():
                     q['hair_tip_radius'] = maths.real_length_to_relative(o.matrix_world, m.hair_tip_radius) / 1000
                     q['display_max_hairs'] = m.display_max_hairs
                 
-                '''
+                """
                 o = bpy.data.objects[q['parent']]
                 ps.set_resolution(self.context.scene, o, 'RENDER')
                 
@@ -5227,7 +5357,7 @@ class MXSExportLegacy():
                         locs.extend([v.x, v.y, v.z])
                 
                 ps.set_resolution(self.context.scene, o, 'PREVIEW')
-                '''
+                """
                 
                 # get fresh object reference
                 # why the it has been somewhere lost??? remove this line will result in segmentation fault
@@ -5264,7 +5394,7 @@ class MXSExportLegacy():
                     
                     points.append(curve)
                 
-                '''
+                """
                 steps = 2 ** ps.settings.render_step
                 num_curves = len(ps.particles) if len(ps.child_particles) == 0 else len(ps.child_particles)
                 nc0 = len(ps.particles)
@@ -5305,7 +5435,7 @@ class MXSExportLegacy():
                             v = mat * v
                             curve.append(v)
                     points.append(curve)
-                '''
+                """
                 # for p in range(0, num_curves):
                 #     seg_length = 1.0
                 #     curve = []
@@ -5354,7 +5484,7 @@ class MXSExportLegacy():
                         # 'HAIR_POINTS': locs,
                         'HAIR_NORMALS': [1.0], }
                 
-                '''
+                """
                 if(m.uv_layer is not ""):
                     uv_no = 0
                     for i, uv in enumerate(o.data.uv_textures):
@@ -5384,7 +5514,7 @@ class MXSExportLegacy():
                     
                     data['HAIR_FLAG_ROOT_UVS'] = [1]
                     data['HAIR_ROOT_UVS'] = uv_locs
-                '''
+                """
                 
                 # print(data['HAIR_GUIDES_COUNT'])
                 # print(data['HAIR_GUIDES_POINT_COUNT'])
@@ -6144,6 +6274,7 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
             matrices.append(m)
         
         return matrices
+'''
 
 
 class MXSBinMeshWriterLegacy():

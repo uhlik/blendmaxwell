@@ -105,6 +105,8 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
         m = context.scene.maxwell_render
         b = sub.box()
         
+        sub.enabled = False
+        
         b.prop(m, 'export_wireframe')
         if(m.export_wireframe):
             c = b.column()
