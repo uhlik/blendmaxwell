@@ -1636,7 +1636,7 @@ class MXSReference(MXSObject):
         self.ref = mx
         
         if(not os.path.exists(bpy.path.abspath(mx.path))):
-            log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
+            log("{}: mxs file: '{}' does not exist, skipping..".format(self.__class__.__name__, bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
             self.skip = True
         
         self.m_path = bpy.path.abspath(bpy.path.abspath(mx.path))
@@ -1651,9 +1651,15 @@ class MXSReference(MXSObject):
         self.m_material = ''
         self.m_backface_material = ''
         if(self.ref.material != ''):
-            self.m_material = bpy.data.materials[self.ref.material].name
+            try:
+                self.m_material = bpy.data.materials[self.ref.material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.ref.material, ), 3, LogStyles.WARNING, )
         if(self.ref.backface_material != ''):
-            self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
+            try:
+                self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.ref.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSParticles(MXSObject):
@@ -1874,9 +1880,15 @@ class MXSParticles(MXSObject):
         self.m_material = ''
         self.m_backface_material = ''
         if(self.mxex.material != ''):
-            self.m_material = bpy.data.materials[self.mxex.material].name
+            try:
+                self.m_material = bpy.data.materials[self.mxex.material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
-            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            try:
+                self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSHair(MXSObject):
@@ -2023,9 +2035,15 @@ class MXSHair(MXSObject):
         self.m_material = ''
         self.m_backface_material = ''
         if(self.mxex.material != ''):
-            self.m_material = bpy.data.materials[self.mxex.material].name
+            try:
+                self.m_material = bpy.data.materials[self.mxex.material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
-            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            try:
+                self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSVolumetrics(MXSObject):
@@ -2059,9 +2077,15 @@ class MXSVolumetrics(MXSObject):
         self.m_material = ''
         self.m_backface_material = ''
         if(self.mxex.material != ''):
-            self.m_material = bpy.data.materials[self.mxex.material].name
+            try:
+                self.m_material = bpy.data.materials[self.mxex.material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
-            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            try:
+                self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSModifier(Serializable):
@@ -2142,9 +2166,15 @@ class MXSGrass(MXSModifier):
         self.m_material = ''
         self.m_backface_material = ''
         if(self.mxex.material != ''):
-            self.m_material = bpy.data.materials[self.mxex.material].name
+            try:
+                self.m_material = bpy.data.materials[self.mxex.material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
-            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            try:
+                self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSCloner(MXSModifier):
@@ -2299,7 +2329,7 @@ class MXSScatter(MXSModifier):
         
         self.m_scatter_object = mxex.scatter_object
         if(self.m_scatter_object is ''):
-            log("{}: no scatter object, skipping Maxwell Scatter modifier..".format(self.b_object.name), 3, LogStyles.WARNING, )
+            log("{}: '{}': no scatter object, skipping Maxwell Scatter modifier..".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
             self.skip = True
         
         self.m_inherit_objectid = mxex.inherit_objectid
@@ -2426,9 +2456,15 @@ class MXSSea(MXSObject):
         self.m_material = ''
         self.m_backface_material = ''
         if(self.mxex.material != ''):
-            self.m_material = bpy.data.materials[self.mxex.material].name
+            try:
+                self.m_material = bpy.data.materials[self.mxex.material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
-            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            try:
+                self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
+            except:
+                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSMaterial(Serializable):
@@ -2455,7 +2491,7 @@ class MXSMaterialMXM(MXSMaterial):
         if(path != ''):
             path = bpy.path.abspath(path)
             if(not os.path.exists(path)):
-                log("{1}: mxm ('{0}') does not exist.".format(path, self.__class__.__name__), 2, LogStyles.WARNING, )
+                log("{1}: mxm ('{0}') does not exist.".format(path, self.__class__.__name__), 3, LogStyles.WARNING, )
                 path = ''
         self.m_path = path
         self.m_embed = embed
