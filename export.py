@@ -2463,7 +2463,6 @@ class MXSMaterialExtension(MXSMaterial):
         self.m = m
         self.mx = mx
         
-        # TODO: set global material properties
         self.m_override_map = self._texture_to_data(mx.global_override_map)
         self.m_bump = mx.global_bump
         self.m_bump_value = mx.global_bump_value

@@ -521,29 +521,28 @@ def material(d, s, ):
             m = s.createMaterial(d['name'])
             m.applyMaterialModifierExtension(p)
             
-            '''
-            a = Cattribute()
-            a.type = MAP_TYPE_VALUE
-            a.value = d['bump_value']
-            m.setAttribute('bump', a)
+            # global properties
+            if(d['override_map']):
+                t = texture(d['override_map'], s, )
+                m.setGlobalMap(t)
             
-            # override_map
-            # bump
-            # bump_value
-            # bump_map
+            if(d['bump']):
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                a.textureMap = texture(d['bump_map'], s, )
+                a.value = d['bump_value']
+                m.setAttribute('bump', a)
             
             m.setDispersion(d['dispersion'])
             m.setMatteShadow(d['shadow'])
             m.setMatte(d['matte'])
             
-            # TODO: 3.2 update
-            # priority
+            # TODO: 3.2 update > set priority
             
             c = Crgb()
             cc = [c / 255 for c in d['id']]
             c.assign(*cc)
             m.setColorID(c)
-            '''
     else:
         raise TypeError("Material '{}' {} is unknown type".format(d['name'], d['subtype']))
 
