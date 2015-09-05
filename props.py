@@ -524,6 +524,18 @@ class MaterialProperties(PropertyGroup):
                                            ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ], default='CUSTOM', )
     # use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ], default='CUSTOM', )
     
+    override_global_properties = BoolProperty(name="Override Global Properties In MXM", default=False, )
+    
+    global_override_map = StringProperty(name="Override Map", default="", )
+    global_bump = BoolProperty(name="Global Bump", default=False, )
+    global_bump_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=1, )
+    global_bump_map = StringProperty(name="Global Bump Map", default="", )
+    global_dispersion = BoolProperty(name="Dispersion", default=False, )
+    global_shadow = BoolProperty(name="Shadow", default=False, )
+    global_matte = BoolProperty(name="Matte", default=False, )
+    global_priority = IntProperty(name="Nested Priority", default=0, min=0, max=1000, )
+    global_id = FloatVectorProperty(name="Material Id", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    
     flag = BoolProperty(name="Flag", default=False, description="True - redraw preview, False - skip", options={'HIDDEN'}, )
     
     @classmethod
@@ -1091,16 +1103,6 @@ class ExtVolumetricsProperties(PropertyGroup):
 
 
 class ExtMaterialProperties(PropertyGroup):
-    global_override_map = StringProperty(name="Override Map", default="", )
-    global_bump = BoolProperty(name="Global Bump", default=False, )
-    global_bump_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=1, )
-    global_bump_map = StringProperty(name="Global Bump Map", default="", )
-    global_dispersion = BoolProperty(name="Dispersion", default=False, )
-    global_shadow = BoolProperty(name="Shadow", default=False, )
-    global_matte = BoolProperty(name="Matte", default=False, )
-    global_priority = IntProperty(name="Nested Priority", default=0, min=0, max=1000, )
-    global_id = FloatVectorProperty(name="Material Id", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    
     emitter_type = EnumProperty(name="Type", items=[('0', "Area", ""), ('1', "IES", ""), ('2', "Spot", ""), ], default='0', )
     emitter_ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
     emitter_ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )

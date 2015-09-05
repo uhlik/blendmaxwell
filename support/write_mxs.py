@@ -326,6 +326,31 @@ def material(d, s, ):
             m = material_placeholder(s, d['name'])
         else:
             m = material_external(d, s)
+            
+            if(d['override']):
+                # global properties
+                if(d['override_map']):
+                    t = texture(d['override_map'], s, )
+                    m.setGlobalMap(t)
+            
+                if(d['bump']):
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    a.textureMap = texture(d['bump_map'], s, )
+                    a.value = d['bump_value']
+                    m.setAttribute('bump', a)
+            
+                m.setDispersion(d['dispersion'])
+                m.setMatteShadow(d['shadow'])
+                m.setMatte(d['matte'])
+            
+                # TODO: 3.2 update > set priority
+            
+                c = Crgb()
+                cc = [c / 255 for c in d['id']]
+                c.assign(*cc)
+                m.setColorID(c)
+            
     elif(d['subtype'] == 'EXTENSION'):
         if(d['use'] == 'EMITTER'):
             m = s.createMaterial(d['name'])

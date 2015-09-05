@@ -1602,10 +1602,14 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         sub.separator()
         
         if(m.use == 'CUSTOM'):
+            r = sub.row()
+            r.prop(m, 'override_global_properties')
+        
+        if(m.use == 'CUSTOM' and not m.override_global_properties):
             sub = sub.column()
             sub.enabled = False
         
-        sub.prop_search(mx, 'global_override_map', mat, 'texture_slots', icon='TEXTURE', )
+        sub.prop_search(m, 'global_override_map', mat, 'texture_slots', icon='TEXTURE', )
         
         r = sub.row()
         s = r.split(percentage=0.2)
@@ -1613,19 +1617,19 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         c.label("Bump:")
         c = s.column()
         r = c.row()
-        r.prop(mx, 'global_bump_value', text="", )
-        r.prop(mx, 'global_bump', text="", )
-        r.prop_search(mx, 'global_bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        r.prop(m, 'global_bump_value', text="", )
+        r.prop(m, 'global_bump', text="", )
+        r.prop_search(m, 'global_bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
         
         r = sub.row()
-        r.prop(mx, 'global_dispersion')
-        r.prop(mx, 'global_shadow')
-        r.prop(mx, 'global_matte')
+        r.prop(m, 'global_dispersion')
+        r.prop(m, 'global_shadow')
+        r.prop(m, 'global_matte')
         
-        sub.prop(mx, 'global_priority')
+        sub.prop(m, 'global_priority')
         
         r = sub.row()
-        r.prop(mx, 'global_id')
+        r.prop(m, 'global_id')
 
 
 class MaterialPanel(MaterialButtonsPanel, Panel):

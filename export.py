@@ -2436,6 +2436,16 @@ class MXSMaterial(Serializable):
         self.m_name = name
         self.m_type = 'MATERIAL'
         self.skip = False
+    
+    def _color_to_rgb8(self, c, ):
+        return tuple([int(255 * v) for v in c])
+    
+    def _texture_to_data(self, name, ):
+        if(name == ''):
+            return None
+        t = MXSTexture(name)
+        a = t._repr()
+        return a
 
 
 class MXSMaterialMXM(MXSMaterial):
@@ -2449,6 +2459,20 @@ class MXSMaterialMXM(MXSMaterial):
                 path = ''
         self.m_path = path
         self.m_embed = embed
+        
+        mat = bpy.data.materials[name]
+        m = mat.maxwell_render
+        self.m_override = m.override_global_properties
+        if(self.m_override):
+            self.m_override_map = self._texture_to_data(m.global_override_map)
+            self.m_bump = m.global_bump
+            self.m_bump_value = m.global_bump_value
+            self.m_bump_map = self._texture_to_data(m.global_bump_map)
+            self.m_dispersion = m.global_dispersion
+            self.m_shadow = m.global_shadow
+            self.m_matte = m.global_matte
+            self.m_priority = m.global_priority
+            self.m_id = self._color_to_rgb8(m.global_id)
 
 
 class MXSMaterialExtension(MXSMaterial):
@@ -2463,15 +2487,15 @@ class MXSMaterialExtension(MXSMaterial):
         self.m = m
         self.mx = mx
         
-        self.m_override_map = self._texture_to_data(mx.global_override_map)
-        self.m_bump = mx.global_bump
-        self.m_bump_value = mx.global_bump_value
-        self.m_bump_map = self._texture_to_data(mx.global_bump_map)
-        self.m_dispersion = mx.global_dispersion
-        self.m_shadow = mx.global_shadow
-        self.m_matte = mx.global_matte
-        self.m_priority = mx.global_priority
-        self.m_id = self._color_to_rgb8(mx.global_id)
+        self.m_override_map = self._texture_to_data(m.global_override_map)
+        self.m_bump = m.global_bump
+        self.m_bump_value = m.global_bump_value
+        self.m_bump_map = self._texture_to_data(m.global_bump_map)
+        self.m_dispersion = m.global_dispersion
+        self.m_shadow = m.global_shadow
+        self.m_matte = m.global_matte
+        self.m_priority = m.global_priority
+        self.m_id = self._color_to_rgb8(m.global_id)
         
         self.m_use = m.use
         if(self.m_use == 'EMITTER'):
@@ -2490,16 +2514,6 @@ class MXSMaterialExtension(MXSMaterial):
             self._carpaint()
         else:
             raise TypeError("{}: ({}): Unsupported extension material type: {}".format(self.__class__.__name__, self.m_name, self.m_use, ))
-    
-    def _color_to_rgb8(self, c, ):
-        return tuple([int(255 * v) for v in c])
-    
-    def _texture_to_data(self, name, ):
-        if(name == ''):
-            return None
-        t = MXSTexture(name)
-        a = t._repr()
-        return a
     
     def _emitter(self):
         mx = self.mx
