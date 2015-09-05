@@ -276,19 +276,12 @@ class PercentDone():
                     f.write("{}".format("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n)))
 
 
-class Materials():
-    db = []
-
-
-def material_placeholder(s):
-    n = 'MATERIAL_PLACEHOLDER'
-    # return clone if already loaded
-    for p, m, e, x in Materials.db:
-        if(p == n and not x):
-            c = m.createCopy()
-            cm = s.addMaterial(c)
-            return cm
-    
+def material_placeholder(s, n=None, ):
+    if(n is not None):
+        # n = '{}_{}'.format(n, 'MATERIAL_PLACEHOLDER')
+        pass
+    else:
+        n = 'MATERIAL_PLACEHOLDER'
     m = s.createMaterial(n)
     l = m.addLayer()
     b = l.addBSDF()
@@ -305,33 +298,63 @@ def material_placeholder(s):
     t.addProceduralTexture(ch)
     a.textureMap = t
     r.setAttribute('color', a)
-    
-    Materials.db.append((n, m, True, False))
-    
     return m
 
 
-def material(path, s, embed, ):
-    r = None
-    for p, m, e, x in Materials.db:
-        if(p == path and not x):
-            r = m
-    if(r is None):
-        t = s.readMaterial(path)
-        r = s.addMaterial(t)
-        Materials.db.append((path, r, embed, False))
-        if(embed is False):
-            # set as external
-            r.setReference(1, path)
-    return r
+def material_default(d, s, ):
+    m = s.createMaterial(d['name'])
+    l = m.addLayer()
+    b = l.addBSDF()
+    return m
+
+
+def material_external(d, s, ):
+    p = d['path']
+    t = s.readMaterial(p)
+    t.setName(d['name'])
+    m = s.addMaterial(t)
+    if(not d['embed']):
+        m.setReference(1, p)
+    return m
+
+
+def material(d, s, ):
+    """create material by type"""
+    if(d['subtype'] == 'EXTERNAL'):
+        if(d['path'] == ''):
+            # m = material_default(d, s)
+            m = material_placeholder(s, d['name'])
+        else:
+            m = material_external(d, s)
+    elif(d['subtype'] == 'EXTENSION'):
+        pass
+    else:
+        raise TypeError("Material '{}' {} is unknown type".format(d['name'], d['subtype']))
+
+
+def get_material(n, s, ):
+    """get material by name from scene, if material is missing, create and return placeholder"""
+    def get_material_names(s):
+        it = CmaxwellMaterialIterator()
+        o = it.first(s)
+        l = []
+        while not o.isNull():
+            name = o.getName()
+            l.append(name)
+            o = it.next()
+        return l
+    
+    names = get_material_names(s)
+    m = None
+    if(n in names):
+        m = s.getMaterial(n)
+    if(m is None):
+        # should not happen because i stopped changing material names.. but i leave it here
+        m = material_placeholder(s)
+    return m
 
 
 def material_ext(d, s, embed, ):
-    for p, m, e, x in Materials.db:
-        if(m.getName() == d['name']):
-            if(p == '' and x):
-                return m
-    
     p = None
     if(d['type'] == 'EMITTER'):
         m = s.createMaterial(d['name'])
@@ -400,7 +423,6 @@ def material_ext(d, s, embed, ):
         
         e.setState(True)
         
-        Materials.db.append(('', m, True, True))
         return m
         
     else:
@@ -535,12 +557,11 @@ def material_ext(d, s, embed, ):
     if(p is not None):
         m = s.createMaterial(d['name'])
         m.applyMaterialModifierExtension(p)
-        Materials.db.append(('', m, True, True))
         return m
     return None
 
 
-def texture(d, s):
+def texture(d, s, ):
     t = CtextureMap()
     t.setPath(d['path'])
     
@@ -588,7 +609,7 @@ def texture(d, s):
     return t
 
 
-def base_and_pivot(o, d):
+def base_and_pivot(o, d, ):
     b = d['base']
     p = d['pivot']
     bb = Cbase()
@@ -612,7 +633,7 @@ def base_and_pivot(o, d):
     o.setScale(Cvector(*s))
 
 
-def object_props(o, d):
+def object_props(o, d, ):
     if(d['hidden_camera']):
         o.setHideToCamera(True)
     if(d['hidden_camera_in_shadow_channel']):
@@ -633,7 +654,7 @@ def object_props(o, d):
     o.setColorID(c)
 
 
-def camera(d, s):
+def camera(d, s, ):
     c = s.addCamera(d['name'], d['number_of_steps'], d['shutter'], d['film_width'], d['film_height'], d['iso'],
                     d['aperture'], d['diaphragm_angle'], d['diaphragm_blades'], d['frame_rate'],
                     d['resolution_x'], d['resolution_y'], d['pixel_aspect'], d['lens'], )
@@ -682,14 +703,14 @@ def camera(d, s):
     return c
 
 
-def empty(d, s):
+def empty(d, s, ):
     o = s.createMesh(d['name'], 0, 0, 0, 0,)
     base_and_pivot(o, d)
     object_props(o, d)
     return o
 
 
-def mesh(d, s):
+def mesh(d, s, ):
     r = MXSBinMeshReaderLegacy(d['mesh_data_path'])
     m = r.data
     o = s.createMesh(d['name'], d['num_vertexes'], d['num_normals'], d['num_triangles'], d['num_positions_per_vertex'], )
@@ -718,196 +739,53 @@ def mesh(d, s):
     if(d['num_materials'] > 1):
         # multi material
         mats = []
-        for mi in range(d['num_materials']):
-            if(d['materials'][mi][1] == ""):
-                # multi material, but none assigned.. to keep triangle group, create and assign blank material
-                mat = material_placeholder(s)
-            else:
-                if(type(d['materials'][mi][1]) is dict):
-                    mat = material_ext(d['materials'][mi][1], s, d['materials'][mi][0])
-                else:
-                    mat = material(d['materials'][mi][1], s, d['materials'][mi][0])
+        for n in d['materials']:
+            mat = get_material(n, s, )
             mats.append(mat)
+        
         for tid, mid in m['triangle_materials']:
             o.setTriangleMaterial(tid, mats[mid])
-    elif(d['num_materials'] == 1):
-        # single material
-        if(d['materials'][0][1] == ""):
-            mat = None
-        else:
-            if(type(d['materials'][0][1]) is dict):
-                mat = material_ext(d['materials'][0][1], s, d['materials'][0][0])
-            else:
-                mat = material(d['materials'][0][1], s, d['materials'][0][0])
-        if(mat is not None):
-            o.setMaterial(mat)
     else:
-        # no material
-        pass
+        # single material
+        if(len(d['materials']) == 1):
+            if(d['materials'][0] != ''):
+                mat = get_material(d['materials'][0], s, )
+                o.setMaterial(mat)
     
-    if(len(d['backface_material']) > 0):
-        if(d['backface_material'][0] != ""):
-            bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
-            o.setBackfaceMaterial(bm)
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
     
     base_and_pivot(o, d)
     object_props(o, d)
     
-    '''
-    if(d['subdiv_ext'] is not None):
-        # 0: ('Subdivision Level', [2], 0, 99, '1 UINT', 4, 1, True)
-        # 1: ('Subdivision Scheme', [0], 0, 2, '1 UINT', 4, 1, True)
-        # 2: ('Interpolation', [2], 0, 3, '1 UINT', 4, 1, True)
-        # 3: ('Crease', [0.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 4: ('Smooth Angle', [90.0], 0.0, 360.0, '3 FLOAT', 4, 1, True)
-        # 5: ('EXTENSION_NAME', 'SubdivisionModifier', '', '', '5 STRING', 1, 20, True)
-        # 6: ('EXTENSION_VERSION', [1], 0, 1000000, '1 UINT', 4, 1, True)
-        # 7: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
-        m = CextensionManager.instance()
-        m.loadAllExtensions()
-        e = m.createDefaultGeometryModifierExtension('SubdivisionModifier')
-        p = e.getExtensionData()
-        e = d['subdiv_ext']
-        p.setUInt('Subdivision Level', e[0])
-        p.setUInt('Subdivision Scheme', e[1])
-        
-        if(e[1] == 0 and e[5] is not None):
-            for t, q in e[5]:
-                o.setTriangleQuadBuddy(t, q)
-        
-        p.setUInt('Interpolation', e[2])
-        p.setFloat('Crease', e[3])
-        p.setFloat('Smooth Angle', e[4])
-        o.applyGeometryModifierExtension(p)
-    
-    if(d['scatter_ext'] is not None):
-        # 0: ('Object', '', '', '', '5 STRING', 1, 1, True)
-        # 1: ('Inherit ObjectID', [0], 0, 1, '0 UCHAR', 1, 1, True)
-        # 2: ('Density', [100.0], 9.999999747378752e-05, 10000000000.0, '3 FLOAT', 4, 1, True)
-        # 3: ('Density Map', <pymaxwell.MXparamList; proxy of <Swig Object of type 'MXparamList *' at 0x10107c390> >, 0, 0, '10 MXPARAMLIST', 0, 1, True)
-        # 4: ('Scale X', [1.0], 0.0, 100000.0, '3 FLOAT', 4, 1, True)
-        # 5: ('Scale Y', [1.0], 0.0, 100000.0, '3 FLOAT', 4, 1, True)
-        # 6: ('Scale Z', [1.0], 0.0, 100000.0, '3 FLOAT', 4, 1, True)
-        # 7: ('Scale Map', <pymaxwell.MXparamList; proxy of <Swig Object of type 'MXparamList *' at 0x10107c390> >, 0, 0, '10 MXPARAMLIST', 0, 1, True)
-        # 8: ('Scale X Variation', [20.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 9: ('Scale Y Variation', [20.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 10: ('Scale Z Variation', [20.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 11: ('Rotation X', [0.0], 0.0, 360.0, '3 FLOAT', 4, 1, True)
-        # 12: ('Rotation Y', [0.0], 0.0, 360.0, '3 FLOAT', 4, 1, True)
-        # 13: ('Rotation Z', [0.0], 0.0, 360.0, '3 FLOAT', 4, 1, True)
-        # 14: ('Rotation Map', <pymaxwell.MXparamList; proxy of <Swig Object of type 'MXparamList *' at 0x10107c390> >, 0, 0, '10 MXPARAMLIST', 0, 1, True)
-        # 15: ('Rotation X Variation', [10.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 16: ('Rotation Y Variation', [10.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 17: ('Rotation Z Variation', [10.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 18: ('Direction Type', [0], 0, 1, '1 UINT', 4, 1, True)
-        # 19: ('Initial Angle', [90.0], 0.0, 90.0, '3 FLOAT', 4, 1, True)
-        # 20: ('Initial Angle Variation', [0.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 21: ('Initial Angle Map', <pymaxwell.MXparamList; proxy of <Swig Object of type 'MXparamList *' at 0x10107c390> >, 0, 0, '10 MXPARAMLIST', 0, 1, True)
-        # 22: ('Seed', [0], 0, 16383, '1 UINT', 4, 1, True)
-        # 23: ('Enable LOD', [0], 0, 1, '0 UCHAR', 1, 1, True)
-        # 24: ('LOD Min Distance', [10.0], 0.0, 100000.0, '3 FLOAT', 4, 1, True)
-        # 25: ('LOD Max Distance', [50.0], 0.0, 100000.0, '3 FLOAT', 4, 1, True)
-        # 26: ('LOD Max Distance Density', [10.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-        # 27: ('Display Percent', [10], 0, 100, '1 UINT', 4, 1, True)
-        # 28: ('Display Max. Instances', [1000], 0, 100000, '1 UINT', 4, 1, True)
-        # 29: ('TRIANGLES_WITH_CLONES', [0], 0, 0, '8 BYTEARRAY', 1, 1, True)
-        # 30: ('EXTENSION_NAME', 'MaxwellScatter', '', '', '5 STRING', 1, 15, True)
-        # 31: ('EXTENSION_VERSION', [1], 0, 1000000, '1 UINT', 4, 1, True)
-        # 32: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
-        
-        m = CextensionManager.instance()
-        m.loadAllExtensions()
-        e = m.createDefaultGeometryModifierExtension('MaxwellScatter')
-        p = e.getExtensionData()
-        e = d['scatter_ext']
-        
-        p.setString('Object', e['scatter_object'])
-        p.setByte('Inherit ObjectID', e['inherit_objectid'])
-        p.setFloat('Density', e['density'])
-        texture_data_to_mxparams(e['density_map'], p, 'Density Map', )
-        p.setUInt('Seed', e['seed'])
-        p.setFloat('Scale X', e['scale_x'])
-        p.setFloat('Scale Y', e['scale_y'])
-        p.setFloat('Scale Z', e['scale_z'])
-        texture_data_to_mxparams(e['scale_map'], p, 'Scale Map', )
-        p.setFloat('Scale X Variation', e['scale_variation_x'])
-        p.setFloat('Scale Y Variation', e['scale_variation_y'])
-        p.setFloat('Scale Z Variation', e['scale_variation_z'])
-        p.setFloat('Rotation X', e['rotation_x'])
-        p.setFloat('Rotation Y', e['rotation_y'])
-        p.setFloat('Rotation Z', e['rotation_z'])
-        texture_data_to_mxparams(e['rotation_map'], p, 'Rotation Map', )
-        p.setFloat('Rotation X Variation', e['rotation_variation_x'])
-        p.setFloat('Rotation Y Variation', e['rotation_variation_y'])
-        p.setFloat('Rotation Z Variation', e['rotation_variation_z'])
-        p.setUInt('Direction Type', e['rotation_direction'])
-        p.setByte('Enable LOD', e['lod'])
-        p.setFloat('LOD Min Distance', e['lod_min_distance'])
-        p.setFloat('LOD Max Distance', e['lod_max_distance'])
-        p.setFloat('LOD Max Distance Density', e['lod_max_distance_density'])
-        p.setUInt('Display Percent', e['display_percent'])
-        p.setUInt('Display Max. Blades', e['display_max_blades'])
-        o.applyGeometryModifierExtension(p)
-    
-    if(d['sea_ext'] is not None):
-        m = CextensionManager.instance()
-        m.loadAllExtensions()
-        e = m.createDefaultGeometryLoaderExtension('MaxwellSea')
-        p = e.getExtensionData()
-        name = d['sea_ext'][0]
-        hide_parent = d['sea_ext'][1]
-        q = d['sea_ext'][2:]
-        
-        p.setFloat('Reference Time', q[0])
-        p.setUInt('Resolution', q[1])
-        p.setFloat('Ocean Depth', q[2])
-        p.setFloat('Vertical Scale', q[3])
-        p.setFloat('Ocean Dim', q[4])
-        p.setUInt('Ocean Seed', q[5])
-        p.setByte('Enable Choppyness', q[6])
-        p.setFloat('Choppy factor', q[7])
-        p.setFloat('Ocean Wind Mod.', q[8])
-        p.setFloat('Ocean Wind Dir.', q[9])
-        p.setFloat('Ocean Wind Alignment', q[10])
-        p.setFloat('Ocean Min. Wave Length', q[11])
-        p.setFloat('Damp Factor Against Wind', q[12])
-        p.setByte('Enable White Caps', q[13])
-        
-        so = s.createGeometryLoaderObject(name, p)
-        object_props(so, d)
-        so.setParent(o)
-        if(hide_parent):
-            o.setHide(True)
-    '''
-    
     return o
 
 
-def instance(d, s):
+def instance(d, s, ):
     bo = s.getObject(d['instanced'])
     o = s.createInstancement(d['name'], bo)
-    if(d['num_materials'] == 1):
-        # instance with different material is possible
-        if(type(d['materials'][0][1]) is dict):
-            m = material_ext(d['materials'][0][1], s, d['materials'][0][0])
-        else:
-            m = material(d['materials'][0][1], s, d['materials'][0][0])
-        o.setMaterial(m)
-    else:
-        # multi material instances cannot be changed (i think)
-        # and just skip instances without material
+    
+    if(d['num_materials'] > 1):
+        # multi material instances inherits material from base object
         pass
-    if(len(d['backface_material']) > 0):
-        if(d['backface_material'][0] != ""):
-            bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
-            o.setBackfaceMaterial(bm)
+    else:
+        # single material, and i think (not sure) i can't make instance with different material than base in blender..
+        if(len(d['materials']) == 1):
+            if(d['materials'][0] != ''):
+                mat = get_material(d['materials'][0], s, )
+                o.setMaterial(mat)
+    
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
     
     base_and_pivot(o, d)
     object_props(o, d)
     return o
 
 
-def scene(d, s):
+def scene(d, s, ):
     s.setRenderParameter('ENGINE', d["scene_quality"])
     s.setRenderParameter('NUM THREADS', d["scene_cpu_threads"])
     s.setRenderParameter('STOP TIME', d["scene_time"] * 60)
@@ -1116,7 +994,7 @@ def scene(d, s):
             s.setRenderParameter('EXTRA SAMPLING INVERT', 1)
 
 
-def environment(d, s):
+def environment(d, s, ):
     env = s.getEnvironment()
     if(d["env_type"] == 'PHYSICAL_SKY' or d["env_type"] == 'IMAGE_BASED'):
         env.setActiveSky(d["sky_type"])
@@ -1200,7 +1078,7 @@ def environment(d, s):
         env.setActiveSky('')
 
 
-def custom_alphas(d, s):
+def custom_alphas(d, s, ):
     ags = d['channels_custom_alpha_groups']
     for a in ags:
         s.createCustomAlphaChannel(a['name'], a['opaque'])
@@ -1209,7 +1087,7 @@ def custom_alphas(d, s):
             o.addToCustomAlpha(a['name'])
 
 
-def particles(d, s):
+def particles(d, s, ):
     mgr = CextensionManager.instance()
     mgr.loadAllExtensions()
     
@@ -1283,21 +1161,18 @@ def particles(d, s):
     
     o = s.createGeometryProceduralObject(d['name'], params)
     
-    # mat = material(d['material'], s, d['material_embed'])
-    # o.setMaterial(mat)
-    
-    if(d['material'] != ""):
-        mat = material(d['material'], s, d['material_embed'])
+    if(d['material'] != ''):
+        mat = get_material(d['material'], s, )
         o.setMaterial(mat)
-    if(d['backface_material'] != ""):
-        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
-        o.setBackfaceMaterial(bm)
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
     
     base_and_pivot(o, d)
     object_props(o, d)
 
 
-def cloner(d, s):
+def cloner(d, s, ):
     m = CextensionManager.instance()
     m.loadAllExtensions()
     
@@ -1350,7 +1225,7 @@ def cloner(d, s):
     o.applyGeometryModifierExtension(p)
 
 
-def hair(d, s):
+def hair(d, s, ):
     m = CextensionManager.instance()
     m.loadAllExtensions()
     
@@ -1430,18 +1305,18 @@ def hair(d, s):
     c, _ = o.addChannelUVW()
     o.generateCustomUVW(2, c)
     
-    if(d['material'] != ""):
-        mat = material(d['material'], s, d['material_embed'])
+    if(d['material'] != ''):
+        mat = get_material(d['material'], s, )
         o.setMaterial(mat)
-    if(d['backface_material'] != ""):
-        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
-        o.setBackfaceMaterial(bm)
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
     
     base_and_pivot(o, d)
     object_props(o, d)
 
 
-def reference(d, s):
+def reference(d, s, ):
     o = s.createMesh(d['name'], 0, 0, 0, 0,)
     base_and_pivot(o, d)
     object_props(o, d)
@@ -1455,17 +1330,17 @@ def reference(d, s):
     if(d['flag_override_hide_to_gi']):
         o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_GI)
     
-    if(d['material'] != ""):
-        mat = material(d['material'], s, d['material_embed'])
+    if(d['material'] != ''):
+        mat = get_material(d['material'], s, )
         o.setMaterial(mat)
-    if(d['backface_material'] != ""):
-        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
-        o.setBackfaceMaterial(bm)
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
     
     return o
 
 
-def volumetrics(d, s):
+def volumetrics(d, s, ):
     m = CextensionManager.instance()
     m.loadAllExtensions()
     e = m.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
@@ -1482,19 +1357,19 @@ def volumetrics(d, s):
     
     o = s.createGeometryProceduralObject(d['name'], p)
     
-    if(d['material'] != ""):
-        mat = material(d['material'], s, d['material_embed'])
+    if(d['material'] != ''):
+        mat = get_material(d['material'], s, )
         o.setMaterial(mat)
-    if(d['backface_material'] != ""):
-        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
-        o.setBackfaceMaterial(bm)
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
     
     base_and_pivot(o, d)
     object_props(o, d)
     return o
 
 
-def subdivision(d, s):
+def subdivision(d, s, ):
     # 0: ('Subdivision Level', [2], 0, 99, '1 UINT', 4, 1, True)
     # 1: ('Subdivision Scheme', [0], 0, 2, '1 UINT', 4, 1, True)
     # 2: ('Interpolation', [2], 0, 3, '1 UINT', 4, 1, True)
@@ -1524,7 +1399,7 @@ def subdivision(d, s):
     o.applyGeometryModifierExtension(p)
 
 
-def scatter(d, s):
+def scatter(d, s, ):
     m = CextensionManager.instance()
     m.loadAllExtensions()
     e = m.createDefaultGeometryModifierExtension('MaxwellScatter')
@@ -1562,20 +1437,21 @@ def scatter(d, s):
     o.applyGeometryModifierExtension(p)
 
 
-def grass(d, s):
+def grass(d, s, ):
     m = CextensionManager.instance()
     m.loadAllExtensions()
     
     e = m.createDefaultGeometryModifierExtension('MaxwellGrass')
     p = e.getExtensionData()
     
-    if(d['material'] != ""):
-        mat = material(d['material'], s, d['material_embed'])
+    if(d['material'] != ''):
+        mat = get_material(d['material'], s, )
+        # o.setMaterial(mat)
         p.setString('Material', mat.getName())
-    
-    if(d['backface_material'] != ""):
-        bmat = material(d['backface_material'], s, d['backface_material_embed'])
-        p.setString('Double Sided Material', bmat.getName())
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        # o.setBackfaceMaterial(mat)
+        p.setString('Double Sided Material', mat.getName())
     
     p.setUInt('Density', d['density'])
     texture_data_to_mxparams(d['density_map'], p, 'Density Map')
@@ -1626,7 +1502,7 @@ def grass(d, s):
     o.applyGeometryModifierExtension(p)
 
 
-def sea(d, s):
+def sea(d, s, ):
     m = CextensionManager.instance()
     m.loadAllExtensions()
     
@@ -1650,18 +1526,18 @@ def sea(d, s):
     
     o = s.createGeometryLoaderObject(d['name'], p)
     
-    if(d['material'] != ""):
-        mat = material(d['material'], s, d['material_embed'])
+    if(d['material'] != ''):
+        mat = get_material(d['material'], s, )
         o.setMaterial(mat)
-    if(d['backface_material'] != ""):
-        bm = material(d['backface_material'][0], s, d['backface_material_embed'][1])
-        o.setBackfaceMaterial(bm)
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
     
     base_and_pivot(o, d)
     object_props(o, d)
 
 
-def hierarchy(d, s):
+def hierarchy(d, s, ):
     log("setting object hierarchy..", 2)
     
     a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
@@ -1685,7 +1561,7 @@ def hierarchy(d, s):
                     p.setHide(True)
 
 
-def wireframe_hierarchy(d, s, ws):
+def wireframe_hierarchy(d, s, ws, ):
     # wire and clay empties data
     ced = {'name': 'clay',
            'parent': None,
@@ -1732,7 +1608,7 @@ def wireframe_hierarchy(d, s, ws):
         w.setParent(we)
 
 
-def wireframe_base(d, s):
+def wireframe_base(d, s, ):
     o = mesh(d, s)
     # zero scale wire instance source base mesh to be practically invisible :)
     o.setScale(Cvector(0, 0, 0))
@@ -1740,7 +1616,7 @@ def wireframe_base(d, s):
     return o
 
 
-def wireframe(d, s):
+def wireframe(d, s, ):
     r = []
     with open(d['matrices_path'], 'r') as f:
         md = json.load(f)
@@ -1755,7 +1631,7 @@ def wireframe(d, s):
     return r
 
 
-def wireframe_material(d, s):
+def wireframe_material(d, s, ):
     n = d['name']
     r0 = d['data']['reflectance_0']
     r90 = d['data']['reflectance_90']
@@ -1788,7 +1664,7 @@ def wireframe_material(d, s):
     return mat
 
 
-def wireframe_assign_materials(d, s, ws, wm, cm):
+def wireframe_assign_materials(d, s, ws, wm, cm, ):
     if(wm is None or cm is None):
         raise RuntimeError("wire or clay material is missing..")
     
@@ -1808,7 +1684,7 @@ def wireframe_assign_materials(d, s, ws, wm, cm):
         w.setMaterial(wm)
 
 
-def texture_data_to_mxparams(d, mp, name):
+def texture_data_to_mxparams(d, mp, name, ):
     if(d is None):
         return
     
@@ -1868,7 +1744,8 @@ def main(args):
         w_material = None
         c_material = None
         all_wires = []
-    progress = PercentDone(len(data), indent=2, )
+    log("creating objects:", 2)
+    progress = PercentDone(len(data), indent=3, )
     for d in data:
         if(d['type'] == 'CAMERA'):
             camera(d, mxs)
@@ -1913,24 +1790,26 @@ def main(args):
             grass(d, mxs)
         elif(d['type'] == 'CLONER'):
             cloner(d, mxs)
-        
         elif(d['type'] == 'SEA'):
             sea(d, mxs)
         
-        elif(d['type'] == 'WIREFRAME_MATERIAL'):
-            mat = wireframe_material(d, mxs)
-            m = {'name': d['name'], 'data': mat, }
-            if(d['name'] == 'wire'):
-                w_material = mat
-            elif(d['name'] == 'clay'):
-                c_material = mat
-            else:
-                raise TypeError("'{0}' is unknown wireframe material".format(d['name']))
-        elif(d['type'] == 'WIREFRAME_EDGE'):
-            wireframe_base(d, mxs)
-        elif(d['type'] == 'WIREFRAME'):
-            ws = wireframe(d, mxs)
-            all_wires.extend(ws)
+        elif(d['type'] == 'MATERIAL'):
+            material(d, mxs)
+        
+        # elif(d['type'] == 'WIREFRAME_MATERIAL'):
+        #     mat = wireframe_material(d, mxs)
+        #     m = {'name': d['name'], 'data': mat, }
+        #     if(d['name'] == 'wire'):
+        #         w_material = mat
+        #     elif(d['name'] == 'clay'):
+        #         c_material = mat
+        #     else:
+        #         raise TypeError("'{0}' is unknown wireframe material".format(d['name']))
+        # elif(d['type'] == 'WIREFRAME_EDGE'):
+        #     wireframe_base(d, mxs)
+        # elif(d['type'] == 'WIREFRAME'):
+        #     ws = wireframe(d, mxs)
+        #     all_wires.extend(ws)
         else:
             raise TypeError("{0} is unknown type".format(d['type']))
         progress.step()

@@ -45,8 +45,9 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # TODO: restore logging
-# TODO: materials
-# TODO: unify error reporting: warning: write to console, fatal: raise exception
+# TODO: extension materials
+# TODO: unify error reporting: warning: write to console, fatal: raise exception, if something can't be exported: skip and print warning or raise exception?
+# TODO: do not export unused materials
 
 
 class MXSExport():
@@ -635,6 +636,15 @@ class MXSExport():
         # collect all objects to be exported, split them by type. keep this dict if hiearchy would be needed
         self.tree = self._collect()
         
+        # all materials
+        for mat in bpy.data.materials:
+            mx = mat.maxwell_render
+            if(mx.use == 'CUSTOM'):
+                mxm = MXSMaterialMXM(mat.name, path=mx.mxm_file, embed=mx.embed, )
+                self._write(mxm)
+            else:
+                pass    # extension material
+        
         for d in self._cameras:
             o = MXSCamera(d)
             self._write(o)
@@ -790,9 +800,11 @@ class MXSExport():
                      'hidden_reflections_refractions': o.m_hidden_reflections_refractions,
                      'hidden_zclip_planes': o.m_hidden_zclip_planes,
                      'object_id': o.m_object_id,
+                     
                      'num_materials': o.m_num_materials,
                      'materials': o.m_materials,
                      'backface_material': o.m_backface_material,
+                     
                      'hide': o.m_hide,
                      'mesh_data_path': p,
                      'base': o.m_base,
@@ -1442,35 +1454,12 @@ class MXSObject(Serializable):
         self.m_scale = s
     
     def _materials(self):
-        # TODO: finish material exporting
         self.m_num_materials = len(self.b_object.material_slots)
         self.m_materials = []
-        self.m_backface_material = []
-        for i in range(self.m_num_materials):
-            self.m_materials.append((False, "", ))
+        for s in self.b_object.material_slots:
+            self.m_materials.append(s.material.name)
         
-        '''
-        ob = None
-        if(type(self.b_object) != bpy.types.Object):
-            # special objects (particles, etc.)
-            pass
-        else:
-            # regular objects
-            ob = self.b_object
-        
-        if(ob is not None):
-            self.m_num_materials = len(ob.material_slots)
-            self.m_materials = []
-            self.m_backface_material = []
-            
-            for i in range(self.m_num_materials):
-                self.m_materials.append((False, "", ))
-        else:
-            # no object >> no material / one undefined material
-            self.m_num_materials = 1
-            self.m_materials = []
-            self.m_backface_material = []
-        '''
+        self.m_backface_material = self.b_object.maxwell_render.backface_material
 
 
 class MXSEmpty(MXSObject):
@@ -1604,7 +1593,6 @@ class MXSMesh(MXSObject):
         for fi, f in enumerate(me.tessfaces):
             triangle_materials.append((fi, f.material_index, ))
         
-        # TODO: implement more positions per vertex (needed for motion blur i guess)
         self.m_num_positions = 1
         self.m_vertices = vertices
         self.m_normals = normals
@@ -1612,6 +1600,10 @@ class MXSMesh(MXSObject):
         self.m_triangle_normals = triangle_normals
         self.m_uv_channels = uv_channels
         self.m_triangle_materials = triangle_materials
+    
+    def add_position(self):
+        # TODO: positions per vertex
+        pass
 
 
 class MXSMeshInstance(MXSObject):
@@ -1619,6 +1611,7 @@ class MXSMeshInstance(MXSObject):
         super().__init__(o)
         self.m_type = 'MESH_INSTANCE'
         self.m_instanced = base.m_name
+        self.base_b_object = base.b_object
         
         self._materials()
         
@@ -1649,6 +1642,8 @@ class MXSReference(MXSObject):
         ob = self.b_object
         mx = ob.maxwell_render_reference
         
+        self.ref = mx
+        
         if(not os.path.exists(bpy.path.abspath(mx.path))):
             log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
             self.skip = True
@@ -1659,10 +1654,15 @@ class MXSReference(MXSObject):
         self.m_flag_override_hide_to_refl_refr = mx.flag_override_hide_to_refl_refr
         self.m_flag_override_hide_to_gi = mx.flag_override_hide_to_gi
         
-        self.m_material = mx.material
-        self.m_material_embed = mx.material_embed
-        self.m_backface_material = mx.backface_material
-        self.m_backface_material_embed = mx.backface_material_embed
+        self._materials()
+    
+    def _materials(self):
+        self.m_material = ''
+        self.m_backface_material = ''
+        if(self.ref.material != ''):
+            self.m_material = bpy.data.materials[self.ref.material].name
+        if(self.ref.backface_material != ''):
+            self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
 
 
 class MXSParticles(MXSObject):
@@ -1880,11 +1880,12 @@ class MXSParticles(MXSObject):
             mxex.private_bin_filename = ''
     
     def _materials(self):
-        mxex = self.mxex
-        self.m_material = bpy.path.abspath(mxex.material)
-        self.m_material_embed = mxex.material_embed
-        self.m_backface_material = bpy.path.abspath(mxex.backface_material)
-        self.m_backface_material_embed = mxex.backface_material_embed
+        self.m_material = ''
+        self.m_backface_material = ''
+        if(self.mxex.material != ''):
+            self.m_material = bpy.data.materials[self.mxex.material].name
+        if(self.mxex.backface_material != ''):
+            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
 
 
 class MXSHair(MXSObject):
@@ -2028,11 +2029,12 @@ class MXSHair(MXSObject):
         self.data_locs = locs
     
     def _materials(self):
-        mxex = self.mxex
-        self.m_material = bpy.path.abspath(mxex.material)
-        self.m_material_embed = mxex.material_embed
-        self.m_backface_material = bpy.path.abspath(mxex.backface_material)
-        self.m_backface_material_embed = mxex.backface_material_embed
+        self.m_material = ''
+        self.m_backface_material = ''
+        if(self.mxex.material != ''):
+            self.m_material = bpy.data.materials[self.mxex.material].name
+        if(self.mxex.backface_material != ''):
+            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
 
 
 class MXSVolumetrics(MXSObject):
@@ -2063,11 +2065,12 @@ class MXSVolumetrics(MXSObject):
         self._transformation()
     
     def _materials(self):
-        mxex = self.mxex
-        self.m_material = bpy.path.abspath(mxex.material)
-        self.m_material_embed = mxex.material_embed
-        self.m_backface_material = bpy.path.abspath(mxex.backface_material)
-        self.m_backface_material_embed = mxex.backface_material_embed
+        self.m_material = ''
+        self.m_backface_material = ''
+        if(self.mxex.material != ''):
+            self.m_material = bpy.data.materials[self.mxex.material].name
+        if(self.mxex.backface_material != ''):
+            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
 
 
 class MXSModifier(Serializable):
@@ -2118,19 +2121,20 @@ class MXSGrass(MXSModifier):
         
         mxex = self.mxex
         
-        material = bpy.path.abspath(mxex.material)
-        if(material != "" and not os.path.exists(material)):
-            log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
-            material = ""
-        backface_material = bpy.path.abspath(mxex.backface_material)
-        if(backface_material != "" and not os.path.exists(backface_material)):
-            log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
-            material = ""
+        # material = bpy.path.abspath(mxex.material)
+        # if(material != "" and not os.path.exists(material)):
+        #     log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
+        #     material = ""
+        # backface_material = bpy.path.abspath(mxex.backface_material)
+        # if(backface_material != "" and not os.path.exists(backface_material)):
+        #     log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
+        #     material = ""
         
-        self.m_material = material
-        self.m_material_embed = mxex.material_embed
-        self.m_backface_material = backface_material
-        self.m_backface_material_embed = mxex.backface_material_embed
+        # self.m_material = material
+        # self.m_material_embed = mxex.material_embed
+        # self.m_backface_material = backface_material
+        # self.m_backface_material_embed = mxex.backface_material_embed
+        
         self.m_density = int(mxex.density)
         self.m_density_map = self._texture_to_data(mxex.density_map)
         self.m_length = mxex.length
@@ -2163,6 +2167,16 @@ class MXSGrass(MXSModifier):
         self.m_lod_max_distance_density = mxex.lod_max_distance_density
         self.m_display_percent = int(mxex.display_percent)
         self.m_display_max_blades = int(mxex.display_max_blades)
+        
+        self._materials()
+    
+    def _materials(self):
+        self.m_material = ''
+        self.m_backface_material = ''
+        if(self.mxex.material != ''):
+            self.m_material = bpy.data.materials[self.mxex.material].name
+        if(self.mxex.backface_material != ''):
+            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
 
 
 class MXSCloner(MXSModifier):
@@ -2198,7 +2212,7 @@ class MXSCloner(MXSModifier):
             
             check(ps)
             
-            # TODO: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
+            # FIXME: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
             # FIXME: also here i have 10 particles, but only 8 clones is rendered in place and one clone is far away, reimporting bin show all 10 particles are where they should be
             
             # i get particle locations in global coordinates, so need to fix that
@@ -2441,22 +2455,41 @@ class MXSSea(MXSObject):
         self._materials()
     
     def _materials(self):
-        mx = self.b_object.maxwell_sea_extension
-        self.m_material = bpy.path.abspath(mx.material)
-        self.m_material_embed = mx.material_embed
-        self.m_backface_material = bpy.path.abspath(mx.backface_material)
-        self.m_backface_material_embed = mx.backface_material_embed
+        self.m_material = ''
+        self.m_backface_material = ''
+        if(self.mxex.material != ''):
+            self.m_material = bpy.data.materials[self.mxex.material].name
+        if(self.mxex.backface_material != ''):
+            self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
 
 
-# --
 class MXSMaterial(Serializable):
-    def __init__(self):
+    def __init__(self, name='Material', ):
+        self.m_name = name
         self.m_type = 'MATERIAL'
+        self.skip = False
 
 
+class MXSMaterialMXM(MXSMaterial):
+    def __init__(self, name, path='', embed=True, ):
+        super().__init__(name)
+        
+        self.m_subtype = 'EXTERNAL'
+        
+        if(path != ''):
+            path = bpy.path.abspath(path)
+            if(not os.path.exists(path)):
+                log("{1}: mxm ('{0}') does not exist.".format(path, self.__class__.__name__), 2, LogStyles.WARNING, )
+                path = ''
+        
+        self.m_path = path
+        self.m_embed = embed
+
+
+'''
 class MXSMaterialCustom(MXSMaterial):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name, ):
+        super().__init__(name)
         
         self.m_kind = 'CUSTOM'
         self.m_mxm = ''
@@ -2464,8 +2497,8 @@ class MXSMaterialCustom(MXSMaterial):
 
 
 class MXSMaterialExtension(MXSMaterial):
-    def __init__(self, o, ):
-        super().__init__()
+    def __init__(self, name, o, ):
+        super().__init__(name)
         self.o = o
         self.m_override_map = o['override_map']
         self.m_bump = o['bump']
@@ -2531,8 +2564,8 @@ class MXSMaterialExtension(MXSMaterial):
 
 
 class MXSMaterialOpaque(MXSMaterialExtension):
-    def __init__(self, o, ):
-        super().__init__(o)
+    def __init__(self, name, o, ):
+        super().__init__(name, o, )
         self.m_color_type = o['opaque_color_type']
         self.m_color = o['opaque_color']
         self.m_color_map = self._texture_to_data(o['opaque_color_map'])
@@ -2548,7 +2581,7 @@ class MXSMaterialOpaque(MXSMaterialExtension):
 class MXSTexture(Serializable):
     def __init__(self):
         pass
-
+'''
 
 # --
 

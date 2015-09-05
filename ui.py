@@ -1096,6 +1096,9 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         sub.separator()
         r = sub.row()
         r.prop(m, 'object_id')
+        
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
+        
         sub.label("Hidden from:")
         s = sub.split(percentage=0.5)
         c = s.column()
@@ -1131,18 +1134,21 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         
         sub.prop(m, 'path')
         
-        sub.separator()
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'material')
-        c = s.column()
-        c.prop(m, 'material_embed', text='Embed', )
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'backface_material')
-        c = s.column()
-        c.prop(m, 'backface_material_embed', text='Embed', )
-        sub.separator()
+        # sub.separator()
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'material')
+        # c = s.column()
+        # c.prop(m, 'material_embed', text='Embed', )
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'backface_material')
+        # c = s.column()
+        # c.prop(m, 'backface_material_embed', text='Embed', )
+        # sub.separator()
+        
+        sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
         q = 0.33
         
@@ -1200,17 +1206,20 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
         
         sub.separator()
         
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'material')
-        c = s.column()
-        c.prop(m, 'material_embed', text='Embed', )
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'material')
+        # c = s.column()
+        # c.prop(m, 'material_embed', text='Embed', )
+        #
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'backface_material')
+        # c = s.column()
+        # c.prop(m, 'backface_material_embed', text='Embed', )
         
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'backface_material')
-        c = s.column()
-        c.prop(m, 'backface_material_embed', text='Embed', )
+        sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
         sub.separator()
         
@@ -1359,17 +1368,20 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
         if(not m.enabled):
             sub.active = False
         
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'material')
-        c = s.column()
-        c.prop(m, 'material_embed', text='Embed', )
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'material')
+        # c = s.column()
+        # c.prop(m, 'material_embed', text='Embed', )
+        #
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'backface_material')
+        # c = s.column()
+        # c.prop(m, 'backface_material_embed', text='Embed', )
         
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'backface_material')
-        c = s.column()
-        c.prop(m, 'backface_material_embed', text='Embed', )
+        sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
         sub.separator()
         
@@ -1960,12 +1972,18 @@ class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
     bl_label = "Maxwell Backface Material"
     bl_options = {'DEFAULT_CLOSED'}
     
+    @classmethod
+    def poll(cls, context):
+        return False
+    
     def draw(self, context):
         l = self.layout
         sub = l.column()
         m = context.object.maxwell_render
-        sub.prop(m, 'backface_material_file')
-        sub.prop(m, 'backface_material_embed')
+        # sub.prop(m, 'backface_material_file')
+        # sub.prop(m, 'backface_material_embed')
+        
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
         r = sub.row(align=True)
         if(m.backface_material_file == ''):
@@ -2353,17 +2371,20 @@ class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
         
         # sub.label("Object Properties:")
         
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'material')
-        c = s.column()
-        c.prop(m, 'material_embed', text='Embed', )
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'material')
+        # c = s.column()
+        # c.prop(m, 'material_embed', text='Embed', )
+        #
+        # s = sub.split(percentage=0.8)
+        # c = s.column()
+        # c.prop(m, 'backface_material')
+        # c = s.column()
+        # c.prop(m, 'backface_material_embed', text='Embed', )
         
-        s = sub.split(percentage=0.8)
-        c = s.column()
-        c.prop(m, 'backface_material')
-        c = s.column()
-        c.prop(m, 'backface_material_embed', text='Embed', )
+        sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
         sub.separator()
         

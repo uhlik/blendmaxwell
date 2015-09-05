@@ -479,8 +479,7 @@ class ObjectProperties(PropertyGroup):
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
-    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, )
-    backface_material_file = StringProperty(name="Backface MXM File", default="", subtype='FILE_PATH', )
+    backface_material = StringProperty(name="Backface Material", default="", )
     
     # hide = BoolProperty(name="Export, but Hide from Render", default=False, )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
@@ -503,10 +502,8 @@ class ReferenceProperties(PropertyGroup):
     flag_override_hide_to_refl_refr = BoolProperty(name="Reflections/Refractions", default=False, )
     flag_override_hide_to_gi = BoolProperty(name="Global Illumination", default=False, )
     
-    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
-    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    material = StringProperty(name="Material", default="", )
+    backface_material = StringProperty(name="Backface Material", default="", )
     
     @classmethod
     def register(cls):
@@ -748,10 +745,8 @@ class ParticlesProperties(PropertyGroup):
 class ExtGrassProperties(PropertyGroup):
     enabled = BoolProperty(name="Maxwell Grass", default=False, )
     
-    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
-    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    material = StringProperty(name="Material", default="", )
+    backface_material = StringProperty(name="Backface Material", default="", )
     
     density = IntProperty(name="Density (blades/m2)", default=3000, min=0, max=100000000, )
     density_map = StringProperty(name="Density Map", default="", )
@@ -807,13 +802,8 @@ class ExtGrassProperties(PropertyGroup):
 
 
 class ExtParticlesProperties(PropertyGroup):
-    # material_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', )
-    # material_embed = BoolProperty(name="Embed Into Scene", default=True, )
-    
-    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
-    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    material = StringProperty(name="Material", default="", )
+    backface_material = StringProperty(name="Backface Material", default="", )
     
     opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
     hidden_camera = BoolProperty(name="Camera", default=False, )
@@ -900,10 +890,8 @@ class ExtParticlesProperties(PropertyGroup):
 
 
 class ExtHairProperties(PropertyGroup):
-    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
-    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    material = StringProperty(name="Material", default="", )
+    backface_material = StringProperty(name="Backface Material", default="", )
     
     opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
     hidden_camera = BoolProperty(name="Camera", default=False, )
@@ -1007,10 +995,8 @@ class ExtSeaProperties(PropertyGroup):
     enabled = BoolProperty(name="Maxwell Sea", default=False, )
     hide_parent = BoolProperty(name="Hide Container Object", default=True, )
     
-    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
-    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    material = StringProperty(name="Material", default="", )
+    backface_material = StringProperty(name="Backface Material", default="", )
     
     resolution = EnumProperty(name="Quality", items=[('0', "4x4", ""), ('1', "8x8", ""), ('2', "16x16", ""), ('3', "32x32", ""), ('4', "64x64", ""),
                                                      ('5', "128x128", ""), ('6', "256x256", ""), ('7', "512x512", ""), ('8', "1024x1024", ""),
@@ -1089,10 +1075,8 @@ class ExtVolumetricsProperties(PropertyGroup):
     noise_octaves = IntProperty(name="Octaves", default=4, min=1, max=50, )
     noise_persistence = FloatProperty(name="Persistance", default=0.55, min=0.0, max=1.0, precision=4, )
     
-    material = StringProperty(name="MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
-    backface_material = StringProperty(name="Backface MXM File", description="Path to material (.MXM) file", default="", subtype='FILE_PATH', )
-    backface_material_embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    material = StringProperty(name="Material", default="", )
+    backface_material = StringProperty(name="Backface Material", default="", )
     
     @classmethod
     def register(cls):
