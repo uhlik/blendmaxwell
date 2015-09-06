@@ -44,6 +44,7 @@ AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).t
 ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
+# TODO: restore windows and linux support
 # TODO: unify error reporting: warning: write to console, fatal: raise exception, if something can't be exported: skip and print warning or raise exception?
 # TODO: do not export unused materials
 
