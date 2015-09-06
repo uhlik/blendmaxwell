@@ -44,7 +44,6 @@ AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).t
 ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
-# TODO: restore logging
 # TODO: unify error reporting: warning: write to console, fatal: raise exception, if something can't be exported: skip and print warning or raise exception?
 # TODO: do not export unused materials
 
@@ -77,6 +76,9 @@ class MXSExport():
             h, t = os.path.split(self.mxs_path)
             n, e = os.path.splitext(t)
             self.tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, self.uuid))
+            
+            log("creating temp directory.. ({})".format(self.tmp_dir), 1, LogStyles.MESSAGE, )
+            
             if(os.path.exists(self.tmp_dir) is False):
                 os.makedirs(self.tmp_dir)
             
@@ -633,9 +635,11 @@ class MXSExport():
     
     def _export(self):
         # collect all objects to be exported, split them by type. keep this dict if hiearchy would be needed
+        log("collecting objects..", 1, LogStyles.MESSAGE, )
         self.tree = self._collect()
         
         # all materials
+        log("writing materials:", 1, LogStyles.MESSAGE, )
         for mat in bpy.data.materials:
             mx = mat.maxwell_render
             if(mx.use == 'CUSTOM'):
@@ -645,14 +649,17 @@ class MXSExport():
                 exmat = MXSMaterialExtension(mat.name)
                 self._write(exmat)
         
+        log("writing cameras:", 1, LogStyles.MESSAGE, )
         for d in self._cameras:
             o = MXSCamera(d)
             self._write(o)
         
+        log("writing empties:", 1, LogStyles.MESSAGE, )
         for d in self._empties:
             o = MXSEmpty(d)
             self._write(o)
         
+        log("writing meshes:", 1, LogStyles.MESSAGE, )
         meshes = []
         
         for d in self._meshes:
@@ -660,6 +667,7 @@ class MXSExport():
             self._write(o)
             meshes.append(o)
         
+        log("writing instance bases:", 1, LogStyles.MESSAGE, )
         bases = []
         
         for d in self._bases:
@@ -674,6 +682,7 @@ class MXSExport():
                 if(b.mesh_name == mnm):
                     return b
         
+        log("writing instances:", 1, LogStyles.MESSAGE, )
         for d in self._instances:
             if(d['converted']):
                 b = find_base(d['object'].data.name)
@@ -682,15 +691,18 @@ class MXSExport():
             o = MXSMeshInstance(d, b, )
             self._write(o)
         
+        log("writing duplicates:", 1, LogStyles.MESSAGE, )
         for d in self._duplicates:
             b = find_base(d['mesh'].name)
             o = MXSMeshInstance(d, b, )
             self._write(o)
         
+        log("writing mxs references:", 1, LogStyles.MESSAGE, )
         for d in self._references:
             o = MXSReference(d)
             self._write(o)
         
+        log("writing particles:", 1, LogStyles.MESSAGE, )
         for d in self._particles:
             ps = d['object']
             if(ps.settings.maxwell_render.use == 'PARTICLES'):
@@ -700,6 +712,7 @@ class MXSExport():
                 o = MXSHair(d)
                 self._write(o)
         
+        log("writing volumetrics:", 1, LogStyles.MESSAGE, )
         for d in self._volumetrics:
             o = MXSVolumetrics(d)
             self._write(o)
@@ -709,6 +722,7 @@ class MXSExport():
                 if(m.m_name == nm):
                     return m
         
+        log("writing object modifiers:", 1, LogStyles.MESSAGE, )
         for d in self._modifiers:
             if(d['export_type'] == 'CLONER'):
                 o = MXSCloner(d)
@@ -731,9 +745,11 @@ class MXSExport():
                 o = MXSSea(d)
                 self._write(o)
         
+        log("writing environment..", 1, LogStyles.MESSAGE, )
         o = MXSEnvironment()
         self._write(o)
         
+        log("writing custom alpha groups:", 1, LogStyles.MESSAGE, )
         # all object are processed now, i can work with all object which have made it through
         groups = []
         allowed = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
@@ -757,6 +773,7 @@ class MXSExport():
                                         
                 groups.append(a)
         
+        log("writing scene properties..", 1, LogStyles.MESSAGE, )
         o = MXSScene(self.mxs_path, groups, )
         self._write(o)
     
@@ -869,11 +886,14 @@ class MXSExport():
     def _finish(self):
         if(system.PLATFORM == 'Darwin'):
             # Mac OS X specific
+            log("writing serialized scene data..".format(), 1, LogStyles.MESSAGE, )
             p = self._serialize(self.serialized_data, self.scene_data_name)
             self.scene_data_path = p
             # generate and execute py32 script
+            log("running pymaxwell..".format(), 1, LogStyles.MESSAGE, )
             self._pymaxwell()
             # remove all generated files
+            log("removing intermediates..".format(), 1, LogStyles.MESSAGE, )
             self._cleanup()
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
             pass
@@ -1216,6 +1236,8 @@ class MXSEnvironment(Serializable):
 
 class MXSCamera(Serializable):
     def __init__(self, o, ):
+        log("'{}'".format(o['object'].name), 2)
+        
         super().__init__()
         
         ob = o['object']
@@ -1455,12 +1477,16 @@ class MXSObject(Serializable):
 
 class MXSEmpty(MXSObject):
     def __init__(self, o, ):
+        log("'{}'".format(o['object'].name), 2)
+        
         super().__init__(o)
         self.m_type = 'EMPTY'
 
 
 class MXSMesh(MXSObject):
     def __init__(self, o, ):
+        log("'{}'".format(o['object'].name), 2)
+        
         super().__init__(o)
         self.m_type = 'MESH'
         
@@ -1599,6 +1625,8 @@ class MXSMesh(MXSObject):
 
 class MXSMeshInstance(MXSObject):
     def __init__(self, o, base, ):
+        log("'{}'".format(o['object'].name), 2)
+        
         super().__init__(o)
         self.m_type = 'MESH_INSTANCE'
         self.m_instanced = base.m_name
@@ -1627,6 +1655,8 @@ class MXSMeshInstance(MXSObject):
 
 class MXSReference(MXSObject):
     def __init__(self, o, ):
+        log("'{}' > '{}'".format(o['object'].name, bpy.path.abspath(o['object'].maxwell_render_reference.path), ), 2)
+        
         super().__init__(o)
         self.m_type = 'REFERENCE'
         
@@ -1640,6 +1670,7 @@ class MXSReference(MXSObject):
             self.skip = True
         
         self.m_path = bpy.path.abspath(bpy.path.abspath(mx.path))
+        
         self.m_flag_override_hide = mx.flag_override_hide
         self.m_flag_override_hide_to_camera = mx.flag_override_hide_to_camera
         self.m_flag_override_hide_to_refl_refr = mx.flag_override_hide_to_refl_refr
@@ -1654,16 +1685,18 @@ class MXSReference(MXSObject):
             try:
                 self.m_material = bpy.data.materials[self.ref.material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.ref.material, ), 3, LogStyles.WARNING, )
+                log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.material, ), 3, LogStyles.WARNING, )
         if(self.ref.backface_material != ''):
             try:
                 self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.ref.backface_material, ), 3, LogStyles.WARNING, )
+                log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSParticles(MXSObject):
     def __init__(self, o, ):
+        log("'{}' > '{}' ({})".format(o['parent'].name, o['object'].name, 'PARTICLES', ), 2)
+        
         super().__init__(o, True, )
         
         self.m_type = 'PARTICLES'
@@ -1893,6 +1926,8 @@ class MXSParticles(MXSObject):
 
 class MXSHair(MXSObject):
     def __init__(self, o, ):
+        log("'{}' > '{}' ({})".format(o['parent'].name, o['object'].name, 'HAIR', ), 2)
+        
         super().__init__(o, True, )
         
         self.m_type = 'HAIR'
@@ -2048,6 +2083,8 @@ class MXSHair(MXSObject):
 
 class MXSVolumetrics(MXSObject):
     def __init__(self, o, ):
+        log("'{}' ({})".format(o['object'].name, 'VOLUMETRICS', ), 2)
+        
         super().__init__(o)
         self.m_type = 'VOLUMETRICS'
         
@@ -2107,6 +2144,8 @@ class MXSModifier(Serializable):
 
 class MXSGrass(MXSModifier):
     def __init__(self, o, ):
+        log("'{}' ({})".format(o['object'].name, 'GRASS', ), 2)
+        
         super().__init__(o)
         self.m_type = 'GRASS'
         self.mxex = self.b_object.maxwell_grass_extension
@@ -2179,8 +2218,11 @@ class MXSGrass(MXSModifier):
 
 class MXSCloner(MXSModifier):
     def __init__(self, o, ):
+        log("'{}' ({})".format(o['object'].name, 'CLONER', ), 2)
+        
         super().__init__(o)
         self.m_type = 'CLONER'
+        
         self.b_object = self.o['parent']
         self.ps = self.o['object']
         self.mxex = self.ps.settings.maxwell_cloner_extension
@@ -2321,6 +2363,8 @@ class MXSCloner(MXSModifier):
 
 class MXSScatter(MXSModifier):
     def __init__(self, o, ):
+        log("'{}' ({})".format(o['object'].name, 'SCATTER', ), 2)
+        
         super().__init__(o)
         self.m_type = 'SCATTER'
         self.mxex = self.b_object.maxwell_scatter_extension
@@ -2361,6 +2405,8 @@ class MXSScatter(MXSModifier):
 
 class MXSSubdivision(MXSModifier):
     def __init__(self, o, quad_pairs, ):
+        log("'{}' ({})".format(o['object'].name, 'SUBDIVISION', ), 2)
+        
         super().__init__(o)
         self.m_type = 'SUBDIVISION'
         self.mxex = self.b_object.maxwell_subdivision_extension
@@ -2412,6 +2458,8 @@ class MXSSubdivision(MXSModifier):
 
 class MXSSea(MXSObject):
     def __init__(self, o, ):
+        log("'{}' ({})".format(o['object'].name, 'SEA', ), 2)
+        
         super().__init__(o, True, )
         self.m_type = 'SEA'
         
@@ -2486,6 +2534,8 @@ class MXSMaterial(Serializable):
 
 class MXSMaterialMXM(MXSMaterial):
     def __init__(self, name, path='', embed=True, ):
+        log("'{}' > '{}'".format(name, bpy.path.abspath(path), ), 2)
+        
         super().__init__(name)
         self.m_subtype = 'EXTERNAL'
         if(path != ''):
@@ -2513,6 +2563,8 @@ class MXSMaterialMXM(MXSMaterial):
 
 class MXSMaterialExtension(MXSMaterial):
     def __init__(self, name, ):
+        log("'{}' > '{}'".format(name, bpy.data.materials[name].maxwell_render.use, ), 2)
+        
         super().__init__(name)
         self.m_subtype = 'EXTENSION'
         
@@ -2534,6 +2586,7 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_id = self._color_to_rgb8(m.global_id)
         
         self.m_use = m.use
+        
         if(self.m_use == 'EMITTER'):
             self._emitter()
         elif(self.m_use == 'AGS'):
@@ -2657,6 +2710,8 @@ class MXSMaterialExtension(MXSMaterial):
 
 class MXSTexture(Serializable):
     def __init__(self, name, ):
+        log("'{}' ({})".format(name, 'IMAGE', ), 2)
+        
         self.m_name = name
         self.m_type = 'TEXTURE'
         self.m_subtype = 'IMAGE'
@@ -2668,6 +2723,7 @@ class MXSTexture(Serializable):
         
         self.m_type = 'IMAGE'
         self.m_path = bpy.path.abspath(tex.image.filepath)
+        
         # self.m_channel = 0
         self.m_use_override_map = m.use_global_map
         # self.m_tile_method_type = (True, True, )
