@@ -56,6 +56,8 @@ class MXSExport():
         self.mxs_path = os.path.realpath(mxs_path)
         self.context = bpy.context
         
+        self.uuid = uuid.uuid1()
+        
         mx = self.context.scene.maxwell_render
         self.use_instances = mx.export_use_instances
         
@@ -72,7 +74,7 @@ class MXSExport():
             mx = self.context.scene.maxwell_render
             self.keep_intermediates = mx.export_keep_intermediates
             
-            self.uuid = uuid.uuid1()
+            # self.uuid = uuid.uuid1()
             h, t = os.path.split(self.mxs_path)
             n, e = os.path.splitext(t)
             self.tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, self.uuid))

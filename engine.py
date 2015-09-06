@@ -26,7 +26,7 @@ from bpy.types import RenderEngine
 
 import numpy
 
-from .log import log, LogStyles, LOG_FILE_PATH
+from .log import log, LogStyles, LOG_FILE_PATH, copy_paste_log
 from . import export
 from . import ops
 from . import system
@@ -377,8 +377,11 @@ class MaxwellRenderExportEngine(RenderEngine):
                 n, e = os.path.splitext(t)
                 m.output_mxi = os.path.join(h, "{}{}{}".format(n, m.private_suffix, e))
         
+        log_file_path = None
         ex = None
         if(m.export_wireframe):
+            raise Exception("Wire export disabled at this time..")
+            
             wire_mat = {'reflectance_0': [int(255 * v) for v in m.export_wire_mat_reflectance_0],
                         'reflectance_90': [int(255 * v) for v in m.export_wire_mat_reflectance_90],
                         'roughness': m.export_wire_mat_roughness,
@@ -438,6 +441,16 @@ class MaxwellRenderExportEngine(RenderEngine):
             
             ex = export.MXSExport(mxs_path=p, )
             
+            from .log import NUMBER_OF_WARNINGS
+            if(NUMBER_OF_WARNINGS > 0):
+                self.report({'ERROR'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
+                
+                h, t = os.path.split(p)
+                n, e = os.path.splitext(t)
+                u = ex.uuid
+                log_file_path = os.path.join(h, '{}-export_log-{}.txt'.format(n, u))
+                copy_paste_log(log_file_path)
+            
             # pr.disable()
             # s = io.StringIO()
             # sortby = 'cumulative'
@@ -447,7 +460,12 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         if((m.exporting_animation_now and scene.frame_current == scene.frame_end) or not m.exporting_animation_now):
             if(m.export_log_open):
-                system.open_file_in_default_application(LOG_FILE_PATH)
+                if(log_file_path is not None):
+                    # open local, it gets written only when some warnigns are encountered
+                    system.open_file_in_default_application(log_file_path)
+                else:
+                    # else open global log file from inside addon files
+                    system.open_file_in_default_application(LOG_FILE_PATH)
         
         # open in..
         if(ex is not None and not m.exporting_animation_now):
