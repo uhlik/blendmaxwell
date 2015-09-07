@@ -2544,6 +2544,7 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
             c.prop(m, 'hair_root_radius')
             c.prop(m, 'hair_tip_radius')
         
+        sub.separator()
         r = sub.row()
         if(len(o.data.uv_textures) == 0):
             r.label("No UV Maps", icon='ERROR', )
