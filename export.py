@@ -92,7 +92,8 @@ class MXSExport():
             self.script_name = "{0}-{1}.py".format(n, self.uuid)
             
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
-            pass
+            self.mxs = mxs.MXSWriter(path=self.mxs_path, append=False, )
+            self.hierarchy = []
     
     def _collect(self):
         """Collect scene objects.
@@ -477,7 +478,7 @@ class MXSExport():
         # no visible camera
         if(len(self._cameras) == 0):
             log("No visible and active camera in scene!", 2, LogStyles.WARNING)
-            log("Trying to find hidden active camera..", 3, LogStyles.WARNING)
+            log("Trying to find hidden active camera..", 3)
             ac = self.context.scene.camera
             if(ac is not None):
                 # there is one active in scene, try to find it
@@ -489,7 +490,7 @@ class MXSExport():
                         cam = o
                         cam['export'] = True
                         self._cameras.append(cam)
-                        log("Found active camera: '{0}' and added to scene.".format(cam['object'].name), 3, LogStyles.WARNING)
+                        log("Found active camera: '{0}' and added to scene.".format(cam['object'].name), 3)
                 for o in h:
                     walk(o)
         
@@ -757,6 +758,8 @@ class MXSExport():
         groups = []
         allowed = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
         children = ['PARTICLES', 'HAIR', 'SEA', ]
+        
+        # FIXME: on Windows and Linux, self.serialized_data is not created so this will not work
         # my humble apologies for following if-for-if-for.. loop
         for g in bpy.data.groups:
             gmx = g.maxwell_render
@@ -877,14 +880,231 @@ class MXSExport():
                 a = o._repr()
                 self.serialized_data.append(a)
             
-        elif(system.PLATFORM == 'Linux'):
-            # # directly write to mxs
-            # self.mxs.write(**o._dict())
-            pass
-        elif(system.PLATFORM == 'Windows'):
-            # # directly write to mxs
-            # self.mxs.write(**o._dict())
-            pass
+            # if(o.m_type == 'MATERIAL'):
+            #     d = o._dict()
+            #     for k, v in d.items():
+            #         print(k, ':', v)
+            
+        elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+            if(o.skip):
+                return
+            
+            def pack_object_props(o):
+                return (o.m_hide, o.m_opacity, o.m_object_id, o.m_hidden_camera, o.m_hidden_camera_in_shadow_channel,
+                        o.m_hidden_global_illumination, o.m_hidden_reflections_refractions, o.m_hidden_zclip_planes, )
+            
+            def pack_matrix(o):
+                return (o.m_base, o.m_pivot, o.m_location, o.m_rotation, o.m_scale, )
+            
+            def pack_prefix(o, prefix, rm=True, ):
+                d = o._repr()
+                r = {}
+                l = len(prefix)
+                for k, v in d.items():
+                    if(k.startswith(prefix)):
+                        if(not rm):
+                            r[k] = v
+                        else:
+                            r[k[l:]] = v
+                return r
+            
+            if(o.m_type == 'MATERIAL'):
+                self.mxs.material(o._repr())
+            elif(o.m_type == 'CAMERA'):
+                props = (o.m_name, o.m_number_of_steps, o.m_shutter, o.m_film_width, o.m_film_height, o.m_iso, o.m_aperture, o.m_diaphragm_angle,
+                         o.m_diaphragm_blades, o.m_frame_rate, o.m_resolution_x, o.m_resolution_y, o.m_pixel_aspect, o.m_lens, )
+                steps = o.m_steps
+                lens_extra = None
+                if(o.m_lens != 0):
+                    if(mx.lens == 3):
+                        lens_extra = o.m_fov
+                    elif(mx.lens == 4):
+                        lens_extra = o.m_azimuth
+                    elif(mx.lens == 5):
+                        lens_extra = o.m_angle
+                screen_region = None
+                if(o.m_screen_region != 'NONE'):
+                    screen_region = o.m_screen_region_xywh
+                custom_bokeh = None
+                if(o.m_custom_bokeh):
+                    custom_bokeh = (o.m_bokeh_ratio, o.m_bokeh_angle, o.m_custom_bokeh)
+                cut_planes = None
+                if(o.m_set_cut_planes[2] != 0):
+                    cut_planes = o.m_set_cut_planes
+                shift_lens = None
+                if(o.m_set_shift_lens != (0.0, 0.0)):
+                    shift_lens = o.m_set_shift_lens
+                self.mxs.camera(props, steps, o.m_active, lens_extra, o.m_response, screen_region, custom_bokeh, cut_planes, shift_lens, )
+            elif(o.m_type == 'EMPTY'):
+                self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
+                self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'MESH'):
+                self.mxs.mesh(o.m_name, pack_matrix(o), o.m_num_positions,
+                              o.m_vertices, o.m_normals, o.m_triangles, o.m_triangle_normals,
+                              o.m_uv_channels, pack_object_props(o), o.m_num_materials,
+                              o.m_materials, o.m_triangle_materials, o.m_backface_material, )
+                self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'MESH_INSTANCE'):
+                self.mxs.instance(o.m_name, o.m_instanced, pack_matrix(o), pack_object_props(o), o.m_materials, o.m_backface_material, )
+                self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'SCENE'):
+                other = {'protect': o.m_export_protect_mxs,
+                         'extra_sampling_enabled': o.m_extra_sampling_enabled,
+                         'extra_sampling_sl': o.m_extra_sampling_sl,
+                         'extra_sampling_mask': o.m_extra_sampling_mask,
+                         'extra_sampling_custom_alpha': o.m_extra_sampling_custom_alpha,
+                         'extra_sampling_user_bitmap': o.m_extra_sampling_user_bitmap,
+                         'extra_sampling_invert': o.m_extra_sampling_invert, }
+                
+                self.mxs.parameters(pack_prefix(o, 'scene_', ),
+                                    pack_prefix(o, 'materials_', ),
+                                    pack_prefix(o, 'globals_', ),
+                                    pack_prefix(o, 'tone_', ),
+                                    pack_prefix(o, 'simulens_', ),
+                                    pack_prefix(o, 'illum_caustics_', ),
+                                    other, )
+                
+                mxi = None
+                if(o.m_output_mxi_enabled):
+                    mxi = bpy.path.abspath(o.m_output_mxi)
+                image = None
+                image_depth = None
+                if(o.m_output_image_enabled):
+                    image = bpy.path.abspath(o.m_output_image)
+                    image_depth = o.m_output_depth
+                if(mxi is not None):
+                    h, t = os.path.split(mxi)
+                    n, e = os.path.splitext(t)
+                    base_path = os.path.join(h, n)
+                elif(image is not None):
+                    h, t = os.path.split(image)
+                    n, e = os.path.splitext(t)
+                    base_path = os.path.join(h, n)
+                else:
+                    h, t = os.path.split(self.mxs_path)
+                    n, e = os.path.splitext(t)
+                    base_path = os.path.join(h, n)
+                channels_output_mode = o.m_channels_output_mode
+                channels_render = o.m_channels_render
+                channels_render_type = o.m_channels_render_type
+                
+                self.mxs.channels(base_path, mxi, image, image_depth, channels_output_mode, channels_render, channels_render_type, pack_prefix(o, 'channels_', False, ), )
+                
+                self.mxs.custom_alphas(o.m_channels_custom_alpha_groups)
+                
+            elif(o.m_type == 'ENVIRONMENT'):
+                env_type = o.m_env_type
+                if(env_type == 'NONE'):
+                    self.mxs.environment(None)
+                    return
+                
+                sky_type = o.m_sky_type
+                sky = pack_prefix(o, 'sky_', False, )
+                dome = pack_prefix(o, 'dome_', False, )
+                sun_type = o.m_sun_type
+                sun = None
+                if(sun_type != 'DISABLED'):
+                    sun = pack_prefix(o, 'sun_', False, )
+                    v = Vector((o.m_sun_dir_x, o.m_sun_dir_y, o.m_sun_dir_z))
+                    sun['sun_dir_x'] = v.x
+                    sun['sun_dir_y'] = v.y
+                    sun['sun_dir_z'] = v.z
+                ibl = None
+                if(env_type == 'IMAGE_BASED'):
+                    ibl = pack_prefix(o, 'ibl_', False, )
+                
+                self.mxs.environment(env_type, sky_type, sky, dome, sun_type, sun, ibl, )
+            elif(o.m_type == 'PARTICLES'):
+                properties = pack_prefix(o, 'bin_', )
+                properties['embed'] = o.m_embed
+                properties['pdata'] =  o.m_pdata
+                self.mxs.ext_particles(o.m_name, properties, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
+                self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'HAIR'):
+                if(o.m_extension == 'MGrassP'):
+                    rr = o.m_grass_root_radius
+                    tr = o.m_grass_tip_radius
+                    dm = o.m_display_max_blades
+                else:
+                    rr = o.m_hair_root_radius
+                    tr = o.m_hair_tip_radius
+                    dm = o.m_display_max_hairs
+                
+                data = o.m_data
+                data['HAIR_POINTS'] = o.data_locs
+                
+                self.mxs.ext_hair(o.m_name, o.m_extension, pack_matrix(o), rr, tr,
+                                  o.m_data, pack_object_props(o), o.m_display_percent, dm,
+                                  o.m_material, o.m_backface_material, )
+                self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'REFERENCE'):
+                flags = (o.m_flag_override_hide, o.m_flag_override_hide_to_camera, o.m_flag_override_hide_to_refl_refr, o.m_flag_override_hide_to_gi, )
+                self.mxs.reference(o.m_name, o.m_path, flags, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
+                self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'VOLUMETRICS'):
+                properties = (o.m_vtype, o.m_density, o.m_noise_seed, o.m_noise_low, o.m_noise_high, o.m_noise_detail, o.m_noise_octaves, o.m_noise_persistence)
+                self.mxs.ext_volumetrics(o.m_name, properties, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
+                self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'SUBDIVISION'):
+                self.mxs.mod_subdivision(o.m_object, o.m_level, o.m_scheme, o.m_interpolation, o.m_crease, o.m_smooth, o.m_quad_pairs, )
+                # self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'SCATTER'):
+                density = (o.m_density, o.m_density_map, )
+                scale = (o.m_scale_x, o.m_scale_y, o.m_scale_z, o.m_scale_map, o.m_scale_variation_x, o.m_scale_variation_y, o.m_scale_variation_z, )
+                rotation = (o.m_rotation_x, o.m_rotation_y, o.m_rotation_z, o.m_rotation_map,
+                            o.m_rotation_variation_x, o.m_rotation_variation_y, o.m_rotation_variation_z, o.m_rotation_direction, )
+                lod = (o.m_lod, o.m_lod_min_distance, o.m_lod_max_distance, o.m_lod_max_distance_density, )
+                self.mxs.mod_scatter(o.m_object, o.m_scatter_object, o.m_inherit_objectid, density, o.m_seed, scale, rotation, lod, o.m_display_percent, o.m_display_max_blades, )
+                # self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'GRASS'):
+                properties = {'density': o.m_density,
+                              'density_map': o.m_density_map,
+                              'length': o.m_length,
+                              'length_map': o.m_length_map,
+                              'length_variation': o.m_length_variation,
+                              'root_width': o.m_root_width,
+                              'tip_width': o.m_tip_width,
+                              'direction_type': o.m_direction_type,
+                              'initial_angle': o.m_initial_angle,
+                              'initial_angle_map': o.m_initial_angle_map,
+                              'initial_angle_variation': o.m_initial_angle_variation,
+                              'start_bend': o.m_start_bend,
+                              'start_bend_map': o.m_start_bend_map,
+                              'start_bend_variation': o.m_start_bend_variation,
+                              'bend_radius': o.m_bend_radius,
+                              'bend_radius_map': o.m_bend_radius_map,
+                              'bend_radius_variation': o.m_bend_radius_variation,
+                              'bend_angle': o.m_bend_angle,
+                              'bend_angle_map': o.m_bend_angle_map,
+                              'bend_angle_variation': o.m_bend_angle_variation,
+                              'cut_off': o.m_cut_off,
+                              'cut_off_map': o.m_cut_off_map,
+                              'cut_off_variation': o.m_cut_off_variation,
+                              'points_per_blade': o.m_points_per_blade,
+                              'primitive_type': o.m_primitive_type,
+                              'seed': o.m_seed,
+                              'lod': o.m_lod,
+                              'lod_max_distance': o.m_lod_max_distance,
+                              'lod_max_distance_density': o.m_lod_max_distance_density,
+                              'lod_min_distance': o.m_lod_min_distance,
+                              'display_max_blades': o.m_display_max_blades,
+                              'display_percent': o.m_display_percent, }
+                self.mxs.mod_grass(o.m_object, properties, o.m_material, o.m_backface_material, )
+                # self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'CLONER'):
+                self.mxs.mod_cloner(o.m_object, o.m_cloned_object, o.m_render_emitter, o.m_pdata, o.m_radius, o.m_mb_factor,
+                                    o.m_load_percent, o.m_start_offset, o.m_extra_npp, o.m_extra_p_dispersion, o.m_extra_p_deformation,
+                                    o.m_align_to_velocity, o.m_scale_with_radius, o.m_inherit_obj_id, o.m_frame, o.m_fps,
+                                    o.m_display_percent, o.m_display_max, )
+                # self.hierarchy.append((o.m_name, o.m_parent))
+            elif(o.m_type == 'SEA'):
+                geometry = (o.m_reference_time, o.m_resolution, o.m_ocean_depth, o.m_vertical_scale, o.m_ocean_dim, o.m_ocean_seed,
+                            o.m_enable_choppyness, o.m_choppy_factor, o.m_enable_white_caps, )
+                wind = (o.m_ocean_wind_mod, o.m_ocean_wind_dir, o.m_ocean_wind_alignment, o.m_ocean_min_wave_length, o.m_damp_factor_against_wind, )
+                self.mxs.ext_sea(o.m_name, pack_matrix(o), pack_object_props(o), geometry, wind, o.m_material, o.m_backface_material, )
+                self.hierarchy.append((o.m_name, o.m_parent))
+            else:
+                raise TypeError("{0} is unknown type".format(o.m_type))
     
     def _finish(self):
         if(system.PLATFORM == 'Darwin'):
@@ -899,7 +1119,13 @@ class MXSExport():
             log("removing intermediates..".format(), 1, LogStyles.MESSAGE, )
             self._cleanup()
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
-            pass
+            log("setting object hiearchy..".format(), 1, LogStyles.MESSAGE, )
+            self.mxs.hierarchy(self.hierarchy)
+            log("writing .mxs file..".format(), 1, LogStyles.MESSAGE, )
+            self.mxs.write()
+            log("mxs saved in:", 1)
+            log("{0}".format(self.mxs_path), 0, LogStyles.MESSAGE, prefix="")
+            log("done.", 1, LogStyles.MESSAGE)
     
     def _serialize(self, d, n, ):
         if(not n.endswith(".json")):
@@ -2713,7 +2939,7 @@ class MXSMaterialExtension(MXSMaterial):
 
 class MXSTexture(Serializable):
     def __init__(self, name, ):
-        log("'{}' ({})".format(name, 'IMAGE', ), 2)
+        log("'{}' ({}: {})".format(name, 'TEXTURE', 'IMAGE', ), 2)
         
         self.m_name = name
         self.m_type = 'TEXTURE'
@@ -9047,6 +9273,8 @@ class MXSExport():
         return (True, d, )
 
 
+'''
+'''
 class MXSExportWireframe(MXSExport):
     def __init__(self, context, mxs_path, use_instances=True, edge_radius=0.00025, edge_resolution=32, wire_mat={}, clay_mat={}, ):
         self.edge_radius = edge_radius

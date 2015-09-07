@@ -29,33 +29,6 @@ s = platform.system()
 if(s == 'Darwin'):
     pass
 elif(s == 'Linux'):
-    # mp = os.environ.get("MAXWELL3_ROOT")
-    # pymxp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
-    # sys.path.append(pmp)
-    # lib = "libmxcommon.so"
-    # libp = os.path.join(mp, lib)
-    # linkp = os.path.join(pymxp, lib)
-    # if(os.path.islink(linkp)):
-    #     if(os.path.realpath(linkp) != libp):
-    #         os.unlink(linkp)
-    # os.symlink(libp, linkp)
-    # mgr = CextensionManager.instance()
-    # mgr.loadAllExtensions()
-    # os.unlink(linkp)
-    
-    # mp = os.environ.get("MAXWELL3_ROOT")
-    # pymxp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
-    # sys.path.append(pymxp)
-    # os.environ['LD_LIBRARY_PATH'] = mp
-    # from pymaxwell import *
-    # mgr = CextensionManager.instance()
-    # mgr.loadAllExtensions()
-    
-    # install libtbb-dev
-    # before starting blender (from terminal of course) do: export LD_LIBRARY_PATH=$MAXWELL3_ROOT
-    # or add this to profile: export LD_LIBRARY_PATH=$MAXWELL3_ROOT:$LD_LIBRARY_PATH
-    # manipulating LD_LIBRARY_PATH from blender itself will not work because it is already running..
-    
     try:
         from pymaxwell import *
     except ImportError:
@@ -90,7 +63,7 @@ class MXSWriter():
         
         if(__name__ != "__main__"):
             if(platform.system() == 'Darwin'):
-                raise ImportError("No pymaxwell for Mac OS X..")
+                raise ImportError("No pymaxwell directly in Blender on Mac OS X..")
         
         log(self.__class__.__name__, 1, LogStyles.MESSAGE, prefix="* ", )
         
@@ -105,7 +78,7 @@ class MXSWriter():
         self.mgr = CextensionManager.instance()
         self.mgr.loadAllExtensions()
         
-        self.matdb = []
+        # self.matdb = []
     
     def write(self):
         """Write scene fo file.
@@ -116,16 +89,24 @@ class MXSWriter():
         log("done.", 2)
         return ok
     
-    def set_base_and_pivot(self, o, base=None, pivot=None, ):
+    def set_base_and_pivot(self, o, matrix=None, ):
         """Convert float tuples to Cbases and set to object.
         o       CmaxwellObject
         base    ((3 float), (3 float), (3 float), (3 float)) or None
         pivot   ((3 float), (3 float), (3 float), (3 float)) or None
         """
-        if(base is None):
-            base = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
-        if(pivot is None):
-            pivot = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+        if(matrix is None):
+            matrix = ([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+                      [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+                      [0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0])
+        base = matrix[0]
+        pivot = matrix[1]
+        l = matrix[2]
+        r = matrix[3]
+        s = matrix[4]
+        
         b = Cbase()
         b.origin = Cvector(*base[0])
         b.xAxis = Cvector(*base[1])
@@ -137,6 +118,12 @@ class MXSWriter():
         p.yAxis = Cvector(*pivot[2])
         p.zAxis = Cvector(*pivot[3])
         o.setBaseAndPivot(b, p)
+        
+        o.setPivotPosition(Cvector(*l))
+        o.setPivotRotation(Cvector(*r))
+        o.setPosition(Cvector(*l))
+        o.setRotation(Cvector(*r))
+        o.setScale(Cvector(*s))
     
     def set_object_props(self, o, hide=False, opacity=100, cid=(255, 255, 255), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, ):
         """Set common object properties.
@@ -274,6 +261,7 @@ class MXSWriter():
         
         return t
     
+    '''
     def load_material(self, path, embed, ):
         """Load material from mxm file.
         path    string or None
@@ -548,6 +536,325 @@ class MXSWriter():
         self.matdb.append((n, m, True, False))
         
         return m
+    '''
+    
+    def material_placeholder(self, n=None, ):
+        if(n is not None):
+            # n = '{}_{}'.format(n, 'MATERIAL_PLACEHOLDER')
+            pass
+        else:
+            n = 'MATERIAL_PLACEHOLDER'
+        
+        s = self.mxs
+        m = s.createMaterial(n)
+        l = m.addLayer()
+        b = l.addBSDF()
+        r = b.getReflectance()
+        a = Cattribute()
+        a.activeType = MAP_TYPE_BITMAP
+        t = CtextureMap()
+        mgr = CextensionManager.instance()
+        mgr.loadAllExtensions()
+        e = mgr.createDefaultTextureExtension('Checker')
+        ch = e.getExtensionData()
+        ch.setUInt('Number of elements U', 32)
+        ch.setUInt('Number of elements V', 32)
+        t.addProceduralTexture(ch)
+        a.textureMap = t
+        r.setAttribute('color', a)
+        return m
+    
+    def material_default(self, n, ):
+        s = self.mxs
+        m = s.createMaterial(n)
+        l = m.addLayer()
+        b = l.addBSDF()
+        return m
+    
+    def material_external(self, d, ):
+        s = self.mxs
+        p = d['path']
+        t = s.readMaterial(p)
+        t.setName(d['name'])
+        m = s.addMaterial(t)
+        if(not d['embed']):
+            m.setReference(1, p)
+        return m
+    
+    def material(self, d, ):
+        s = self.mxs
+        if(d['subtype'] == 'EXTERNAL'):
+            if(d['path'] == ''):
+                m = self.material_placeholder(d['name'])
+            else:
+                m = self.material_external(d)
+                
+                if(d['override']):
+                    # global properties
+                    if(d['override_map']):
+                        t = self.texture(d['override_map'])
+                        m.setGlobalMap(t)
+                    
+                    if(d['bump']):
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_BITMAP
+                        a.textureMap = self.texture(d['bump_map'])
+                        a.value = d['bump_value']
+                        m.setAttribute('bump', a)
+                    
+                    m.setDispersion(d['dispersion'])
+                    m.setMatteShadow(d['shadow'])
+                    m.setMatte(d['matte'])
+                    
+                    # TODO: 3.2 update > set priority
+                    
+                    c = Crgb()
+                    cc = [c / 255 for c in d['id']]
+                    c.assign(*cc)
+                    m.setColorID(c)
+        
+        elif(d['subtype'] == 'EXTENSION'):
+            if(d['use'] == 'EMITTER'):
+                m = s.createMaterial(d['name'])
+                l = m.addLayer()
+                e = l.createEmitter()
+                
+                if(d['emitter_type'] == 0):
+                    e.setLobeType(EMISSION_LOBE_DEFAULT)
+                elif(d['emitter_type'] == 1):
+                    e.setLobeType(EMISSION_LOBE_IES)
+                    e.setLobeIES(d['emitter_ies_data'])
+                    e.setIESLobeIntensity(d['emitter_ies_intensity'])
+                elif(d['emitter_type'] == 2):
+                    # e.setLobeType(EMISSION_LOBE_BITMAP)
+                    e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
+                    if(d['emitter_spot_map'] is not None):
+                        t = self.texture(d['emitter_spot_map'])
+                        e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
+                    e.setSpotConeAngle(d['emitter_spot_cone_angle'])
+                    e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
+                    e.setSpotFallOffType(d['emitter_spot_falloff_type'])
+                    e.setSpotBlur(d['emitter_spot_blur'])
+                
+                if(d['emitter_emission'] == 0):
+                    e.setActiveEmissionType(EMISSION_TYPE_PAIR)
+                    
+                    ep = CemitterPair()
+                    c = Crgb8()
+                    c.assign(*d['emitter_color'])
+                    ep.rgb.assign(c.toRGB())
+                    ep.temperature = d['emitter_color_black_body']
+                    ep.watts = d['emitter_luminance_power']
+                    ep.luminousEfficacy = d['emitter_luminance_efficacy']
+                    ep.luminousPower = d['emitter_luminance_output']
+                    ep.illuminance = d['emitter_luminance_output']
+                    ep.luminousIntensity = d['emitter_luminance_output']
+                    ep.luminance = d['emitter_luminance_output']
+                    e.setPair(ep)
+                    
+                    if(d['emitter_color_black_body_enabled']):
+                        e.setActivePair(EMISSION_COLOR_TEMPERATURE)
+                    else:
+                        if(d['emitter_luminance'] == 0):
+                            u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
+                        elif(d['emitter_luminance'] == 1):
+                            u = EMISSION_UNITS_LUMINOUS_POWER
+                        elif(d['emitter_luminance'] == 2):
+                            u = EMISSION_UNITS_ILLUMINANCE
+                        elif(d['emitter_luminance'] == 3):
+                            u = EMISSION_UNITS_LUMINOUS_INTENSITY
+                        elif(d['emitter_luminance'] == 4):
+                            u = EMISSION_UNITS_LUMINANCE
+                        e.setActivePair(EMISSION_RGB, u)
+                
+                elif(d['emitter_emission'] == 1):
+                    e.setActiveEmissionType(EMISSION_TYPE_TEMPERATURE)
+                    e.setTemperature(d['emitter_temperature_value'])
+                elif(d['emitter_emission'] == 2):
+                    e.setActiveEmissionType(EMISSION_TYPE_MXI)
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = self.texture(d['emitter_hdr_map'])
+                    a.textureMap = t
+                    a.value = d['emitter_hdr_intensity']
+                    e.setMXI(a)
+                
+                e.setState(True)
+            else:
+                m = CextensionManager.instance()
+                m.loadAllExtensions()
+                if(d['use'] == 'AGS'):
+                    e = m.createDefaultMaterialModifierExtension('AGS')
+                    p = e.getExtensionData()
+                    
+                    c = Crgb8()
+                    c.assign(*d['ags_color'])
+                    p.setRgb('Color', c.toRGB())
+                    p.setFloat('Reflection', d['ags_reflection'])
+                    p.setUInt('Type', d['ags_type'])
+                
+                elif(d['use'] == 'OPAQUE'):
+                    e = m.createDefaultMaterialModifierExtension('Opaque')
+                    p = e.getExtensionData()
+                    
+                    p.setByte('Color Type', d['opaque_color_type'])
+                    c = Crgb8()
+                    c.assign(*d['opaque_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['opaque_color_map'], p, )
+                    
+                    p.setByte('Shininess Type', d['opaque_shininess_type'])
+                    p.setFloat('Shininess', d['opaque_shininess'])
+                    self.texture_data_to_mxparams('Shininess Map', d['opaque_shininess_map'], p, )
+                    
+                    p.setByte('Roughness Type', d['opaque_roughness_type'])
+                    p.setFloat('Roughness', d['opaque_roughness'])
+                    self.texture_data_to_mxparams('Roughness Map', d['opaque_roughness_map'], p, )
+                    
+                    p.setByte('Clearcoat', d['opaque_clearcoat'])
+                
+                elif(d['use'] == 'TRANSPARENT'):
+                    e = m.createDefaultMaterialModifierExtension('Transparent')
+                    p = e.getExtensionData()
+                    
+                    p.setByte('Color Type', d['transparent_color_type'])
+                    c = Crgb8()
+                    c.assign(*d['transparent_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['transparent_color_map'], p, )
+                    
+                    p.setFloat('Ior', d['transparent_ior'])
+                    p.setFloat('Transparency', d['transparent_transparency'])
+                    
+                    p.setByte('Roughness Type', d['transparent_roughness_type'])
+                    p.setFloat('Roughness', d['transparent_roughness'])
+                    self.texture_data_to_mxparams('Roughness Map', d['transparent_roughness_map'], p, )
+                    
+                    p.setFloat('Specular Tint', d['transparent_specular_tint'])
+                    p.setFloat('Dispersion', d['transparent_dispersion'])
+                    p.setByte('Clearcoat', d['transparent_clearcoat'])
+                
+                elif(d['use'] == 'METAL'):
+                    e = m.createDefaultMaterialModifierExtension('Metal')
+                    p = e.getExtensionData()
+                    
+                    p.setUInt('IOR', d['metal_ior'])
+                    
+                    p.setFloat('Tint', d['metal_tint'])
+                    
+                    p.setByte('Color Type', d['metal_color_type'])
+                    c = Crgb8()
+                    c.assign(*d['metal_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['metal_color_map'], p, )
+                    
+                    p.setByte('Roughness Type', d['metal_roughness_type'])
+                    p.setFloat('Roughness', d['metal_roughness'])
+                    self.texture_data_to_mxparams('Roughness Map', d['metal_roughness_map'], p, )
+                    
+                    p.setByte('Anisotropy Type', d['metal_anisotropy_type'])
+                    p.setFloat('Anisotropy', d['metal_anisotropy'])
+                    self.texture_data_to_mxparams('Anisotropy Map', d['metal_anisotropy_map'], p, )
+                    
+                    p.setByte('Angle Type', d['metal_angle_type'])
+                    p.setFloat('Angle', d['metal_angle'])
+                    self.texture_data_to_mxparams('Angle Map', d['metal_angle_map'], p, )
+                    
+                    p.setByte('Dust Type', d['metal_dust_type'])
+                    p.setFloat('Dust', d['metal_dust'])
+                    self.texture_data_to_mxparams('Dust Map', d['metal_dust_map'], p, )
+                    
+                    p.setByte('Perforation Enabled', d['metal_perforation_enabled'])
+                    self.texture_data_to_mxparams('Perforation Map', d['metal_perforation_map'], p, )
+                
+                elif(d['use'] == 'TRANSLUCENT'):
+                    e = m.createDefaultMaterialModifierExtension('Translucent')
+                    p = e.getExtensionData()
+                    
+                    p.setFloat('Scale', d['translucent_scale'])
+                    p.setFloat('Ior', d['translucent_ior'])
+                    
+                    p.setByte('Color Type', d['translucent_color_type'])
+                    c = Crgb8()
+                    c.assign(*d['translucent_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['translucent_color_map'], p, )
+                    
+                    p.setFloat('Hue Shift', d['translucent_hue_shift'])
+                    p.setByte('Invert Hue', d['translucent_invert_hue'])
+                    p.setFloat('Vibrance', d['translucent_vibrance'])
+                    p.setFloat('Density', d['translucent_density'])
+                    p.setFloat('Opacity', d['translucent_opacity'])
+                    
+                    p.setByte('Roughness Type', d['translucent_roughness_type'])
+                    p.setFloat('Roughness', d['translucent_roughness'])
+                    self.texture_data_to_mxparams('Roughness Map', d['translucent_roughness_map'], p, )
+                    
+                    p.setFloat('Specular Tint', d['translucent_specular_tint'])
+                    p.setByte('Clearcoat', d['translucent_clearcoat'])
+                    p.setFloat('Clearcoat Ior', d['translucent_clearcoat_ior'])
+                
+                elif(d['use'] == 'CARPAINT'):
+                    e = m.createDefaultMaterialModifierExtension('Car Paint')
+                    p = e.getExtensionData()
+                    
+                    c = Crgb8()
+                    c.assign(*d['carpaint_color'])
+                    p.setRgb('Color', c.toRGB())
+                    
+                    p.setFloat('Metallic', d['carpaint_metallic'])
+                    p.setFloat('Topcoat', d['carpaint_topcoat'])
+                
+                m = s.createMaterial(d['name'])
+                m.applyMaterialModifierExtension(p)
+                
+                # global properties
+                if(d['override_map']):
+                    t = self.texture(d['override_map'])
+                    m.setGlobalMap(t)
+                
+                if(d['bump']):
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    a.textureMap = self.texture(d['bump_map'])
+                    a.value = d['bump_value']
+                    m.setAttribute('bump', a)
+                
+                m.setDispersion(d['dispersion'])
+                m.setMatteShadow(d['shadow'])
+                m.setMatte(d['matte'])
+                
+                # TODO: 3.2 update > set priority
+                
+                c = Crgb()
+                cc = [c / 255 for c in d['id']]
+                c.assign(*cc)
+                m.setColorID(c)
+        else:
+            raise TypeError("Material '{}' {} is unknown type".format(d['name'], d['subtype']))
+
+
+    def get_material(self, n, ):
+        """get material by name from scene, if material is missing, create and return placeholder"""
+        def get_material_names(s):
+            it = CmaxwellMaterialIterator()
+            o = it.first(s)
+            l = []
+            while not o.isNull():
+                name = o.getName()
+                l.append(name)
+                o = it.next()
+            return l
+        
+        s = self.mxs
+        names = get_material_names(s)
+        m = None
+        if(n in names):
+            m = s.getMaterial(n)
+        if(m is None):
+            # should not happen because i stopped changing material names.. but i leave it here
+            m = self.material_placeholder()
+        return m
     
     def camera(self, props, steps, active=False, lens_extra=None, response=None, region=None, custom_bokeh=(1.0, 0.0, False), cut_planes=(0.0, 1e7, False), shift_lens=(0.0, 0.0), ):
         """Create camera.
@@ -594,21 +901,20 @@ class MXSWriter():
             c.setActive()
         return c
     
-    def empty(self, name, base, pivot, object_props=None, ):
+    def empty(self, name, matrix, object_props=None, ):
         """Create empty object.
         name            string
-        base            ((3 float), (3 float), (3 float), (3 float))
-        pivot           ((3 float), (3 float), (3 float), (3 float))
+        matrix          (((3 float), (3 float), (3 float), (3 float)), ((3 float), (3 float), (3 float), (3 float)), (3 float), (3 float), (3 float)) - base, pivot, location, rotation, scale
         object_props    (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
         """
         s = self.mxs
         o = s.createMesh(name, 0, 0, 0, 0, )
-        self.set_base_and_pivot(o, base, pivot, )
+        self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         return o
     
-    def mesh(self, name, base, pivot, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, object_props=None, num_materials=0, materials=[], triangle_materials=None, backface_material=None, ):
+    def mesh(self, name, matrix, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, object_props=None, num_materials=0, materials=[], triangle_materials=None, backface_material=None, ):
         """Create mesh object.
         name                string
         base                ((3 float), (3 float), (3 float), (3 float))
@@ -649,46 +955,62 @@ class MXSWriter():
                 for it, t in enumerate(uv):
                     o.setTriangleUVW(it, iuv, *t)
         
-        self.set_base_and_pivot(o, base, pivot, )
+        self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
         if(materials is not None):
+            # if(num_materials > 1):
+            #     # multi material
+            #     mats = []
+            #     for mi in range(num_materials):
+            #         if(type(materials[mi][0]) is dict):
+            #             mat = self.ext_material(materials[mi][0])
+            #         else:
+            #             mat = self.load_material(*materials[mi])
+            #         if(mat is None):
+            #             mat = self.material_placeholder()
+            #         mats.append(mat)
+            #     for tid, mid in triangle_materials:
+            #         o.setTriangleMaterial(tid, mats[mid])
+            # elif(num_materials == 1):
+            #     # single material
+            #     if(type(materials[0][0]) is dict):
+            #         mat = self.ext_material(materials[0][0])
+            #     else:
+            #         mat = self.load_material(*materials[0])
+            #     if(mat is not None):
+            #         # set for whole object, no need to care about triangles
+            #         o.setMaterial(mat)
+            
             if(num_materials > 1):
                 # multi material
                 mats = []
-                for mi in range(num_materials):
-                    if(type(materials[mi][0]) is dict):
-                        mat = self.ext_material(materials[mi][0])
-                    else:
-                        mat = self.load_material(*materials[mi])
-                    if(mat is None):
-                        mat = self.material_placeholder()
+                for n in materials:
+                    mat = self.get_material(n)
                     mats.append(mat)
+                
                 for tid, mid in triangle_materials:
                     o.setTriangleMaterial(tid, mats[mid])
-            elif(num_materials == 1):
+            else:
                 # single material
-                if(type(materials[0][0]) is dict):
-                    mat = self.ext_material(materials[0][0])
-                else:
-                    mat = self.load_material(*materials[0])
-                if(mat is not None):
-                    # set for whole object, no need to care about triangles
-                    o.setMaterial(mat)
+                if(len(materials) == 1):
+                    if(materials[0] != ''):
+                        mat = self.get_material(materials[0])
+                        o.setMaterial(mat)
         else:
             # no material
             pass
         
         if(backface_material is not None):
-            # only single backface material
-            mat = self.load_material(*backface_material)
-            if(mat is not None):
+            if(backface_material != ''):
+                # only single backface material
+                mat = self.get_material(backface_material)
                 o.setBackfaceMaterial(mat)
         
         return o
     
-    def instance(self, name, instanced_name, base, pivot, object_props=None, material=None, backface_material=None, ):
+    def instance(self, name, instanced_name, matrix, object_props=None, materials=None, backface_material=None, ):
         """Create instance of mesh object. Instanced object must exist in scene.
         name                string
         instanced_name      string
@@ -702,25 +1024,41 @@ class MXSWriter():
         bo = s.getObject(instanced_name)
         o = s.createInstancement(name, bo)
         
-        self.set_base_and_pivot(o, base, pivot, )
+        self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
-        if(material is not None):
-            if(type(material[0]) is dict):
-                m = self.ext_material(material[0])
+        # if(material is not None):
+        #     if(type(material[0]) is dict):
+        #         m = self.ext_material(material[0])
+        #     else:
+        #         m = self.load_material(*material)
+        #     if(m is not None):
+        #         o.setMaterial(m)
+        # if(backface_material is not None):
+        #     m = self.load_material(*backface_material)
+        #     if(m is not None):
+        #         o.setBackfaceMaterial(m)
+        
+        if(materials is not None):
+            if(len(materials) > 1):
+                # multi material instances inherits material from base object
+                pass
             else:
-                m = self.load_material(*material)
-            if(m is not None):
-                o.setMaterial(m)
+                # single material, and i think (not sure) i can't make instance with different material than base in blender..
+                if(len(materials) == 1):
+                    if(materials[0] != ''):
+                        mat = self.get_material(materials[0])
+                        o.setMaterial(mat)
+        
         if(backface_material is not None):
-            m = self.load_material(*backface_material)
-            if(m is not None):
-                o.setBackfaceMaterial(m)
+            if(backface_material != ''):
+                mat = self.get_material(backface_material)
+                o.setBackfaceMaterial(mat)
         
         return o
     
-    def reference(self, name, path, flags, base, pivot, object_props=None, ):
+    def reference(self, name, path, flags, matrix, object_props=None, material=None, backface_material=None, ):
         """Create MXS reference object.
         name            string
         path            string (path)
@@ -740,9 +1078,18 @@ class MXSWriter():
             o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_REFL_REFR)
         if(flags[3]):
             o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_GI)
-        self.set_base_and_pivot(o, base, pivot, )
+        self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
+        if(material is not None):
+            if(material != ''):
+                mat = self.get_material(material)
+                o.setMaterial(mat)
+        if(backface_material is not None):
+            if(backface_material != ''):
+                mat = self.get_material(backface_material)
+                o.setBackfaceMaterial(mat)
+        
         return o
     
     def hierarchy(self, tree, ):
@@ -1228,7 +1575,7 @@ class MXSWriter():
                 o = s.getObject(n)
                 o.addToCustomAlpha(a['name'])
     
-    def ext_particles(self, name, properties, base, pivot, object_props=None, material=None, backface_material=None, ):
+    def ext_particles(self, name, properties, matrix, object_props=None, material=None, backface_material=None, ):
         """Create particles object.
         name                string
         properties          dict
@@ -1305,22 +1652,31 @@ class MXSWriter():
         
         o = s.createGeometryProceduralObject(name, p)
         
-        self.set_base_and_pivot(o, base, pivot, )
+        self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
+        # if(material is not None):
+        #     mat = self.load_material(*material)
+        #     if(mat is not None):
+        #         o.setMaterial(mat)
+        # if(backface_material is not None):
+        #     mat = self.load_material(*backface_material)
+        #     if(mat is not None):
+        #         o.setBackfaceMaterial(mat)
+        
         if(material is not None):
-            mat = self.load_material(*material)
-            if(mat is not None):
+            if(material != ''):
+                mat = self.get_material(material)
                 o.setMaterial(mat)
         if(backface_material is not None):
-            mat = self.load_material(*backface_material)
-            if(mat is not None):
+            if(backface_material != ''):
+                mat = self.get_material(backface_material)
                 o.setBackfaceMaterial(mat)
         
         return o
     
-    def ext_hair(self, name, extension, base, pivot, root_radius, tip_radius, data, object_props=None, display_percent=10, display_max=1000, material=None, backface_material=None, ):
+    def ext_hair(self, name, extension, matrix, root_radius, tip_radius, data, object_props=None, display_percent=10, display_max=1000, material=None, backface_material=None, ):
         """Create hair/grass object.
         name                string
         extension           string ('MaxwellHair' ,'MGrassP')
@@ -1356,6 +1712,9 @@ class MXSWriter():
         p.setFloatArray('HAIR_POINTS', list(data['HAIR_POINTS']), c)
         p.setFloatArray('HAIR_NORMALS', list(data['HAIR_NORMALS']), c)
         
+        if(data['HAIR_FLAG_ROOT_UVS'][0] == 1):
+            p.setFloatArray('HAIR_ROOT_UVS', list(data['HAIR_ROOT_UVS']), c)
+        
         p.setUInt('Display Percent', display_percent)
         if(extension == 'MaxwellHair'):
             p.setUInt('Display Max. Hairs', display_max)
@@ -1368,22 +1727,31 @@ class MXSWriter():
         
         o = s.createGeometryProceduralObject(name, p)
         
-        self.set_base_and_pivot(o, base, pivot, )
+        self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
+        # if(material is not None):
+        #     mat = self.load_material(*material)
+        #     if(mat is not None):
+        #         o.setMaterial(mat)
+        # if(backface_material is not None):
+        #     mat = self.load_material(*backface_material)
+        #     if(mat is not None):
+        #         o.setBackfaceMaterial(mat)
+        
         if(material is not None):
-            mat = self.load_material(*material)
-            if(mat is not None):
+            if(material != ''):
+                mat = self.get_material(material)
                 o.setMaterial(mat)
         if(backface_material is not None):
-            mat = self.load_material(*backface_material)
-            if(mat is not None):
+            if(backface_material != ''):
+                mat = self.get_material(backface_material)
                 o.setBackfaceMaterial(mat)
         
         return o
     
-    def ext_sea(self, name, base, pivot, object_props=None, geometry=None, wind=None, material=None, backface_material=None, ):
+    def ext_sea(self, name, matrix, object_props=None, geometry=None, wind=None, material=None, backface_material=None, ):
         """Create sea extension object.
         name                string
         base                ((3 float), (3 float), (3 float), (3 float))
@@ -1417,6 +1785,8 @@ class MXSWriter():
         p.setUInt('Ocean Seed', geometry[5])
         p.setByte('Enable Choppyness', geometry[6])
         p.setFloat('Choppy factor', geometry[7])
+        p.setByte('Enable White Caps', geometry[8])
+        
         p.setFloat('Ocean Wind Mod.', wind[0])
         p.setFloat('Ocean Wind Dir.', wind[1])
         p.setFloat('Ocean Wind Alignment', wind[2])
@@ -1425,20 +1795,29 @@ class MXSWriter():
         
         o = s.createGeometryLoaderObject(name, p)
         
-        self.set_base_and_pivot(o, base, pivot, )
+        self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
+        # if(material is not None):
+        #     mat = self.load_material(*material)
+        #     if(mat is not None):
+        #         o.setMaterial(mat)
+        # if(backface_material is not None):
+        #     mat = self.load_material(*backface_material)
+        #     if(mat is not None):
+        #         o.setBackfaceMaterial(mat)
+        
         if(material is not None):
-            mat = self.load_material(*material)
-            if(mat is not None):
+            if(material != ''):
+                mat = self.get_material(material)
                 o.setMaterial(mat)
         if(backface_material is not None):
-            mat = self.load_material(*backface_material)
-            if(mat is not None):
+            if(backface_material != ''):
+                mat = self.get_material(backface_material)
                 o.setBackfaceMaterial(mat)
     
-    def ext_volumetrics(self, name, properties, base, pivot, object_props=None, material=None, backface_material=None, ):
+    def ext_volumetrics(self, name, properties, matrix, object_props=None, material=None, backface_material=None, ):
         """Create Volumetrics Extension Object.
         name                string
         properties          (int type 1, float density) or (int type 2, float density, int seed, float low, float high, float detail, int octaves, float perssistence)
@@ -1465,17 +1844,26 @@ class MXSWriter():
         
         o = s.createGeometryProceduralObject(name, p)
         
-        self.set_base_and_pivot(o, base, pivot, )
+        self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
+        # if(material is not None):
+        #     mat = self.load_material(*material)
+        #     if(mat is not None):
+        #         o.setMaterial(mat)
+        # if(backface_material is not None):
+        #     mat = self.load_material(*backface_material)
+        #     if(mat is not None):
+        #         o.setBackfaceMaterial(mat)
+        
         if(material is not None):
-            mat = self.load_material(*material)
-            if(mat is not None):
+            if(material != ''):
+                mat = self.get_material(material)
                 o.setMaterial(mat)
         if(backface_material is not None):
-            mat = self.load_material(*backface_material)
-            if(mat is not None):
+            if(backface_material != ''):
+                mat = self.get_material(backface_material)
                 o.setBackfaceMaterial(mat)
         
         return o
@@ -1492,11 +1880,11 @@ class MXSWriter():
         p = e.getExtensionData()
         
         if(material is not None):
-            mat = self.load_material(*material)
+            mat = self.get_material(material)
             if(mat is not None):
                 p.setString('Material', mat.getName())
         if(backface_material is not None):
-            mat = self.load_material(*backface_material)
+            mat = self.get_material(backface_material)
             if(mat is not None):
                 p.setString('Double Sided Material', mat.getName())
         
@@ -1549,7 +1937,7 @@ class MXSWriter():
         o.applyGeometryModifierExtension(p)
         return o
     
-    def mod_subdivision(self, object_name, level=2, scheme=0, interpolation=2, crease=0.0, smooth_angle=math.radians(90.0), quads=None, ):
+    def mod_subdivision(self, object_name, level=2, scheme=0, interpolation=2, crease=0.0, smooth_angle=90.0, quads=None, ):
         """Create subdivision object modifier extension.
         object_name     string
         level           int
@@ -1697,6 +2085,7 @@ class MXSWriter():
         o.applyGeometryModifierExtension(p)
         return o
     
+    '''
     def wire_material(self, name, r0=(210, 210, 210), r90=(230, 230, 230), cid=(255, 0, 0), roughness=97.0, ):
         """Create basic material for wire render.
         name        string
@@ -1794,6 +2183,7 @@ class MXSWriter():
                 o.setParent(ce)
                 if(cmat is not None):
                     o.setMaterial(cmat)
+    '''
 
 
 class ExtMXMWriter():
