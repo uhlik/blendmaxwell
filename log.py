@@ -23,15 +23,23 @@ import platform
 
 LOG_FILE_PATH = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log.txt'))
 LOG_CONVERT = re.compile("\033\[[0-9;]+m")
+NUMBER_OF_WARNINGS = 0
 
 
 def clear_log():
+    global NUMBER_OF_WARNINGS
+    NUMBER_OF_WARNINGS = 0
     with open(LOG_FILE_PATH, mode='w', encoding='utf-8', ):
         # clear log file..
         pass
 
 
 clear_log()
+
+
+def copy_paste_log(log_file_path):
+    import shutil
+    shutil.copyfile(LOG_FILE_PATH, log_file_path)
 
 
 class LogStyles:
@@ -55,6 +63,10 @@ if(platform.system() == 'Windows'):
 
 
 def log(msg="", indent=0, style=LogStyles.NORMAL, instance=None, prefix="> ", ):
+    global NUMBER_OF_WARNINGS
+    if(style == LogStyles.WARNING):
+        NUMBER_OF_WARNINGS += 1
+    
     if(instance is None):
         inst = ""
     else:
