@@ -44,9 +44,6 @@ AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).t
 ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
-# TODO: unify error reporting: warning: write to console, fatal: raise exception, if something can't be exported: skip and print warning or raise exception?
-# TODO: do not export unused materials
-
 
 class MXSExport():
     def __init__(self, mxs_path, ):
@@ -643,16 +640,21 @@ class MXSExport():
         log("collecting objects..", 1, LogStyles.MESSAGE, )
         self.tree = self._collect()
         
-        # all materials
         log("writing materials:", 1, LogStyles.MESSAGE, )
         for mat in bpy.data.materials:
+            # TODO: do not export unused materials >> partly done, all materials are exported, but then all unused materials are removed from scene
             mx = mat.maxwell_render
-            if(mx.use == 'CUSTOM'):
-                mxm = MXSMaterialMXM(mat.name, path=mx.mxm_file, embed=mx.embed, )
-                self._write(mxm)
-            else:
-                exmat = MXSMaterialExtension(mat.name)
-                self._write(exmat)
+            # only materials with (users - fake_user) > 0
+            u = mat.users
+            if(mat.use_fake_user):
+                u -= 1
+            if(u > 0):
+                if(mx.use == 'CUSTOM' and mat.users > 0):
+                    mxm = MXSMaterialMXM(mat.name, path=mx.mxm_file, embed=mx.embed, )
+                    self._write(mxm)
+                else:
+                    exmat = MXSMaterialExtension(mat.name)
+                    self._write(exmat)
         
         log("writing cameras:", 1, LogStyles.MESSAGE, )
         for d in self._cameras:
@@ -745,6 +747,7 @@ class MXSExport():
                     o = MXSSubdivision(d, qp, )
                     self._write(o)
             elif(d['export_type'] == 'SEA'):
+                # FIXME: sea should not be in modifiers, move it to its own list, also maybe split particles to particles and hair
                 o = MXSSea(d)
                 self._write(o)
         
@@ -1138,6 +1141,7 @@ class MXSExport():
             log("setting object hiearchy..".format(), 1, LogStyles.MESSAGE, )
             self.mxs.hierarchy(self.hierarchy)
             log("writing .mxs file..".format(), 1, LogStyles.MESSAGE, )
+            self.mxs.erase_unused_materials()
             self.mxs.write()
             log("mxs saved in: {0}".format(self.mxs_path), 1, LogStyles.MESSAGE, )
     

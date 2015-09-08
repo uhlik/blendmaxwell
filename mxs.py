@@ -89,6 +89,9 @@ class MXSWriter():
         log("done.", 2)
         return ok
     
+    def erase_unused_materials(self):
+        self.mxs.eraseUnusedMaterials()
+    
     def set_base_and_pivot(self, o, matrix=None, ):
         """Convert float tuples to Cbases and set to object.
         o       CmaxwellObject

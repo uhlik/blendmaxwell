@@ -2098,6 +2098,8 @@ def main(args):
             if(d['active']):
                 c = mxs.getCamera(d['name'])
                 c.setActive()
+    # remove unused materials
+    mxs.eraseUnusedMaterials()
     # save mxs
     log("saving scene..", 2)
     ok = mxs.writeMXS(args.result_path)
