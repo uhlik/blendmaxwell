@@ -331,12 +331,12 @@ class MXSExport():
         def hierarchy():
             h = []
             
-            def get_object_hiearchy(o):
+            def get_object_hierarchy(o):
                 r = []
                 for ch in o.children:
                     t, m, c = export_type(ch)
                     p = {'object': ch,
-                         'children': get_object_hiearchy(ch),
+                         'children': get_object_hierarchy(ch),
                          'export': check_visibility(ch),
                          'export_type': t,
                          'mesh': m,
@@ -350,7 +350,7 @@ class MXSExport():
                 if(ob.parent is None):
                     t, m, c = export_type(ob)
                     p = {'object': ob,
-                         'children': get_object_hiearchy(ob),
+                         'children': get_object_hierarchy(ob),
                          'export': check_visibility(ob),
                          'export_type': t,
                          'mesh': m,
@@ -393,14 +393,14 @@ class MXSExport():
                 if((o['export_type'] in append_types) and o['export'] is True):
                     # keep instances (Maxwell 3)
                     # keep: meshes, bases - both with export: True
-                    # (export: False are hidden objects, and should be already swapped to empties if needed for hiearchy)
+                    # (export: False are hidden objects, and should be already swapped to empties if needed for hierarchy)
                     # > meshes..
                     # > bases can have children, bases are real meshes
                     ov.append(True)
                 else:
                     # remove: empties, bases, instances, suns, meshes and bases with export: False (hidden objects) and reference enabled: False
                     # > empties can be removed
-                    # > instances are moved to base level, because with instances hiearchy is irrelevant
+                    # > instances are moved to base level, because with instances hierarchy is irrelevant
                     # > suns are not objects
                     # > meshes and bases, see above
                     ov.append(False)
@@ -599,7 +599,7 @@ class MXSExport():
                         
                         if(mx.use in ['PARTICLES', 'HAIR', ]):
                             particles.append(p)
-                            # those two should be put into hiearchy, they are real objects.. the rest are just modifiers
+                            # those two should be put into hierarchy, they are real objects.. the rest are just modifiers
                             o['children'].append(p)
                         else:
                             # in case of cloner..
@@ -636,7 +636,7 @@ class MXSExport():
         return h
     
     def _export(self):
-        # collect all objects to be exported, split them by type. keep this dict if hiearchy would be needed
+        # collect all objects to be exported, split them by type. keep this dict if hierarchy would be needed
         log("collecting objects..", 1, LogStyles.MESSAGE, )
         self.tree = self._collect()
         
@@ -786,14 +786,14 @@ class MXSExport():
                 if(gmx.custom_alpha_use):
                     a = {'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
                     for o in g.objects:
-                        for mo in self.hiearchy:
-                            # hiearchy: (0: name, 1: parent, 2: type), ...
+                        for mo in self.hierarchy:
+                            # hierarchy: (0: name, 1: parent, 2: type), ...
                             # type
                             if(mo[2] in allowed):
                                 # name
                                 if(o.name == mo[0]):
                                     a['objects'].append(o.name)
-                                    for ch in self.hiearchy:
+                                    for ch in self.hierarchy:
                                         # type
                                         if(ch[2] in allowed):
                                             # parent, name
@@ -1138,7 +1138,7 @@ class MXSExport():
             self._cleanup()
             log("mxs saved in: {0}".format(self.mxs_path), 1, LogStyles.MESSAGE, )
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
-            log("setting object hiearchy..".format(), 1, LogStyles.MESSAGE, )
+            log("setting object hierarchy..".format(), 1, LogStyles.MESSAGE, )
             self.mxs.hierarchy(self.hierarchy)
             log("writing .mxs file..".format(), 1, LogStyles.MESSAGE, )
             self.mxs.erase_unused_materials()
