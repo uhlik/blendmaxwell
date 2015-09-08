@@ -52,6 +52,7 @@
 
 changelog:
 
+* 0.3.0 refactored exporter part, added: hair uvs, curves instancing, material global properties, fixed: object transformations when opened and saved in Studio
 * 0.2.4 added: automatic subdivision modifiers export to speed things up
 * 0.2.3 added: mxs export menu operator, quad export when using subdivision modifier, 2.75 compatibility
 * 0.2.2 added: mxs import (objects, emitters, cameras and sun selectively), save extension materials to mxm, embed particles in mxs (saving of external .bin files is now optional)
