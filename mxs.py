@@ -557,8 +557,7 @@ class MXSWriter():
                 m.setColorID(c)
         else:
             raise TypeError("Material '{}' {} is unknown type".format(d['name'], d['subtype']))
-
-
+    
     def get_material(self, n, ):
         """get material by name from scene, if material is missing, create and return placeholder"""
         def get_material_names(s):

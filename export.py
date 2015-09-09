@@ -46,7 +46,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # 3.2 update list:
 # Nested Dielectrics: new material parameter called “Nested Priority”      DONE
-# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                    
+# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                    .
 # Export to PSD files: PSD format in 8, 16 and 32 bits                     DONE
 # Separated reflection and refraction channels                             DONE
 # Remove overlaps in the Maxwell Scatter                                   DONE
@@ -755,6 +755,7 @@ class MXSExport():
                 
                 # TODO: 3.2: Cloner extension is not compatible with 3.2 sdk in 3.1.99.9, skipping it until this is fixed
                 # Extension: /Applications/Maxwell 3/extensions/MaxwellCloner.osx.mxx incompatible with current SDK version
+                log("MXSCloner: extension disabled in 3.1.99.9 (at least on Mac OS X), because is incompatible with current SDK version".format(), 3, LogStyles.WARNING, )
                 o.skip = True
                 
                 self._write(o)
@@ -1065,7 +1066,7 @@ class MXSExport():
             elif(o.m_type == 'PARTICLES'):
                 properties = pack_prefix(o, 'bin_', )
                 properties['embed'] = o.m_embed
-                properties['pdata'] =  o.m_pdata
+                properties['pdata'] = o.m_pdata
                 self.mxs.ext_particles(o.m_name, properties, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'HAIR'):
@@ -1149,7 +1150,7 @@ class MXSExport():
                 self.mxs.ext_sea(o.m_name, pack_matrix(o), pack_object_props(o), geometry, wind, o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'ASSET_REFERENCE'):
-                self.mxs.ext_asset_reference(o.m_name, o.m_path, o.m_axis, o.m_display, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material )
+                self.mxs.ext_asset_reference(o.m_name, o.m_path, o.m_axis, o.m_display, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             else:
                 raise TypeError("{0} is unknown type".format(o.m_type))

@@ -1165,7 +1165,7 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
             if(vol or aref):
                 return False
             return True
-        return  False
+        return False
     
     def draw_header(self, context):
         m = context.object.maxwell_render_reference
@@ -1239,7 +1239,7 @@ class ObjectAssetReferencePanel(ObjectButtonsPanel, Panel):
             if(vol or ref):
                 return False
             return True
-        return  False
+        return False
     
     def draw_header(self, context):
         m = context.object.maxwell_assetref_extension
@@ -1273,7 +1273,7 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
             if(ref or aref):
                 return False
             return True
-        return  False
+        return False
     
     def draw_header(self, context):
         m = context.object.maxwell_volumetrics_extension
