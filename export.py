@@ -49,7 +49,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO --- New stereo lenses: Lat/Long and Stereo Fish Lens                         -
 # TODO --- Export to PSD files: PSD format in 8, 16 and 32 bits                     DONE
 # TODO --- Separated reflection and refraction channels                             DONE
-# TODO --- Remove overlaps in the Maxwell Scatter                                   -
+# TODO --- Remove overlaps in the Maxwell Scatter                                   DONE
 # TODO --- New Reflectance channel                                                  DONE
 # TODO --- Improvements in the Maxwell Grass fibers growth                          DONE
 # TODO --- New Asset Reference extension                                            DONE (with bug in setting material)
@@ -1097,11 +1097,12 @@ class MXSExport():
                 self.mxs.mod_subdivision(o.m_object, o.m_level, o.m_scheme, o.m_interpolation, o.m_crease, o.m_smooth, o.m_quad_pairs, )
             elif(o.m_type == 'SCATTER'):
                 density = (o.m_density, o.m_density_map, )
-                scale = (o.m_scale_x, o.m_scale_y, o.m_scale_z, o.m_scale_map, o.m_scale_variation_x, o.m_scale_variation_y, o.m_scale_variation_z, )
+                scale = (o.m_scale_x, o.m_scale_y, o.m_scale_z, o.m_scale_map, o.m_scale_variation_x, o.m_scale_variation_y, o.m_scale_variation_z, o.m_scale_uniform, )
                 rotation = (o.m_rotation_x, o.m_rotation_y, o.m_rotation_z, o.m_rotation_map,
                             o.m_rotation_variation_x, o.m_rotation_variation_y, o.m_rotation_variation_z, o.m_rotation_direction, )
                 lod = (o.m_lod, o.m_lod_min_distance, o.m_lod_max_distance, o.m_lod_max_distance_density, )
-                self.mxs.mod_scatter(o.m_object, o.m_scatter_object, o.m_inherit_objectid, density, o.m_seed, scale, rotation, lod, o.m_display_percent, o.m_display_max_blades, )
+                angle = (o.m_direction_type, o.m_initial_angle, o.m_initial_angle_variation, o.m_initial_angle_map, )
+                self.mxs.mod_scatter(o.m_object, o.m_scatter_object, o.m_inherit_objectid, o.m_remove_overlapped, density, o.m_seed, scale, rotation, lod, angle, o.m_display_percent, o.m_display_max_blades, )
             elif(o.m_type == 'GRASS'):
                 properties = {'density': o.m_density,
                               'density_map': o.m_density_map,
@@ -2702,9 +2703,20 @@ class MXSScatter(MXSModifier):
         self.m_density = mxex.density
         self.m_density_map = self._texture_to_data(mxex.density_map)
         self.m_seed = int(mxex.seed)
+        
+        self.m_remove_overlapped = mxex.remove_overlapped
+        
+        self.m_direction_type = mxex.direction_type
+        self.m_initial_angle = math.degrees(mxex.initial_angle)
+        self.m_initial_angle_variation = mxex.initial_angle_variation
+        self.m_initial_angle_map = self._texture_to_data(mxex.initial_angle_map)
+        
         self.m_scale_x = mxex.scale_x
         self.m_scale_y = mxex.scale_y
         self.m_scale_z = mxex.scale_z
+        
+        self.m_scale_uniform = mxex.scale_uniform
+        
         self.m_scale_map = self._texture_to_data(mxex.scale_map)
         self.m_scale_variation_x = mxex.scale_variation_x
         self.m_scale_variation_y = mxex.scale_variation_y

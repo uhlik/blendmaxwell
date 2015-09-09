@@ -1496,6 +1496,14 @@ def scatter(d, s, ):
     p.setFloat('LOD Max Distance Density', e['lod_max_distance_density'])
     p.setUInt('Display Percent', e['display_percent'])
     p.setUInt('Display Max. Blades', e['display_max_blades'])
+    
+    p.setByte('Remove Overlapped', e['remove_overlapped'])
+    p.setFloat('Direction Type', e['direction_type'])
+    p.setFloat('Initial Angle', e['initial_angle'])
+    p.setFloat('Initial Angle Variation', e['initial_angle_variation'])
+    texture_data_to_mxparams(e['initial_angle_map'], p, 'Initial Angle Map', )
+    p.setByte('Uniform Scale', e['scale_uniform'])
+    
     o.applyGeometryModifierExtension(p)
 
 

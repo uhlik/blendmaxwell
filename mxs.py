@@ -1731,7 +1731,7 @@ class MXSWriter():
         o.applyGeometryModifierExtension(p)
         return o
     
-    def mod_scatter(self, object_name, scatter_object, inherit_objectid=False, density=None, seed=0, scale=None, rotation=None, lod=None, display_percent=10, display_max=1000, ):
+    def mod_scatter(self, object_name, scatter_object, inherit_objectid=False, remove_overlapped=False, density=None, seed=0, scale=None, rotation=None, lod=None, angle=None, display_percent=10, display_max=1000, ):
         """Create scatter object modifier extension.
         object_name                 string
         scatter_object              string
@@ -1754,6 +1754,8 @@ class MXSWriter():
             p.setFloat('Density', density[0])
             self.texture_data_to_mxparams('Density Map', density[1], p, )
         p.setUInt('Seed', seed)
+        p.setByte('Remove Overlapped', remove_overlapped)
+        
         if(scale is not None):
             p.setFloat('Scale X', scale[0])
             p.setFloat('Scale Y', scale[1])
@@ -1762,6 +1764,7 @@ class MXSWriter():
             p.setFloat('Scale X Variation', scale[4])
             p.setFloat('Scale Y Variation', scale[5])
             p.setFloat('Scale Z Variation', scale[6])
+            p.setByte('Uniform Scale', scale[7])
         if(rotation is not None):
             p.setFloat('Rotation X', rotation[0])
             p.setFloat('Rotation Y', rotation[1])
@@ -1776,6 +1779,12 @@ class MXSWriter():
             p.setFloat('LOD Min Distance', lod[1])
             p.setFloat('LOD Max Distance', lod[2])
             p.setFloat('LOD Max Distance Density', lod[3])
+        if(angle is not None):
+            p.setFloat('Direction Type', angle[0])
+            p.setFloat('Initial Angle', angle[1])
+            p.setFloat('Initial Angle Variation', angle[2])
+            texture_data_to_mxparams(angle[3], p, 'Initial Angle Map', )
+            
         p.setUInt('Display Percent', display_percent)
         p.setUInt('Display Max. Blades', display_max)
         

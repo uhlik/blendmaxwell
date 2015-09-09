@@ -989,6 +989,11 @@ class ExtHairProperties(PropertyGroup):
 
 
 class ExtScatterProperties(PropertyGroup):
+    # 20: ('Direction Type', [0.0], 0.0, 100.0, '3 (FLOAT)', 4, 1)
+    # 21: ('Initial Angle', [90.0], 0.0, 90.0, '3 (FLOAT)', 4, 1)
+    # 22: ('Initial Angle Variation', [0.0], 0.0, 100.0, '3 (FLOAT)', 4, 1)
+    # 23: ('Initial Angle Map', <pymaxwell.MXparamList; proxy of <Swig Object of type 'MXparamList *' at 0x100669120> >, 0, 0, '10 (MXPARAMLIST)', 0, 1)
+    
     enabled = BoolProperty(name="Maxwell Scatter", default=False, )
     
     scatter_object = StringProperty(name="Object", default="", )
@@ -996,11 +1001,18 @@ class ExtScatterProperties(PropertyGroup):
     
     density = FloatProperty(name="Density (Units/m2)", default=100.0, min=0.0001, max=100000000.0, precision=3, )
     density_map = StringProperty(name="Density Map", default="", )
+    remove_overlapped = BoolProperty(name="Remove Overlaps", default=False, )
     seed = IntProperty(name="Random Seed", default=0, min=0, max=16300, )
+    
+    direction_type = FloatProperty(name="Grow Towards World-Y (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    initial_angle = FloatProperty(name="Initial Angle", default=math.radians(90.0), min=math.radians(0.0), max=math.radians(90.0), precision=1, subtype='ANGLE', )
+    initial_angle_variation = FloatProperty(name="Initial Angle Variation (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    initial_angle_map = StringProperty(name="Initial Angle Map", default="", )
     
     scale_x = FloatProperty(name="X", default=1.0, min=0.0, max=100000.0, precision=3, )
     scale_y = FloatProperty(name="Y", default=1.0, min=0.0, max=100000.0, precision=3, )
     scale_z = FloatProperty(name="Z", default=1.0, min=0.0, max=100000.0, precision=3, )
+    scale_uniform = BoolProperty(name="Uniform Scale", default=False, )
     scale_map = StringProperty(name="Length Map", default="", )
     scale_variation_x = FloatProperty(name="X", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     scale_variation_y = FloatProperty(name="X", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
