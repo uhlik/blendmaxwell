@@ -46,7 +46,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # 3.2 update list:
 # Nested Dielectrics: new material parameter called “Nested Priority”      DONE
-# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                    ...
+# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                    postponed..
 # Export to PSD files: PSD format in 8, 16 and 32 bits                     DONE
 # Separated reflection and refraction channels                             DONE
 # Remove overlaps in the Maxwell Scatter                                   DONE
@@ -774,7 +774,7 @@ class MXSExport():
                     o = MXSSubdivision(d, qp, )
                     self._write(o)
             elif(d['export_type'] == 'SEA'):
-                # FIXME: sea should not be in modifiers, move it to its own list, also maybe split particles to particles and hair
+                # FIXME: sea should not be in modifiers, move it to its own list, also maybe split particles to particles and hair, or unify all to extensions and that's it..
                 o = MXSSea(d)
                 self._write(o)
         
@@ -1790,7 +1790,8 @@ class MXSObject(Serializable):
         self.m_num_materials = len(self.b_object.material_slots)
         self.m_materials = []
         for s in self.b_object.material_slots:
-            self.m_materials.append(s.material.name)
+            if(s.material is not None):
+                self.m_materials.append(s.material.name)
         
         self.m_backface_material = self.b_object.maxwell_render.backface_material
 

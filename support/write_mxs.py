@@ -1899,6 +1899,7 @@ def main(args):
         elif(d['type'] == 'SCATTER'):
             scatter(d, mxs)
         elif(d['type'] == 'GRASS'):
+            # FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is creted without whole python crashing..
             grass(d, mxs)
         elif(d['type'] == 'CLONER'):
             cloner(d, mxs)
