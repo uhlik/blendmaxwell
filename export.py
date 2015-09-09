@@ -1264,8 +1264,8 @@ class MXSScene(Serializable):
     def __init__(self, mxs_path, groups, ):
         super().__init__()
         
-        h, t = os.path.split(mxs_path)
-        n, e = os.path.splitext(t)
+        # h, t = os.path.split(mxs_path)
+        # n, e = os.path.splitext(t)
         mx = bpy.context.scene.maxwell_render
         
         self.m_type = 'SCENE'
