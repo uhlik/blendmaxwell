@@ -31,6 +31,7 @@ from pymaxwell import *
 
 LOG_FILE_PATH = None
 
+# TODO: update with globals and priority
 
 def log(msg, indent=0):
     m = "{0}> {1}".format("    " * indent, msg)

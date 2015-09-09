@@ -1147,6 +1147,9 @@ class MXSExport():
                 wind = (o.m_ocean_wind_mod, o.m_ocean_wind_dir, o.m_ocean_wind_alignment, o.m_ocean_min_wave_length, o.m_damp_factor_against_wind, )
                 self.mxs.ext_sea(o.m_name, pack_matrix(o), pack_object_props(o), geometry, wind, o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
+            else(o.m_type == 'ASSET_REFERENCE'):
+                self.mxs.ext_asset_reference(o.m_name, o.m_path, o.m_axis, o.m_display, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material )
+                self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             else:
                 raise TypeError("{0} is unknown type".format(o.m_type))
     
