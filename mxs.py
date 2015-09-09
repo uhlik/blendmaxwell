@@ -1858,8 +1858,6 @@ class ExtMXMWriter():
         data    dict
         """
         
-        # TODO: update with globals and priority
-        
         if(__name__ != "__main__"):
             if(platform.system() == 'Darwin'):
                 raise ImportError("No pymaxwell for Mac OS X..")
@@ -1872,7 +1870,7 @@ class ExtMXMWriter():
         self.mgr = CextensionManager.instance()
         self.mgr.loadAllExtensions()
         
-        mat = self.ext_material(data)
+        mat = self.material(data)
         if(mat is not None):
             log("writing to: {}".format(self.path), 2, prefix="* ", )
             mat.write(path)
@@ -1946,6 +1944,8 @@ class ExtMXMWriter():
         """Create CtextureMap from parameters
         d   dict
         """
+        s = self.mxs
+        
         t = CtextureMap()
         t.setPath(d['path'])
         
@@ -1984,216 +1984,321 @@ class ExtMXMWriter():
         
         return t
     
-    def ext_material(self, d, ):
-        """Create material extension.
-        d       dict extension parameters
-        """
-        s = self.mxs
-        p = None
-        if(d['type'] == 'EMITTER'):
-            m = s.createMaterial(d['name'])
-            l = m.addLayer()
-            e = l.createEmitter()
-            
-            if(d['emitter_type'] == 0):
-                e.setLobeType(EMISSION_LOBE_DEFAULT)
-            elif(d['emitter_type'] == 1):
-                e.setLobeType(EMISSION_LOBE_IES)
-                e.setLobeIES(d['emitter_ies_data'])
-                e.setIESLobeIntensity(d['emitter_ies_intensity'])
-            elif(d['emitter_type'] == 2):
-                # e.setLobeType(EMISSION_LOBE_BITMAP)
-                e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
-                if(d['emitter_spot_map'] is not None):
-                    t = self.texture(d['emitter_spot_map'])
-                    e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
-                e.setSpotConeAngle(d['emitter_spot_cone_angle'])
-                e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
-                e.setSpotFallOffType(d['emitter_spot_falloff_type'])
-                e.setSpotBlur(d['emitter_spot_blur'])
-            
-            if(d['emitter_emission'] == 0):
-                e.setActiveEmissionType(EMISSION_TYPE_PAIR)
-                
-                ep = CemitterPair()
-                c = Crgb8()
-                c.assign(*d['emitter_color'])
-                ep.rgb.assign(c.toRGB())
-                ep.temperature = d['emitter_color_black_body']
-                ep.watts = d['emitter_luminance_power']
-                ep.luminousEfficacy = d['emitter_luminance_efficacy']
-                ep.luminousPower = d['emitter_luminance_output']
-                ep.illuminance = d['emitter_luminance_output']
-                ep.luminousIntensity = d['emitter_luminance_output']
-                ep.luminance = d['emitter_luminance_output']
-                e.setPair(ep)
-                
-                if(d['emitter_color_black_body_enabled']):
-                    e.setActivePair(EMISSION_COLOR_TEMPERATURE)
-                else:
-                    if(d['emitter_luminance'] == 0):
-                        u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
-                    elif(d['emitter_luminance'] == 1):
-                        u = EMISSION_UNITS_LUMINOUS_POWER
-                    elif(d['emitter_luminance'] == 2):
-                        u = EMISSION_UNITS_ILLUMINANCE
-                    elif(d['emitter_luminance'] == 3):
-                        u = EMISSION_UNITS_LUMINOUS_INTENSITY
-                    elif(d['emitter_luminance'] == 4):
-                        u = EMISSION_UNITS_LUMINANCE
-                    e.setActivePair(EMISSION_RGB, u)
-            
-            elif(d['emitter_emission'] == 1):
-                e.setActiveEmissionType(EMISSION_TYPE_TEMPERATURE)
-                e.setTemperature(d['emitter_temperature_value'])
-            elif(d['emitter_emission'] == 2):
-                e.setActiveEmissionType(EMISSION_TYPE_MXI)
-                a = Cattribute()
-                a.activeType = MAP_TYPE_BITMAP
-                t = self.texture(d['emitter_hdr_map'])
-                a.textureMap = t
-                a.value = d['emitter_hdr_intensity']
-                e.setMXI(a)
-            
-            e.setState(True)
-            
-            return m
-        
+    def material_placeholder(self, n=None, ):
+        if(n is not None):
+            # n = '{}_{}'.format(n, 'MATERIAL_PLACEHOLDER')
+            pass
         else:
-            m = CextensionManager.instance()
-            m.loadAllExtensions()
-            
-            if(d['type'] == 'AGS'):
-                e = m.createDefaultMaterialModifierExtension('AGS')
-                p = e.getExtensionData()
-                
-                c = Crgb8()
-                c.assign(*d['ags_color'])
-                p.setRgb('Color', c.toRGB())
-                p.setFloat('Reflection', d['ags_reflection'])
-                p.setUInt('Type', d['ags_type'])
-            
-            elif(d['type'] == 'OPAQUE'):
-                e = m.createDefaultMaterialModifierExtension('Opaque')
-                p = e.getExtensionData()
-                
-                p.setByte('Color Type', d['opaque_color_type'])
-                c = Crgb8()
-                c.assign(*d['opaque_color'])
-                p.setRgb('Color', c.toRGB())
-                self.texture_data_to_mxparams('Color Map', d['opaque_color_map'], p, )
-                
-                p.setByte('Shininess Type', d['opaque_shininess_type'])
-                p.setFloat('Shininess', d['opaque_shininess'])
-                self.texture_data_to_mxparams('Shininess Map', d['opaque_shininess_map'], p, )
-                
-                p.setByte('Roughness Type', d['opaque_roughness_type'])
-                p.setFloat('Roughness', d['opaque_roughness'])
-                self.texture_data_to_mxparams('Roughness Map', d['opaque_roughness_map'], p, )
-                
-                p.setByte('Clearcoat', d['opaque_clearcoat'])
-            
-            elif(d['type'] == 'TRANSPARENT'):
-                e = m.createDefaultMaterialModifierExtension('Transparent')
-                p = e.getExtensionData()
-                
-                p.setByte('Color Type', d['transparent_color_type'])
-                c = Crgb8()
-                c.assign(*d['transparent_color'])
-                p.setRgb('Color', c.toRGB())
-                self.texture_data_to_mxparams('Color Map', d['transparent_color_map'], p, )
-                
-                p.setFloat('Ior', d['transparent_ior'])
-                p.setFloat('Transparency', d['transparent_transparency'])
-                
-                p.setByte('Roughness Type', d['transparent_roughness_type'])
-                p.setFloat('Roughness', d['transparent_roughness'])
-                self.texture_data_to_mxparams('Roughness Map', d['transparent_roughness_map'], p, )
-                
-                p.setFloat('Specular Tint', d['transparent_specular_tint'])
-                p.setFloat('Dispersion', d['transparent_dispersion'])
-                p.setByte('Clearcoat', d['transparent_clearcoat'])
-            
-            elif(d['type'] == 'METAL'):
-                e = m.createDefaultMaterialModifierExtension('Metal')
-                p = e.getExtensionData()
-                
-                p.setUInt('IOR', d['metal_ior'])
-                
-                p.setFloat('Tint', d['metal_tint'])
-                
-                p.setByte('Color Type', d['metal_color_type'])
-                c = Crgb8()
-                c.assign(*d['metal_color'])
-                p.setRgb('Color', c.toRGB())
-                self.texture_data_to_mxparams('Color Map', d['metal_color_map'], p, )
-                
-                p.setByte('Roughness Type', d['metal_roughness_type'])
-                p.setFloat('Roughness', d['metal_roughness'])
-                self.texture_data_to_mxparams('Roughness Map', d['metal_roughness_map'], p, )
-                
-                p.setByte('Anisotropy Type', d['metal_anisotropy_type'])
-                p.setFloat('Anisotropy', d['metal_anisotropy'])
-                self.texture_data_to_mxparams('Anisotropy Map', d['metal_anisotropy_map'], p, )
-                
-                p.setByte('Angle Type', d['metal_angle_type'])
-                p.setFloat('Angle', d['metal_angle'])
-                self.texture_data_to_mxparams('Angle Map', d['metal_angle_map'], p, )
-                
-                p.setByte('Dust Type', d['metal_dust_type'])
-                p.setFloat('Dust', d['metal_dust'])
-                self.texture_data_to_mxparams('Dust Map', d['metal_dust_map'], p, )
-                
-                p.setByte('Perforation Enabled', d['metal_perforation_enabled'])
-                self.texture_data_to_mxparams('Perforation Map', d['metal_perforation_map'], p, )
-            
-            elif(d['type'] == 'TRANSLUCENT'):
-                e = m.createDefaultMaterialModifierExtension('Translucent')
-                p = e.getExtensionData()
-                
-                p.setFloat('Scale', d['translucent_scale'])
-                p.setFloat('Ior', d['translucent_ior'])
-                
-                p.setByte('Color Type', d['translucent_color_type'])
-                c = Crgb8()
-                c.assign(*d['translucent_color'])
-                p.setRgb('Color', c.toRGB())
-                self.texture_data_to_mxparams('Color Map', d['translucent_color_map'], p, )
-                
-                p.setFloat('Hue Shift', d['translucent_hue_shift'])
-                p.setByte('Invert Hue', d['translucent_invert_hue'])
-                p.setFloat('Vibrance', d['translucent_vibrance'])
-                p.setFloat('Density', d['translucent_density'])
-                p.setFloat('Opacity', d['translucent_opacity'])
-                
-                p.setByte('Roughness Type', d['translucent_roughness_type'])
-                p.setFloat('Roughness', d['translucent_roughness'])
-                self.texture_data_to_mxparams('Roughness Map', d['translucent_roughness_map'], p, )
-                
-                p.setFloat('Specular Tint', d['translucent_specular_tint'])
-                p.setByte('Clearcoat', d['translucent_clearcoat'])
-                p.setFloat('Clearcoat Ior', d['translucent_clearcoat_ior'])
-            
-            elif(d['type'] == 'CARPAINT'):
-                e = m.createDefaultMaterialModifierExtension('Car Paint')
-                p = e.getExtensionData()
-                
-                c = Crgb8()
-                c.assign(*d['carpaint_color'])
-                p.setRgb('Color', c.toRGB())
-                
-                p.setFloat('Metallic', d['carpaint_metallic'])
-                p.setFloat('Topcoat', d['carpaint_topcoat'])
-            
+            n = 'MATERIAL_PLACEHOLDER'
+        
+        s = self.mxs
+        m = s.createMaterial(n)
+        l = m.addLayer()
+        b = l.addBSDF()
+        r = b.getReflectance()
+        a = Cattribute()
+        a.activeType = MAP_TYPE_BITMAP
+        t = CtextureMap()
+        mgr = CextensionManager.instance()
+        mgr.loadAllExtensions()
+        e = mgr.createDefaultTextureExtension('Checker')
+        ch = e.getExtensionData()
+        ch.setUInt('Number of elements U', 32)
+        ch.setUInt('Number of elements V', 32)
+        t.addProceduralTexture(ch)
+        a.textureMap = t
+        r.setAttribute('color', a)
+        return m
+    
+    def material_default(self, n, ):
+        s = self.mxs
+        m = s.createMaterial(n)
+        l = m.addLayer()
+        b = l.addBSDF()
+        return m
+    
+    def material_external(self, d, ):
+        s = self.mxs
+        p = d['path']
+        t = s.readMaterial(p)
+        t.setName(d['name'])
+        m = s.addMaterial(t)
+        if(not d['embed']):
+            m.setReference(1, p)
+        return m
+    
+    def material(self, d, ):
+        s = self.mxs
+        if(d['subtype'] == 'EXTERNAL'):
+            if(d['path'] == ''):
+                m = self.material_placeholder(d['name'])
             else:
-                return None
+                m = self.material_external(d)
+                
+                if(d['override']):
+                    # global properties
+                    if(d['override_map']):
+                        t = self.texture(d['override_map'])
+                        m.setGlobalMap(t)
+                    
+                    if(d['bump']):
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_BITMAP
+                        a.textureMap = self.texture(d['bump_map'])
+                        a.value = d['bump_value']
+                        m.setAttribute('bump', a)
+                    
+                    m.setDispersion(d['dispersion'])
+                    m.setMatteShadow(d['shadow'])
+                    m.setMatte(d['matte'])
+                    m.setNestedPriority(d['priority'])
+                    
+                    c = Crgb()
+                    cc = [c / 255 for c in d['id']]
+                    c.assign(*cc)
+                    m.setColorID(c)
         
-        if(p is not None):
-            m = s.createMaterial(d['name'])
-            m.applyMaterialModifierExtension(p)
-            return m
+        elif(d['subtype'] == 'EXTENSION'):
+            if(d['use'] == 'EMITTER'):
+                m = s.createMaterial(d['name'])
+                l = m.addLayer()
+                e = l.createEmitter()
+                
+                if(d['emitter_type'] == 0):
+                    e.setLobeType(EMISSION_LOBE_DEFAULT)
+                elif(d['emitter_type'] == 1):
+                    e.setLobeType(EMISSION_LOBE_IES)
+                    e.setLobeIES(d['emitter_ies_data'])
+                    e.setIESLobeIntensity(d['emitter_ies_intensity'])
+                elif(d['emitter_type'] == 2):
+                    # e.setLobeType(EMISSION_LOBE_BITMAP)
+                    e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
+                    if(d['emitter_spot_map'] is not None):
+                        t = self.texture(d['emitter_spot_map'])
+                        e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
+                    e.setSpotConeAngle(d['emitter_spot_cone_angle'])
+                    e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
+                    e.setSpotFallOffType(d['emitter_spot_falloff_type'])
+                    e.setSpotBlur(d['emitter_spot_blur'])
+                
+                if(d['emitter_emission'] == 0):
+                    e.setActiveEmissionType(EMISSION_TYPE_PAIR)
+                    
+                    ep = CemitterPair()
+                    c = Crgb8()
+                    c.assign(*d['emitter_color'])
+                    ep.rgb.assign(c.toRGB())
+                    ep.temperature = d['emitter_color_black_body']
+                    ep.watts = d['emitter_luminance_power']
+                    ep.luminousEfficacy = d['emitter_luminance_efficacy']
+                    ep.luminousPower = d['emitter_luminance_output']
+                    ep.illuminance = d['emitter_luminance_output']
+                    ep.luminousIntensity = d['emitter_luminance_output']
+                    ep.luminance = d['emitter_luminance_output']
+                    e.setPair(ep)
+                    
+                    if(d['emitter_color_black_body_enabled']):
+                        e.setActivePair(EMISSION_COLOR_TEMPERATURE)
+                    else:
+                        if(d['emitter_luminance'] == 0):
+                            u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
+                        elif(d['emitter_luminance'] == 1):
+                            u = EMISSION_UNITS_LUMINOUS_POWER
+                        elif(d['emitter_luminance'] == 2):
+                            u = EMISSION_UNITS_ILLUMINANCE
+                        elif(d['emitter_luminance'] == 3):
+                            u = EMISSION_UNITS_LUMINOUS_INTENSITY
+                        elif(d['emitter_luminance'] == 4):
+                            u = EMISSION_UNITS_LUMINANCE
+                        e.setActivePair(EMISSION_RGB, u)
+                
+                elif(d['emitter_emission'] == 1):
+                    e.setActiveEmissionType(EMISSION_TYPE_TEMPERATURE)
+                    e.setTemperature(d['emitter_temperature_value'])
+                elif(d['emitter_emission'] == 2):
+                    e.setActiveEmissionType(EMISSION_TYPE_MXI)
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = self.texture(d['emitter_hdr_map'])
+                    a.textureMap = t
+                    a.value = d['emitter_hdr_intensity']
+                    e.setMXI(a)
+                
+                e.setState(True)
+            else:
+                m = CextensionManager.instance()
+                m.loadAllExtensions()
+                if(d['use'] == 'AGS'):
+                    e = m.createDefaultMaterialModifierExtension('AGS')
+                    p = e.getExtensionData()
+                    
+                    c = Crgb8()
+                    c.assign(*d['ags_color'])
+                    p.setRgb('Color', c.toRGB())
+                    p.setFloat('Reflection', d['ags_reflection'])
+                    p.setUInt('Type', d['ags_type'])
+                
+                elif(d['use'] == 'OPAQUE'):
+                    e = m.createDefaultMaterialModifierExtension('Opaque')
+                    p = e.getExtensionData()
+                    
+                    p.setByte('Color Type', d['opaque_color_type'])
+                    c = Crgb8()
+                    c.assign(*d['opaque_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['opaque_color_map'], p, )
+                    
+                    p.setByte('Shininess Type', d['opaque_shininess_type'])
+                    p.setFloat('Shininess', d['opaque_shininess'])
+                    self.texture_data_to_mxparams('Shininess Map', d['opaque_shininess_map'], p, )
+                    
+                    p.setByte('Roughness Type', d['opaque_roughness_type'])
+                    p.setFloat('Roughness', d['opaque_roughness'])
+                    self.texture_data_to_mxparams('Roughness Map', d['opaque_roughness_map'], p, )
+                    
+                    p.setByte('Clearcoat', d['opaque_clearcoat'])
+                
+                elif(d['use'] == 'TRANSPARENT'):
+                    e = m.createDefaultMaterialModifierExtension('Transparent')
+                    p = e.getExtensionData()
+                    
+                    p.setByte('Color Type', d['transparent_color_type'])
+                    c = Crgb8()
+                    c.assign(*d['transparent_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['transparent_color_map'], p, )
+                    
+                    p.setFloat('Ior', d['transparent_ior'])
+                    p.setFloat('Transparency', d['transparent_transparency'])
+                    
+                    p.setByte('Roughness Type', d['transparent_roughness_type'])
+                    p.setFloat('Roughness', d['transparent_roughness'])
+                    self.texture_data_to_mxparams('Roughness Map', d['transparent_roughness_map'], p, )
+                    
+                    p.setFloat('Specular Tint', d['transparent_specular_tint'])
+                    p.setFloat('Dispersion', d['transparent_dispersion'])
+                    p.setByte('Clearcoat', d['transparent_clearcoat'])
+                
+                elif(d['use'] == 'METAL'):
+                    e = m.createDefaultMaterialModifierExtension('Metal')
+                    p = e.getExtensionData()
+                    
+                    p.setUInt('IOR', d['metal_ior'])
+                    
+                    p.setFloat('Tint', d['metal_tint'])
+                    
+                    p.setByte('Color Type', d['metal_color_type'])
+                    c = Crgb8()
+                    c.assign(*d['metal_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['metal_color_map'], p, )
+                    
+                    p.setByte('Roughness Type', d['metal_roughness_type'])
+                    p.setFloat('Roughness', d['metal_roughness'])
+                    self.texture_data_to_mxparams('Roughness Map', d['metal_roughness_map'], p, )
+                    
+                    p.setByte('Anisotropy Type', d['metal_anisotropy_type'])
+                    p.setFloat('Anisotropy', d['metal_anisotropy'])
+                    self.texture_data_to_mxparams('Anisotropy Map', d['metal_anisotropy_map'], p, )
+                    
+                    p.setByte('Angle Type', d['metal_angle_type'])
+                    p.setFloat('Angle', d['metal_angle'])
+                    self.texture_data_to_mxparams('Angle Map', d['metal_angle_map'], p, )
+                    
+                    p.setByte('Dust Type', d['metal_dust_type'])
+                    p.setFloat('Dust', d['metal_dust'])
+                    self.texture_data_to_mxparams('Dust Map', d['metal_dust_map'], p, )
+                    
+                    p.setByte('Perforation Enabled', d['metal_perforation_enabled'])
+                    self.texture_data_to_mxparams('Perforation Map', d['metal_perforation_map'], p, )
+                
+                elif(d['use'] == 'TRANSLUCENT'):
+                    e = m.createDefaultMaterialModifierExtension('Translucent')
+                    p = e.getExtensionData()
+                    
+                    p.setFloat('Scale', d['translucent_scale'])
+                    p.setFloat('Ior', d['translucent_ior'])
+                    
+                    p.setByte('Color Type', d['translucent_color_type'])
+                    c = Crgb8()
+                    c.assign(*d['translucent_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['translucent_color_map'], p, )
+                    
+                    p.setFloat('Hue Shift', d['translucent_hue_shift'])
+                    p.setByte('Invert Hue', d['translucent_invert_hue'])
+                    p.setFloat('Vibrance', d['translucent_vibrance'])
+                    p.setFloat('Density', d['translucent_density'])
+                    p.setFloat('Opacity', d['translucent_opacity'])
+                    
+                    p.setByte('Roughness Type', d['translucent_roughness_type'])
+                    p.setFloat('Roughness', d['translucent_roughness'])
+                    self.texture_data_to_mxparams('Roughness Map', d['translucent_roughness_map'], p, )
+                    
+                    p.setFloat('Specular Tint', d['translucent_specular_tint'])
+                    p.setByte('Clearcoat', d['translucent_clearcoat'])
+                    p.setFloat('Clearcoat Ior', d['translucent_clearcoat_ior'])
+                
+                elif(d['use'] == 'CARPAINT'):
+                    e = m.createDefaultMaterialModifierExtension('Car Paint')
+                    p = e.getExtensionData()
+                    
+                    c = Crgb8()
+                    c.assign(*d['carpaint_color'])
+                    p.setRgb('Color', c.toRGB())
+                    
+                    p.setFloat('Metallic', d['carpaint_metallic'])
+                    p.setFloat('Topcoat', d['carpaint_topcoat'])
+                
+                m = s.createMaterial(d['name'])
+                m.applyMaterialModifierExtension(p)
+                
+                # global properties
+                if(d['override_map']):
+                    t = self.texture(d['override_map'])
+                    m.setGlobalMap(t)
+                
+                if(d['bump']):
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    a.textureMap = self.texture(d['bump_map'])
+                    a.value = d['bump_value']
+                    m.setAttribute('bump', a)
+                
+                m.setDispersion(d['dispersion'])
+                m.setMatteShadow(d['shadow'])
+                m.setMatte(d['matte'])
+                
+                m.setNestedPriority(d['priority'])
+                
+                c = Crgb()
+                cc = [c / 255 for c in d['id']]
+                c.assign(*cc)
+                m.setColorID(c)
+        else:
+            raise TypeError("Material '{}' {} is unknown type".format(d['name'], d['subtype']))
+    
+    def get_material(self, n, ):
+        """get material by name from scene, if material is missing, create and return placeholder"""
+        def get_material_names(s):
+            it = CmaxwellMaterialIterator()
+            o = it.first(s)
+            l = []
+            while not o.isNull():
+                name = o.getName()
+                l.append(name)
+                o = it.next()
+            return l
         
-        return None
+        s = self.mxs
+        names = get_material_names(s)
+        m = None
+        if(n in names):
+            m = s.getMaterial(n)
+        if(m is None):
+            # should not happen because i stopped changing material names.. but i leave it here
+            m = self.material_placeholder()
+        return m
 
 
 class MXSReader():

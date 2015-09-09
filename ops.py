@@ -124,6 +124,10 @@ class ExportMXS(Operator, ExportHelper):
             sub.prop(self, 'keep_intermediates')
     
     def execute(self, context):
+        raise Exception("Unimplemented!")
+        
+        # FIXME: update mxs export operator
+        
         p = self.filepath
         if(system.PLATFORM == 'Darwin'):
             d = {'context': bpy.context,
@@ -490,6 +494,7 @@ class EditExtensionMaterial(Operator):
         # else:
         #     context.material.maxwell_render.mxm_file = bpy.path.relpath(self.filepath)
         
+        '''
         def ext_material(mat, ob):
             m = mat.maxwell_render
             mx = mat.maxwell_material_extension
@@ -661,6 +666,15 @@ class EditExtensionMaterial(Operator):
             return d
         
         path = system.mxed_create_and_edit_ext_material_helper(p, ext_material(context.material, context.object))
+        '''
+        
+        mat = export.MXSMaterialExtension(context.material.name)
+        d = mat._repr()
+        
+        # for k, v in d.items():
+        #     print(k, ':', v)
+        
+        path = system.mxed_create_and_edit_ext_material_helper(p, d)
         
         m = context.material.maxwell_render
         m.use = 'CUSTOM'
