@@ -722,6 +722,45 @@ def camera(d, s, ):
         c.setSphericalLensProperties(d['azimuth'])
     if(d['lens'] == 5):
         c.setCylindricalLensProperties(d['angle'])
+    
+    '''
+    if(d['lens'] == 6):
+        p = MXparamList()
+        # p.createUInt('Type', 1, 0, 2)
+        # p.createFloat('FOV Vertical', 180.0, 180.0, 0.0)
+        # p.createFloat('FOV Horizontal', 360.0, 360.0, 0.0)
+        # p.createByte('Flip Ray X', 0, 0, 1)
+        # p.createByte('Flip Ray Y', 0, 0, 1)
+        # p.createFloat('Parallax Distance', 360.0, 0.0, 360.0)
+        # p.createByte('Zenith Mode', 0, 0, 1)
+        # p.createFloat('Separation', 6.0, 0.0, 100000.0)
+        
+        p.setUInt('Type', d['lls_type'])
+        p.setFloat('FOV Vertical', d['lls_fovv'])
+        p.setFloat('FOV Horizontal', d['lls_fovh'])
+        p.setByte('Flip Ray X', d['lls_flip_ray_x'])
+        p.setByte('Flip Ray Y', d['lls_flip_ray_y'])
+        p.setFloat('Parallax Distance', d['lls_parallax_distance'])
+        p.setByte('Zenith Mode', d['lls_zenith_mode'])
+        p.setFloat('Separation', d['lls_separation'])
+        # texture_data_to_mxparams(d['lls_separation_map'], p, 'Separation Map')
+        c.applyCameraLensExtension(p)
+    
+    if(d['lens'] == 7):
+        p = MXparamList()
+        p.setUInt('Type', d['fs_type'])
+        p.setFloat('FOV', d['fs_fov'])
+        p.setFloat('Separation', d['fs_separation'])
+        texture_data_to_mxparams(d['fs_separation_map'], p, 'Separation Map')
+        p.setByte('Vertical Mode', d['fs_vertical_mode'])
+        p.setFloat('Dome Radius', d['fs_dome_radius'])
+        texture_data_to_mxparams(d['fs_head_turn_map'], p, 'Turn Map')
+        p.setByte('Dome Tilt Compensation', d['fs_dome_tilt_compensation'])
+        p.setFloat('Dome Tilt', d['fs_dome_tilt'])
+        texture_data_to_mxparams(d['fs_head_tilt_map'], p, 'Tilt Map')
+        c.applyCameraLensExtension(p)
+    '''
+    
     # c.setShutter(d['shutter'])
     c.setCutPlanes(d['set_cut_planes'][0], d['set_cut_planes'][1], d['set_cut_planes'][2], )
     c.setShiftLens(d['set_shift_lens'][0], d['set_shift_lens'][1], )

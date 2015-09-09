@@ -46,7 +46,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # 3.2 update list:
 # Nested Dielectrics: new material parameter called “Nested Priority”      DONE
-# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                    .
+# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                    ...
 # Export to PSD files: PSD format in 8, 16 and 32 bits                     DONE
 # Separated reflection and refraction channels                             DONE
 # Remove overlaps in the Maxwell Scatter                                   DONE
@@ -971,6 +971,14 @@ class MXSExport():
                         lens_extra = o.m_azimuth
                     elif(mx.lens == 5):
                         lens_extra = o.m_angle
+                    '''
+                    elif(mx.lens == 6):
+                        lens_extra = (o.m_lls_type, o.m_lls_fovv, o.m_lls_fovh, o.m_lls_flip_ray_x, o.m_lls_flip_ray_y,
+                                      o.m_lls_parallax_distance, o.m_lls_zenith_mode, o.m_lls_separation, o.m_lls_separation_map, )
+                    elif(mx.lens == 7):
+                        lens_extra = (fs_type, fs_fov, fs_separation, fs_separation_map, fs_vertical_mode, fs_dome_radius, 
+                                      fs_head_turn_map, fs_dome_tilt_compensation, fs_dome_tilt, fs_head_tilt_map, )
+                    '''
                 screen_region = None
                 if(o.m_screen_region != 'NONE'):
                     screen_region = o.m_screen_region_xywh
@@ -1569,6 +1577,36 @@ class MXSCamera(Serializable):
         self.m_frame_rate = mx.frame_rate
         self.m_set_cut_planes = (cd.clip_start, cd.clip_end, int(mx.zclip))
         self.m_set_shift_lens = (cd.shift_x * 10.0, cd.shift_y * 10.0)
+        
+        '''
+        def _texture_to_data(name):
+            if(name == ''):
+                return None
+            t = MXSTexture(name)
+            a = t._repr()
+            return a
+        
+        # stereo extensions
+        self.m_lls_type = int(mx.lls_type[-1:])
+        self.m_lls_fovv = math.degrees(mx.lls_fovv)
+        self.m_lls_fovh = math.degrees(mx.lls_fovh)
+        self.m_lls_flip_ray_x = mx.lls_flip_ray_x
+        self.m_lls_flip_ray_y = mx.lls_flip_ray_y
+        self.m_lls_parallax_distance = math.degrees(mx.lls_parallax_distance)
+        self.m_lls_zenith_mode = mx.lls_zenith_mode
+        self.m_lls_separation = mx.lls_separation
+        self.m_lls_separation_map = self._texture_to_data(mx.lls_separation_map)
+        self.m_fs_type = int(mx.fs_type[-1:])
+        self.m_fs_fov = math.degrees(mx.fs_fov)
+        self.m_fs_separation = mx.fs_separation
+        self.m_fs_separation_map = self._texture_to_data(mx.fs_separation_map)
+        self.m_fs_vertical_mode = int(mx.fs_vertical_mode[-1:])
+        self.m_fs_dome_radius = mx.fs_dome_radius
+        self.m_fs_head_turn_map = self._texture_to_data(mx.fs_head_turn_map)
+        self.m_fs_dome_tilt_compensation = int(mx.fs_dome_tilt_compensation[-1:])
+        self.m_fs_dome_tilt = mx.fs_dome_tilt
+        self.m_fs_head_tilt_map = self._texture_to_data(mx.fs_head_tilt_map)
+        '''
         
         # film width / height: width / height ratio a ==  x_res / y_res ratio
         # x_res / y_res is more important than sensor size, depending on sensor fit the other one is calculated

@@ -881,6 +881,7 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
             sub.prop(m, 'azimuth')
         if(m.lens == 'TYPE_CYLINDRICAL_5'):
             sub.prop(m, 'angle')
+        '''
         if(m.lens == 'TYPE_LAT_LONG_STEREO_6'):
             sub.separator()
             sub.label('Lat-Long Stereo:')
@@ -894,20 +895,21 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
             sub.prop(m, 'lls_parallax_distance')
             sub.prop(m, 'lls_zenith_mode')
             sub.prop(m, 'lls_separation')
-            sub.prop(m, 'lls_separation_map')
+            sub.prop_search(m, 'lls_separation_map', bpy.data, 'textures', icon='TEXTURE')
         if(m.lens == 'TYPE_FISH_STEREO_7'):
             sub.separator()
             sub.label('Fish Stereo:')
             sub.prop(m, 'fs_type')
             sub.prop(m, 'fs_fov')
             sub.prop(m, 'fs_separation')
-            sub.prop(m, 'fs_separation_map')
+            sub.prop_search(m, 'fs_separation_map', bpy.data, 'textures', icon='TEXTURE')
             sub.prop(m, 'fs_vertical_mode')
             sub.prop(m, 'fs_dome_radius')
-            sub.prop(m, 'fs_head_turn_map')
+            sub.prop_search(m, 'fs_head_turn_map', bpy.data, 'textures', icon='TEXTURE')
             sub.prop(m, 'fs_dome_tilt_compensation')
             sub.prop(m, 'fs_dome_tilt')
-            sub.prop(m, 'fs_head_tilt_map')
+            sub.prop_search(m, 'fs_head_tilt_map', bpy.data, 'textures', icon='TEXTURE')
+        '''
 
 
 class CameraSensorPanel(CameraButtonsPanel, Panel):

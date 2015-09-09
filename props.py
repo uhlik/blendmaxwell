@@ -435,20 +435,27 @@ class EnvironmentProperties(PropertyGroup):
 class CameraProperties(PropertyGroup):
     # optics
     # lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""), ('TYPE_PINHOLE_1', "Pin Hole", ""), ('TYPE_ORTHO_2', "Ortho", ""), ('TYPE_FISHEYE_3', "Fish Eye", ""), ('TYPE_SPHERICAL_4', "Spherical", ""), ('TYPE_CYLINDRICAL_5', "Cylindical", "")], default='TYPE_THIN_LENS_0', )
+    # lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""),
+    #                                         ('TYPE_PINHOLE_1', "Pin Hole", ""),
+    #                                         ('TYPE_ORTHO_2', "Ortho", ""),
+    #                                         ('TYPE_FISHEYE_3', "Fish Eye", ""),
+    #                                         ('TYPE_SPHERICAL_4', "Spherical", ""),
+    #                                         ('TYPE_CYLINDRICAL_5', "Cylindical", ""),
+    #                                         ('TYPE_LAT_LONG_STEREO_6', "Lat-Long Stereo", ""),
+    #                                         ('TYPE_FISH_STEREO_7', "Fish Stereo", ""), ], default='TYPE_THIN_LENS_0', )
     lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""),
                                             ('TYPE_PINHOLE_1', "Pin Hole", ""),
                                             ('TYPE_ORTHO_2', "Ortho", ""),
                                             ('TYPE_FISHEYE_3', "Fish Eye", ""),
                                             ('TYPE_SPHERICAL_4', "Spherical", ""),
-                                            ('TYPE_CYLINDRICAL_5', "Cylindical", ""),
-                                            ('TYPE_LAT_LONG_STEREO_6', "Lat-Long Stereo", ""),
-                                            ('TYPE_FISH_STEREO_7', "Fish Stereo", ""), ], default='TYPE_THIN_LENS_0', )
+                                            ('TYPE_CYLINDRICAL_5', "Cylindical", ""), ], default='TYPE_THIN_LENS_0', )
     shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", )
     fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_update_gpu_dof, )
     fov = FloatProperty(name="FOV", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     azimuth = FloatProperty(name="Azimuth", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     angle = FloatProperty(name="Angle", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     
+    '''
     lls_type = EnumProperty(name="Type", items=[('CENTER_0', "Center", ""), ('LEFT_1', "Left", ""), ('RIGHT_2', "Right", ""), ], default='LEFT_1', )
     lls_fovv = FloatProperty(name="FOV Vertical", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(180.0), subtype='ANGLE', )
     lls_fovh = FloatProperty(name="FOV Horizontal", default=math.radians(360.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
@@ -457,17 +464,18 @@ class CameraProperties(PropertyGroup):
     lls_parallax_distance = FloatProperty(name="Parallax Distance", default=math.radians(360.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     lls_zenith_mode = BoolProperty(name="Zenith Mode", default=False, )
     lls_separation = FloatProperty(name="Separation", default=6.0, min=0.0, max=1000000.0, )
-    lls_separation_map = StringProperty(name="Separation Map", default="", subtype='FILE_PATH', description="Path to separation map", )
+    lls_separation_map = StringProperty(name="Separation Map", default="", description="Path to separation map", )
     fs_type = EnumProperty(name="Type", items=[('CENTER_0', "Center", ""), ('LEFT_1', "Left", ""), ('RIGHT_2', "Right", ""), ], default='CENTER_0', )
     fs_fov = FloatProperty(name="FOV", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     fs_separation = FloatProperty(name="Separation", default=6.0, min=0.0, max=1000000.0, )
-    fs_separation_map = StringProperty(name="Separation Map", default="", subtype='FILE_PATH', description="Path to separation map", )
+    fs_separation_map = StringProperty(name="Separation Map", default="", description="Path to separation map", )
     fs_vertical_mode = EnumProperty(name="Vertical Mode", items=[('OFF_0', "Off", ""), ('ON_1', "On", ""), ], default='OFF_0', )
     fs_dome_radius = FloatProperty(name="Dome Radius", default=136.0, min=1.0, max=1000000.0, )
-    fs_head_turn_map = StringProperty(name="Head Turn Map", default="", subtype='FILE_PATH', description="Path to separation map", )
+    fs_head_turn_map = StringProperty(name="Head Turn Map", default="", description="Path to separation map", )
     fs_dome_tilt_compensation = EnumProperty(name="Dome Tilt Compensation", items=[('OFF_0', "Off", ""), ('ON_1', "On", ""), ], default='OFF_0', )
     fs_dome_tilt = FloatProperty(name="Dome Tilt", default=0.0, min=0.0, max=90.0, )
-    fs_head_tilt_map = StringProperty(name="Head Tilt Map", default="", subtype='FILE_PATH', description="Path to separation map", )
+    fs_head_tilt_map = StringProperty(name="Head Tilt Map", default="", description="Path to separation map", )
+    '''
     
     # sensor
     # resolution_width = IntProperty(name="Width", default=640, min=32, max=65536, subtype="PIXEL", )

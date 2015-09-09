@@ -104,6 +104,7 @@ def get_all_panels():
 
 
 def get_default_presets():
+    # TODO: have a look at presets if they are still the same or updated
     presets = {
         'exposure': {
             'subdirs': False,
