@@ -398,9 +398,10 @@ class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
         sub.prop(m, 'channels_output_mode')
         
         r = sub.row()
-        c = r.column()
+        s = r.split(percentage=0.33)
+        c = s.column()
         c.prop(m, 'channels_render')
-        c = r.column()
+        c = s.column()
         c.prop(m, 'channels_render_type', text="", )
         if(not m.channels_render):
             c.enabled = False
@@ -543,6 +544,13 @@ class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
         c.prop(m, 'channels_custom_alpha')
         c = s.column()
         c.prop(m, 'channels_custom_alpha_file', text="", )
+        
+        r = l.row()
+        s = r.split(percentage=0.33)
+        c = s.column()
+        c.prop(m, 'channels_reflectance')
+        c = s.column()
+        c.prop(m, 'channels_reflectance_file', text="", )
 
 
 class ChannelsCustomAlphasPanel(RenderLayerButtonsPanel, Panel):

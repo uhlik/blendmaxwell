@@ -44,6 +44,16 @@ AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).t
 ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
+# 3.2 update list:
+# TODO --- Nested Dielectrics: new material parameter called “Nested Priority”      DONE
+# TODO --- New stereo lenses: Lat/Long and Stereo Fish Lens                         -
+# TODO --- Export to PSD files: PSD format in 8, 16 and 32 bits                     DONE
+# TODO --- Separated reflection and refraction channels                             DONE
+# TODO --- Remove overlaps in the Maxwell Scatter                                   -
+# TODO --- New Reflectance channel                                                  DONE
+# TODO --- Improvements in the Maxwell Grass fibers growth                          -
+# TODO --- New Asset Reference extension                                            -
+
 
 class MXSExport():
     def __init__(self, mxs_path, ):
@@ -1296,6 +1306,10 @@ class MXSScene(Serializable):
         self.m_channels_custom_alpha = mx.channels_custom_alpha
         self.m_channels_custom_alpha_file = mx.channels_custom_alpha_file
         self.m_channels_custom_alpha_groups = groups
+        
+        self.m_channels_reflectance = mx.channels_reflectance
+        self.m_channels_reflectance_file = mx.channels_reflectance_file
+        
         self.m_tone_color_space = int(mx.tone_color_space.split('_')[1])
         self.m_tone_whitepoint = mx.tone_whitepoint
         self.m_tone_tint = mx.tone_tint

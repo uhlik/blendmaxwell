@@ -331,8 +331,7 @@ class MXSWriter():
                     m.setDispersion(d['dispersion'])
                     m.setMatteShadow(d['shadow'])
                     m.setMatte(d['matte'])
-                    
-                    # TODO: 3.2 update > set priority
+                    m.setNestedPriority(d['priority'])
                     
                     c = Crgb()
                     cc = [c / 255 for c in d['id']]
@@ -550,7 +549,7 @@ class MXSWriter():
                 m.setMatteShadow(d['shadow'])
                 m.setMatte(d['matte'])
                 
-                # TODO: 3.2 update > set priority
+                m.setNestedPriority(d['priority'])
                 
                 c = Crgb()
                 cc = [c / 255 for c in d['id']]
@@ -1206,6 +1205,12 @@ class MXSWriter():
                 return ('.hdr', 32)
             elif(t == 'DTEX'):
                 return ('.dtex', 32)
+            elif(t == 'PSD8'):
+                return ('.psd', 8)
+            elif(t == 'PSD16'):
+                return ('.psd', 16)
+            elif(t == 'PSD32'):
+                return ('.psd', 32)
             else:
                 return ('.tif', 8)
         
@@ -1230,15 +1235,7 @@ class MXSWriter():
         s.setRenderParameter('DO RENDER CHANNEL', int(channels_render))
         s.setRenderParameter('EMBED CHANNELS', channels_output_mode)
         
-        if(channels_render_type == 2):
-            s.setRenderParameter('DO DIFFUSE LAYER', 0)
-            s.setRenderParameter('DO REFLECTION LAYER', 1)
-        elif(channels_render_type == 1):
-            s.setRenderParameter('DO DIFFUSE LAYER', 1)
-            s.setRenderParameter('DO REFLECTION LAYER', 0)
-        else:
-            s.setRenderParameter('DO DIFFUSE LAYER', 1)
-            s.setRenderParameter('DO REFLECTION LAYER', 1)
+        s.setRenderParameter('RENDER LAYERS', channels_render_type)
         
         if(channels is not None):
             e, depth = get_ext_depth(channels["channels_alpha_file"])
@@ -1267,6 +1264,8 @@ class MXSWriter():
             s.setPath('UV', "{}_uv{}".format(base_path, e), depth)
             e, depth = get_ext_depth(channels["channels_custom_alpha_file"])
             s.setPath('ALPHA_CUSTOM', "{}_custom_alpha{}".format(base_path, e), depth)
+            e, depth = get_ext_depth(channels["channels_reflectance_file"])
+            s.setPath('REFLECTANCE', "{}_reflectance{}".format(base_path, e), depth)
             
             s.setRenderParameter('DO ALPHA CHANNEL', int(channels["channels_alpha"]))
             s.setRenderParameter('OPAQUE ALPHA', int(channels["channels_alpha_opaque"]))
@@ -1289,6 +1288,7 @@ class MXSWriter():
             s.setRenderParameter('DO UV CHANNEL', int(channels["channels_uv"]))
             # s.setRenderParameter('MOTION CHANNEL TYPE', ?)
             s.setRenderParameter('DO ALPHA CUSTOM CHANNEL', int(channels["channels_custom_alpha"]))
+            s.setRenderParameter('DO REFLECTANCE CHANNEL', int(channels["channels_reflectance"]))
     
     def custom_alphas(self, groups, ):
         """Set custom alphas.

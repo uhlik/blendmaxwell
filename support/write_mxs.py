@@ -332,31 +332,30 @@ def material(d, s, ):
                 if(d['override_map']):
                     t = texture(d['override_map'], s, )
                     m.setGlobalMap(t)
-            
+                
                 if(d['bump']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
                     a.textureMap = texture(d['bump_map'], s, )
                     a.value = d['bump_value']
                     m.setAttribute('bump', a)
-            
+                
                 m.setDispersion(d['dispersion'])
                 m.setMatteShadow(d['shadow'])
                 m.setMatte(d['matte'])
-            
-                # TODO: 3.2 update > set priority
-            
+                m.setNestedPriority(d['priority'])
+                
                 c = Crgb()
                 cc = [c / 255 for c in d['id']]
                 c.assign(*cc)
                 m.setColorID(c)
-            
+        
     elif(d['subtype'] == 'EXTENSION'):
         if(d['use'] == 'EMITTER'):
             m = s.createMaterial(d['name'])
             l = m.addLayer()
             e = l.createEmitter()
-        
+            
             if(d['emitter_type'] == 0):
                 e.setLobeType(EMISSION_LOBE_DEFAULT)
             elif(d['emitter_type'] == 1):
@@ -373,10 +372,10 @@ def material(d, s, ):
                 e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
                 e.setSpotFallOffType(d['emitter_spot_falloff_type'])
                 e.setSpotBlur(d['emitter_spot_blur'])
-        
+            
             if(d['emitter_emission'] == 0):
                 e.setActiveEmissionType(EMISSION_TYPE_PAIR)
-            
+                
                 ep = CemitterPair()
                 c = Crgb8()
                 c.assign(*d['emitter_color'])
@@ -389,7 +388,7 @@ def material(d, s, ):
                 ep.luminousIntensity = d['emitter_luminance_output']
                 ep.luminance = d['emitter_luminance_output']
                 e.setPair(ep)
-            
+                
                 if(d['emitter_color_black_body_enabled']):
                     e.setActivePair(EMISSION_COLOR_TEMPERATURE)
                 else:
@@ -562,7 +561,7 @@ def material(d, s, ):
             m.setMatteShadow(d['shadow'])
             m.setMatte(d['matte'])
             
-            # TODO: 3.2 update > set priority
+            m.setNestedPriority(d['priority'])
             
             c = Crgb()
             cc = [c / 255 for c in d['id']]
@@ -1026,6 +1025,87 @@ def instance(d, s, ):
 
 
 def scene(d, s, ):
+    h, t = os.path.split(d["output_mxi"])
+    n, e = os.path.splitext(t)
+    base_path = os.path.join(h, n)
+    
+    def get_ext_depth(t, e=None):
+        if(e is not None):
+            t = "{}{}".format(e[1:].upper(), int(t[3:]))
+        
+        if(t == 'RGB8'):
+            return ('.png', 8)
+        elif(t == 'RGB16'):
+            return ('.png', 16)
+        elif(t == 'RGB32'):
+            return ('.exr', 32)
+        elif(t == 'PNG8'):
+            return ('.png', 8)
+        elif(t == 'PNG16'):
+            return ('.png', 16)
+        elif(t == 'TGA'):
+            return ('.tga', 8)
+        elif(t == 'TIF8'):
+            return ('.tif', 8)
+        elif(t == 'TIF16'):
+            return ('.tif', 16)
+        elif(t == 'TIF32'):
+            return ('.tif', 32)
+        elif(t == 'EXR16'):
+            return ('.exr', 16)
+        elif(t == 'EXR32'):
+            return ('.exr', 32)
+        elif(t == 'EXR_DEEP'):
+            return ('.exr', 32)
+        elif(t == 'JPG'):
+            return ('.jpg', 8)
+        elif(t == 'JP2'):
+            return ('.jp2', 8)
+        elif(t == 'HDR'):
+            return ('.hdr', 32)
+        elif(t == 'DTEX'):
+            return ('.dtex', 32)
+        elif(t == 'PSD8'):
+            return ('.psd', 8)
+        elif(t == 'PSD16'):
+            return ('.psd', 16)
+        elif(t == 'PSD32'):
+            return ('.psd', 32)
+        else:
+            return ('.tif', 8)
+    
+    _, depth = get_ext_depth(d["output_depth"], os.path.splitext(os.path.split(d["output_image"])[1])[1])
+    s.setPath('RENDER', d["output_image"], depth)
+    
+    e, depth = get_ext_depth(d["channels_alpha_file"])
+    s.setPath('ALPHA', "{}_alpha{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_shadow_file"])
+    s.setPath('SHADOW', "{}_shadow{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_object_id_file"])
+    s.setPath('OBJECT', "{}_object_id{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_material_id_file"])
+    s.setPath('MATERIAL', "{}_material_id{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_motion_vector_file"])
+    s.setPath('MOTION', "{}_motion_vector{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_z_buffer_file"])
+    s.setPath('Z', "{}_z_buffer{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_roughness_file"])
+    s.setPath('ROUGHNESS', "{}_roughness{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_fresnel_file"])
+    s.setPath('FRESNEL', "{}_fresnel{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_normals_file"])
+    s.setPath('NORMALS', "{}_normals{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_position_file"])
+    s.setPath('POSITION', "{}_position{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_deep_file"])
+    s.setPath('DEEP', "{}_deep{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_uv_file"])
+    s.setPath('UV', "{}_uv{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_custom_alpha_file"])
+    s.setPath('ALPHA_CUSTOM', "{}_custom_alpha{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_reflectance_file"])
+    s.setPath('REFLECTANCE', "{}_reflectance{}".format(base_path, e), depth)
+    
     s.setRenderParameter('ENGINE', d["scene_quality"])
     s.setRenderParameter('NUM THREADS', d["scene_cpu_threads"])
     s.setRenderParameter('STOP TIME', d["scene_time"] * 60)
@@ -1044,15 +1124,24 @@ def scene(d, s, ):
     s.setRenderParameter('DO DISPLACEMENT', d["globals_diplacement"])
     s.setRenderParameter('DO DISPERSION', d["globals_dispersion"])
     
-    if(d['channels_render_type'] == 2):
-        s.setRenderParameter('DO DIFFUSE LAYER', 0)
-        s.setRenderParameter('DO REFLECTION LAYER', 1)
-    elif(d['channels_render_type'] == 1):
-        s.setRenderParameter('DO DIFFUSE LAYER', 1)
-        s.setRenderParameter('DO REFLECTION LAYER', 0)
-    else:
-        s.setRenderParameter('DO DIFFUSE LAYER', 1)
-        s.setRenderParameter('DO REFLECTION LAYER', 1)
+    # 'RENDER LAYERS': 0 = RENDER_LAYER_ALL (all layers)
+    #                  1 = RENDER_LAYER_DIFFUSE (diffuse)
+    #                  2 = RENDER_LAYER_REFLECTIONS (reflections)
+    #                  3 = RENDER_LAYER_REFRACTIONS (refractions)
+    #                  4 = RENDER_LAYER_DIFFUSE_AND_REFLECTIONS (diffuse and reflections)
+    #                  5 = RENDER_LAYER_REFLECTIONS_AND_REFRACTIONS (reflections and refractions)
+    s.setRenderParameter('RENDER LAYERS', d['channels_render_type'])
+    
+    # # 3.1
+    # if(d['channels_render_type'] == 2):
+    #     s.setRenderParameter('DO DIFFUSE LAYER', 0)
+    #     s.setRenderParameter('DO REFLECTION LAYER', 1)
+    # elif(d['channels_render_type'] == 1):
+    #     s.setRenderParameter('DO DIFFUSE LAYER', 1)
+    #     s.setRenderParameter('DO REFLECTION LAYER', 0)
+    # else:
+    #     s.setRenderParameter('DO DIFFUSE LAYER', 1)
+    #     s.setRenderParameter('DO REFLECTION LAYER', 1)
     
     v = d['illum_caustics_illumination']
     if(v == 3):
@@ -1096,80 +1185,6 @@ def scene(d, s, ):
         s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 1)
         s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 1)
     
-    h, t = os.path.split(d["output_mxi"])
-    n, e = os.path.splitext(t)
-    base_path = os.path.join(h, n)
-    
-    def get_ext_depth(t, e=None):
-        if(e is not None):
-            t = "{}{}".format(e[1:].upper(), int(t[3:]))
-        
-        if(t == 'RGB8'):
-            return ('.png', 8)
-        elif(t == 'RGB16'):
-            return ('.png', 16)
-        elif(t == 'RGB32'):
-            return ('.exr', 32)
-        elif(t == 'PNG8'):
-            return ('.png', 8)
-        elif(t == 'PNG16'):
-            return ('.png', 16)
-        elif(t == 'TGA'):
-            return ('.tga', 8)
-        elif(t == 'TIF8'):
-            return ('.tif', 8)
-        elif(t == 'TIF16'):
-            return ('.tif', 16)
-        elif(t == 'TIF32'):
-            return ('.tif', 32)
-        elif(t == 'EXR16'):
-            return ('.exr', 16)
-        elif(t == 'EXR32'):
-            return ('.exr', 32)
-        elif(t == 'EXR_DEEP'):
-            return ('.exr', 32)
-        elif(t == 'JPG'):
-            return ('.jpg', 8)
-        elif(t == 'JP2'):
-            return ('.jp2', 8)
-        elif(t == 'HDR'):
-            return ('.hdr', 32)
-        elif(t == 'DTEX'):
-            return ('.dtex', 32)
-        else:
-            return ('.tif', 8)
-    
-    _, depth = get_ext_depth(d["output_depth"], os.path.splitext(os.path.split(d["output_image"])[1])[1])
-    s.setPath('RENDER', d["output_image"], depth)
-    
-    e, depth = get_ext_depth(d["channels_alpha_file"])
-    s.setPath('ALPHA', "{}_alpha.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_shadow_file"])
-    s.setPath('SHADOW', "{}_shadow.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_object_id_file"])
-    s.setPath('OBJECT', "{}_object_id.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_material_id_file"])
-    s.setPath('MATERIAL', "{}_material_id.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_motion_vector_file"])
-    s.setPath('MOTION', "{}_motion_vector.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_z_buffer_file"])
-    s.setPath('Z', "{}_z_buffer.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_roughness_file"])
-    s.setPath('ROUGHNESS', "{}_roughness.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_fresnel_file"])
-    s.setPath('FRESNEL', "{}_fresnel.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_normals_file"])
-    s.setPath('NORMALS', "{}_normals.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_position_file"])
-    s.setPath('POSITION', "{}_position.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_deep_file"])
-    s.setPath('DEEP', "{}_deep.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_uv_file"])
-    s.setPath('UV', "{}_uv.{}".format(base_path, e), depth)
-    
-    e, depth = get_ext_depth(d["channels_custom_alpha_file"])
-    s.setPath('ALPHA_CUSTOM', "{}_custom_alpha.{}".format(base_path, e), depth)
-    
     s.setRenderParameter('DO RENDER CHANNEL', int(d["channels_render"]))
     s.setRenderParameter('DO ALPHA CHANNEL', int(d["channels_alpha"]))
     s.setRenderParameter('OPAQUE ALPHA', int(d["channels_alpha_opaque"]))
@@ -1191,9 +1206,9 @@ def scene(d, s, ):
     s.setRenderParameter('DEEP MIN DISTANCE', d["channels_deep_min_dist"])
     s.setRenderParameter('DEEP MAX SAMPLES', d["channels_deep_max_samples"])
     s.setRenderParameter('DO UV CHANNEL', int(d["channels_uv"]))
-    
     # s.setRenderParameter('MOTION CHANNEL TYPE', ?)
     s.setRenderParameter('DO ALPHA CUSTOM CHANNEL', int(d["channels_custom_alpha"]))
+    s.setRenderParameter('DO REFLECTANCE CHANNEL', int(d["channels_reflectance"]))
     
     s.setRenderParameter('DO DEVIGNETTING', d["simulens_devignetting"])
     s.setRenderParameter('DEVIGNETTING', d["simulens_devignetting_value"])
@@ -1506,7 +1521,7 @@ def hair(d, s, ):
     # p.setByteArray('HAIR_GUIDES_POINT_COUNT', d['data']['HAIR_GUIDES_POINT_COUNT'])
     m = memoryview(struct.pack("I", d['data']['HAIR_GUIDES_POINT_COUNT'][0])).tolist()
     p.setByteArray('HAIR_GUIDES_POINT_COUNT', m)
-    # TODO
+    # TODO: some old todo and i don't remember what it was..
     # p.setByteArray('HAIR_GUIDES_POINT_COUNT', m * d['data']['HAIR_GUIDES_COUNT'][0])
     
     c = Cbase()

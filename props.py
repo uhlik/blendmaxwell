@@ -41,6 +41,23 @@ def _output_depth_items(scene, context):
         return items
 
 
+def _output_file_types(scene, context):
+    a = [('EXR32', "EXR 32", ""),
+         ('EXR16', "EXR 16", ""),
+         ('TIF32', "TIF 32", ""),
+         ('TIF16', "TIF 16", ""),
+         ('TIF8', "TIF 8", ""),
+         ('PSD32', "PSD 32", ""),
+         ('PSD16', "PSD 16", ""),
+         ('PSD8', "PSD 8", ""),
+         ('PNG16', "PNG 16", ""),
+         ('PNG8', "PNG 8", ""),
+         ('JPG', "JPG", ""),
+         ('JP2', "JP2", ""),
+         ('TGA', "TGA", ""), ]
+    return a
+
+
 def _gmt_auto(self, context):
     if(self.sun_latlong_gmt_auto):
         # http://stackoverflow.com/questions/1058342/rough-estimate-of-the-time-offset-from-gmt-from-latitude-longitude
@@ -83,7 +100,7 @@ def _override_output_image(self, context):
     
     h, t = os.path.split(self.output_image)
     n, e = os.path.splitext(t)
-    es = ['.png', '.jpg', '.tga', '.tif', '.jp2', '.hdr', '.exr', '.bmp', ]
+    es = ['.png', '.psd', '.jpg', '.tga', '.tif', '.jp2', '.hdr', '.exr', '.bmp', ]
     if(not e.lower() in es):
         e = '.png'
     
@@ -182,31 +199,38 @@ class SceneProperties(PropertyGroup):
     
     channels_output_mode = EnumProperty(name="Output Mode", items=[('SEPARATE_0', "Separate", ""), ('EMBEDDED_1', "Embedded", "")], default='SEPARATE_0', )
     channels_render = BoolProperty(name="Render", default=True, )
-    channels_render_type = EnumProperty(name="Type", items=[('DIFFUSE_REFLECTIONS_0', "Diffuse + Reflections", ""), ('DIFFUSE_1', "Diffuse", ""), ('REFLECTIONS_2', "Reflections", "")], default='DIFFUSE_REFLECTIONS_0', )
+    # channels_render_type = EnumProperty(name="Type", items=[('DIFFUSE_REFLECTIONS_0', "Diffuse + Reflections", ""), ('DIFFUSE_1', "Diffuse", ""), ('REFLECTIONS_2', "Reflections", "")], default='DIFFUSE_REFLECTIONS_0', )
+    channels_render_type = EnumProperty(name="Type", items=[('RENDER_LAYER_ALL_0', "All", ""),
+                                                            ('RENDER_LAYER_DIFFUSE_1', "Diffuse", ""),
+                                                            ('RENDER_LAYER_REFLECTIONS_2', "Reflections", ""),
+                                                            ('RENDER_LAYER_REFRACTIONS_3', "Refractions", ""),
+                                                            ('RENDER_LAYER_DIFFUSE_AND_REFLECTIONS_4', "Diffuse and Reflections", ""),
+                                                            ('RENDER_LAYER_REFLECTIONS_AND_REFRACTIONS_5', "Reflections and Refractions", ""), ], default='RENDER_LAYER_ALL_0', )
+    
     channels_alpha = BoolProperty(name="Alpha", default=False, )
-    channels_alpha_file = EnumProperty(name="Alpha File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", "")], default='PNG16', )
+    channels_alpha_file = EnumProperty(name="Alpha File", items=_output_file_types, )
     channels_alpha_opaque = BoolProperty(name="Opaque", default=False, )
     channels_z_buffer = BoolProperty(name="Z-buffer", default=False, )
-    channels_z_buffer_file = EnumProperty(name="Z-buffer File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_z_buffer_file = EnumProperty(name="Z-buffer File", items=_output_file_types, )
     channels_z_buffer_near = FloatProperty(name="Z-buffer Near", default=0.0, min=-100000.000, max=100000.000, precision=3, )
     channels_z_buffer_far = FloatProperty(name="Z-buffer Far", default=0.0, min=-100000.000, max=100000.000, precision=3, )
     channels_shadow = BoolProperty(name="Shadow", default=False, )
-    channels_shadow_file = EnumProperty(name="Shadow File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_shadow_file = EnumProperty(name="Shadow File", items=_output_file_types, )
     channels_material_id = BoolProperty(name="Material ID", default=False, )
-    channels_material_id_file = EnumProperty(name="Material ID File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_material_id_file = EnumProperty(name="Material ID File", items=_output_file_types, )
     channels_object_id = BoolProperty(name="Object ID", default=False, )
-    channels_object_id_file = EnumProperty(name="Object ID File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_object_id_file = EnumProperty(name="Object ID File", items=_output_file_types, )
     channels_motion_vector = BoolProperty(name="Motion Vector", default=False, )
-    channels_motion_vector_file = EnumProperty(name="Motion Vector File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_motion_vector_file = EnumProperty(name="Motion Vector File", items=_output_file_types, )
     channels_roughness = BoolProperty(name="Roughness", default=False, )
-    channels_roughness_file = EnumProperty(name="Roughness File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_roughness_file = EnumProperty(name="Roughness File", items=_output_file_types, )
     channels_fresnel = BoolProperty(name="Fresnel", default=False, )
-    channels_fresnel_file = EnumProperty(name="Fresnel File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_fresnel_file = EnumProperty(name="Fresnel File", items=_output_file_types, )
     channels_normals = BoolProperty(name="Normals", default=False, )
-    channels_normals_file = EnumProperty(name="Normals File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_normals_file = EnumProperty(name="Normals File", items=_output_file_types, )
     channels_normals_space = EnumProperty(name="Normals Space", items=[('WORLD_0', "World", ""), ('CAMERA_1', "Camera", "")], default='WORLD_0', )
     channels_position = BoolProperty(name="Position", default=False, )
-    channels_position_file = EnumProperty(name="Position File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_position_file = EnumProperty(name="Position File", items=_output_file_types, )
     channels_position_space = EnumProperty(name="Normals Space", items=[('WORLD_0', "World", ""), ('CAMERA_1', "Camera", "")], default='WORLD_0', )
     channels_deep = BoolProperty(name="Deep", default=False, )
     channels_deep_file = EnumProperty(name="Deep File", items=[('EXR_DEEP', "EXR DEEP", ""), ('DTEX', "DTEX", "")], default='EXR_DEEP', )
@@ -214,9 +238,11 @@ class SceneProperties(PropertyGroup):
     channels_deep_min_dist = FloatProperty(name="Min dist (m)", default=0.2, min=0.0, max=1000.000, precision=3, )
     channels_deep_max_samples = IntProperty(name="Max samples", default=20, min=1, max=100000, )
     channels_uv = BoolProperty(name="UV", default=False, )
-    channels_uv_file = EnumProperty(name="UV File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_uv_file = EnumProperty(name="UV File", items=_output_file_types, )
     channels_custom_alpha = BoolProperty(name="Custom Alpha", default=False, )
-    channels_custom_alpha_file = EnumProperty(name="Custom Alpha File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", "")], default='PNG16', )
+    channels_custom_alpha_file = EnumProperty(name="Custom Alpha File", items=_output_file_types, )
+    channels_reflectance = BoolProperty(name="Reflectance", default=False, )
+    channels_reflectance_file = EnumProperty(name="Reflectance File", items=_output_file_types, )
     
     tone_color_space = EnumProperty(name="Color Space",
                                     items=[('SRGB_0', "sRGB IEC61966-2.1", ""),
