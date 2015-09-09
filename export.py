@@ -45,14 +45,14 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # 3.2 update list:
-# TODO --- Nested Dielectrics: new material parameter called “Nested Priority”      DONE
-# TODO --- New stereo lenses: Lat/Long and Stereo Fish Lens                         -
-# TODO --- Export to PSD files: PSD format in 8, 16 and 32 bits                     DONE
-# TODO --- Separated reflection and refraction channels                             DONE
-# TODO --- Remove overlaps in the Maxwell Scatter                                   DONE
-# TODO --- New Reflectance channel                                                  DONE
-# TODO --- Improvements in the Maxwell Grass fibers growth                          DONE
-# TODO --- New Asset Reference extension                                            DONE (with bug in setting material)
+# Nested Dielectrics: new material parameter called “Nested Priority”      DONE
+# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                    
+# Export to PSD files: PSD format in 8, 16 and 32 bits                     DONE
+# Separated reflection and refraction channels                             DONE
+# Remove overlaps in the Maxwell Scatter                                   DONE
+# New Reflectance channel                                                  DONE
+# Improvements in the Maxwell Grass fibers growth                          DONE
+# New Asset Reference extension                                            DONE (with bug in setting material)
 
 
 class MXSExport():

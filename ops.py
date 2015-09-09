@@ -124,26 +124,36 @@ class ExportMXS(Operator, ExportHelper):
             sub.prop(self, 'keep_intermediates')
     
     def execute(self, context):
-        raise Exception("Unimplemented!")
+        # p = self.filepath
+        # if(system.PLATFORM == 'Darwin'):
+        #     d = {'context': bpy.context,
+        #          'mxs_path': p,
+        #          'use_instances': self.use_instances,
+        #          'keep_intermediates': self.keep_intermediates, }
+        #     ex = export.MXSExportLegacy(**d)
+        # elif(system.PLATFORM == 'Linux'):
+        #     ex = export.MXSExport(bpy.context, p, self.use_instances, )
+        # elif(system.PLATFORM == 'Windows'):
+        #     ex = export.MXSExport(bpy.context, p, self.use_instances, )
+        # else:
+        #     pass
         
-        # FIXME: update mxs export operator
+        p = bpy.path.abspath(self.filepath)
+        ex = export.MXSExport(mxs_path=p, )
         
-        p = self.filepath
-        if(system.PLATFORM == 'Darwin'):
-            d = {'context': bpy.context,
-                 'mxs_path': p,
-                 'use_instances': self.use_instances,
-                 'keep_intermediates': self.keep_intermediates, }
-            ex = export.MXSExportLegacy(**d)
-        elif(system.PLATFORM == 'Linux'):
-            ex = export.MXSExport(bpy.context, p, self.use_instances, )
-        elif(system.PLATFORM == 'Windows'):
-            ex = export.MXSExport(bpy.context, p, self.use_instances, )
-        else:
-            pass
+        # if(self.open_log):
+        #     system.open_file_in_default_application(LOG_FILE_PATH)
         
+        from .log import NUMBER_OF_WARNINGS, copy_paste_log
+        if(NUMBER_OF_WARNINGS > 0):
+            self.report({'ERROR'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
         if(self.open_log):
-            system.open_file_in_default_application(LOG_FILE_PATH)
+            h, t = os.path.split(p)
+            n, e = os.path.splitext(t)
+            u = ex.uuid
+            log_file_path = os.path.join(h, '{}-export_log-{}.txt'.format(n, u))
+            copy_paste_log(log_file_path)
+            system.open_file_in_default_application(log_file_path)
         
         if(ex is not None):
             bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=self.open_with, instance_app=False, )
