@@ -1131,7 +1131,12 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         o = context.active_object
         ts = ['EMPTY']
         vol = context.object.maxwell_volumetrics_extension.enabled
-        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES) and not vol
+        aref = context.object.maxwell_assetref_extension.enabled
+        if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
+            if(vol or aref):
+                return False
+            return True
+        return  False
     
     def draw_header(self, context):
         m = context.object.maxwell_render_reference
@@ -1189,6 +1194,40 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'flag_override_hide_to_gi')
 
 
+class ObjectAssetReferencePanel(ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Asset Reference Object"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['EMPTY']
+        vol = context.object.maxwell_volumetrics_extension.enabled
+        ref = context.object.maxwell_render_reference.enabled
+        if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
+            if(vol or ref):
+                return False
+            return True
+        return  False
+    
+    def draw_header(self, context):
+        m = context.object.maxwell_assetref_extension
+        self.layout.prop(m, 'enabled', text="")
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        m = context.object.maxwell_assetref_extension
+        
+        sub.prop(m, 'path')
+        sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
+        sub.prop(m, 'axis')
+        sub.prop(m, 'display')
+
+
 class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Volumetrics"
@@ -1200,7 +1239,12 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
         o = context.active_object
         ts = ['EMPTY']
         ref = context.object.maxwell_render_reference.enabled
-        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES) and not ref
+        aref = context.object.maxwell_assetref_extension.enabled
+        if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
+            if(ref or aref):
+                return False
+            return True
+        return  False
     
     def draw_header(self, context):
         m = context.object.maxwell_volumetrics_extension

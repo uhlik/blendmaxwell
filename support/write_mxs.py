@@ -1585,6 +1585,31 @@ def reference(d, s, ):
     return o
 
 
+def asset_reference(d, s, ):
+    m = CextensionManager.instance()
+    e = m.createDefaultGeometryLoaderExtension('AssetReference')
+    p = e.getExtensionData()
+    
+    p.setString('FileName', d['path'])
+    p.setUInt('Axis', d['axis'])
+    p.setUInt('Display', d['display'])
+    
+    o = s.createGeometryLoaderObject(d['name'], p)
+    
+    # FIXME: setting material does not work, material is set, but renders as default material. when set manually, works
+    if(d['material'] != ''):
+        mat = get_material(d['material'], s, )
+        o.setMaterial(mat)
+    
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
+    
+    base_and_pivot(o, d)
+    object_props(o, d)
+    return o
+
+
 def volumetrics(d, s, ):
     m = CextensionManager.instance()
     e = m.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
@@ -1780,9 +1805,9 @@ def hierarchy(d, s, ):
     
     a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
          'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
-         'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', ]
+         'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', 'ASSET_REFERENCE', ]
     
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', 'SEA', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types):
             if(d[i]['parent'] is not None):
@@ -2020,6 +2045,10 @@ def main(args):
         #     cloner(d, mxs)
         elif(d['type'] == 'REFERENCE'):
             reference(d, mxs)
+        
+        elif(d['type'] == 'ASSET_REFERENCE'):
+            asset_reference(d, mxs)
+        
         elif(d['type'] == 'VOLUMETRICS'):
             volumetrics(d, mxs)
         
@@ -2100,7 +2129,8 @@ def main(args):
                 c = mxs.getCamera(d['name'])
                 c.setActive()
     # remove unused materials
-    mxs.eraseUnusedMaterials()
+    # FIXME: disabled because it removes also backface materials if they are not used somewhere else as normal materials
+    # mxs.eraseUnusedMaterials()
     # save mxs
     log("saving scene..", 2)
     ok = mxs.writeMXS(args.result_path)

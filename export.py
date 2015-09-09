@@ -52,7 +52,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO --- Remove overlaps in the Maxwell Scatter                                   -
 # TODO --- New Reflectance channel                                                  DONE
 # TODO --- Improvements in the Maxwell Grass fibers growth                          -
-# TODO --- New Asset Reference extension                                            -
+# TODO --- New Asset Reference extension                                            DONE (with bug in setting material)
 
 
 class MXSExport():
@@ -282,6 +282,8 @@ class MXSExport():
                 # t = 'EMPTY'
                 if(o.maxwell_render_reference.enabled):
                     t = 'REFERENCE'
+                if(o.maxwell_assetref_extension.enabled):
+                    t = 'ASSET_REFERENCE'
                 elif(o.maxwell_volumetrics_extension.enabled):
                     t = 'VOLUMETRICS'
                 else:
@@ -392,7 +394,7 @@ class MXSExport():
             walk(o)
         
         # mark to remove all redundant empties
-        append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'VOLUMETRICS', ]
+        append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', ]
         
         def check_renderables_in_tree(oo):
             ov = []
@@ -448,6 +450,7 @@ class MXSExport():
         bases = []
         suns = []
         references = []
+        asset_references = []
         volumetrics = []
         
         def walk(o):
@@ -469,6 +472,8 @@ class MXSExport():
                     suns.append(o)
                 elif(o['export_type'] == 'REFERENCE'):
                     references.append(o)
+                elif(o['export_type'] == 'ASSET_REFERENCE'):
+                    asset_references.append(o)
                 elif(o['export_type'] == 'VOLUMETRICS'):
                     volumetrics.append(o)
         
@@ -481,6 +486,7 @@ class MXSExport():
         self._empties = empties
         self._cameras = cameras
         self._references = references
+        self._asset_references = asset_references
         self._volumetrics = volumetrics
         
         # no visible camera
@@ -717,6 +723,11 @@ class MXSExport():
             o = MXSReference(d)
             self._write(o)
         
+        log("writing asset references:", 1, LogStyles.MESSAGE, )
+        for d in self._asset_references:
+            o = MXSAssetReference(d)
+            self._write(o)
+        
         log("writing particles:", 1, LogStyles.MESSAGE, )
         for d in self._particles:
             ps = d['object']
@@ -741,6 +752,11 @@ class MXSExport():
         for d in self._modifiers:
             if(d['export_type'] == 'CLONER'):
                 o = MXSCloner(d)
+                
+                # TODO: 3.2: Cloner extension is not compatible with 3.2 sdk in 3.1.99.9, skipping it until this is fixed
+                # Extension: /Applications/Maxwell 3/extensions/MaxwellCloner.osx.mxx incompatible with current SDK version
+                o.skip = True
+                
                 self._write(o)
             elif(d['export_type'] == 'GRASS'):
                 o = MXSGrass(d)
@@ -1938,6 +1954,48 @@ class MXSReference(MXSObject):
         self.m_flag_override_hide_to_gi = mx.flag_override_hide_to_gi
         
         self._materials()
+    
+    def _materials(self):
+        self.m_material = ''
+        self.m_backface_material = ''
+        if(self.ref.material != ''):
+            try:
+                self.m_material = bpy.data.materials[self.ref.material].name
+            except:
+                log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.material, ), 3, LogStyles.WARNING, )
+        if(self.ref.backface_material != ''):
+            try:
+                self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
+            except:
+                log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.backface_material, ), 3, LogStyles.WARNING, )
+
+
+class MXSAssetReference(MXSObject):
+    def __init__(self, o, ):
+        log("'{}' > '{}'".format(o['object'].name, bpy.path.abspath(o['object'].maxwell_assetref_extension.path), ), 2)
+        
+        super().__init__(o)
+        self.m_type = 'ASSET_REFERENCE'
+        
+        ob = self.b_object
+        mx = ob.maxwell_assetref_extension
+        
+        self.ref = mx
+        
+        if(not os.path.exists(bpy.path.abspath(mx.path))):
+            log("{}: asset file: '{}' does not exist, skipping..".format(self.__class__.__name__, bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
+            self.skip = True
+        
+        self.m_path = bpy.path.abspath(bpy.path.abspath(mx.path))
+        self.m_axis = int(mx.axis)
+        self.m_display = int(mx.display)
+        
+        self._materials()
+        
+        # repeat transformation with new data
+        mw = self.b_matrix_world.copy() * ROTATE_X_MINUS_90
+        self.b_matrix_world = mw
+        self._transformation()
     
     def _materials(self):
         self.m_material = ''

@@ -540,6 +540,23 @@ class ReferenceProperties(PropertyGroup):
         del bpy.types.Object.maxwell_render_reference
 
 
+class ExtAssetReference(PropertyGroup):
+    enabled = BoolProperty(name="Asset Reference", default=False, )
+    path = StringProperty(name="File", default="", subtype='FILE_PATH', )
+    axis = EnumProperty(name="Axis System", items=[('0', "YXZ(lw c4d rf)", ""), ('1', "ZXY(3dsmax maya)", ""), ('2', "YZX(xsi maya houdini)", "")], default='2', )
+    display = EnumProperty(name="Display Type (Studio)", items=[('0', "Bounding Box", ""), ('1', "Points", ""), ('2', "Meshes", "")], default='2', )
+    material = StringProperty(name="Material", default="", )
+    backface_material = StringProperty(name="Backface Material", default="", )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Object.maxwell_assetref_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Object.maxwell_assetref_extension
+
+
 class MaterialProperties(PropertyGroup):
     embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )
