@@ -1503,10 +1503,10 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         sub.separator()
         
-        sub.prop(m, 'points_per_blade')
         r = sub.row()
         r.label("Primitive Type:")
         r.prop(m, 'primitive_type', expand=True, )
+        sub.prop(m, 'points_per_blade')
         sub.separator()
         
         sub.label("Grass Density:")

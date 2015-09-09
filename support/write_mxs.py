@@ -1391,7 +1391,7 @@ def asset_reference(d, s, ):
     
     o = s.createGeometryLoaderObject(d['name'], p)
     
-    # FIXME: setting material does not work, material is set, but renders as default material. when set manually, works
+    # FIXME: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
     if(d['material'] != ''):
         mat = get_material(d['material'], s, )
         o.setMaterial(mat)
@@ -1523,7 +1523,7 @@ def grass(d, s, ):
     p.setFloat('Root Width', d['root_width'])
     p.setFloat('Tip Width', d['tip_width'])
     
-    p.setUInt('Direction Type', d['direction_type'])
+    p.setFloat('Direction Type', d['direction_type'])
     
     p.setFloat('Initial Angle', d['initial_angle'])
     p.setFloat('Initial Angle Variation', d['initial_angle_variation'])

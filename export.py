@@ -51,7 +51,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO --- Separated reflection and refraction channels                             DONE
 # TODO --- Remove overlaps in the Maxwell Scatter                                   -
 # TODO --- New Reflectance channel                                                  DONE
-# TODO --- Improvements in the Maxwell Grass fibers growth                          -
+# TODO --- Improvements in the Maxwell Grass fibers growth                          DONE
 # TODO --- New Asset Reference extension                                            DONE (with bug in setting material)
 
 
@@ -2495,7 +2495,7 @@ class MXSGrass(MXSModifier):
         self.m_length_variation = mxex.length_variation
         self.m_root_width = mxex.root_width
         self.m_tip_width = mxex.tip_width
-        self.m_direction_type = int(mxex.direction_type)
+        self.m_direction_type = mxex.direction_type
         self.m_initial_angle = math.degrees(mxex.initial_angle)
         self.m_initial_angle_variation = mxex.initial_angle_variation
         self.m_initial_angle_map = self._texture_to_data(mxex.initial_angle_map)

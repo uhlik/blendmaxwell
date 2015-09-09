@@ -1621,7 +1621,7 @@ class MXSWriter():
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
-        # FIXME: setting material does not work, material is set, but renders as default material. when set manually, works
+        # FIXME: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
         if(material is not None):
             if(material != ''):
                 mat = self.get_material(material)
@@ -1663,7 +1663,7 @@ class MXSWriter():
         p.setFloat('Root Width', properties['root_width'])
         p.setFloat('Tip Width', properties['tip_width'])
         
-        p.setUInt('Direction Type', properties['direction_type'])
+        p.setFloat('Direction Type', properties['direction_type'])
         
         p.setFloat('Initial Angle', properties['initial_angle'])
         p.setFloat('Initial Angle Variation', properties['initial_angle_variation'])
