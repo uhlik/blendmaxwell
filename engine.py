@@ -445,11 +445,12 @@ class MaxwellRenderExportEngine(RenderEngine):
             if(NUMBER_OF_WARNINGS > 0):
                 self.report({'ERROR'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
                 
-                h, t = os.path.split(p)
-                n, e = os.path.splitext(t)
-                u = ex.uuid
-                log_file_path = os.path.join(h, '{}-export_log-{}.txt'.format(n, u))
-                copy_paste_log(log_file_path)
+                if(m.export_warning_log_write):
+                    h, t = os.path.split(p)
+                    n, e = os.path.splitext(t)
+                    u = ex.uuid
+                    log_file_path = os.path.join(h, '{}-export_log-{}.txt'.format(n, u))
+                    copy_paste_log(log_file_path)
             
             # pr.disable()
             # s = io.StringIO()

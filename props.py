@@ -290,6 +290,8 @@ class SceneProperties(PropertyGroup):
     # overlay_background = BoolProperty(name="Background", default=False, )
     # overlay_background_color = FloatVectorProperty(name="Background Color", description="", default=(0.69, 0.69, 0.69), min=0.0, max=1.0, subtype='COLOR', )
     
+    # TODO: split export options to its own PropertyGroup?
+    
     export_protect_mxs = BoolProperty(name="Protect MXS", default=False, description="", )
     
     export_output_directory = StringProperty(name="Output Directory", subtype='DIR_PATH', default="//", description="Output directory for Maxwell scene (.MXS) file", )
@@ -318,6 +320,7 @@ class SceneProperties(PropertyGroup):
     # export_log = StringProperty(name="Export Log String", default="", )
     # export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
     export_log_open = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
+    export_warning_log_write = BoolProperty(name="Write Log", default=True, description="Write log file next to scene file on warnings. When running blender from terminal you can skip that and read warnings in it.", )
     
     exporting_animation_now = BoolProperty(default=False, options={'HIDDEN'}, )
     exporting_animation_frame_number = IntProperty(default=1, options={'HIDDEN'}, )
