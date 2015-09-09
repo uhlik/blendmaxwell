@@ -290,7 +290,6 @@ def material_placeholder(s, n=None, ):
     a.activeType = MAP_TYPE_BITMAP
     t = CtextureMap()
     mgr = CextensionManager.instance()
-    mgr.loadAllExtensions()
     e = mgr.createDefaultTextureExtension('Checker')
     ch = e.getExtensionData()
     ch.setUInt('Number of elements U', 32)
@@ -419,7 +418,6 @@ def material(d, s, ):
             e.setState(True)
         else:
             m = CextensionManager.instance()
-            m.loadAllExtensions()
             if(d['use'] == 'AGS'):
                 e = m.createDefaultMaterialModifierExtension('AGS')
                 p = e.getExtensionData()
@@ -666,8 +664,6 @@ def material_ext(d, s, embed, ):
         
     else:
         m = CextensionManager.instance()
-        m.loadAllExtensions()
-        
         if(d['type'] == 'AGS'):
             e = m.createDefaultMaterialModifierExtension('AGS')
             p = e.getExtensionData()
@@ -1344,8 +1340,6 @@ def custom_alphas(d, s, ):
 
 def particles(d, s, ):
     mgr = CextensionManager.instance()
-    mgr.loadAllExtensions()
-    
     ext = mgr.createDefaultGeometryProceduralExtension('MaxwellParticles')
     params = ext.getExtensionData()
     
@@ -1429,8 +1423,6 @@ def particles(d, s, ):
 
 def cloner(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
     e = m.createDefaultGeometryModifierExtension('MaxwellCloner')
     p = e.getExtensionData()
     
@@ -1482,8 +1474,6 @@ def cloner(d, s, ):
 
 def hair(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
     if(d['extension'] == 'MaxwellHair'):
         e = m.createDefaultGeometryProceduralExtension('MaxwellHair')
     if(d['extension'] == 'MGrassP'):
@@ -1597,7 +1587,6 @@ def reference(d, s, ):
 
 def volumetrics(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
     e = m.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
     p = e.getExtensionData()
     
@@ -1635,7 +1624,6 @@ def subdivision(d, s, ):
     # 7: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
     
     m = CextensionManager.instance()
-    m.loadAllExtensions()
     e = m.createDefaultGeometryModifierExtension('SubdivisionModifier')
     p = e.getExtensionData()
     
@@ -1656,7 +1644,6 @@ def subdivision(d, s, ):
 
 def scatter(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
     e = m.createDefaultGeometryModifierExtension('MaxwellScatter')
     p = e.getExtensionData()
     
@@ -1694,8 +1681,6 @@ def scatter(d, s, ):
 
 def grass(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
     e = m.createDefaultGeometryModifierExtension('MaxwellGrass')
     p = e.getExtensionData()
     
@@ -1759,8 +1744,6 @@ def grass(d, s, ):
 
 def sea(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
     e = m.createDefaultGeometryLoaderExtension('MaxwellSea')
     
     p = e.getExtensionData()
@@ -1994,6 +1977,9 @@ def main(args):
         mxs.readMXS(args.result_path)
     else:
         log("creating new scene..", 2)
+    # instance manager
+    mgr = CextensionManager.instance()
+    mgr.loadAllExtensions()
     # loop over scene data and create things by type
     if(args.wireframe):
         w_material = None
