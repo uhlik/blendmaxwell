@@ -1445,6 +1445,8 @@ def asset_reference(d, s, ):
 
 
 '''
+
+
 def volumetrics(d, s, ):
     m = CextensionManager.instance()
     e = m.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
@@ -1795,6 +1797,8 @@ def wireframe_assign_materials(d, s, ws, wm, cm, ):
 
 
 '''
+
+
 def texture_data_to_mxparams(d, mp, name, ):
     if(d is None):
         return

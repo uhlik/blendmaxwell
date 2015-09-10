@@ -143,6 +143,8 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
 
 
 '''
+
+
 class SceneOptionsPanel(RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Scene"
@@ -1265,6 +1267,8 @@ class ObjectAssetReferencePanel(ObjectButtonsPanel, Panel):
 
 
 '''
+
+
 class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Volumetrics"
