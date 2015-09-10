@@ -1181,7 +1181,9 @@ class MXSExport():
             log("setting object hierarchy..".format(), 1, LogStyles.MESSAGE, )
             self.mxs.hierarchy(self.hierarchy)
             log("writing .mxs file..".format(), 1, LogStyles.MESSAGE, )
-            self.mxs.erase_unused_materials()
+            if(bpy.context.scene.maxwell_render.export_remove_unused_materials):
+                log("removing unused materials..".format(), 1, LogStyles.MESSAGE, )
+                self.mxs.erase_unused_materials()
             self.mxs.write()
             log("mxs saved in: {0}".format(self.mxs_path), 1, LogStyles.MESSAGE, )
     
@@ -1366,6 +1368,8 @@ class MXSScene(Serializable):
         # self.m_overlay_background = mx.overlay_background
         # self.m_overlay_background_color = self._color_to_rgb8(mx.overlay_background_color)
         self.m_export_protect_mxs = mx.export_protect_mxs
+        self.m_export_remove_unused_materials = mx.export_remove_unused_materials
+        
         self.m_extra_sampling_enabled = mx.extra_sampling_enabled
         self.m_extra_sampling_sl = mx.extra_sampling_sl
         self.m_extra_sampling_mask = int(mx.extra_sampling_mask[-1:])

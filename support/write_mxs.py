@@ -1978,8 +1978,14 @@ def main(args):
                 c = mxs.getCamera(d['name'])
                 c.setActive()
     # remove unused materials
-    # FIXME: disabled because it removes also backface materials if they are not used somewhere else as normal materials
+    # FIXMENOT: disabled because it removes also backface materials if they are not used somewhere else as normal materials
     # mxs.eraseUnusedMaterials()
+    for d in data:
+        if(d['type'] == 'SCENE'):
+            if(d['export_remove_unused_materials']):
+                # optional, might also remove materials not supposed to be removed
+                log("removing unused materials..", 2)
+                mxs.eraseUnusedMaterials()
     # save mxs
     log("saving scene..", 2)
     ok = mxs.writeMXS(args.result_path)

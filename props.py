@@ -321,6 +321,7 @@ class SceneProperties(PropertyGroup):
     # export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
     export_log_open = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
     export_warning_log_write = BoolProperty(name="Write Log", default=True, description="Write log file next to scene file on warnings. When running blender from terminal you can skip that and read warnings in it.", )
+    export_remove_unused_materials = BoolProperty(name="Remove Unused Materials", default=False, description="", )
     
     exporting_animation_now = BoolProperty(default=False, options={'HIDDEN'}, )
     exporting_animation_frame_number = IntProperty(default=1, options={'HIDDEN'}, )

@@ -90,6 +90,7 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         r.prop(m, 'export_log_open')
         r.prop(m, 'export_warning_log_write')
         r = sub.row()
+        r.prop(m, 'export_remove_unused_materials')
         c = r.column()
         c.prop(m, 'export_keep_intermediates')
         if(platform.system() != 'Darwin'):
