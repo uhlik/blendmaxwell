@@ -1198,7 +1198,8 @@ class MXSExport():
         shutil.move("{0}.tmp".format(p), p)
         return p
     
-    def _pymaxwell(self, append=False, instancer=False, wireframe=False, ):
+    # def _pymaxwell(self, append=False, instancer=False, wireframe=False, ):
+    def _pymaxwell(self, append=False, ):
         # generate script
         self.script_path = os.path.join(self.tmp_dir, self.script_name)
         with open(self.script_path, mode='w', encoding='utf-8') as f:
@@ -1208,7 +1209,8 @@ class MXSExport():
             # write template to a new file
             f.write(code)
         
-        system.python34_run_script_helper(self.script_path, self.scene_data_path, self.mxs_path, append, instancer, wireframe, )
+        # system.python34_run_script_helper(self.script_path, self.scene_data_path, self.mxs_path, append, instancer, wireframe, )
+        system.python34_run_script_helper(self.script_path, self.scene_data_path, self.mxs_path, append, )
     
     def _cleanup(self):
         """Remove all intermediate products."""

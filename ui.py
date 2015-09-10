@@ -97,6 +97,7 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
             c.enabled = False
 
 
+'''
 class ExportSpecialsPanel(RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Export Specials"
@@ -141,6 +142,7 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
             r.prop(m, 'export_clay_mat_roughness', text="Roughness", )
 
 
+'''
 class SceneOptionsPanel(RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Scene"

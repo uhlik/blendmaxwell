@@ -244,19 +244,20 @@ def maxwell_open_mxs_helper(path, instance):
         p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
 
 
-def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, instancer, wireframe, ):
+# def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, instancer, wireframe, ):
+def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, ):
     if(PLATFORM == 'Darwin' or PLATFORM == 'Linux'):
         switches = ''
         if(append):
             switches += '-a'
-        if(instancer):
-            if(switches != ''):
-                switches += ' '
-            switches += '-i'
-        if(wireframe):
-            if(switches != ''):
-                switches += ' '
-            switches += '-w'
+        # if(instancer):
+        #     if(switches != ''):
+        #         switches += ' '
+        #     switches += '-i'
+        # if(wireframe):
+        #     if(switches != ''):
+        #         switches += ' '
+        #     switches += '-w'
         
         # if(QUIET):
         #     if(switches != ''):

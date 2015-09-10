@@ -1649,9 +1649,8 @@ def hierarchy(d, s, ):
     # a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
     #      'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
     #      'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', 'ASSET_REFERENCE', ]
-    a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
-         'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
-         'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', ]
+    a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES', 'HAIR',
+         'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER', 'SEA', ]
     
     # object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', 'SEA', ]
     object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
@@ -1671,6 +1670,7 @@ def hierarchy(d, s, ):
                     p.setHide(True)
 
 
+'''
 def wireframe_hierarchy(d, s, ws, ):
     # wire and clay empties data
     ced = {'name': 'clay',
@@ -1794,6 +1794,7 @@ def wireframe_assign_materials(d, s, ws, wm, cm, ):
         w.setMaterial(wm)
 
 
+'''
 def texture_data_to_mxparams(d, mp, name, ):
     if(d is None):
         return
@@ -1853,10 +1854,10 @@ def main(args):
     mgr = CextensionManager.instance()
     mgr.loadAllExtensions()
     # loop over scene data and create things by type
-    if(args.wireframe):
-        w_material = None
-        c_material = None
-        all_wires = []
+    # if(args.wireframe):
+    #     w_material = None
+    #     c_material = None
+    #     all_wires = []
     log("creating objects:", 2)
     progress = PercentDone(len(data), indent=3, )
     for d in data:
@@ -1866,11 +1867,11 @@ def main(args):
             empty(d, mxs)
         elif(d['type'] == 'MESH'):
             mesh(d, mxs)
-            if(args.instancer):
-                # there should be just one mesh which is base, scale it to zero to be invisible..
-                name = d['name']
-                ob = mxs.getObject(d['name'])
-                ob.setScale(Cvector(0.0, 0.0, 0.0))
+            # if(args.instancer):
+            #     # there should be just one mesh which is base, scale it to zero to be invisible..
+            #     name = d['name']
+            #     ob = mxs.getObject(d['name'])
+            #     ob.setScale(Cvector(0.0, 0.0, 0.0))
         elif(d['type'] == 'MESH_INSTANCE'):
             try:
                 if(d['base']):
@@ -1934,41 +1935,41 @@ def main(args):
     #
     hierarchy(data, mxs)
     #
-    if(args.wireframe):
-        wireframe_hierarchy(data, mxs, all_wires)
-        wireframe_assign_materials(data, mxs, all_wires, w_material, c_material)
+    # if(args.wireframe):
+    #     wireframe_hierarchy(data, mxs, all_wires)
+    #     wireframe_assign_materials(data, mxs, all_wires, w_material, c_material)
     #
-    if(args.instancer):
-        name = "instancer"
-        
-        def get_objects_names(mxs):
-            it = CmaxwellObjectIterator()
-            o = it.first(mxs)
-            l = []
-            while not o.isNull():
-                name, _ = o.getName()
-                l.append(name)
-                o = it.next()
-            return l
-        
-        ns = get_objects_names(mxs)
-        ed = {'name': name,
-              'parent': None,
-              'base': ((0.0, 0.0, -0.0), (1.0, 0.0, -0.0), (0.0, 1.0, -0.0), (-0.0, -0.0, 1.0)),
-              'pivot': ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
-              'opacity': 100.0,
-              'hidden_camera': False,
-              'hidden_camera_in_shadow_channel': False,
-              'hidden_global_illumination': False,
-              'hidden_reflections_refractions': False,
-              'hidden_zclip_planes': False,
-              'object_id': (255, 255, 255),
-              'hide': False,
-              'type': 'EMPTY', }
-        e = empty(ed, mxs)
-        for n in ns:
-            ch = mxs.getObject(n)
-            ch.setParent(e)
+    # if(args.instancer):
+    #     name = "instancer"
+    #
+    #     def get_objects_names(mxs):
+    #         it = CmaxwellObjectIterator()
+    #         o = it.first(mxs)
+    #         l = []
+    #         while not o.isNull():
+    #             name, _ = o.getName()
+    #             l.append(name)
+    #             o = it.next()
+    #         return l
+    #
+    #     ns = get_objects_names(mxs)
+    #     ed = {'name': name,
+    #           'parent': None,
+    #           'base': ((0.0, 0.0, -0.0), (1.0, 0.0, -0.0), (0.0, 1.0, -0.0), (-0.0, -0.0, 1.0)),
+    #           'pivot': ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
+    #           'opacity': 100.0,
+    #           'hidden_camera': False,
+    #           'hidden_camera_in_shadow_channel': False,
+    #           'hidden_global_illumination': False,
+    #           'hidden_reflections_refractions': False,
+    #           'hidden_zclip_planes': False,
+    #           'object_id': (255, 255, 255),
+    #           'hide': False,
+    #           'type': 'EMPTY', }
+    #     e = empty(ed, mxs)
+    #     for n in ns:
+    #         ch = mxs.getObject(n)
+    #         ch.setParent(e)
     
     # set active camera, again.. for some reason it gets reset
     for d in data:
@@ -1995,8 +1996,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=textwrap.dedent('''Make Maxwell scene from serialized data'''), epilog='',
                                      formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
     parser.add_argument('-a', '--append', action='store_true', help='append to existing mxs (result_path)')
-    parser.add_argument('-w', '--wireframe', action='store_true', help='scene data contains wireframe scene')
-    parser.add_argument('-i', '--instancer', action='store_true', help='scene data contains instancer (python only)')
+    # parser.add_argument('-w', '--wireframe', action='store_true', help='scene data contains wireframe scene')
+    # parser.add_argument('-i', '--instancer', action='store_true', help='scene data contains instancer (python only)')
     parser.add_argument('-q', '--quiet', action='store_true', help='no logging except errors')
     parser.add_argument('log_file', type=str, help='path to log file')
     parser.add_argument('scene_data_path', type=str, help='path to serialized scene data file')
