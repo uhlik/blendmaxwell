@@ -1419,6 +1419,7 @@ def reference(d, s, ):
     return o
 
 
+'''
 def asset_reference(d, s, ):
     m = CextensionManager.instance()
     e = m.createDefaultGeometryLoaderExtension('AssetReference')
@@ -1430,7 +1431,7 @@ def asset_reference(d, s, ):
     
     o = s.createGeometryLoaderObject(d['name'], p)
     
-    # FIXME: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
+    # FIXMENOT: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
     if(d['material'] != ''):
         mat = get_material(d['material'], s, )
         o.setMaterial(mat)
@@ -1444,6 +1445,7 @@ def asset_reference(d, s, ):
     return o
 
 
+'''
 def volumetrics(d, s, ):
     m = CextensionManager.instance()
     e = m.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
@@ -1645,11 +1647,15 @@ def sea(d, s, ):
 def hierarchy(d, s, ):
     log("setting object hierarchy..", 2)
     
+    # a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
+    #      'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
+    #      'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', 'ASSET_REFERENCE', ]
     a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
          'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
-         'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', 'ASSET_REFERENCE', ]
+         'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', ]
     
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', 'SEA', ]
+    # object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', 'SEA', ]
+    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types):
             if(d[i]['parent'] is not None):
@@ -1888,8 +1894,8 @@ def main(args):
         elif(d['type'] == 'REFERENCE'):
             reference(d, mxs)
         
-        elif(d['type'] == 'ASSET_REFERENCE'):
-            asset_reference(d, mxs)
+        # elif(d['type'] == 'ASSET_REFERENCE'):
+        #     asset_reference(d, mxs)
         
         elif(d['type'] == 'VOLUMETRICS'):
             volumetrics(d, mxs)

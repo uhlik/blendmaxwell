@@ -1593,6 +1593,7 @@ class MXSWriter():
         
         return o
     
+    '''
     def ext_asset_reference(self, name, path, axis, display, matrix, object_props=None, material=None, backface_material=None, ):
         """Create Asset Reference object.
         name                string
@@ -1620,7 +1621,7 @@ class MXSWriter():
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
-        # FIXME: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
+        # FIXMENOT: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
         if(material is not None):
             if(material != ''):
                 mat = self.get_material(material)
@@ -1632,6 +1633,7 @@ class MXSWriter():
         
         return o
     
+    '''
     def mod_grass(self, object_name, properties, material=None, backface_material=None, ):
         """Create grass object modifier extension.
         object_name         string

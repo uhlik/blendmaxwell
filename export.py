@@ -52,7 +52,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # Remove overlaps in the Maxwell Scatter                                   DONE
 # New Reflectance channel                                                  DONE
 # Improvements in the Maxwell Grass fibers growth                          DONE
-# New Asset Reference extension                                            DONE (with bug in setting material)
+# New Asset Reference extension                                            -
 
 
 class MXSExport():
@@ -282,8 +282,8 @@ class MXSExport():
                 # t = 'EMPTY'
                 if(o.maxwell_render_reference.enabled):
                     t = 'REFERENCE'
-                if(o.maxwell_assetref_extension.enabled):
-                    t = 'ASSET_REFERENCE'
+                # elif(o.maxwell_assetref_extension.enabled):
+                #     t = 'ASSET_REFERENCE'
                 elif(o.maxwell_volumetrics_extension.enabled):
                     t = 'VOLUMETRICS'
                 else:
@@ -394,7 +394,8 @@ class MXSExport():
             walk(o)
         
         # mark to remove all redundant empties
-        append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', ]
+        # append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', ]
+        append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'VOLUMETRICS', ]
         
         def check_renderables_in_tree(oo):
             ov = []
@@ -450,7 +451,7 @@ class MXSExport():
         bases = []
         suns = []
         references = []
-        asset_references = []
+        # asset_references = []
         volumetrics = []
         
         def walk(o):
@@ -472,8 +473,8 @@ class MXSExport():
                     suns.append(o)
                 elif(o['export_type'] == 'REFERENCE'):
                     references.append(o)
-                elif(o['export_type'] == 'ASSET_REFERENCE'):
-                    asset_references.append(o)
+                # elif(o['export_type'] == 'ASSET_REFERENCE'):
+                #     asset_references.append(o)
                 elif(o['export_type'] == 'VOLUMETRICS'):
                     volumetrics.append(o)
         
@@ -486,7 +487,7 @@ class MXSExport():
         self._empties = empties
         self._cameras = cameras
         self._references = references
-        self._asset_references = asset_references
+        # self._asset_references = asset_references
         self._volumetrics = volumetrics
         
         # no visible camera
@@ -658,7 +659,7 @@ class MXSExport():
         
         log("writing materials:", 1, LogStyles.MESSAGE, )
         for mat in bpy.data.materials:
-            # TODO: do not export unused materials >> partly done, all materials are exported, but then all unused materials are removed from scene
+            # TODO: do not export unused materials >> hacked together (all materials are exported, but then all unused materials are removed from scene), but better solution is needed
             mx = mat.maxwell_render
             # only materials with (users - fake_user) > 0
             u = mat.users
@@ -723,10 +724,10 @@ class MXSExport():
             o = MXSReference(d)
             self._write(o)
         
-        log("writing asset references:", 1, LogStyles.MESSAGE, )
-        for d in self._asset_references:
-            o = MXSAssetReference(d)
-            self._write(o)
+        # log("writing asset references:", 1, LogStyles.MESSAGE, )
+        # for d in self._asset_references:
+        #     o = MXSAssetReference(d)
+        #     self._write(o)
         
         log("writing particles:", 1, LogStyles.MESSAGE, )
         for d in self._particles:
@@ -1157,9 +1158,9 @@ class MXSExport():
                 wind = (o.m_ocean_wind_mod, o.m_ocean_wind_dir, o.m_ocean_wind_alignment, o.m_ocean_min_wave_length, o.m_damp_factor_against_wind, )
                 self.mxs.ext_sea(o.m_name, pack_matrix(o), pack_object_props(o), geometry, wind, o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
-            elif(o.m_type == 'ASSET_REFERENCE'):
-                self.mxs.ext_asset_reference(o.m_name, o.m_path, o.m_axis, o.m_display, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
-                self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
+            # elif(o.m_type == 'ASSET_REFERENCE'):
+            #     self.mxs.ext_asset_reference(o.m_name, o.m_path, o.m_axis, o.m_display, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
+            #     self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             else:
                 raise TypeError("{0} is unknown type".format(o.m_type))
     
@@ -2014,6 +2015,7 @@ class MXSReference(MXSObject):
                 log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.backface_material, ), 3, LogStyles.WARNING, )
 
 
+'''
 class MXSAssetReference(MXSObject):
     def __init__(self, o, ):
         log("'{}' > '{}'".format(o['object'].name, bpy.path.abspath(o['object'].maxwell_assetref_extension.path), ), 2)
@@ -2056,6 +2058,7 @@ class MXSAssetReference(MXSObject):
                 log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.backface_material, ), 3, LogStyles.WARNING, )
 
 
+'''
 class MXSParticles(MXSObject):
     def __init__(self, o, ):
         log("'{}' > '{}' ({})".format(o['parent'].name, o['object'].name, 'PARTICLES', ), 2)

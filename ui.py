@@ -1162,9 +1162,10 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         o = context.active_object
         ts = ['EMPTY']
         vol = context.object.maxwell_volumetrics_extension.enabled
-        aref = context.object.maxwell_assetref_extension.enabled
+        # aref = context.object.maxwell_assetref_extension.enabled
         if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
-            if(vol or aref):
+            # if(vol or aref):
+            if(vol):
                 return False
             return True
         return False
@@ -1225,6 +1226,7 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'flag_override_hide_to_gi')
 
 
+'''
 class ObjectAssetReferencePanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Asset Reference Object"
@@ -1259,6 +1261,7 @@ class ObjectAssetReferencePanel(ObjectButtonsPanel, Panel):
         sub.prop(m, 'display')
 
 
+'''
 class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Volumetrics"
@@ -1270,9 +1273,10 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
         o = context.active_object
         ts = ['EMPTY']
         ref = context.object.maxwell_render_reference.enabled
-        aref = context.object.maxwell_assetref_extension.enabled
+        # aref = context.object.maxwell_assetref_extension.enabled
         if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
-            if(ref or aref):
+            # if(ref or aref):
+            if(ref):
                 return False
             return True
         return False
