@@ -45,14 +45,16 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # 3.2 update list:
-# Nested Dielectrics: new material parameter called “Nested Priority”      DONE
-# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                    postponed..
-# Export to PSD files: PSD format in 8, 16 and 32 bits                     DONE
-# Separated reflection and refraction channels                             DONE
-# Remove overlaps in the Maxwell Scatter                                   DONE
-# New Reflectance channel                                                  DONE
-# Improvements in the Maxwell Grass fibers growth                          DONE
-# New Asset Reference extension                                            -
+# Nested Dielectrics: new material parameter called “Nested Priority”       DONE
+# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                     postponed..
+# Export to PSD files: PSD format in 8, 16 and 32 bits                      DONE
+# Separated reflection and refraction channels                              DONE
+# Remove overlaps in the Maxwell Scatter                                    DONE
+# New Reflectance channel                                                   DONE
+# Improvements in the Maxwell Grass fibers growth                           DONE
+# New Asset Reference extension                                             X
+
+# TODO: wireframe export - use new standardized way of creating things..
 
 
 class MXSExport():
@@ -3154,7 +3156,6 @@ class MXSTexture(Serializable):
 '''
 class MXSExportWireframe(MXSExport):
     def __init__(self, mxs_path, ):
-        # TODO: finish wire export..
         raise Exception("Wire export disabled at this time..")
         
         super().__init__(mxs_path)
