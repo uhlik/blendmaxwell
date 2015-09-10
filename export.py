@@ -3149,6 +3149,7 @@ class MXSTexture(Serializable):
         #             break
 
 
+'''
 class MXSExportWireframe(MXSExport):
     def __init__(self, mxs_path, ):
         # TODO: finish wire export..
@@ -3294,8 +3295,7 @@ class MXSExportWireframe(MXSExport):
         return matrices
 
 
-# --
-
+'''
 '''
 class MXSExportWireframeLegacy(MXSExportLegacy):
     def __init__(self, context, mxs_path, use_instances=True, keep_intermediates=False, edge_radius=0.00025, edge_resolution=32, wire_mat={}, clay_mat={}, ):

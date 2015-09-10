@@ -379,6 +379,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         log_file_path = None
         ex = None
+        """
         if(m.export_wireframe):
             raise Exception("Wire export disabled at this time..")
             
@@ -458,6 +459,31 @@ class MaxwellRenderExportEngine(RenderEngine):
             # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
             # ps.print_stats()
             # print(s.getvalue())
+        """
+        
+        # import cProfile, pstats, io
+        # pr = cProfile.Profile()
+        # pr.enable()
+        
+        ex = export.MXSExport(mxs_path=p, )
+        
+        from .log import NUMBER_OF_WARNINGS
+        if(NUMBER_OF_WARNINGS > 0):
+            self.report({'ERROR'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
+            
+            if(m.export_warning_log_write):
+                h, t = os.path.split(p)
+                n, e = os.path.splitext(t)
+                u = ex.uuid
+                log_file_path = os.path.join(h, '{}-export_log-{}.txt'.format(n, u))
+                copy_paste_log(log_file_path)
+        
+        # pr.disable()
+        # s = io.StringIO()
+        # sortby = 'cumulative'
+        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        # ps.print_stats()
+        # print(s.getvalue())
         
         if((m.exporting_animation_now and scene.frame_current == scene.frame_end) or not m.exporting_animation_now):
             if(m.export_log_open):
