@@ -465,7 +465,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         # pr = cProfile.Profile()
         # pr.enable()
         
-        ex = export.MXSExport(mxs_path=p, )
+        ex = export.MXSExport(mxs_path=p, engine=self, )
         
         from .log import NUMBER_OF_WARNINGS
         if(NUMBER_OF_WARNINGS > 0):

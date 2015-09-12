@@ -58,11 +58,16 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
 class MXSExport():
-    def __init__(self, mxs_path, ):
+    def __init__(self, mxs_path, engine=None, ):
         clear_log()
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         
         self.mxs_path = os.path.realpath(mxs_path)
+        self.engine = engine
+        
+        self.progress_current = 0
+        self.progress_count = 0
+        
         self.context = bpy.context
         
         self.uuid = uuid.uuid1()
@@ -73,6 +78,20 @@ class MXSExport():
         self._prepare()
         self._export()
         self._finish()
+    
+    def _progress(self, progress=0.0, ):
+        if(progress == 0.0):
+            progress = self.progress_current / self.progress_count
+            self.progress_current += 1
+        
+        if(self.engine is not None):
+            if(system.PLATFORM == 'Darwin'):
+                # on Mac OS X report progress up to 3/4, then external script is called which will take some time
+                # and better not to over complicate things reporting that too.. would be problematic..
+                progress = maths.remap(progress, 0.0, 1.0, 0.0, 0.75)
+            elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+                pass
+            self.engine.update_progress(progress)
     
     def _prepare(self):
         self.hierarchy = []
@@ -659,6 +678,24 @@ class MXSExport():
         log("collecting objects..", 1, LogStyles.MESSAGE, )
         self.tree = self._collect()
         
+        # count all objects, will be used for progress reporting.. not quite precise, but good for now.. better than nothing
+        self.progress_current = 0
+        c = 0
+        c += len(bpy.data.materials)
+        c += len(self._cameras)
+        c += len(self._empties)
+        c += len(self._meshes)
+        c += len(self._bases)
+        c += len(self._instances)
+        c += len(self._duplicates)
+        c += len(self._references)
+        c += len(self._particles)
+        c += len(self._volumetrics)
+        c += len(self._modifiers)
+        c += 1  # environment
+        c += 1  # scene
+        self.progress_count = c
+        
         log("writing materials:", 1, LogStyles.MESSAGE, )
         for mat in bpy.data.materials:
             # TODO: do not export unused materials >> hacked together (all materials are exported, but then all unused materials are removed from scene), but better solution is needed
@@ -840,6 +877,8 @@ class MXSExport():
         self._write(o)
     
     def _write(self, o, ):
+        self._progress()
+        
         if(system.PLATFORM == 'Darwin'):
             # skip marked
             if(o.skip):
@@ -1188,6 +1227,8 @@ class MXSExport():
                 self.mxs.erase_unused_materials()
             self.mxs.write()
             log("mxs saved in: {0}".format(self.mxs_path), 1, LogStyles.MESSAGE, )
+        
+        self._progress(1.0)
     
     def _serialize(self, d, n, ):
         if(not n.endswith(".json")):
