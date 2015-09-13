@@ -539,7 +539,7 @@ def material(d, s, ):
             
                 p.setFloat('Metallic', d['carpaint_metallic'])
                 p.setFloat('Topcoat', d['carpaint_topcoat'])
-        
+            
             m = s.createMaterial(d['name'])
             m.applyMaterialModifierExtension(p)
             
@@ -1655,7 +1655,8 @@ def hierarchy(d, s, ):
          'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER', 'SEA', ]
     
     # object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', 'SEA', ]
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+    # object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', 'WIREFRAME_CONTAINER', 'WIREFRAME_BASE', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types):
             if(d[i]['parent'] is not None):
@@ -1672,131 +1673,23 @@ def hierarchy(d, s, ):
                     p.setHide(True)
 
 
-'''
-def wireframe_hierarchy(d, s, ws, ):
-    # wire and clay empties data
-    ced = {'name': 'clay',
-           'parent': None,
-           'base': ((0.0, 0.0, -0.0), (1.0, 0.0, -0.0), (0.0, 1.0, -0.0), (-0.0, -0.0, 1.0)),
-           'pivot': ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
-           'opacity': 100.0,
-           'hidden_camera': False,
-           'hidden_camera_in_shadow_channel': False,
-           'hidden_global_illumination': False,
-           'hidden_reflections_refractions': False,
-           'hidden_zclip_planes': False,
-           'object_id': (0, 0, 0),
-           'hide': False,
-           'type': 'EMPTY', }
-    ce = empty(ced, s)
-    wed = {'name': 'wire',
-           'parent': None,
-           'base': ((0.0, 0.0, -0.0), (1.0, 0.0, -0.0), (0.0, 1.0, -0.0), (-0.0, -0.0, 1.0)),
-           'pivot': ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
-           'opacity': 100.0,
-           'hidden_camera': False,
-           'hidden_camera_in_shadow_channel': False,
-           'hidden_global_illumination': False,
-           'hidden_reflections_refractions': False,
-           'hidden_zclip_planes': False,
-           'object_id': (0, 0, 0),
-           'hide': False,
-           'type': 'EMPTY', }
-    we = empty(wed, s)
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'WIREFRAME_EDGE', 'WIREFRAME', ]
-    for i in range(len(d)):
-        if(d[i]['type'] in object_types):
-            if(d[i]['type'] == 'WIREFRAME'):
-                pass
-            elif(d[i]['type'] == 'WIREFRAME_EDGE'):
-                ch = s.getObject(d[i]['name'])
-                ch.setParent(we)
-            else:
-                if(d[i]['parent'] is None):
-                    ch = s.getObject(d[i]['name'])
-                    ch.setParent(ce)
-    # group all wires..
-    for w in ws:
-        w.setParent(we)
-
-
-def wireframe_base(d, s, ):
-    o = mesh(d, s)
-    # zero scale wire instance source base mesh to be practically invisible :)
-    o.setScale(Cvector(0, 0, 0))
-    # o.setMaterial(mat)
-    return o
-
-
 def wireframe(d, s, ):
     r = []
-    with open(d['matrices_path'], 'r') as f:
-        md = json.load(f)
     bo = s.getObject(d['instanced'])
-    for i, m in enumerate(md['matrices']):
+    for i, m in enumerate(d['wire_matrices']):
         o = s.createInstancement("{0}-{1}".format(d['name'], i), bo)
-        bp = {'base': m[0], 'pivot': m[1], }
+        bp = {'base': m[0],
+              'pivot': m[1],
+              'location': m[2],
+              'rotation': m[3],
+              'scale': m[4], }
         base_and_pivot(o, bp)
         object_props(o, d)
         r.append(o)
+        
+        # mat = get_material(d['materials'][0], s, )
         # o.setMaterial(mat)
     return r
-
-
-def wireframe_material(d, s, ):
-    n = d['name']
-    r0 = d['data']['reflectance_0']
-    r90 = d['data']['reflectance_90']
-    ci = d['data']['id']
-    rough = d['data']['roughness']
-    mat = s.createMaterial(n)
-    l = mat.addLayer()
-    l.setName(n)
-    b = l.addBSDF()
-    r = b.getReflectance()
-    a = Cattribute()
-    a.activeType = MAP_TYPE_RGB
-    c = Crgb8()
-    c.assign(*r0)
-    a.rgb.assign(c.toRGB())
-    r.setAttribute('color', a)
-    a = Cattribute()
-    a.activeType = MAP_TYPE_RGB
-    c = Crgb8()
-    c.assign(*r90)
-    a.rgb.assign(c.toRGB())
-    r.setAttribute('color.tangential', a)
-    a = Cattribute()
-    a.type = MAP_TYPE_VALUE
-    a.value = rough
-    b.setAttribute('roughness', a)
-    c = Crgb8()
-    c.assign(*ci)
-    mat.setColorID(c.toRGB())
-    return mat
-
-
-def wireframe_assign_materials(d, s, ws, wm, cm, ):
-    if(wm is None or cm is None):
-        raise RuntimeError("wire or clay material is missing..")
-    
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'WIREFRAME_EDGE', 'WIREFRAME', ]
-    for i in range(len(d)):
-        if(d[i]['type'] in object_types):
-            if(d[i]['type'] == 'WIREFRAME'):
-                pass
-            elif(d[i]['type'] == 'WIREFRAME_EDGE'):
-                o = s.getObject(d[i]['name'])
-                o.setMaterial(wm)
-            else:
-                o = s.getObject(d[i]['name'])
-                o.setMaterial(cm)
-    # group all wires..
-    for w in ws:
-        w.setMaterial(wm)
-
-
-'''
 
 
 def texture_data_to_mxparams(d, mp, name, ):
@@ -1858,10 +1751,12 @@ def main(args):
     mgr = CextensionManager.instance()
     mgr.loadAllExtensions()
     # loop over scene data and create things by type
-    # if(args.wireframe):
-    #     w_material = None
-    #     c_material = None
-    #     all_wires = []
+    
+    use_wireframe = args.wireframe
+    all_wire_instances = []
+    wire_container = None
+    wire_base = None
+    
     log("creating objects:", 2)
     progress = PercentDone(len(data), indent=3, )
     for d in data:
@@ -1919,61 +1814,68 @@ def main(args):
         elif(d['type'] == 'MATERIAL'):
             material(d, mxs)
         
-        # elif(d['type'] == 'WIREFRAME_MATERIAL'):
-        #     mat = wireframe_material(d, mxs)
-        #     m = {'name': d['name'], 'data': mat, }
-        #     if(d['name'] == 'wire'):
-        #         w_material = mat
-        #     elif(d['name'] == 'clay'):
-        #         c_material = mat
-        #     else:
-        #         raise TypeError("'{0}' is unknown wireframe material".format(d['name']))
-        # elif(d['type'] == 'WIREFRAME_EDGE'):
-        #     wireframe_base(d, mxs)
-        # elif(d['type'] == 'WIREFRAME'):
-        #     ws = wireframe(d, mxs)
-        #     all_wires.extend(ws)
+        elif(d['type'] == 'WIREFRAME_CONTAINER'):
+            wire_container = empty(d, mxs)
+        elif(d['type'] == 'WIREFRAME_BASE'):
+            wire_base = mesh(d, mxs)
+        elif(d['type'] == 'WIREFRAME'):
+            wos = wireframe(d, mxs, )
+            all_wire_instances.extend(wos)
+        
         else:
             raise TypeError("{0} is unknown type".format(d['type']))
         progress.step()
     #
     hierarchy(data, mxs)
-    #
-    # if(args.wireframe):
-    #     wireframe_hierarchy(data, mxs, all_wires)
-    #     wireframe_assign_materials(data, mxs, all_wires, w_material, c_material)
-    #
-    # if(args.instancer):
-    #     name = "instancer"
-    #
-    #     def get_objects_names(mxs):
-    #         it = CmaxwellObjectIterator()
-    #         o = it.first(mxs)
-    #         l = []
-    #         while not o.isNull():
-    #             name, _ = o.getName()
-    #             l.append(name)
-    #             o = it.next()
-    #         return l
-    #
-    #     ns = get_objects_names(mxs)
-    #     ed = {'name': name,
-    #           'parent': None,
-    #           'base': ((0.0, 0.0, -0.0), (1.0, 0.0, -0.0), (0.0, 1.0, -0.0), (-0.0, -0.0, 1.0)),
-    #           'pivot': ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
-    #           'opacity': 100.0,
-    #           'hidden_camera': False,
-    #           'hidden_camera_in_shadow_channel': False,
-    #           'hidden_global_illumination': False,
-    #           'hidden_reflections_refractions': False,
-    #           'hidden_zclip_planes': False,
-    #           'object_id': (255, 255, 255),
-    #           'hide': False,
-    #           'type': 'EMPTY', }
-    #     e = empty(ed, mxs)
-    #     for n in ns:
-    #         ch = mxs.getObject(n)
-    #         ch.setParent(e)
+    
+    if(use_wireframe):
+        for wi in all_wire_instances:
+            wi.setParent(wire_container)
+        
+        # zero scale wire_base to be practically invisible
+        z = (0.0, 0.0, 0.0)
+        b = Cbase()
+        b.origin = Cvector(*z)
+        b.xAxis = Cvector(*z)
+        b.yAxis = Cvector(*z)
+        b.zAxis = Cvector(*z)
+        p = Cbase()
+        p.origin = Cvector(*z)
+        p.xAxis = Cvector(1.0, 0.0, 0.0)
+        p.yAxis = Cvector(0.0, 1.0, 0.0)
+        p.zAxis = Cvector(0.0, 0.0, 1.0)
+        wire_base.setBaseAndPivot(b, p)
+        wire_base.setScale(Cvector(0, 0, 0))
+        
+        # export_wireframe
+        export_clay_override_object_material = False
+        export_wire_wire_material = None
+        export_wire_clay_material = None
+        
+        for d in data:
+            if(d['type'] == 'SCENE'):
+                export_clay_override_object_material = d['export_clay_override_object_material']
+                export_wire_wire_material = d['export_wire_wire_material']
+                export_wire_clay_material = d['export_wire_clay_material']
+                break
+        
+        if(export_wire_clay_material is not None):
+            wire = get_material(export_wire_wire_material, mxs, )
+            for d in data:
+                if(d['type'] == 'WIREFRAME_BASE'):
+                    o = mxs.getObject(d['name'])
+                    o.setMaterial(wire)
+                    break
+            for wi in all_wire_instances:
+                wi.setMaterial(wire)
+        
+        if(export_wire_clay_material is not None and export_clay_override_object_material):
+            clay = get_material(export_wire_clay_material, mxs, )
+            clayable = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+            for d in data:
+                if(d['type'] in clayable):
+                    o = mxs.getObject(d['name'])
+                    o.setMaterial(clay)
     
     # set active camera, again.. for some reason it gets reset
     for d in data:
@@ -2000,7 +1902,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=textwrap.dedent('''Make Maxwell scene from serialized data'''), epilog='',
                                      formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
     parser.add_argument('-a', '--append', action='store_true', help='append to existing mxs (result_path)')
-    # parser.add_argument('-w', '--wireframe', action='store_true', help='scene data contains wireframe scene')
+    parser.add_argument('-w', '--wireframe', action='store_true', help='scene data contains wireframe scene')
     # parser.add_argument('-i', '--instancer', action='store_true', help='scene data contains instancer (python only)')
     parser.add_argument('-q', '--quiet', action='store_true', help='no logging except errors')
     parser.add_argument('log_file', type=str, help='path to log file')
@@ -2028,14 +1930,9 @@ if __name__ == "__main__":
         # print(s.getvalue())
         
     except Exception as e:
-        # exc_type, exc_value, exc_traceback = sys.exc_info()
-        # lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        # sys.stdout.write("".join(lines))
-        
         import traceback
         m = traceback.format_exc()
         log(m)
         
-        # log("".join(lines))
         sys.exit(1)
     sys.exit(0)

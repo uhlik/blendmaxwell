@@ -97,7 +97,6 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
             c.enabled = False
 
 
-'''
 class ExportSpecialsPanel(RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Export Specials"
@@ -109,40 +108,22 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
         m = context.scene.maxwell_render
         b = sub.box()
         
-        sub.enabled = False
-        
         b.prop(m, 'export_wireframe')
         if(m.export_wireframe):
             c = b.column()
             c.label("Wireframe Options:")
             sc = c.column(align=True)
-            sc.prop(m, 'export_edge_radius')
-            sc.prop(m, 'export_edge_resolution')
+            sc.prop(m, 'export_wire_edge_radius')
+            sc.prop(m, 'export_wire_edge_resolution')
             c.separator()
             
-            c.label("Wire Material:")
-            r = c.row()
-            r.prop(m, 'export_wire_mat_color_id', text="ID", )
-            r = c.row()
-            r.prop(m, 'export_wire_mat_reflectance_0', text="Reflectance 0", )
-            r = c.row()
-            r.prop(m, 'export_wire_mat_reflectance_90', text="Reflectance 90", )
-            r = c.row()
-            r.prop(m, 'export_wire_mat_roughness', text="Roughness", )
-            c.separator()
+            c.prop_search(m, 'export_wire_wire_material', bpy.data, 'materials', icon='MATERIAL')
+            c.prop(m, 'export_clay_override_object_material')
             
-            c.label("Clay Material:")
-            r = c.row()
-            r.prop(m, 'export_clay_mat_color_id', text="ID", )
-            r = c.row()
-            r.prop(m, 'export_clay_mat_reflectance_0', text="Reflectance 0", )
-            r = c.row()
-            r.prop(m, 'export_clay_mat_reflectance_90', text="Reflectance 90", )
-            r = c.row()
-            r.prop(m, 'export_clay_mat_roughness', text="Roughness", )
-
-
-'''
+            sub = c.column()
+            sub.prop_search(m, 'export_wire_clay_material', bpy.data, 'materials', icon='MATERIAL')
+            if(not m.export_clay_override_object_material):
+                sub.enabled = False
 
 
 class SceneOptionsPanel(RenderButtonsPanel, Panel):
@@ -1752,6 +1733,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
         # sub.prop(m, 'use', text="Material Type", )
         # sub.separator()
         
+        # TODO: blender viewport color for extension materials
+        
         if(m.use == 'EMITTER'):
             sub.prop(mx, 'emitter_type')
             sub.separator()
@@ -2104,7 +2087,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
         #     r.prop(mx, 'hair_secondary_highlight_spread')
         #     r = sub.row()
         #     r.prop(mx, 'hair_secondary_highlight_tint')
-        #
+        #   
         else:
             # 'CUSTOM'
             sub.prop(m, 'mxm_file')

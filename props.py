@@ -302,19 +302,12 @@ class SceneProperties(PropertyGroup):
     export_open_with = EnumProperty(name="Open With", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "None", "")], default='STUDIO', description="After export, open in ...", )
     instance_app = BoolProperty(name="Open a new instance of application", default=False, description="Open a new instance of the application even if one is already running", )
     
-    '''
     export_wireframe = BoolProperty(name="Wireframe", default=False, description="Wireframe and Clay scene export", )
-    export_edge_radius = FloatProperty(name="Edge Radius", default=0.00025, min=0.0, max=1.0, precision=6, description="Wireframe edge radius (meters)", )
-    export_edge_resolution = IntProperty(name="Edge Resolution", default=32, min=3, max=128, description="Wireframe edge resolution", )
-    export_wire_mat_color_id = FloatVectorProperty(name="Wire Color ID", default=(1.0, 0.0, 0.0), min=0.0, max=1.0, subtype='COLOR', description="Wireframe color ID", )
-    export_wire_mat_reflectance_0 = FloatVectorProperty(name="Wire Reflectance 0", default=(20 / 255, 20 / 255, 20 / 255), min=0.0, max=1.0, subtype='COLOR', description="Wireframe reflectance 0 color", )
-    export_wire_mat_reflectance_90 = FloatVectorProperty(name="Wire Reflectance 90", default=(45 / 255, 45 / 255, 45 / 255), min=0.0, max=1.0, subtype='COLOR', description="Wireframe reflectance 90 color", )
-    export_wire_mat_roughness = FloatProperty(name="Wire Roughness", default=97.0, min=0.0, max=100.0, step=3, precision=2, subtype='PERCENTAGE', description="Wireframe roughness value", )
-    export_clay_mat_color_id = FloatVectorProperty(name="Clay Color ID", default=(0.0, 1.0, 0.0), min=0.0, max=1.0, subtype='COLOR', description="Clay color ID", )
-    export_clay_mat_reflectance_0 = FloatVectorProperty(name="Clay Reflectance 0", default=(210 / 255, 210 / 255, 210 / 255), min=0.0, max=1.0, subtype='COLOR', description="Clay reflectance 0 color", )
-    export_clay_mat_reflectance_90 = FloatVectorProperty(name="Clay Reflectance 90", default=(230 / 255, 230 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', description="Clay reflectance 90 color", )
-    export_clay_mat_roughness = FloatProperty(name="Clay Roughness", default=97.0, min=0.0, max=100.0, step=3, precision=2, subtype='PERCENTAGE', description="Clay roughness value", )
-    '''
+    export_wire_edge_radius = FloatProperty(name="Edge Radius", default=0.00025, min=0.0, max=1.0, precision=6, description="Wireframe edge radius (meters)", )
+    export_wire_edge_resolution = IntProperty(name="Edge Resolution", default=32, min=3, max=128, description="Wireframe edge resolution", )
+    export_clay_override_object_material = BoolProperty(name="Override Object Material", default=True, )
+    export_wire_wire_material = StringProperty(name="Wire Material", default="", )
+    export_wire_clay_material = StringProperty(name="Clay Material", default="", )
     
     export_overwrite = BoolProperty(name="Overwrite Existing", default=True, description="", )
     export_incremental = BoolProperty(name="Incremental", default=False, description="Always export a new file", )

@@ -54,8 +54,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # Improvements in the Maxwell Grass fibers growth                           DONE
 # New Asset Reference extension                                             X
 
-# TODO: wireframe export - use new standardized way of creating things..
-
 
 class MXSExport():
     def __init__(self, mxs_path, engine=None, ):
@@ -74,6 +72,7 @@ class MXSExport():
         
         mx = self.context.scene.maxwell_render
         self.use_instances = mx.export_use_instances
+        self.use_wireframe = mx.export_wireframe
         
         self._prepare()
         self._export()
@@ -696,6 +695,31 @@ class MXSExport():
         c += 1  # scene
         self.progress_count = c
         
+        if(self.use_wireframe):
+            log("writing wireframe base objects..", 1, LogStyles.MESSAGE, )
+            
+            mx = self.context.scene.maxwell_render
+            
+            # correct progress counts..
+            c = self.progress_count
+            c += 1  # base
+            c += 1  # empty
+            # c += 2  # wire and clay materials
+            c += len(self._meshes)
+            c += len(self._bases)
+            c += len(self._instances)
+            c += len(self._duplicates)
+            self.progress_count = c
+            
+            wc = MXSWireframeContainer(self.uuid)
+            self._write(wc)
+            self.wireframe_container_name = wc.m_name
+            
+            wb = MXSWireframeBase(self.uuid)
+            wb.m_parent = wc.m_name
+            self._write(wb)
+            self.wireframe_base_name = wb.m_name
+        
         log("writing materials:", 1, LogStyles.MESSAGE, )
         for mat in bpy.data.materials:
             # TODO: do not export unused materials >> hacked together (all materials are exported, but then all unused materials are removed from scene), but better solution is needed
@@ -728,6 +752,11 @@ class MXSExport():
             o = MXSMesh(d)
             self._write(o)
             meshes.append(o)
+            
+            if(self.use_wireframe):
+                w = MXSWireframe(o, self.wireframe_base_name)
+                w.m_parent = self.wireframe_container_name
+                self._write(w)
         
         log("writing instance bases:", 1, LogStyles.MESSAGE, )
         bases = []
@@ -737,6 +766,11 @@ class MXSExport():
             
             bases.append(o)
             meshes.append(o)
+            
+            if(self.use_wireframe):
+                w = MXSWireframe(o, self.wireframe_base_name)
+                w.m_parent = self.wireframe_container_name
+                self._write(w)
         
         def find_base(mnm):
             for b in bases:
@@ -751,12 +785,22 @@ class MXSExport():
                 b = find_base(d['mesh'].name)
             o = MXSMeshInstance(d, b, )
             self._write(o)
+            
+            if(self.use_wireframe):
+                w = MXSWireframe(o, self.wireframe_base_name)
+                w.m_parent = self.wireframe_container_name
+                self._write(w)
         
         log("writing duplicates:", 1, LogStyles.MESSAGE, )
         for d in self._duplicates:
             b = find_base(d['mesh'].name)
             o = MXSMeshInstance(d, b, )
             self._write(o)
+            
+            if(self.use_wireframe):
+                w = MXSWireframe(o, self.wireframe_base_name)
+                w.m_parent = self.wireframe_container_name
+                self._write(w)
         
         log("writing mxs references:", 1, LogStyles.MESSAGE, )
         for d in self._references:
@@ -875,6 +919,10 @@ class MXSExport():
         log("writing scene properties..", 1, LogStyles.MESSAGE, )
         o = MXSScene(self.mxs_path, groups, )
         self._write(o)
+        
+        if(self.use_wireframe):
+            utils.wipe_out_object(bpy.data.objects[self.wireframe_base_name], and_data=True, )
+            utils.wipe_out_object(bpy.data.objects[self.wireframe_container_name], and_data=True, )
     
     def _write(self, o, ):
         self._progress()
@@ -885,7 +933,7 @@ class MXSExport():
                 return
             
             # mesh, particles and hair have their own file format, have to split data
-            if(o.m_type == 'MESH'):
+            if(o.m_type == 'MESH' or o.m_type == 'WIREFRAME_BASE'):
                 nm = "{}-{}".format(o.m_name, uuid.uuid1())
                 
                 # split data to mesh / properties
@@ -932,7 +980,8 @@ class MXSExport():
                      'scatter_ext': None,
                      'subdiv_ext': None,
                      
-                     'type': 'MESH', }
+                     # 'type': 'MESH',
+                     'type': o.m_type, }
                 
                 self.mesh_data_paths.append(p)
                 self.serialized_data.append(d)
@@ -1037,12 +1086,21 @@ class MXSExport():
             elif(o.m_type == 'EMPTY'):
                 self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
+            # elif(o.m_type == 'WIREFRAME_CONTAINER'):
+            #     self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
+            #     self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'MESH'):
                 self.mxs.mesh(o.m_name, pack_matrix(o), o.m_num_positions,
                               o.m_vertices, o.m_normals, o.m_triangles, o.m_triangle_normals,
                               o.m_uv_channels, pack_object_props(o), o.m_num_materials,
                               o.m_materials, o.m_triangle_materials, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
+            # elif(o.m_type == 'WIREFRAME_BASE'):
+            #     self.mxs.mesh(o.m_name, pack_matrix(o), o.m_num_positions,
+            #                   o.m_vertices, o.m_normals, o.m_triangles, o.m_triangle_normals,
+            #                   o.m_uv_channels, pack_object_props(o), o.m_num_materials,
+            #                   o.m_materials, o.m_triangle_materials, o.m_backface_material, )
+            #     self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'MESH_INSTANCE'):
                 self.mxs.instance(o.m_name, o.m_instanced, pack_matrix(o), pack_object_props(o), o.m_materials, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
@@ -1241,7 +1299,6 @@ class MXSExport():
         shutil.move("{0}.tmp".format(p), p)
         return p
     
-    # def _pymaxwell(self, append=False, instancer=False, wireframe=False, ):
     def _pymaxwell(self, append=False, ):
         # generate script
         self.script_path = os.path.join(self.tmp_dir, self.script_name)
@@ -1252,8 +1309,7 @@ class MXSExport():
             # write template to a new file
             f.write(code)
         
-        # system.python34_run_script_helper(self.script_path, self.scene_data_path, self.mxs_path, append, instancer, wireframe, )
-        system.python34_run_script_helper(self.script_path, self.scene_data_path, self.mxs_path, append, )
+        system.python34_run_script_helper(self.script_path, self.scene_data_path, self.mxs_path, append, self.use_wireframe, )
     
     def _cleanup(self):
         """Remove all intermediate products."""
@@ -1421,6 +1477,14 @@ class MXSScene(Serializable):
         self.m_extra_sampling_custom_alpha = mx.extra_sampling_custom_alpha
         self.m_extra_sampling_user_bitmap = bpy.path.abspath(mx.extra_sampling_user_bitmap)
         self.m_extra_sampling_invert = mx.extra_sampling_invert
+        
+        # write these too, nothing will be done if just present in data, will be used only when needed..
+        self.m_export_wireframe = mx.export_wireframe
+        # self.m_export_wire_edge_radius = mx.export_wire_edge_radius
+        # self.m_export_wire_edge_resolution = mx.export_wire_edge_resolution
+        self.m_export_clay_override_object_material = mx.export_clay_override_object_material
+        self.m_export_wire_wire_material = mx.export_wire_wire_material
+        self.m_export_wire_clay_material = mx.export_wire_clay_material
 
 
 class MXSEnvironment(Serializable):
@@ -1829,6 +1893,8 @@ class MXSObject(Serializable):
             m = self.b_parent_matrix_world.copy().inverted() * m
         m *= ROTATE_X_90
         b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+        
+        self.mx_matrix_world = m.copy()
         
         self.m_base = b
         self.m_pivot = p
@@ -3196,372 +3262,87 @@ class MXSTexture(Serializable):
         #             break
 
 
-'''
-class MXSExportWireframe(MXSExport):
-    def __init__(self, mxs_path, ):
-        raise Exception("Wire export disabled at this time..")
-        
-        super().__init__(mxs_path)
-        mx = self.context.scene.maxwell_render
-        
-        self.edge_radius = mx.export_edge_radius
-        self.edge_resolution = mx.export_edge_resolution
-        self.wire_mat = {'name': 'wire',
-                         'type': 'WIREFRAME_MATERIAL',
-                         'data': {'reflectance_0': self._color_to_rgb8(mx.export_wire_mat_reflectance_0),
-                                  'reflectance_90': self._color_to_rgb8(mx.export_wire_mat_reflectance_90),
-                                  'id': self._color_to_rgb8(mx.export_wire_mat_color_id),
-                                  'roughness': mx.export_wire_mat_roughness, }, }
-        self.clay_mat = {'name': 'clay',
-                         'type': 'WIREFRAME_MATERIAL',
-                         'data': {'reflectance_0': self._color_to_rgb8(mx.export_clay_mat_reflectance_0),
-                                  'reflectance_90': self._color_to_rgb8(mx.export_clay_mat_reflectance_90),
-                                  'id': self._color_to_rgb8(mx.export_clay_mat_color_id),
-                                  'roughness': mx.export_clay_mat_roughness, }, }
-        
-        self.serialized_data.append(self.wire_mat)
-        self.serialized_data.append(self.clay_mat)
-        self._wire_base()
-        self._wire_objects()
-    
-    def _color_to_rgb8(self, c, ):
-        return tuple([int(255 * v) for v in c])
-    
-    def _wire_base(self):
-        """Create and set to export base wire edge cylinder."""
-        gen = utils.CylinderMeshGenerator(height=1, radius=self.edge_radius, sides=self.edge_resolution, )
-        n = "wireframe_edge_{0}".format(self.uuid)
+class MXSWireframeBase(MXSMesh):
+    def __init__(self, euuid, ):
+        n = 'WIREFRAME_BASE_{}'.format(euuid)
+        mx = bpy.context.scene.maxwell_render
+        gen = utils.CylinderMeshGenerator(height=1, radius=mx.export_wire_edge_radius, sides=mx.export_wire_edge_resolution, )
         me = bpy.data.meshes.new(n)
         v, e, f = gen.generate()
         me.from_pydata(v, [], f)
-        log("{0}".format(n), 2)
         ob = utils.add_object(n, me)
         
-        o = {'children': [], 'export': True, 'export_type': 'BASE_INSTANCE', 'converted': False, 'object': ob, 'type': 'MESH', 'mesh': ob.data, 'parent': None, }
-        m = MXSMesh(o)
-        m.m_type = 'WIREFRAME_EDGE'
-        self._write(o)
+        o = {'type': 'MESH', 'export': True, 'object': ob, 'mesh': me, 'export_type': 'MESH', 'parent': None, 'children': [], 'converted': False, }
+        super().__init__(o)
         
-        self.wireframe_edge_name = ob.name
-        utils.wipe_out_object(ob, and_data=True)
-    
-    def _wire_objects(self):
-        """Loop over all renderable objects and prepare wire data for pymaxwell."""
-        eo = self._meshes[:] + self._bases[:] + self._instances[:] + self._duplicates[:]
-        for o in eo:
-            # log("{0}".format(o['object'].name), 2)
-            d, md = self._wire_to_data(o)
-            nm = md['name']
-            try:
-                # duplicates are handled differently
-                nm = o['dupli_name']
-            except KeyError:
-                pass
-            p = self._serialize(md, "{0}.json".format(nm))
-            self.mesh_data_paths.append(p)
-            d['matrices_path'] = p
-            self.data.append(d)
-    
-    def _wire_to_data(self, o):
-        """Make wire data from object data."""
-        ob = o['object']
-        me = ob.to_mesh(self.context.scene, True, 'RENDER', )
-        mw = ob.matrix_world
-        try:
-            # duplicates are handled differently
-            mw = o['dupli_matrix']
-        except KeyError:
-            pass
-        me.transform(mw)
+        self.m_type = 'WIREFRAME_BASE'
+        self.wipe_out_object = ob
         
-        vs = tuple([v.co.copy() for v in me.vertices])
-        es = tuple([tuple([i for i in e.vertices]) for e in me.edges])
-        
-        ms = self._calc_marices(vs=vs, es=es, )
-        
-        dt = []
-        for m in ms:
-            b, p = self._matrix_to_base_and_pivot(m)
-            dt.append((b, p, ))
-        
-        d = {'name': ob.name,
-             'matrix': None,
-             'parent': None,
-             'opacity': 100.0,
-             'hidden_camera': False,
-             'hidden_camera_in_shadow_channel': False,
-             'hidden_global_illumination': False,
-             'hidden_reflections_refractions': False,
-             'hidden_zclip_planes': False,
-             'object_id': (255, 255, 255),
-             'num_materials': len(ob.material_slots),
-             'materials': [],
-             'hide': False,
-             'instanced': None,
-             'type': 'INSTANCE', }
-        
-        d['name'] = "{0}-wire".format(ob.name)
-        d['instanced'] = self.wireframe_edge_name
-        d['object_id'] = self.wire_mat['id']
-        d['type'] = 'WIREFRAME'
-        
-        md = {'name': "{0}-wire".format(ob.name),
-              'matrices': dt, }
-        
-        bpy.data.meshes.remove(me)
-        return d, md
-    
-    def _calc_marices(self, vs, es, ):
-        """Calculate wire matrices."""
-        
-        def distance(a, b):
-            return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2) ** 0.5
-        
-        matrices = []
-        up = Vector((0, 0, 1))
-        for i, e in enumerate(es):
-            a = vs[e[0]]
-            b = vs[e[1]]
-            d = distance(a, b)
-            
-            # v1
-            quat = maths.rotation_to(Vector((0, 0, 1)), b - a)
-            mr = quat.to_matrix().to_4x4()
-            mt = Matrix.Translation(a)
-            mtr = mt * mr
-            
-            # # v2
-            # mtr = maths.look_at_matrix(a, Vector(maths.shift_vert_along_normal(a, b-a, -1.0)), up, )
-            
-            # add scale as well
-            ms = Matrix.Scale(d, 4, up)
-            m = mtr * ms
-            matrices.append(m)
-        
-        return matrices
+        # self.m_num_materials = 1
+        # self.m_materials = [wire_material_name]
 
 
-'''
-'''
-class MXSExportWireframeLegacy(MXSExportLegacy):
-    def __init__(self, context, mxs_path, use_instances=True, keep_intermediates=False, edge_radius=0.00025, edge_resolution=32, wire_mat={}, clay_mat={}, ):
-        """
-        context: bpy.context
-        mxs_path: path where .mxs should be saved
-        use_instances: if True all multi user meshes and duplis are exported as instances
-        keep_intermediates: if True, temp files and directory will not be removed
-        edge_radius: wire edge (cylinder) radius in meters
-        edge_radius: wire edge (cylinder) resolution
-        wire_mat: wireframe material, format: {'reflectance_0': (r, g, b), 'reflectance_90': (r, g, b), 'id': (r, g, b), }, r, g, b in 8bit 0-255 values
-        clay_mat: clay material, format: {'reflectance_0': (r, g, b), 'reflectance_90': (r, g, b), 'id': (r, g, b), }, r, g, b in 8bit 0-255 values
-        """
-        self.edge_radius = edge_radius
-        self.edge_resolution = edge_resolution
-        try:
-            v = wire_mat['reflectance_0']
-            v = wire_mat['reflectance_90']
-            v = wire_mat['roughness']
-            v = wire_mat['id']
-        except KeyError:
-            r0 = 20
-            r90 = 45
-            wire_mat = {'reflectance_0': (r0, r0, r0, ), 'reflectance_90': (r90, r90, r90, ), 'id': (0, 255, 0), 'roughness': 97.0, }
-        try:
-            v = clay_mat['reflectance_0']
-            v = clay_mat['reflectance_90']
-            v = clay_mat['roughness']
-            v = clay_mat['id']
-        except KeyError:
-            r0 = 210
-            r90 = 230
-            clay_mat = {'reflectance_0': (r0, r0, r0, ), 'reflectance_90': (r90, r90, r90, ), 'id': (255, 0, 0), 'roughness': 97.0, }
-        self.wire_mat = wire_mat
-        self.clay_mat = clay_mat
+class MXSWireframeContainer(MXSEmpty):
+    def __init__(self, euuid, ):
+        n = 'WIREFRAME_CONTAINER_{}'.format(euuid)
+        ob = utils.add_object(n, None, )
         
-        super(MXSExportWireframeLegacy, self).__init__(context, mxs_path, use_instances, keep_intermediates, )
-    
-    def _export(self):
-        log("collecting objects..", 1)
-        self.tree = self._collect()
+        o = {'parent': None, 'type': 'EMPTY', 'object': ob, 'export_type': 'EMPTY', 'mesh': None, 'converted': False, 'children': [], 'export': True, }
+        super().__init__(o)
         
-        self.uuid = uuid.uuid1()
-        h, t = os.path.split(self.mxs_path)
-        n, e = os.path.splitext(t)
-        self.tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, self.uuid))
-        if(os.path.exists(self.tmp_dir) is False):
-            os.makedirs(self.tmp_dir)
+        self.m_type = 'WIREFRAME_CONTAINER'
+        self.wipe_out_object = ob
+
+
+class MXSWireframe(MXSObject):
+    def __init__(self, o, wire_base_name, ):
+        # log("wireframe: '{}'".format(o.m_name), 3, )
+        log("wireframe..", 3, )
         
-        self.mesh_data_paths = []
-        self.hair_data_paths = []
-        self.wire_data_paths = []
-        self.part_data_paths = []
-        self.scene_data_name = "{0}-{1}.json".format(n, self.uuid)
-        self.script_name = "{0}-{1}.py".format(n, self.uuid)
-        
-        # coordinate conversion matrix
-        # m = io_utils.axis_conversion(from_forward='Y', to_forward='-Z', from_up='Z', to_up='Y').to_4x4()
-        # print(repr(m))
-        self.matrix = Matrix(((1.0, 0.0, 0.0, 0.0),
-                              (0.0, 0.0, 1.0, 0.0),
-                              (0.0, -1.0, 0.0, 0.0),
-                              (0.0, 0.0, 0.0, 1.0)))
-        
-        # process:
-        self.data = []
-        
-        # add materials before anything else, this way they will be later available to be used
-        d = {'name': 'wire',
-             'type': 'WIREFRAME_MATERIAL',
-             'data': self.wire_mat, }
-        self.data.append(d)
-        d = {'name': 'clay',
-             'type': 'WIREFRAME_MATERIAL',
-             'data': self.clay_mat, }
-        self.data.append(d)
-        
-        # write regular scene objects
-        self._export_data()
-        
-        # rewrite material data to none and add material property
-        for d in self.data:
-            try:
-                mps = d['mxm_paths']
-                nmps = []
-                for i, mp in enumerate(mps):
-                    nmps.append((i, '', ))
-                d['mxm_paths'] = nmps
-                # d['material'] = self.clay_mat
-            except KeyError:
-                pass
-        
-        # wireframe
-        log("making wire base mesh..", 1, LogStyles.MESSAGE)
-        self._wire_base()
-        log("processing wires..", 1, LogStyles.MESSAGE)
-        self._wire_objects()
-        
-        self._scene_properties()
-        
-        # save main data, meshes are already saved
-        p = self._serialize(self.data, self.scene_data_name)
-        self.scene_data_path = p
-        
-        # generate and execute py32 script
-        log("executing script..", 1, LogStyles.MESSAGE)
-        self._pymaxwell(wireframe=True)
-        
-        # remove all generated files
-        log("cleanup..", 1, LogStyles.MESSAGE)
-        self._cleanup()
-        
-        log("mxs saved in:", 1)
-        log("{0}".format(self.mxs_path), 0, LogStyles.MESSAGE, prefix="")
-        log("done.", 1, LogStyles.MESSAGE)
-        
-        # import pprint
-        # pp = pprint.PrettyPrinter(indent=4)
-        # pp.pprint(self.tree)
-    
-    def _wire_base(self):
-        """Create and set to export base wire edge cylinder."""
-        gen = utils.CylinderMeshGenerator(height=1, radius=self.edge_radius, sides=self.edge_resolution, )
-        n = "wireframe_edge_{0}".format(self.uuid)
-        me = bpy.data.meshes.new(n)
-        v, e, f = gen.generate()
-        me.from_pydata(v, [], f)
-        log("{0}".format(n), 2)
-        ob = utils.add_object(n, me)
-        o = {'object': ob,
-             'children': [],
-             'export': True,
-             'export_type': 'MESH',
-             'mesh': ob.data,
+        d = {'parent': None,
+             'type': 'MESH',
+             'object': bpy.data.objects[wire_base_name],
+             'export_type': 'INSTANCE',
+             'mesh': bpy.data.objects[wire_base_name].data,
              'converted': False,
-             'parent': None,
-             'hide': False,
-             'type': ob.type, }
-        d, md = self._mesh_to_data(o)
-        d['type'] = 'WIREFRAME_EDGE'
+             'children': [],
+             'export': True, }
         
-        p = os.path.join(self.tmp_dir, "{0}.binmesh".format(md['name']))
-        # w = MXSBinMeshWriterLegacy(p, md, d['num_positions_per_vertex'])
-        w = MXSBinMeshWriterLegacy(p, **md)
+        super().__init__(d)
         
-        self.wire_base_data = p
-        d['mesh_data_path'] = p
-        self.data.append(d)
-        self.wireframe_edge_name = ob.name
-        utils.wipe_out_object(ob, and_data=True)
-    
-    def _wire_objects(self):
-        """Loop over all renderable objects and prepare wire data for pymaxwell."""
-        eo = self.meshes[:] + self.bases[:] + self.instances[:] + self.duplicates[:]
-        for o in eo:
-            log("{0}".format(o['object'].name), 2)
-            d, md = self._wire_to_data(o)
-            nm = md['name']
-            try:
-                # duplicates are handled differently
-                nm = o['dupli_name']
-            except KeyError:
-                pass
-            p = self._serialize(md, "{0}.json".format(nm))
-            self.mesh_data_paths.append(p)
-            d['matrices_path'] = p
-            self.data.append(d)
-    
-    def _wire_to_data(self, o):
-        """Make wire data from object data."""
-        ob = o['object']
-        me = ob.to_mesh(self.context.scene, True, 'RENDER', )
+        self.m_type = 'WIREFRAME'
+        self.m_instanced = wire_base_name
+        self.base_b_object = bpy.data.objects[wire_base_name]
+        
+        ob = o.b_object
+        me = ob.to_mesh(bpy.context.scene, True, 'RENDER', )
         mw = ob.matrix_world
         try:
             # duplicates are handled differently
-            mw = o['dupli_matrix']
+            mw = o.o['dupli_matrix']
         except KeyError:
             pass
+        
         me.transform(mw)
         
         vs = tuple([v.co.copy() for v in me.vertices])
         es = tuple([tuple([i for i in e.vertices]) for e in me.edges])
-        
         ms = self._calc_marices(vs=vs, es=es, )
         
         dt = []
         for m in ms:
-            b, p = self._matrix_to_base_and_pivot(m)
-            dt.append((b, p, ))
-        
-        d = {'name': ob.name,
-             'matrix': None,
-             'parent': None,
-             
-             'opacity': 100.0,
-             'hidden_camera': False,
-             'hidden_camera_in_shadow_channel': False,
-             'hidden_global_illumination': False,
-             'hidden_reflections_refractions': False,
-             'hidden_zclip_planes': False,
-             'object_id': (255, 255, 255),
-             
-             'num_materials': len(ob.material_slots),
-             'materials': [],
-             
-             'hide': False,
-             
-             'instanced': None,
-             'type': 'INSTANCE', }
-        
-        d['name'] = "{0}-wire".format(ob.name)
-        d['instanced'] = self.wireframe_edge_name
-        d['object_id'] = self.wire_mat['id']
-        d['type'] = 'WIREFRAME'
-        
-        md = {'name': "{0}-wire".format(ob.name),
-              'matrices': dt, }
+            b, p, l, r, s = self._transformation2(m)
+            dt.append((b, p, l, r, s, ))
         
         bpy.data.meshes.remove(me)
-        return d, md
+        
+        self.m_num_wires = len(dt)
+        self.m_wire_matrices = dt
+        
+        self.m_name = 'wireframe-{}'.format(o.m_name)
+        
+        # self.m_num_materials = 1
+        # self.m_materials = [wire_material_name]
     
     def _calc_marices(self, vs, es, ):
         """Calculate wire matrices."""
@@ -3591,7 +3372,13 @@ class MXSExportWireframeLegacy(MXSExportLegacy):
             matrices.append(m)
         
         return matrices
-'''
+    
+    def _transformation2(self, m, ):
+        if(self.b_parent):
+            m = self.b_parent_matrix_world.copy().inverted() * m
+        m *= ROTATE_X_90
+        b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+        return (b, p, l, r, s, )
 
 
 class MXSBinMeshWriterLegacy():
@@ -3911,123 +3698,3 @@ class MXSBinParticlesReaderLegacy():
         e = r(o + "?")
         if(self.offset != len(self.bindata)):
             raise RuntimeError("expected EOF")
-
-
-'''
-class MXSExportWireframe(MXSExport):
-    def __init__(self, context, mxs_path, use_instances=True, edge_radius=0.00025, edge_resolution=32, wire_mat={}, clay_mat={}, ):
-        self.edge_radius = edge_radius
-        self.edge_resolution = edge_resolution
-        try:
-            v = wire_mat['reflectance_0']
-            v = wire_mat['reflectance_90']
-            v = wire_mat['roughness']
-            v = wire_mat['id']
-        except KeyError:
-            r0 = 20
-            r90 = 45
-            wire_mat = {'reflectance_0': (r0, r0, r0, ), 'reflectance_90': (r90, r90, r90, ), 'id': (0, 255, 0), 'roughness': 97.0, }
-        try:
-            v = clay_mat['reflectance_0']
-            v = clay_mat['reflectance_90']
-            v = clay_mat['roughness']
-            v = clay_mat['id']
-        except KeyError:
-            r0 = 210
-            r90 = 230
-            clay_mat = {'reflectance_0': (r0, r0, r0, ), 'reflectance_90': (r90, r90, r90, ), 'id': (255, 0, 0), 'roughness': 97.0, }
-        self.wire_mat = wire_mat
-        self.clay_mat = clay_mat
-        
-        super(MXSExportWireframe, self).__init__(context, mxs_path, use_instances, )
-    
-    def export(self):
-        super(MXSExportWireframe, self).export()
-        
-        # wireframe
-        self.uuid = uuid.uuid1()
-        log("making wire materials..", 1, LogStyles.MESSAGE)
-        wm = self.mxs.wire_material("wire_material", wire_mat['reflectance_0'], wire_mat['reflectance_90'], wire_mat['id'], wire_mat['roughness'], )
-        self.wm = wm.getName()
-        cm = self.mxs.wire_material("clay_material", wire_mat['reflectance_0'], wire_mat['reflectance_90'], wire_mat['id'], wire_mat['roughness'], )
-        self.cm = cm.getName()
-        
-        log("making wire base mesh..", 1, LogStyles.MESSAGE)
-        self._wire_base()
-        
-        log("processing wires..", 1, LogStyles.MESSAGE)
-        self._wire_objects()
-        
-        log("processing hierarchy..", 1, LogStyles.MESSAGE)
-        self._wire_hierarchy(self.wireframe_edge_name)
-        
-        # save again..
-        self.mxs.write()
-    
-    def _wire_base(self):
-        """Create and set to export base wire edge cylinder."""
-        gen = utils.CylinderMeshGenerator(height=1, radius=self.edge_radius, sides=self.edge_resolution, )
-        n = "wireframe_edge_{0}".format(self.uuid)
-        me = bpy.data.meshes.new(n)
-        v, e, f = gen.generate()
-        me.from_pydata(v, [], f)
-        log("{0}".format(n), 2)
-        ob = utils.add_object(n, me)
-        o = {'object': ob,
-             'children': [],
-             'export': True,
-             'export_type': 'MESH',
-             'mesh': ob.data,
-             'converted': False,
-             'parent': None,
-             'type': ob.type, }
-        self.mxs.mesh(o)
-        self.wireframe_edge_name = ob.name
-        utils.wipe_out_object(ob, and_data=True)
-    
-    def _wire_objects(self):
-        """Loop over all renderable objects and prepare wire data for pymaxwell."""
-        eo = self.meshes[:] + self.bases[:] + self.instances[:] + self.duplicates[:]
-        
-        for o in eo:
-            log("{0}".format(o['object'].name), 2)
-            ob = o['object']
-            me = ob.to_mesh(self.context.scene, True, 'RENDER', )
-            mw = ob.matrix_world
-            try:
-                # duplicates are handled differently
-                mw = o['dupli_matrix']
-            except KeyError:
-                pass
-            me.transform(mw)
-            
-            vs = tuple([v.co.copy() for v in me.vertices])
-            es = tuple([tuple([i for i in e.vertices]) for e in me.edges])
-            ms = self._calc_marices(vs=vs, es=es, )
-            
-            self.mxs.wire_instances(self.wireframe_edge_name, ob.name, ms, None, self.wm, )
-            
-            bpy.data.meshes.remove(me)
-    
-    def _calc_marices(self, vs, es, ):
-        """Calculate wire matrices."""
-        
-        def distance(a, b):
-            return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2) ** 0.5
-        
-        matrices = []
-        up = Vector((0, 0, 1))
-        for i, e in enumerate(es):
-            a = vs[e[0]]
-            b = vs[e[1]]
-            d = distance(a, b)
-            quat = maths.rotation_to(Vector((0, 0, 1)), b - a)
-            mr = quat.to_matrix().to_4x4()
-            mt = Matrix.Translation(a)
-            mtr = mt * mr
-            ms = Matrix.Scale(d, 4, up)
-            m = mtr * ms
-            matrices.append(m)
-        
-        return matrices
-'''
