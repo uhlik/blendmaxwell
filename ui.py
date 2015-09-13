@@ -85,12 +85,19 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         sub.label("Options:")
         r = sub.row()
         r.prop(m, 'export_use_instances')
-        r.prop(m, 'export_protect_mxs')
+        c = r.column()
+        c.prop(m, 'export_use_subdivision')
+        c.enabled = False
+        
         r = sub.row()
         r.prop(m, 'export_log_open')
         r.prop(m, 'export_warning_log_write')
+        
         r = sub.row()
         r.prop(m, 'export_remove_unused_materials')
+        r.prop(m, 'export_protect_mxs')
+        
+        r = sub.row()
         c = r.column()
         c.prop(m, 'export_keep_intermediates')
         if(platform.system() != 'Darwin'):
@@ -124,6 +131,8 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
             sub.prop_search(m, 'export_wire_clay_material', bpy.data, 'materials', icon='MATERIAL')
             if(not m.export_clay_override_object_material):
                 sub.enabled = False
+            
+            # TODO: use UILayout.alert = True if missing values?
 
 
 class SceneOptionsPanel(RenderButtonsPanel, Panel):

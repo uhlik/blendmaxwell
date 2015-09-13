@@ -292,7 +292,7 @@ class SceneProperties(PropertyGroup):
     
     # TODO: split export options to its own PropertyGroup?
     
-    export_protect_mxs = BoolProperty(name="Protect MXS", default=False, description="", )
+    export_protect_mxs = BoolProperty(name="Protect MXS", default=False, description="Protect MXS from importing.", )
     
     export_output_directory = StringProperty(name="Output Directory", subtype='DIR_PATH', default="//", description="Output directory for Maxwell scene (.MXS) file", )
     export_use_instances = BoolProperty(name="Use Instances", default=True, description="Convert multi-user mesh objects to instances", )
@@ -316,7 +316,9 @@ class SceneProperties(PropertyGroup):
     # export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
     export_log_open = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
     export_warning_log_write = BoolProperty(name="Write Log", default=True, description="Write log file next to scene file on warnings. When running blender from terminal you can skip that and read warnings in it.", )
-    export_remove_unused_materials = BoolProperty(name="Remove Unused Materials", default=False, description="", )
+    
+    export_remove_unused_materials = BoolProperty(name="Remove Unused Materials", default=False, description="Remove all materials that is not used by any object in scene. Might not work as intended in 3.1.99.9.", )
+    export_use_subdivision = BoolProperty(name="Use Subdivision Modifiers", default=False, description="Export all Subdivision modifiers if they are Catmull-Clark type and at the end of modifier stack on regular mesh objects. Manually added Subdivision will override automatic one.", )
     
     exporting_animation_now = BoolProperty(default=False, options={'HIDDEN'}, )
     exporting_animation_frame_number = IntProperty(default=1, options={'HIDDEN'}, )
