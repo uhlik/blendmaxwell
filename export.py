@@ -56,6 +56,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # TODO: restore instancer support for my personal use (python only)
 # TODO: restore auto subdivision modifier
+# TODO: wire export linux/windows
 
 
 class MXSExport():
