@@ -1685,6 +1685,10 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         mx = context.material.maxwell_material_extension
         mat = context.material
         
+        r = sub.row()
+        r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
+        sub.separator()
+        
         sub.prop(m, 'use', text="Material Type", )
         sub.separator()
         
@@ -1729,11 +1733,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
         m = context.material.maxwell_render
         mx = context.material.maxwell_material_extension
         mat = context.material
-        
-        # sub.prop(m, 'use', text="Material Type", )
-        # sub.separator()
-        
-        # TODO: blender viewport color for extension materials
         
         if(m.use == 'EMITTER'):
             sub.prop(mx, 'emitter_type')
@@ -2092,8 +2091,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             # 'CUSTOM'
             sub.prop(m, 'mxm_file')
             sub.prop(m, 'embed')
-            r = sub.row()
-            r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
             r = sub.row(align=True)
             if(m.mxm_file == ''):
                 r.operator('maxwell_render.create_material').backface = False
