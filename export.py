@@ -54,6 +54,9 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # Improvements in the Maxwell Grass fibers growth                           DONE
 # New Asset Reference extension                                             X
 
+# TODO: restore instancer support for my personal use (python only)
+# TODO: restore auto subdivision modifier
+
 
 class MXSExport():
     def __init__(self, mxs_path, engine=None, ):
