@@ -849,12 +849,6 @@ class MXSExport():
         for d in self._modifiers:
             if(d['export_type'] == 'CLONER'):
                 o = MXSCloner(d)
-                
-                # TODO: 3.2: Cloner extension is not compatible with 3.2 sdk in 3.1.99.9, skipping it until this is fixed
-                # Extension: /Applications/Maxwell 3/extensions/MaxwellCloner.osx.mxx incompatible with current SDK version
-                log("MXSCloner: extension disabled in 3.1.99.9 (at least on Mac OS X), because is incompatible with current SDK version".format(), 3, LogStyles.WARNING, )
-                o.skip = True
-                
                 self._write(o)
             elif(d['export_type'] == 'GRASS'):
                 o = MXSGrass(d)
@@ -2287,6 +2281,7 @@ class MXSParticles(MXSObject):
         ps = self.ps
         
         # FIXME: somehow, in test scene with 10 particles, number of rendere is 9, have a look into it
+        # FIXME: the same problem is with cloner..
         
         pdata = {}
         if(mxex.source == 'BLENDER_PARTICLES'):
@@ -2813,6 +2808,7 @@ class MXSCloner(MXSModifier):
             
             # FIXME: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
             # FIXME: also here i have 10 particles, but only 8 clones is rendered in place and one clone is far away, reimporting bin show all 10 particles are where they should be
+            # FIXME: update, when based-cloned-with-modifier object is in scene root (not child of anything) the missing particle is back, but this works only for externally linked bin files, not for embedded particles..
             
             # i get particle locations in global coordinates, so need to fix that
             # mat = bpy.data.objects[self.m_parent].matrix_world.copy()
@@ -2839,19 +2835,27 @@ class MXSCloner(MXSModifier):
                     else:
                         sizes.append(mxex.bl_size / 2)
             
+            rfms = Matrix.Scale(1.0, 4)
+            rfms[0][0] = -1.0
+            rfmr = Matrix.Rotation(math.radians(-90.0), 4, 'Z')
+            rfm = rfms * rfmr * ROTATE_X_90
+            
             mry90 = Matrix.Rotation(math.radians(90.0), 4, 'Y')
+            
             for i, l in enumerate(locs):
                 if(mxex.embed):
                     locs[i] = Vector(l * ROTATE_X_90).to_tuple()
                 else:
-                    locs[i] = Vector(l * ROTATE_X_90 * mry90).to_tuple()
+                    # locs[i] = Vector(l * ROTATE_X_90 * mry90).to_tuple()
+                    locs[i] = Vector(l * rfm).to_tuple()
             
             if(mxex.bl_use_velocity):
                 for i, v in enumerate(vels):
                     if(mxex.embed):
                         vels[i] = Vector(v * ROTATE_X_90).to_tuple()
                     else:
-                        vels[i] = Vector(v * ROTATE_X_90 * mry90).to_tuple()
+                        # vels[i] = Vector(v * ROTATE_X_90 * mry90).to_tuple()
+                        vels[i] = Vector(v * rfm).to_tuple()
             
             particles = []
             for i, ploc in enumerate(locs):
