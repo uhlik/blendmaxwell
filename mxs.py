@@ -1859,6 +1859,47 @@ class MXSWriter():
         o = s.getObject(cloned_object)
         o.applyGeometryModifierExtension(p)
         return o
+    
+    def wireframe_override_object_materials(self, clay_mat_name, wire_base_name, ):
+        s = self.mxs
+        
+        it = CmaxwellObjectIterator()
+        o = it.first(scene)
+        l = []
+        while not o.isNull():
+            name, _ = o.getName()
+            l.append(name)
+            o = it.next()
+        
+        for o in l:
+            # do not set material to wire base
+            if(o.getName()[0] != wire_base_name):
+                if(o.isInstance()[0] == 1):
+                    instanced = o.getInstanced()
+                    # do not set material to wire base instances
+                    if(instanced.getName()[0] != wire_base_name):
+                        o.setMaterial(clay_mat_name)
+                else:
+                    o.setMaterial(clay_mat_name)
+    
+    def wireframe_zero_scale_base(self, wire_base_name):
+        s = self.mxs
+        o = s.getObject(wire_base_name)
+        
+        z = (0.0, 0.0, 0.0)
+        b = Cbase()
+        b.origin = Cvector(*z)
+        b.xAxis = Cvector(*z)
+        b.yAxis = Cvector(*z)
+        b.zAxis = Cvector(*z)
+        p = Cbase()
+        p.origin = Cvector(*z)
+        p.xAxis = Cvector(1.0, 0.0, 0.0)
+        p.yAxis = Cvector(0.0, 1.0, 0.0)
+        p.zAxis = Cvector(0.0, 0.0, 1.0)
+        
+        o.setBaseAndPivot(b, p)
+        o.setScale(Cvector(0, 0, 0))
 
 
 class ExtMXMWriter():

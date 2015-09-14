@@ -56,7 +56,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # TODO: restore instancer support for my personal use (python only)
 # TODO: restore auto subdivision modifier
-# TODO: wire export linux/windows
 
 
 class MXSExport():
@@ -1090,21 +1089,12 @@ class MXSExport():
             elif(o.m_type == 'EMPTY'):
                 self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
-            # elif(o.m_type == 'WIREFRAME_CONTAINER'):
-            #     self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
-            #     self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'MESH'):
                 self.mxs.mesh(o.m_name, pack_matrix(o), o.m_num_positions,
                               o.m_vertices, o.m_normals, o.m_triangles, o.m_triangle_normals,
                               o.m_uv_channels, pack_object_props(o), o.m_num_materials,
                               o.m_materials, o.m_triangle_materials, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
-            # elif(o.m_type == 'WIREFRAME_BASE'):
-            #     self.mxs.mesh(o.m_name, pack_matrix(o), o.m_num_positions,
-            #                   o.m_vertices, o.m_normals, o.m_triangles, o.m_triangle_normals,
-            #                   o.m_uv_channels, pack_object_props(o), o.m_num_materials,
-            #                   o.m_materials, o.m_triangle_materials, o.m_backface_material, )
-            #     self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'MESH_INSTANCE'):
                 self.mxs.instance(o.m_name, o.m_instanced, pack_matrix(o), pack_object_props(o), o.m_materials, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
@@ -1264,6 +1254,24 @@ class MXSExport():
             # elif(o.m_type == 'ASSET_REFERENCE'):
             #     self.mxs.ext_asset_reference(o.m_name, o.m_path, o.m_axis, o.m_display, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
             #     self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
+            elif(o.m_type == 'WIREFRAME_CONTAINER'):
+                self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
+                self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
+            elif(o.m_type == 'WIREFRAME_BASE'):
+                self.mxs.mesh(o.m_name, pack_matrix(o), o.m_num_positions,
+                              o.m_vertices, o.m_normals, o.m_triangles, o.m_triangle_normals,
+                              o.m_uv_channels, pack_object_props(o), o.m_num_materials,
+                              o.m_materials, o.m_triangle_materials, o.m_backface_material, )
+                self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
+            elif(o.m_type == 'WIREFRAME'):
+                e = self.wireframe_base_name
+                c = self.wireframe_container_name
+                p = pack_object_props(o)
+                wm = bpy.context.scene.maxwell_render.export_wire_wire_material
+                for i, m in enumerate(o.m_wire_matrices):
+                    n = "{0}-{1}".format(o.m_name, i)
+                    self.mxs.instance(n, e, m, p, wm, None, )
+                    self.hierarchy.append((n, c, 'MESH_INSTANCE'))
             else:
                 raise TypeError("{0} is unknown type".format(o.m_type))
     
@@ -1283,6 +1291,13 @@ class MXSExport():
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
             log("setting object hierarchy..".format(), 1, LogStyles.MESSAGE, )
             self.mxs.hierarchy(self.hierarchy)
+            
+            if(self.use_wireframe):
+                mx = bpy.context.scene.maxwell_render
+                if(mx.export_clay_override_object_material):
+                    self.mxs.wireframe_override_object_materials(mx.export_wire_clay_material, self.wireframe_base_name, )
+                self.mxs.wireframe_zero_scale_base(self.wireframe_base_name)
+            
             log("writing .mxs file..".format(), 1, LogStyles.MESSAGE, )
             if(bpy.context.scene.maxwell_render.export_remove_unused_materials):
                 log("removing unused materials..".format(), 1, LogStyles.MESSAGE, )
