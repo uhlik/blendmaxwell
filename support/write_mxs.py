@@ -1847,7 +1847,7 @@ def main(args):
         wire_base.setBaseAndPivot(b, p)
         wire_base.setScale(Cvector(0, 0, 0))
         
-        # export_wireframe
+        # export_use_wireframe
         export_clay_override_object_material = False
         export_wire_wire_material = None
         export_wire_clay_material = None

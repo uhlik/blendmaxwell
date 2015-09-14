@@ -85,9 +85,10 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         sub.label("Options:")
         r = sub.row()
         r.prop(m, 'export_use_instances')
-        c = r.column()
-        c.prop(m, 'export_use_subdivision')
-        c.enabled = False
+        r.prop(m, 'export_use_subdivision')
+        # c = r.column()
+        # c.prop(m, 'export_use_subdivision')
+        # c.enabled = False
         
         r = sub.row()
         r.prop(m, 'export_log_open')
@@ -115,8 +116,8 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
         m = context.scene.maxwell_render
         b = sub.box()
         
-        b.prop(m, 'export_wireframe')
-        if(m.export_wireframe):
+        b.prop(m, 'export_use_wireframe')
+        if(m.export_use_wireframe):
             c = b.column()
             c.label("Wireframe Options:")
             sc = c.column(align=True)

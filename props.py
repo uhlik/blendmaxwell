@@ -302,7 +302,7 @@ class SceneProperties(PropertyGroup):
     export_open_with = EnumProperty(name="Open With", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "None", "")], default='STUDIO', description="After export, open in ...", )
     instance_app = BoolProperty(name="Open a new instance of application", default=False, description="Open a new instance of the application even if one is already running", )
     
-    export_wireframe = BoolProperty(name="Wireframe", default=False, description="Wireframe and Clay scene export", )
+    export_use_wireframe = BoolProperty(name="Wireframe", default=False, description="Wireframe and Clay scene export", )
     export_wire_edge_radius = FloatProperty(name="Edge Radius", default=0.00025, min=0.0, max=1.0, precision=6, description="Wireframe edge radius (meters)", )
     export_wire_edge_resolution = IntProperty(name="Edge Resolution", default=32, min=3, max=128, description="Wireframe edge resolution", )
     export_clay_override_object_material = BoolProperty(name="Override Object Material", default=True, )

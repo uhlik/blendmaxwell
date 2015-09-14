@@ -55,7 +55,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # New Asset Reference extension                                             X
 
 # TODO: restore instancer support for my personal use (python only)
-# TODO: restore auto subdivision modifier
 
 
 class MXSExport():
@@ -75,7 +74,8 @@ class MXSExport():
         
         mx = self.context.scene.maxwell_render
         self.use_instances = mx.export_use_instances
-        self.use_wireframe = mx.export_wireframe
+        self.use_wireframe = mx.export_use_wireframe
+        self.use_subdivision = mx.export_use_subdivision
         
         self._prepare()
         self._export()
@@ -760,6 +760,11 @@ class MXSExport():
                 w = MXSWireframe(o, self.wireframe_base_name)
                 w.m_parent = self.wireframe_container_name
                 self._write(w)
+            
+            if(self.use_subdivision):
+                mod = o.subdivision_modifier
+                if(mod is not None):
+                    self._write(mod)
         
         log("writing instance bases:", 1, LogStyles.MESSAGE, )
         bases = []
@@ -774,6 +779,11 @@ class MXSExport():
                 w = MXSWireframe(o, self.wireframe_base_name)
                 w.m_parent = self.wireframe_container_name
                 self._write(w)
+            
+            if(self.use_subdivision):
+                mod = o.subdivision_modifier
+                if(mod is not None):
+                    self._write(mod)
         
         def find_base(mnm):
             for b in bases:
@@ -1498,7 +1508,7 @@ class MXSScene(Serializable):
         self.m_extra_sampling_invert = mx.extra_sampling_invert
         
         # write these too, nothing will be done if just present in data, will be used only when needed..
-        self.m_export_wireframe = mx.export_wireframe
+        self.m_export_use_wireframe = mx.export_use_wireframe
         # self.m_export_wire_edge_radius = mx.export_wire_edge_radius
         # self.m_export_wire_edge_resolution = mx.export_wire_edge_resolution
         self.m_export_clay_override_object_material = mx.export_clay_override_object_material
@@ -1966,8 +1976,24 @@ class MXSMesh(MXSObject):
             # get to-mesh-conversion result (curves, texts, etc..)
             me = o['mesh']
         else:
+            use_subdivision = bpy.context.scene.maxwell_render.export_use_subdivision
+            if(use_subdivision):
+                if(len(ob.modifiers) > 0):
+                    last_modifier = ob.modifiers[-1]
+                    if(last_modifier.type == 'SUBSURF' and last_modifier.show_render and last_modifier.subdivision_type == 'CATMULL_CLARK'):
+                        extra_subdiv = True
+                        # if using auto subdivision modifiers in Maxwell, disable last modifier if conditions are met
+                        last_modifier.show_render = False
+                    else:
+                        if(last_modifier.type == 'SUBSURF'):
+                            log("{}: WARNING: '{}': (auto subdivision modifiers) last subdivision modifier can't be used".format(self.__class__.__name__, ob.name), 3, LogStyles.WARNING, )
+            
             # or make new flattened mesh (regular meshes, with modifiers applied)
             me = ob.to_mesh(bpy.context.scene, True, 'RENDER', )
+            
+            if(extra_subdiv):
+                # and enable it again
+                last_modifier.show_render = True
         
         # transform
         me.transform(ROTATE_X_MINUS_90)
@@ -2025,6 +2051,37 @@ class MXSMesh(MXSObject):
         
         me.calc_tessface()
         me.calc_normals()
+        
+        self.subdivision_modifier = None
+        if(extra_subdiv):
+            sd = self.b_object.maxwell_subdivision_extension
+            # store old settings
+            old = (sd.enabled, sd.level, sd.scheme, sd.interpolation, sd.crease, sd.smooth, )
+            # set modifier settings
+            sd.enabled = True
+            sd.level = last_modifier.render_levels
+            sd.scheme = '0'
+            if(last_modifier.use_subsurf_uv):
+                sd.interpolation = '2'
+            else:
+                sd.interpolation = '0'
+            sd.crease = 0.0
+            sd.smooth = math.radians(90.000)
+            d = {'type': None,
+                 'object': self.b_object,
+                 'parent': self.b_parent,
+                 'export': True,
+                 'children': [],
+                 'export_type': 'SUBDIVISION', }
+            o = MXSSubdivision(d, self.quad_pairs, )
+            self.subdivision_modifier = o
+            # restore old settings
+            sd.enabled = old[0]
+            sd.level = old[1]
+            sd.scheme = old[2]
+            sd.interpolation = old[3]
+            sd.crease = old[4]
+            sd.smooth = old[5]
         
         return me
     
