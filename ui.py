@@ -133,7 +133,7 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
             if(not m.export_clay_override_object_material):
                 sub.enabled = False
             
-            # TODO: use UILayout.alert = True if missing values?
+            # NOT TO DO: use UILayout.alert = True if missing values? prop_search does not support this..
 
 
 class SceneOptionsPanel(RenderButtonsPanel, Panel):
@@ -1176,6 +1176,11 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         m = context.object.maxwell_render_reference
         
         sub.prop(m, 'path')
+        
+        # r = sub.row()
+        # if(m.path == ''):
+        #     r.alert = True
+        # r.prop(m, 'path')
         
         # sub.separator()
         # s = sub.split(percentage=0.8)
