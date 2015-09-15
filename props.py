@@ -316,6 +316,7 @@ class SceneProperties(PropertyGroup):
     # export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
     export_log_open = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
     export_warning_log_write = BoolProperty(name="Write Log", default=True, description="Write log file next to scene file on warnings. When running blender from terminal you can skip that and read warnings in it.", )
+    export_suppress_warning_popups = BoolProperty(name="Suppress Warnings", default=False, description="Don't popup number of warnings next to mouse cursor.", )
     
     export_remove_unused_materials = BoolProperty(name="Remove Unused Materials", default=False, description="Remove all materials that is not used by any object in scene. Might not work as intended in 3.1.99.9.", )
     export_use_subdivision = BoolProperty(name="Use Subdivision Modifiers", default=False, description="Export all Subdivision modifiers if they are Catmull-Clark type and at the end of modifier stack on regular mesh objects. Manually added Subdivision will override automatic one.", )

@@ -99,6 +99,7 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         r.prop(m, 'export_protect_mxs')
         
         r = sub.row()
+        r.prop(m, 'export_suppress_warning_popups')
         c = r.column()
         c.prop(m, 'export_keep_intermediates')
         if(platform.system() != 'Darwin'):

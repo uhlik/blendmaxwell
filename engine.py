@@ -388,7 +388,10 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         from .log import NUMBER_OF_WARNINGS
         if(NUMBER_OF_WARNINGS > 0):
-            self.report({'ERROR'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
+            if(m.export_suppress_warning_popups):
+                self.report({'WARNING'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
+            else:
+                self.report({'ERROR'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
             
             if(m.export_warning_log_write):
                 h, t = os.path.split(p)
