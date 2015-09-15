@@ -340,7 +340,7 @@ class MXSExport():
                                 m = me
                                 c = True
                     else:
-                        if(len(o.data.polygons) > 0):
+                        if(len(me.polygons) > 0):
                             t = 'MESH'
                             m = me
                             c = True
@@ -806,9 +806,13 @@ class MXSExport():
         
         log("writing duplicates:", 1, LogStyles.MESSAGE, )
         for d in self._duplicates:
-            b = find_base(d['mesh'].name)
-            o = MXSMeshInstance(d, b, )
-            self._write(o)
+            if(not self.use_instances):
+                o = MXSMesh(d)
+                self._write(o)
+            else:
+                b = find_base(d['mesh'].name)
+                o = MXSMeshInstance(d, b, )
+                self._write(o)
             
             if(self.use_wireframe):
                 w = MXSWireframe(o, self.wireframe_base_name)
@@ -1951,6 +1955,26 @@ class MXSMesh(MXSObject):
         
         super().__init__(o)
         self.m_type = 'MESH'
+        
+        # dupli overrides when self.use_instances = False
+        self.dupli = False
+        if('dupli_matrix' in self.o):
+            self.dupli = True
+        
+        if(self.dupli):
+            self.m_name = self.o['dupli_name']
+            
+            mw = self.o['dupli_matrix'].copy()
+            m = self.o['parent']['object'].matrix_world.inverted() * mw
+            m *= ROTATE_X_90
+            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+            
+            self.m_base = b
+            self.m_pivot = p
+            self.m_location = l
+            self.m_rotation = r
+            self.m_scale = s
+        # dupli overrides when self.use_instances = False
         
         me = self._prepare_mesh()
         
