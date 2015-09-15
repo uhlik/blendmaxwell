@@ -530,6 +530,35 @@ class MXSWriter():
                     p.setFloat('Metallic', d['carpaint_metallic'])
                     p.setFloat('Topcoat', d['carpaint_topcoat'])
                 
+                elif(d['use'] == 'HAIR'):
+                    e = m.createDefaultMaterialModifierExtension('Hair')
+                    p = e.getExtensionData()
+                    
+                    p.setByte('Color Type', d['hair_color_type'])
+                    
+                    c = Crgb8()
+                    c.assign(*d['hair_color'])
+                    p.setRgb('Color', c.toRGB())
+                    self.texture_data_to_mxparams('Color Map', d['hair_color_map'], p, )
+                    
+                    self.texture_data_to_mxparams('Root-Tip Map', d['hair_root_tip_map'], p, )
+                    
+                    p.setByte('Root-Tip Weight Type', d['hair_root_tip_weight_type'])
+                    p.setFloat('Root-Tip Weight', d['hair_root_tip_weight'])
+                    self.texture_data_to_mxparams('Root-Tip Weight Map', d['hair_root_tip_weight_map'], p, )
+                    
+                    p.setFloat('Primary Highlight Strength', d['hair_primary_highlight_strength'])
+                    p.setFloat('Primary Highlight Spread', d['hair_primary_highlight_spread'])
+                    c = Crgb8()
+                    c.assign(*d['hair_primary_highlight_tint'])
+                    p.setRgb('Primary Highlight Tint', c.toRGB())
+                    
+                    p.setFloat('Secondary Highlight Strength', d['hair_secondary_highlight_strength'])
+                    p.setFloat('Secondary Highlight Spread', d['hair_secondary_highlight_spread'])
+                    c = Crgb8()
+                    c.assign(*d['hair_secondary_highlight_tint'])
+                    p.setRgb('Secondary Highlight Tint', c.toRGB())
+                
                 m = s.createMaterial(d['name'])
                 m.applyMaterialModifierExtension(p)
                 

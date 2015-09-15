@@ -3175,6 +3175,8 @@ class MXSMaterialExtension(MXSMaterial):
             self._translucent()
         elif(self.m_use == 'CARPAINT'):
             self._carpaint()
+        elif(self.m_use == 'HAIR'):
+            self._hair()
         else:
             raise TypeError("{}: ({}): Unsupported extension material type: {}".format(self.__class__.__name__, self.m_name, self.m_use, ))
     
@@ -3280,6 +3282,22 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_carpaint_color = self._color_to_rgb8(mx.carpaint_color)
         self.m_carpaint_metallic = mx.carpaint_metallic
         self.m_carpaint_topcoat = mx.carpaint_topcoat
+    
+    def _hair(self):
+        mx = self.mx
+        self.m_hair_color_type = mx.hair_color_type
+        self.m_hair_color = self._color_to_rgb8(mx.hair_color)
+        self.m_hair_color_map = self._texture_to_data(mx.hair_color_map)
+        self.m_hair_root_tip_map = self._texture_to_data(mx.hair_root_tip_map)
+        self.m_hair_root_tip_weight_type = mx.hair_root_tip_weight_type
+        self.m_hair_root_tip_weight = mx.hair_root_tip_weight
+        self.m_hair_root_tip_weight_map = self._texture_to_data(mx.hair_root_tip_weight_map)
+        self.m_hair_primary_highlight_strength = mx.hair_primary_highlight_strength
+        self.m_hair_primary_highlight_spread = mx.hair_primary_highlight_spread
+        self.m_hair_primary_highlight_tint = self._color_to_rgb8(mx.hair_primary_highlight_tint)
+        self.m_hair_secondary_highlight_strength = mx.hair_secondary_highlight_strength
+        self.m_hair_secondary_highlight_spread = mx.hair_secondary_highlight_spread
+        self.m_hair_secondary_highlight_tint = self._color_to_rgb8(mx.hair_secondary_highlight_tint)
 
 
 class MXSTexture(Serializable):

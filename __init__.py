@@ -105,7 +105,11 @@ def get_all_panels():
 
 def get_default_presets():
     # TODO: have a look at presets if they are still the same or updated
-    # TODO: add hair material presets
+    def get_prefs():
+        a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
+        p = bpy.context.user_preferences.addons[a].preferences
+        return p
+    
     presets = {
         'exposure': {
             'subdirs': False,
@@ -126,6 +130,37 @@ def get_default_presets():
             'defines': [
                 "import bpy",
                 "m = bpy.context.object.active_material.maxwell_material_extension",
+                "    ",
+                "def texture(d):",
+                "    mat = bpy.context.object.active_material",
+                "    ts = mat.texture_slots",
+                "    for i in range(len(ts)):",
+                "        mat.texture_slots.clear(i)",
+                "    slot = ts.create(0)",
+                "    tex = bpy.data.textures.new(d['name'], 'IMAGE')",
+                "    slot.texture = tex",
+                "    image = bpy.data.images.load(d['path'])",
+                "    tex.image = image",
+                "    tm = tex.maxwell_render",
+                "    tm.use_global_map = d['use_global_map']",
+                "    tm.channel = d['channel']",
+                "    tm.tiling_method = d['tiling_method']",
+                "    tm.tiling_units = d['tiling_units']",
+                "    tm.repeat = d['repeat']",
+                "    tm.mirror_x = d['mirror_x']",
+                "    tm.mirror_y = d['mirror_y']",
+                "    tm.offset = d['offset']",
+                "    tm.rotation = d['rotation']",
+                "    tm.invert = d['invert']",
+                "    tm.use_alpha = d['use_alpha']",
+                "    tm.interpolation = d['interpolation']",
+                "    tm.brightness = d['brightness']",
+                "    tm.contrast = d['contrast']",
+                "    tm.saturation = d['saturation']",
+                "    tm.hue = d['hue']",
+                "    tm.clamp = d['clamp']",
+                "    return tex.name",
+                "    ",
             ],
             'presets': {
                 'opaque': {
@@ -207,6 +242,127 @@ def get_default_presets():
                     'metal_halide_hmi_lamp_2500w': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 6000.0, 'emitter_luminance': '0', 'emitter_luminance_power': 2500.0, 'emitter_luminance_efficacy': 96.0, 'emitter_luminance_output': 240000.0, },
                     'candle': {'emitter_color': (255 / 255, 255 / 255, 255 / 255), 'emitter_color_black_body_enabled': False, 'emitter_color_black_body': 1200.0, 'emitter_luminance': '0', 'emitter_luminance_power': 40.0, 'emitter_luminance_efficacy': 0.3, 'emitter_luminance_output': 12.4, },
                 },
+                'hair': {
+                    'black_hair': {
+                        'hair_color_type': False,
+                        'hair_color': (6 / 255, 6 / 255, 7 / 255),
+                        'hair_color_map': '',
+                        'hair_root_tip_map': '',
+                        'hair_root_tip_weight_type': False,
+                        'hair_root_tip_weight': 50.0,
+                        'hair_root_tip_weight_map': '',
+                        'hair_primary_highlight_strength': 40.0,
+                        'hair_primary_highlight_spread': 36.0,
+                        'hair_primary_highlight_tint': (245 / 255, 245 / 255, 255 / 255),
+                        'hair_secondary_highlight_strength': 40.0,
+                        'hair_secondary_highlight_spread': 45.0,
+                        'hair_secondary_highlight_tint': (131 / 255, 135 / 255, 140 / 255),
+                    },
+                    'dark_brown': {
+                        'hair_color_type': False,
+                        'hair_color': (40 / 255, 22 / 255, 11 / 255),
+                        'hair_color_map': '',
+                        'hair_root_tip_map': '',
+                        'hair_root_tip_weight_type': False,
+                        'hair_root_tip_weight': 50.0,
+                        'hair_root_tip_weight_map': '',
+                        'hair_primary_highlight_strength': 65.0,
+                        'hair_primary_highlight_spread': 36.0,
+                        'hair_primary_highlight_tint': (255 / 255, 255 / 255, 255 / 255),
+                        'hair_secondary_highlight_strength': 60.0,
+                        'hair_secondary_highlight_spread': 45.0,
+                        'hair_secondary_highlight_tint': (128 / 255, 74 / 255, 58 / 255),
+                    },
+                    'light_brown': {
+                        'hair_color_type': True,
+                        'hair_color': (55 / 255, 30 / 255, 15 / 255),
+                        'hair_color_map': {
+                            'name':'light_brown-hair_color_map',
+                            'path': os.path.join(get_prefs().maxwell_path, 'materials database', 'textures', 'hairTex_lightBrown.png'),
+                            'use_global_map': 0, 'channel': 1, 'tiling_method': 'TILE_XY', 'tiling_units': '0', 'repeat': (3.0, 3.0, ), 'mirror_x': False, 'mirror_y': False,
+                            'offset': (0.0, 0.0, ), 'rotation': 0.0, 'invert': False, 'use_alpha': False, 'interpolation': False,
+                            # 'brightness': 3.0, 'contrast': 0.0, 'saturation': -4.0, 'hue': 0.0, 'clamp': (0, 255, ),
+                            # in preset file there are some values for these, but mxed do not set them, so i do the same
+                            'brightness': 0.0, 'contrast': 0.0, 'saturation': 0.0, 'hue': 0.0, 'clamp': (0, 255, ),
+                        },
+                        'hair_root_tip_map': '',
+                        'hair_root_tip_weight_type': False,
+                        'hair_root_tip_weight': 50.0,
+                        'hair_root_tip_weight_map': '',
+                        'hair_primary_highlight_strength': 55.0,
+                        'hair_primary_highlight_spread': 40.0,
+                        'hair_primary_highlight_tint': (255 / 255, 255 / 255, 255 / 255),
+                        'hair_secondary_highlight_strength': 55.0,
+                        'hair_secondary_highlight_spread': 55.0,
+                        'hair_secondary_highlight_tint': (160 / 255, 116 / 255, 86 / 255),
+                    },
+                    'dark_blonde': {
+                        'hair_color_type': True,
+                        'hair_color': (55 / 255, 30 / 255, 15 / 255),
+                        'hair_color_map': {
+                            'name':'dark_blonde-hair_color_map',
+                            'path': os.path.join(get_prefs().maxwell_path, 'materials database', 'textures', 'hairTex_Blonde.png'),
+                            'use_global_map': 0, 'channel': 1, 'tiling_method': 'TILE_XY', 'tiling_units': '0', 'repeat': (2.0, 2.0, ), 'mirror_x': False, 'mirror_y': False,
+                            'offset': (0.0, 0.0, ), 'rotation': 0.0, 'invert': False, 'use_alpha': False, 'interpolation': False,
+                            # 'brightness': -6.0, 'contrast': 25.0, 'saturation': -50.0, 'hue': -6.0, 'clamp': (0, 255, ),
+                            'brightness': 0.0, 'contrast': 0.0, 'saturation': 0.0, 'hue': 0.0, 'clamp': (0, 255, ),
+                        },
+                        'hair_root_tip_map': '',
+                        'hair_root_tip_weight_type': False,
+                        'hair_root_tip_weight': 50.0,
+                        'hair_root_tip_weight_map': '',
+                        'hair_primary_highlight_strength': 75.0,
+                        'hair_primary_highlight_spread': 36.0,
+                        'hair_primary_highlight_tint': (241 / 255, 235 / 255, 226 / 255),
+                        'hair_secondary_highlight_strength': 85.0,
+                        'hair_secondary_highlight_spread': 45.0,
+                        'hair_secondary_highlight_tint': (226 / 255, 167 / 255, 139 / 255),
+                    },
+                    'hollywood_blonde': {
+                        'hair_color_type': True,
+                        'hair_color': (55 / 255, 30 / 255, 15 / 255),
+                        'hair_color_map': {
+                            'name':'hollywood_blonde-hair_color_map',
+                            'path': os.path.join(get_prefs().maxwell_path, 'materials database', 'textures', 'hairTex_Blonde.png'),
+                            'use_global_map': 0, 'channel': 1, 'tiling_method': 'TILE_XY', 'tiling_units': '0', 'repeat': (2.0, 2.0, ), 'mirror_x': False, 'mirror_y': False,
+                            'offset': (0.0, 0.0, ), 'rotation': 0.0, 'invert': False, 'use_alpha': False, 'interpolation': False,
+                            # 'brightness': 25.0, 'contrast': -29.0, 'saturation': -7.0, 'hue': -5.0, 'clamp': (0, 255, ),
+                            'brightness': 0.0, 'contrast': 0.0, 'saturation': 0.0, 'hue': 0.0, 'clamp': (0, 255, ),
+                        },
+                        'hair_root_tip_map': '',
+                        'hair_root_tip_weight_type': False,
+                        'hair_root_tip_weight': 50.0,
+                        'hair_root_tip_weight_map': '',
+                        'hair_primary_highlight_strength': 100.0,
+                        'hair_primary_highlight_spread': 90.0,
+                        'hair_primary_highlight_tint': (241 / 255, 235 / 255, 226 / 255),
+                        'hair_secondary_highlight_strength': 95.0,
+                        'hair_secondary_highlight_spread': 75.0,
+                        'hair_secondary_highlight_tint': (226 / 255, 192 / 255, 113 / 255),
+                    },
+                    'red_hair': {
+                        'hair_color_type': True,
+                        'hair_color': (55 / 255, 30 / 255, 15 / 255),
+                        'hair_color_map': {
+                            'name':'red_hair-hair_color_map',
+                            'path': os.path.join(get_prefs().maxwell_path, 'materials database', 'textures', 'hairTex_Red.png'),
+                            'use_global_map': 0, 'channel': 1, 'tiling_method': 'TILE_XY', 'tiling_units': '0', 'repeat': (2.0, 2.0, ), 'mirror_x': False, 'mirror_y': False,
+                            'offset': (0.0, 0.0, ), 'rotation': 0.0, 'invert': False, 'use_alpha': False, 'interpolation': False,
+                            # 'brightness': 25.0, 'contrast': -29.0, 'saturation': -7.0, 'hue': -5.0, 'clamp': (0, 255, ),
+                            'brightness': 0.0, 'contrast': 0.0, 'saturation': 0.0, 'hue': 0.0, 'clamp': (0, 255, ),
+                        },
+                        'hair_root_tip_map': '',
+                        'hair_root_tip_weight_type': False,
+                        'hair_root_tip_weight': 50.0,
+                        'hair_root_tip_weight_map': '',
+                        'hair_primary_highlight_strength': 100.0,
+                        'hair_primary_highlight_spread': 90.0,
+                        'hair_primary_highlight_tint': (241 / 255, 235 / 255, 226 / 255),
+                        'hair_secondary_highlight_strength': 95.0,
+                        'hair_secondary_highlight_spread': 75.0,
+                        'hair_secondary_highlight_tint': (226 / 255, 192 / 255, 113 / 255),
+                    },
+                },
             },
         },
     }
@@ -259,7 +415,9 @@ def setup():
                         for i in range(len(defines)):
                             s += defines[i] + e
                         for k3, v3 in v2.items():
-                            if(type(v3) is str and v3 != ""):
+                            if(type(v3) is dict):
+                                s += 'm.{} = texture({}){}'.format(k3, v3, e)
+                            elif(type(v3) is str and v3 != ""):
                                 s += 'm.{} = "{}"{}'.format(k3, v3, e)
                             elif(v3 == ""):
                                 s += 'm.{} = ""{}'.format(k3, e)
@@ -292,7 +450,7 @@ def setup():
 
 
 def register():
-    setup()
+    # setup()
     
     # bpy.utils.register_module(__name__, verbose=True)
     bpy.utils.register_module(__name__)
@@ -328,6 +486,8 @@ def register():
     else:
         # user set something, leave it as it is
         pass
+    
+    setup()
     
     # for p in get_all_panels():
     for p in get_selected_panels():
