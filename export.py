@@ -1928,9 +1928,11 @@ class MXSObject(Serializable):
     def _materials(self):
         self.m_num_materials = len(self.b_object.material_slots)
         self.m_materials = []
-        for s in self.b_object.material_slots:
+        for i, s in enumerate(self.b_object.material_slots):
             if(s.material is not None):
                 self.m_materials.append(s.material.name)
+            else:
+                log("{}: slot: '{}' has no material assigned, material placeholder will be used..".format(self.__class__.__name__, i, ), 3, LogStyles.WARNING, )
         
         self.m_backface_material = self.b_object.maxwell_render.backface_material
 
