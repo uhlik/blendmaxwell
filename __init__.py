@@ -104,7 +104,6 @@ def get_all_panels():
 
 
 def get_default_presets():
-    # TODO: have a look at presets if they are still the same or updated
     def get_prefs():
         a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
         p = bpy.context.user_preferences.addons[a].preferences

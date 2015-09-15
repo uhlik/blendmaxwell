@@ -80,6 +80,8 @@ class MXSExport():
         self._prepare()
         self._export()
         self._finish()
+        
+        MXSDatabase.clear()
     
     def _progress(self, progress=0.0, ):
         if(progress == 0.0):
@@ -725,7 +727,6 @@ class MXSExport():
         
         log("writing materials:", 1, LogStyles.MESSAGE, )
         for mat in bpy.data.materials:
-            # TODO: do not export unused materials >> hacked together (all materials are exported, but then all unused materials are removed from scene), but better solution is needed
             mx = mat.maxwell_render
             # only materials with (users - fake_user) > 0
             u = mat.users
@@ -1376,6 +1377,56 @@ class MXSExport():
             log("{1}: WARNING: _cleanup(): {0} does not exist?".format(self.tmp_dir, self.__class__.__name__), 1, LogStyles.WARNING, )
 
 
+class MXSDatabase():
+    """Maxwell object names are not case sensitive, so naming in blender one
+    object 'Cube' and other 'cube' is perfectly alright, but in Maxwell it
+    causes problems, Maxwell will fix name of second object to 'cube1',
+    but then asking for 'cube' object reference will return 'Cube' and not
+    'cube', now named 'cube1'..
+    
+    All objects which defines m_name variable should include this:
+    self.m_name = MXSDatabase.object_name_append(OBJECT_NAME)
+    """
+    
+    # TODO: use similar mechanism for materials to skip unused before actual export
+    
+    __object_names = []
+    
+    @classmethod
+    def object_name_append(cls, name, ):
+        """Add object name to database and return it back. If already exist in database, fixe it by adding integer suffix and return back fixed name."""
+        if(cls.object_name_exists(name)):
+            name = cls.__object_fix_name(name)
+        cls.__object_names.append(name)
+        return name
+    
+    @classmethod
+    def object_name_exists(cls, name, ):
+        """Check if name is in database."""
+        for n in cls.__object_names:
+            if(n.lower() == name.lower()):
+                return True
+        return False
+    
+    @classmethod
+    def __object_fix_name(cls, name, ):
+        """Fix name by adding integer suffix. Then ensure that new name is not in database. If is, go again, if not return it."""
+        ok = False
+        i = 1
+        while(not ok):
+            n = "{}-{}".format(name, i, )
+            i += 1
+            if(not cls.object_name_exists(n)):
+                ok = True
+                name = n
+        return name
+    
+    @classmethod
+    def clear(cls):
+        """Clear object names database to prepare for new export. Call it when all is done and database is not longer needed."""
+        cls.__object_names = []
+
+
 class Serializable():
     def __init__(self):
         self.skip = False
@@ -1679,7 +1730,7 @@ class MXSCamera(Serializable):
         mx = ob.data.maxwell_render
         
         # object
-        self.m_name = ob.name
+        self.m_name = MXSDatabase.object_name_append(ob.name)
         self.m_type = 'CAMERA'
         self.m_parent = None
         self.m_active = (bpy.context.scene.camera == ob)
@@ -1823,7 +1874,7 @@ class MXSObject(Serializable):
         self.b_parent_matrix_world = None
         self.b_parent_type = None
         
-        self.m_name = self.b_name
+        self.m_name = MXSDatabase.object_name_append(self.b_name)
         self.m_parent = None
         
         if(self.b_object.parent):
@@ -1962,7 +2013,7 @@ class MXSMesh(MXSObject):
             self.dupli = True
         
         if(self.dupli):
-            self.m_name = self.o['dupli_name']
+            self.m_name = MXSDatabase.object_name_append(self.o['dupli_name'])
             
             mw = self.o['dupli_matrix'].copy()
             m = self.o['parent']['object'].matrix_world.inverted() * mw
@@ -2152,7 +2203,7 @@ class MXSMesh(MXSObject):
         self.m_triangle_materials = triangle_materials
     
     def add_position(self):
-        # TODO: positions per vertex
+        # TODO: positions per vertex (animations? deformed mesh motion blur?)
         pass
 
 
@@ -2172,7 +2223,7 @@ class MXSMeshInstance(MXSObject):
             self.dupli = True
         
         if(self.dupli):
-            self.m_name = self.o['dupli_name']
+            self.m_name = MXSDatabase.object_name_append(self.o['dupli_name'])
             
             mw = self.o['dupli_matrix'].copy()
             m = self.o['parent']['object'].matrix_world.inverted() * mw
@@ -2289,7 +2340,7 @@ class MXSParticles(MXSObject):
         self.b_parent_type = 'OBJECT'
         
         self.m_parent = self.b_object.name
-        self.m_name = "{}-{}".format(self.m_parent, self.o['object'].name)
+        self.m_name = MXSDatabase.object_name_append("{}-{}".format(self.m_parent, self.o['object'].name))
         
         self.mx = self.b_object.maxwell_render
         
@@ -2543,7 +2594,7 @@ class MXSHair(MXSObject):
         self.b_parent_type = 'OBJECT'
         
         self.m_parent = self.b_object.name
-        self.m_name = "{}-{}".format(self.m_parent, self.o['object'].name)
+        self.m_name = MXSDatabase.object_name_append("{}-{}".format(self.m_parent, self.o['object'].name))
         
         self.mx = self.b_object.maxwell_render
         
@@ -2830,7 +2881,7 @@ class MXSCloner(MXSModifier):
         self.mxex = self.ps.settings.maxwell_cloner_extension
         
         self.m_parent = self.o['parent'].name
-        self.m_name = "{}-{}".format(self.m_parent, self.ps.name)
+        self.m_name = MXSDatabase.object_name_append("{}-{}".format(self.m_parent, self.ps.name))
         
         self._to_data()
     
@@ -3093,7 +3144,7 @@ class MXSSea(MXSObject):
         self.b_parent_matrix_world = Matrix.Identity(4)
         self.b_parent_type = 'OBJECT'
         self.m_parent = self.b_object.name
-        self.m_name = "{}-{}".format(self.m_parent, 'MaxwellSea', )
+        self.m_name = MXSDatabase.object_name_append("{}-{}".format(self.m_parent, 'MaxwellSea', ))
         
         self.mx = self.b_object.maxwell_render
         self.mxex = self.b_object.maxwell_sea_extension
@@ -3140,6 +3191,7 @@ class MXSSea(MXSObject):
 class MXSMaterial(Serializable):
     def __init__(self, name='Material', ):
         self.m_name = name
+        
         self.m_type = 'MATERIAL'
         self.skip = False
     
@@ -3485,7 +3537,7 @@ class MXSWireframe(MXSObject):
         self.m_num_wires = len(dt)
         self.m_wire_matrices = dt
         
-        self.m_name = 'wireframe-{}'.format(o.m_name)
+        self.m_name = MXSDatabase.object_name_append('wireframe-{}'.format(o.m_name))
         
         # self.m_num_materials = 1
         # self.m_materials = [wire_material_name]
