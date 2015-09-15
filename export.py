@@ -2349,12 +2349,34 @@ class MXSParticles(MXSObject):
                     else:
                         sizes.append(mxex.bl_size / 2)
             
-            # fix rotation of .bin
+            # # fix rotation of .bin
+            # for i, l in enumerate(locs):
+            #     locs[i] = Vector(l * ROTATE_X_90).to_tuple()
+            # if(mxex.bl_use_velocity):
+            #     for i, v in enumerate(vels):
+            #         vels[i] = Vector(v * ROTATE_X_90).to_tuple()
+            
+            rfms = Matrix.Scale(1.0, 4)
+            rfms[0][0] = -1.0
+            rfmr = Matrix.Rotation(math.radians(-90.0), 4, 'Z')
+            rfm = rfms * rfmr * ROTATE_X_90
+            
+            mry90 = Matrix.Rotation(math.radians(90.0), 4, 'Y')
+            
             for i, l in enumerate(locs):
-                locs[i] = Vector(l * ROTATE_X_90).to_tuple()
+                if(mxex.embed):
+                    locs[i] = Vector(l * ROTATE_X_90).to_tuple()
+                else:
+                    # locs[i] = Vector(l * ROTATE_X_90 * mry90).to_tuple()
+                    locs[i] = Vector(l * rfm).to_tuple()
+            
             if(mxex.bl_use_velocity):
                 for i, v in enumerate(vels):
-                    vels[i] = Vector(v * ROTATE_X_90).to_tuple()
+                    if(mxex.embed):
+                        vels[i] = Vector(v * ROTATE_X_90).to_tuple()
+                    else:
+                        # vels[i] = Vector(v * ROTATE_X_90 * mry90).to_tuple()
+                        vels[i] = Vector(v * rfm).to_tuple()
             
             particles = []
             for i, ploc in enumerate(locs):
