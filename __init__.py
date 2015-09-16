@@ -449,8 +449,6 @@ def setup():
 
 
 def register():
-    # setup()
-    
     # bpy.utils.register_module(__name__, verbose=True)
     bpy.utils.register_module(__name__)
     
@@ -488,7 +486,6 @@ def register():
     
     setup()
     
-    # for p in get_all_panels():
     for p in get_selected_panels():
         p.COMPAT_ENGINES.add(engine.MaxwellRenderExportEngine.bl_idname)
 
@@ -497,7 +494,6 @@ def unregister():
     # bpy.utils.unregister_module(__name__, verbose=True)
     bpy.utils.unregister_module(__name__)
     
-    # for p in get_all_panels():
     for p in get_selected_panels():
         p.COMPAT_ENGINES.remove(engine.MaxwellRenderExportEngine.bl_idname)
 

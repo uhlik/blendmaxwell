@@ -195,11 +195,8 @@ class SceneProperties(PropertyGroup):
     extra_sampling_user_bitmap = StringProperty(name="Bitmap", default="", subtype='FILE_PATH', description="Path of the image to use when mask is Birmap", )
     extra_sampling_invert = BoolProperty(name="Invert Mask", default=False, description="Inverts alpha mask for render extra-sampling.", )
     
-    # render_use_layers = EnumProperty(name="Export layers", items=[('VIEWPORT', "Viewport Layers", ""), ('RENDER', "Render Layers", ""), ], default='VIEWPORT', description="Export objects from scene or render layers", )
-    
     channels_output_mode = EnumProperty(name="Output Mode", items=[('SEPARATE_0', "Separate", ""), ('EMBEDDED_1', "Embedded", "")], default='SEPARATE_0', )
     channels_render = BoolProperty(name="Render", default=True, )
-    # channels_render_type = EnumProperty(name="Type", items=[('DIFFUSE_REFLECTIONS_0', "Diffuse + Reflections", ""), ('DIFFUSE_1', "Diffuse", ""), ('REFLECTIONS_2', "Reflections", "")], default='DIFFUSE_REFLECTIONS_0', )
     channels_render_type = EnumProperty(name="Type", items=[('RENDER_LAYER_ALL_0', "All", ""),
                                                             ('RENDER_LAYER_DIFFUSE_1', "Diffuse", ""),
                                                             ('RENDER_LAYER_REFLECTIONS_2', "Reflections", ""),
@@ -283,6 +280,7 @@ class SceneProperties(PropertyGroup):
     illum_caustics_refl_caustics = EnumProperty(name="Refl. Caustics", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Reflection caustics", )
     illum_caustics_refr_caustics = EnumProperty(name="Refr. Caustics", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Refraction caustics", )
     
+    # TODO: how to set overlay text?
     # overlay_enabled = BoolProperty(name="Overlay", default=False, )
     # overlay_text = StringProperty(name="Overlay Text", default="", )
     # overlay_position = EnumProperty(name="Position", items=[('BOTTOM', "Bottom", ""), ('TOP', "Top", "")], default='BOTTOM', )
@@ -297,7 +295,6 @@ class SceneProperties(PropertyGroup):
     export_output_directory = StringProperty(name="Output Directory", subtype='DIR_PATH', default="//", description="Output directory for Maxwell scene (.MXS) file", )
     export_use_instances = BoolProperty(name="Use Instances", default=True, description="Convert multi-user mesh objects to instances", )
     export_keep_intermediates = BoolProperty(name="Keep Intermediates", default=False, description="Do not remove intermediate files used for scene export (usable only for debugging purposes)", )
-    # export_auto_open = BoolProperty(name="Open In Studio", description="", default=True, )
     
     export_open_with = EnumProperty(name="Open With", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "None", "")], default='STUDIO', description="After export, open in ...", )
     instance_app = BoolProperty(name="Open a new instance of application", default=False, description="Open a new instance of the application even if one is already running", )
@@ -312,8 +309,6 @@ class SceneProperties(PropertyGroup):
     export_overwrite = BoolProperty(name="Overwrite Existing", default=True, description="", )
     export_incremental = BoolProperty(name="Incremental", default=False, description="Always export a new file", )
     
-    # export_log = StringProperty(name="Export Log String", default="", )
-    # export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
     export_log_open = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
     export_warning_log_write = BoolProperty(name="Write Log", default=True, description="Write log file next to scene file on warnings. When running blender from terminal you can skip that and read warnings in it.", )
     export_suppress_warning_popups = BoolProperty(name="Suppress Warnings", default=False, description="Don't popup number of warnings next to mouse cursor.", )
@@ -546,7 +541,6 @@ class ObjectProperties(PropertyGroup):
     
     backface_material = StringProperty(name="Backface Material", default="", )
     
-    # hide = BoolProperty(name="Export, but Hide from Render", default=False, )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     override_instance = BoolProperty(name="Override Instancing", default=False, )
     
@@ -604,11 +598,8 @@ class MaterialProperties(PropertyGroup):
     embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )
     
-    # use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""),
-    #                                        ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ('HAIR', "Hair", ""), ], default='CUSTOM', )
     use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""),
                                            ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ('HAIR', "Hair", ""), ], default='CUSTOM', )
-    # use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ], default='CUSTOM', )
     
     override_global_properties = BoolProperty(name="Override Global Properties In MXM", default=False, )
     
@@ -828,7 +819,6 @@ class SunProperties(PropertyGroup):
 
 class ParticlesProperties(PropertyGroup):
     use = EnumProperty(name="Type", items=[('HAIR', "Hair", ""),
-                                           # ('GRASS', "Grass", ""),
                                            ('PARTICLES', "Particles", ""),
                                            # ('MESHER', "Mesher", ""),
                                            ('CLONER', "Cloner", ""),
@@ -914,7 +904,6 @@ class ExtParticlesProperties(PropertyGroup):
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
-    # hide = BoolProperty(name="Hide From Render", default=False, )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
@@ -1002,7 +991,6 @@ class ExtHairProperties(PropertyGroup):
     hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
-    # hide = BoolProperty(name="Hide From Render", default=False, )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
@@ -1029,11 +1017,6 @@ class ExtHairProperties(PropertyGroup):
 
 
 class ExtScatterProperties(PropertyGroup):
-    # 20: ('Direction Type', [0.0], 0.0, 100.0, '3 (FLOAT)', 4, 1)
-    # 21: ('Initial Angle', [90.0], 0.0, 90.0, '3 (FLOAT)', 4, 1)
-    # 22: ('Initial Angle Variation', [0.0], 0.0, 100.0, '3 (FLOAT)', 4, 1)
-    # 23: ('Initial Angle Map', <pymaxwell.MXparamList; proxy of <Swig Object of type 'MXparamList *' at 0x100669120> >, 0, 0, '10 (MXPARAMLIST)', 0, 1)
-    
     enabled = BoolProperty(name="Maxwell Scatter", default=False, )
     
     scatter_object = StringProperty(name="Object", default="", )
@@ -1075,9 +1058,12 @@ class ExtScatterProperties(PropertyGroup):
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max_blades = IntProperty(name="Display Max. Instances", default=1000, min=0, max=100000, )
     
+    # included but not shown in Studio ui
     # 19: ('Initial Angle', [90.0], 0.0, 90.0, '3 FLOAT', 4, 1, True)
     # 20: ('Initial Angle Variation', [0.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
     # 21: ('Initial Angle Map', <pymaxwell.MXparamList; proxy of <Swig Object of type 'MXparamList *' at 0x10107c390> >, 0, 0, '10 MXPARAMLIST', 0, 1, True)
+    
+    # new, something to investigate
     # 29: ('TRIANGLES_WITH_CLONES', [0], 0, 0, '8 BYTEARRAY', 1, 1, True)
     
     @classmethod

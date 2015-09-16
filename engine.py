@@ -136,10 +136,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                 # check and raise error if mxs exists, if not continue
                 p = os.path.join(ed, "{}{}{}.mxs".format(mxs_name, mxs_increment, mxs_suffix))
                 if(os.path.exists(p) and not m.export_overwrite):
-                    # # reset animation flags
-                    # m.exporting_animation_now = False
-                    # m.exporting_animation_frame_number = 1
-                    # m.exporting_animation_first_frame = True
+                    # reset animation flags
                     self.reset_workflow(scene)
                     self.report({'ERROR'}, "Scene file already exist in Output directory.")
                     return
@@ -204,7 +201,6 @@ class MaxwellRenderExportEngine(RenderEngine):
             # lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
             # log("".join(lines))
             
-            # self.report({'ERROR'}, '{}'.format(ex))
             self.reset_workflow(scene)
             self.report({'ERROR'}, m)
         
@@ -419,20 +415,6 @@ class MaxwellRenderExportEngine(RenderEngine):
         # open in..
         if(ex is not None and not m.exporting_animation_now):
             bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=m.export_open_with, instance_app=m.instance_app, )
-        
-        # # and make black rectangle as a render result
-        # c = self.size_x * self.size_y
-        # b = [[0.0, 0.0, 0.0, 1.0]] * c
-        # r = self.begin_result(0, 0, self.size_x, self.size_y)
-        # l = r.layers[0]
-        # l.rect = b
-        # self.end_result(r)
-        
-        # # leave it as it is
-        # r = self.begin_result(0, 0, self.size_x, self.size_y)
-        # self.end_result(r)
-        
-        # ehm, skip it completelly
     
     def reset_workflow(self, scene):
         m = scene.maxwell_render

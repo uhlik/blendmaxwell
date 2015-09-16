@@ -86,9 +86,6 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         r = sub.row()
         r.prop(m, 'export_use_instances')
         r.prop(m, 'export_use_subdivision')
-        # c = r.column()
-        # c.prop(m, 'export_use_subdivision')
-        # c.enabled = False
         
         r = sub.row()
         r.prop(m, 'export_log_open')
@@ -155,13 +152,6 @@ class SceneOptionsPanel(RenderButtonsPanel, Panel):
         
         sub.prop(m, 'scene_time')
         sub.prop(m, 'scene_sampling_level')
-        
-        # r = sub.row()
-        # s = r.split(percentage=0.62)
-        # c = s.column()
-        # c.prop(m, 'scene_multilight')
-        # c = s.column()
-        # c.prop(m, 'scene_multilight_type', text="", )
         
         s = sub.split(percentage=0.2)
         c = s.column()
@@ -358,23 +348,15 @@ class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
         sub = l.column()
         m = context.scene.maxwell_render
         
-        # sub.prop(m, "render_use_layers")
-        
         scene = context.scene
         rd = scene.render
         rl = rd.layers.active
         
         s = sub.split()
         c = s.column()
-        # c.prop(scene, "layers", text="Viewport Layers")
         c.prop(scene, "layers", text="Scene")
-        # if(m.render_use_layers == 'RENDER'):
-        #     c.active = False
         c = s.column()
-        # c.prop(rl, "layers", text="Render Layers")
         c.prop(rl, "layers", text="Layer")
-        # if(m.render_use_layers == 'VIEWPORT'):
-        #     c.active = False
         c.separator()
 
 
@@ -731,12 +713,6 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
         sb.prop(m, 'ibl_bg_type')
         sb.prop(m, 'ibl_bg_map')
         sb.prop(m, 'ibl_bg_intensity')
-        # r = sb.row(align=True)
-        # r.prop(m, 'ibl_bg_scale_x')
-        # r.prop(m, 'ibl_bg_scale_y')
-        # r = sb.row(align=True)
-        # r.prop(m, 'ibl_bg_offset_x')
-        # r.prop(m, 'ibl_bg_offset_y')
         r = sb.row()
         c = r.column(align=True)
         c.prop(m, 'ibl_bg_scale_x')
@@ -752,12 +728,6 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
         if(m.ibl_refl_type == 'HDR_IMAGE'):
             sb.prop(m, 'ibl_refl_map')
             sb.prop(m, 'ibl_refl_intensity')
-            # r = sb.row(align=True)
-            # r.prop(m, 'ibl_refl_scale_x')
-            # r.prop(m, 'ibl_refl_scale_y')
-            # r = sb.row(align=True)
-            # r.prop(m, 'ibl_refl_offset_x')
-            # r.prop(m, 'ibl_refl_offset_y')
             r = sb.row()
             c = r.column(align=True)
             c.prop(m, 'ibl_refl_scale_x')
@@ -773,12 +743,6 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
         if(m.ibl_refr_type == 'HDR_IMAGE'):
             sb.prop(m, 'ibl_refr_map')
             sb.prop(m, 'ibl_refr_intensity')
-            # r = sb.row(align=True)
-            # r.prop(m, 'ibl_refr_scale_x')
-            # r.prop(m, 'ibl_refr_scale_y')
-            # r = sb.row(align=True)
-            # r.prop(m, 'ibl_refr_offset_x')
-            # r.prop(m, 'ibl_refr_offset_y')
             r = sb.row()
             c = r.column(align=True)
             c.prop(m, 'ibl_refr_scale_x')
@@ -794,12 +758,6 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
         if(m.ibl_illum_type == 'HDR_IMAGE'):
             sb.prop(m, 'ibl_illum_map')
             sb.prop(m, 'ibl_illum_intensity')
-            # r = sb.row(align=True)
-            # r.prop(m, 'ibl_illum_scale_x')
-            # r.prop(m, 'ibl_illum_scale_y')
-            # r = sb.row(align=True)
-            # r.prop(m, 'ibl_illum_offset_x')
-            # r.prop(m, 'ibl_illum_offset_y')
             r = sb.row()
             c = r.column(align=True)
             c.prop(m, 'ibl_illum_scale_x')
@@ -974,12 +932,6 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         sub.prop(rd, "pixel_aspect_x", text="X")
         sub.prop(rd, "pixel_aspect_y", text="Y")
         
-        # row = col.row()
-        # row.prop(rd, "use_border", text="Border")
-        # sub = row.row()
-        # sub.active = rd.use_border
-        # sub.prop(rd, "use_crop_to_border", text="Crop")
-        
         col = split.column()
         sub = col.column(align=True)
         sub.label(text="Frame Range:")
@@ -990,12 +942,6 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         sub.label(text="Frame Rate:")
         
         CameraSensorPanel.draw_framerate(sub, rd)
-        
-        # subrow = sub.row(align=True)
-        # subrow.label(text="Time Remapping:")
-        # subrow = sub.row(align=True)
-        # subrow.prop(rd, "frame_map_old", text="Old")
-        # subrow.prop(rd, "frame_map_new", text="New")
     
     def draw(self, context):
         l = self.layout
@@ -1006,26 +952,14 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         
         r = sub.row(align=True)
         r.menu("CAMERA_MT_presets", text=bpy.types.CAMERA_MT_presets.bl_label)
-        # row.operator("camera.preset_add", text="", icon='ZOOMIN')
-        # row.operator("camera.preset_add", text="", icon='ZOOMOUT').remove_active = True
         
         self.draw_blender_part(context, sub)
-        
-        # r = sub.row(align=True)
-        # r.label("Resolution:")
-        # r.prop(rp, 'resolution_x', text="", )
-        # r.prop(rp, 'resolution_y', text="", )
-        # sub.prop(rp, 'resolution_percentage')
         
         r = sub.row(align=True)
         r.label("Filmback (mm):")
         r.prop(o, 'sensor_width', text="", )
         r.prop(o, 'sensor_height', text="", )
         sub.prop(o, 'sensor_fit')
-        
-        # c = sub.column(align=True)
-        # c.prop(rp, 'pixel_aspect_x')
-        # c.prop(rp, 'pixel_aspect_y')
         
         sub.prop(m, 'iso')
         sub.prop(m, 'response')
@@ -1178,24 +1112,6 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         
         sub.prop(m, 'path')
         
-        # r = sub.row()
-        # if(m.path == ''):
-        #     r.alert = True
-        # r.prop(m, 'path')
-        
-        # sub.separator()
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'material')
-        # c = s.column()
-        # c.prop(m, 'material_embed', text='Embed', )
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'backface_material')
-        # c = s.column()
-        # c.prop(m, 'backface_material_embed', text='Embed', )
-        # sub.separator()
-        
         sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
@@ -1298,18 +1214,6 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
         r.prop(m, 'vtype', expand=True)
         
         sub.separator()
-        
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'material')
-        # c = s.column()
-        # c.prop(m, 'material_embed', text='Embed', )
-        #
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'backface_material')
-        # c = s.column()
-        # c.prop(m, 'backface_material_embed', text='Embed', )
         
         sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
@@ -1473,18 +1377,6 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
         if(not m.enabled):
             sub.active = False
         
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'material')
-        # c = s.column()
-        # c.prop(m, 'material_embed', text='Embed', )
-        #
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'backface_material')
-        # c = s.column()
-        # c.prop(m, 'backface_material_embed', text='Embed', )
-        
         sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
@@ -1537,18 +1429,9 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         m = context.object.maxwell_grass_extension
         
         sub.label("Primitive:")
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'material')
-        # c = s.column()
-        # c.prop(m, 'material_embed', text='Embed', )
+        
         sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL', )
         
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'backface_material')
-        # c = s.column()
-        # c.prop(m, 'backface_material_embed', text='Embed', )
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         sub.separator()
         
@@ -1561,7 +1444,6 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         sub.label("Grass Density:")
         sub.prop(m, 'density')
         r = sub.row()
-        # r.prop_search(m, 'density_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop_search(m, 'density_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
         r.prop(m, 'seed')
         sub.separator()
@@ -1569,7 +1451,6 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         sub.label("Blade Length:")
         sub.prop(m, 'length')
         r = sub.row()
-        # r.prop_search(m, 'length_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop_search(m, 'length_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
         r.prop(m, 'length_variation')
         sub.separator()
@@ -1583,7 +1464,6 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         sub.prop(m, 'direction_type')
         sub.prop(m, 'initial_angle')
         r = sub.row()
-        # r.prop_search(m, 'initial_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop_search(m, 'initial_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
         r.prop(m, 'initial_angle_variation')
         sub.separator()
@@ -1591,19 +1471,16 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         sub.label("Bend:")
         sub.prop(m, 'start_bend')
         r = sub.row()
-        # r.prop_search(m, 'start_bend_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop_search(m, 'start_bend_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
         r.prop(m, 'start_bend_variation')
         
         sub.prop(m, 'bend_radius')
         r = sub.row()
-        # r.prop_search(m, 'bend_radius_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop_search(m, 'bend_radius_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
         r.prop(m, 'bend_radius_variation')
         
         sub.prop(m, 'bend_angle')
         r = sub.row()
-        # r.prop_search(m, 'bend_angle_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop_search(m, 'bend_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
         r.prop(m, 'bend_angle_variation')
         sub.separator()
@@ -1611,7 +1488,6 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         sub.label("Cut Off:")
         sub.prop(m, 'cut_off')
         r = sub.row()
-        # r.prop_search(m, 'cut_off_map', ps, 'texture_slots', icon='TEXTURE', text="Map")
         r.prop_search(m, 'cut_off_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
         r.prop(m, 'cut_off_variation')
         sub.separator()
@@ -2131,8 +2007,6 @@ class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.object.maxwell_render
-        # sub.prop(m, 'backface_material_file')
-        # sub.prop(m, 'backface_material_embed')
         
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
@@ -2158,9 +2032,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
     def draw(self, context):
         l = self.layout
         m = context.texture.maxwell_render
-        
-        # l.label("Texture Type:")
-        # l.prop(m, 'use', text="")
         
         ts = context.texture_slot
         
@@ -2191,14 +2062,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
         tex = context.texture
         ob = context.object
         
-        # r = sub.row()
-        # s = r.split(percentage=0.25)
-        # s.label(text="Channel:")
-        # if(len(ob.data.uv_textures) == 0):
-        #     s.label("No UV Maps", icon='ERROR', )
-        # else:
-        #     s.prop_search(ts, "uv_layer", ob.data, "uv_textures", text="")
-        # sub.separator()
         sub.prop(m, 'channel')
         sub.separator()
         
@@ -2220,7 +2083,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
         
         sub.prop(m, 'rotation')
         
-        # l.separator()
         l.label("Image Properties:")
         
         sub = l.column()
@@ -2230,7 +2092,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
         r.prop(m, 'interpolation')
         
         sub = l.column()
-        # sub.label("Nothing to see here, move along..", icon='ERROR', )
         sub.prop(m, 'brightness')
         sub.prop(m, 'contrast')
         sub.prop(m, 'saturation')
@@ -2238,8 +2099,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
         
         r = sub.row()
         r.prop(m, 'clamp')
-        
-        # sub.enabled = False
 
 
 class TextureProceduralPanel(TextureButtonsPanel, Panel):
@@ -2478,7 +2337,6 @@ class ParticlesPanel(ParticleButtonsPanel, Panel):
         
         r = sub.row()
         r.prop(m, 'use', expand=True, )
-        # sub.label("Particle system will be skipped.", icon='ERROR', )
 
 
 class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
@@ -2500,8 +2358,6 @@ class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
             return False
         
         m = context.particle_system.settings.maxwell_render
-        # if(m.use == 'HAIR' or m.use == 'PARTICLES'):
-        #     return True
         
         return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES) and (m.use == 'HAIR' or m.use == 'PARTICLES')
     
@@ -2521,20 +2377,6 @@ class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
             m = context.particle_system.settings.maxwell_particles_extension
         else:
             return
-        
-        # sub.label("Object Properties:")
-        
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'material')
-        # c = s.column()
-        # c.prop(m, 'material_embed', text='Embed', )
-        #
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'backface_material')
-        # c = s.column()
-        # c.prop(m, 'backface_material_embed', text='Embed', )
         
         sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
@@ -2596,43 +2438,6 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
         
         m = context.particle_system.settings.maxwell_hair_extension
         
-        # sub.label("Not implemented yet..", icon='ERROR', )
-        
-        # sub.label("Object Properties:")
-        #
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'material')
-        # c = s.column()
-        # c.prop(m, 'material_embed', text='Embed', )
-        #
-        # s = sub.split(percentage=0.8)
-        # c = s.column()
-        # c.prop(m, 'backface_material')
-        # c = s.column()
-        # c.prop(m, 'backface_material_embed', text='Embed', )
-        #
-        # sub.separator()
-        #
-        # sub.prop(m, 'hide')
-        # sub.prop(m, 'hide_parent')
-        # sub.prop(m, 'opacity')
-        # r = sub.row()
-        # r.prop(m, 'object_id')
-        # sub.separator()
-        #
-        # sub.label("Hidden from:")
-        # s = sub.split(percentage=0.5)
-        # c = s.column()
-        # c.prop(m, 'hidden_camera')
-        # c.prop(m, 'hidden_camera_in_shadow_channel')
-        # c.prop(m, 'hidden_global_illumination')
-        # c = s.column()
-        # c.prop(m, 'hidden_reflections_refractions')
-        # c.prop(m, 'hidden_zclip_planes')
-        # sub.separator()
-        
-        # sub.label("Hair Properties:")
         r = sub.row()
         r.prop(m, 'hair_type', expand=True, )
         sub.separator()
@@ -2652,17 +2457,8 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
             r.label("No UV Maps", icon='ERROR', )
         else:
             r.prop_search(m, "uv_layer", o.data, "uv_textures", )
-        # r.enabled = False
-        # sub.label("UVs needs to be fixed..", icon='ERROR', )
         
         sub.separator()
-        # sub.prop(m, 'display_percent')
-        # if(m.hair_type == 'GRASS'):
-        #     sub.prop(m, 'display_max_blades')
-        # else:
-        #     sub.prop(m, 'display_max_hairs')
-        
-        # sub.label("Display:")
         c = sub.column(align=True)
         c.prop(m, 'display_percent')
         if(m.hair_type == 'GRASS'):
@@ -2706,37 +2502,11 @@ class ExtParticlesPanel(ParticleButtonsPanel, Panel):
         
         m = context.particle_system.settings.maxwell_particles_extension
         
-        # sub.label("Object Properties:")
-        # s = sub.split(percentage=0.7)
-        # c = s.column()
-        # c.prop(m, 'material_file')
-        # c = s.column()
-        # c.prop(m, 'material_embed', text='Embed', )
-        # sub.separator()
-        # sub.prop(m, 'hide')
-        # sub.prop(m, 'hide_parent')
-        # sub.prop(m, 'opacity')
-        # r = sub.row()
-        # r.prop(m, 'object_id')
-        # sub.separator()
-        # sub.label("Hidden from:")
-        # s = sub.split(percentage=0.5)
-        # c = s.column()
-        # c.prop(m, 'hidden_camera')
-        # c.prop(m, 'hidden_camera_in_shadow_channel')
-        # c.prop(m, 'hidden_global_illumination')
-        # c = s.column()
-        # c.prop(m, 'hidden_reflections_refractions')
-        # c.prop(m, 'hidden_zclip_planes')
-        # sub.separator()
-        
         r = sub.row()
         r.prop(m, 'source', expand=True)
         if(m.source == 'EXTERNAL_BIN'):
             sub.prop(m, 'bin_filename')
             
-            # r = sub.row()
-            # r.prop(m, 'bin_type', expand=True, )
             sub.prop(m, 'bin_type')
             if(m.bin_type == 'SEQUENCE'):
                 sub.prop(m, 'seq_limit')
@@ -2761,7 +2531,6 @@ class ExtParticlesPanel(ParticleButtonsPanel, Panel):
                 sub.prop(m, 'bin_overwrite')
         
         sub.separator()
-        # sub.label("Sequence:")
         
         sub.prop(m, 'bin_radius_multiplier')
         sub.prop(m, 'bin_motion_blur_multiplier')
@@ -2893,15 +2662,6 @@ class ExtClonerPanel(ParticleButtonsPanel, Panel):
         if(m.source == 'EXTERNAL_BIN'):
             sub.prop(m, 'filename')
         else:
-            # sub.prop(m, 'bl_use_velocity')
-            # r = sub.row()
-            # r.prop(m, 'bl_size')
-            # if(m.bl_use_size):
-            #     r.active = False
-            # sub.prop(m, 'bl_use_size')
-            # sub.prop(m, 'directory')
-            # sub.prop(m, 'overwrite')
-            
             r = sub.row()
             r.prop(m, 'bl_use_velocity')
             r.prop(m, 'bl_use_size')

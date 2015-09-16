@@ -45,11 +45,6 @@ def check_for_pymaxwell():
         PYMAXWELL_SO = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', '_pymaxwell.so', ))
         PYMAXWELL_PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', 'pymaxwell.py', ))
     elif(PLATFORM == 'Linux'):
-        # # import site
-        # # site.getsitepackages()
-        # self.PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'python3.4', ))
-        # self.PYMAXWELL_SO = os.path.join('/usr/local/lib/python3.4/site-packages', '_pymaxwell.so', )
-        # self.PYMAXWELL_PY = os.path.join('/usr/local/lib/python3.4/site-packages', 'pymaxwell.py', )
         pass
     elif(PLATFORM == 'Windows'):
         pass
@@ -66,7 +61,6 @@ def check_for_pymaxwell():
 
 
 def check_for_template():
-    # check for template
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_mxs.py")
     if(not os.path.exists(TEMPLATE)):
         log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )
@@ -75,7 +69,6 @@ def check_for_template():
 
 
 def check_for_import_template():
-    # check for template
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxs.py")
     if(not os.path.exists(TEMPLATE)):
         log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )

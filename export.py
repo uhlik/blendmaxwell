@@ -109,7 +109,6 @@ class MXSExport():
             mx = self.context.scene.maxwell_render
             self.keep_intermediates = mx.export_keep_intermediates
             
-            # self.uuid = uuid.uuid1()
             h, t = os.path.split(self.mxs_path)
             n, e = os.path.splitext(t)
             self.tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, self.uuid))
@@ -1468,8 +1467,6 @@ class MXSScene(Serializable):
     def __init__(self, mxs_path, groups, ):
         super().__init__()
         
-        # h, t = os.path.split(mxs_path)
-        # n, e = os.path.splitext(t)
         mx = bpy.context.scene.maxwell_render
         
         self.m_type = 'SCENE'
@@ -1571,8 +1568,6 @@ class MXSScene(Serializable):
         
         # write these too, nothing will be done if just present in data, will be used only when needed..
         self.m_export_use_wireframe = mx.export_use_wireframe
-        # self.m_export_wire_edge_radius = mx.export_wire_edge_radius
-        # self.m_export_wire_edge_resolution = mx.export_wire_edge_resolution
         self.m_export_clay_override_object_material = mx.export_clay_override_object_material
         self.m_export_wire_wire_material = mx.export_wire_wire_material
         self.m_export_wire_clay_material = mx.export_wire_clay_material
@@ -1921,22 +1916,15 @@ class MXSObject(Serializable):
         cm = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).to_4x4()
         mm = m.copy()
         
-        # # i've rotated mesh x-90, so rotate matrix x+90 to compensate..
-        # mr90 = Matrix.Rotation(math.radians(-90.0 * -1), 4, 'X')
-        # mm *= mr90
-        
         l, r, s = mm.decompose()
         # location
         ml = cm * l
-        # print(ml.to_tuple())
         # rotate
         e = r.to_euler()
         e.rotate(cm)
-        # print((math.degrees(e[0]), math.degrees(e[1]), math.degrees(e[2]), ))
         mr = e.to_matrix()
         # scale
         ms = Matrix(((s.x, 0.0, 0.0), (0.0, s.y, 0.0), (0.0, 0.0, s.z)))
-        # print(s.to_tuple())
         # combine rotation + scale
         rs = mr * ms
         rs.transpose()
@@ -1946,18 +1934,10 @@ class MXSObject(Serializable):
         bz = rs.row[2].to_tuple()
         b = (ml.to_tuple(), ) + (bx, by, bz)
         p = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
-        # print(b)
-        # print(p)
         
         l = ml.to_tuple()
         r = (math.degrees(e[0]), math.degrees(e[1]), math.degrees(e[2]), )
         s = s.to_tuple()
-        
-        # print(b)
-        # print(p)
-        # print(l)
-        # print(r)
-        # print(s)
         
         return (b, p, l, r, s, )
     
@@ -2820,20 +2800,6 @@ class MXSGrass(MXSModifier):
         
         mxex = self.mxex
         
-        # material = bpy.path.abspath(mxex.material)
-        # if(material != "" and not os.path.exists(material)):
-        #     log("{1}: mxm ('{0}') does not exist.".format(material, self.__class__.__name__), 2, LogStyles.WARNING, )
-        #     material = ""
-        # backface_material = bpy.path.abspath(mxex.backface_material)
-        # if(backface_material != "" and not os.path.exists(backface_material)):
-        #     log("{1}: backface mxm ('{0}') does not exist.".format(backface_material, self.__class__.__name__), 2, LogStyles.WARNING, )
-        #     material = ""
-        
-        # self.m_material = material
-        # self.m_material_embed = mxex.material_embed
-        # self.m_backface_material = backface_material
-        # self.m_backface_material_embed = mxex.backface_material_embed
-        
         self.m_density = int(mxex.density)
         self.m_density_map = self._texture_to_data(mxex.density_map)
         self.m_length = mxex.length
@@ -3433,9 +3399,7 @@ class MXSTexture(Serializable):
         self.m_type = 'IMAGE'
         self.m_path = bpy.path.abspath(tex.image.filepath)
         
-        # self.m_channel = 0
         self.m_use_override_map = m.use_global_map
-        # self.m_tile_method_type = (True, True, )
         self.m_channel = m.channel
         self.m_tile_method_units = int(m.tiling_units[-1:])
         self.m_repeat = (m.repeat[0], m.repeat[1], )
@@ -3460,21 +3424,6 @@ class MXSTexture(Serializable):
         else:
             tm = (True, True, )
         self.m_tile_method_type = tm
-        
-        # self.m_channel = channel
-        # if(material_name is not None and object_name is not None):
-        #     mat = bpy.data.materials[material_name]
-        #     slot = None
-        #     for ts in mat.texture_slots:
-        #         if(ts is not None):
-        #             if(ts.texture is not None):
-        #                 if(ts.texture.name == name):
-        #                     slot = ts
-        #                     break
-        #     for i, uv in enumerate(ob.data.uv_textures):
-        #         if(uv.name == slot.uv_layer):
-        #             self.m_channel = i
-        #             break
 
 
 class MXSWireframeBase(MXSMesh):
