@@ -87,6 +87,8 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         r.prop(m, 'export_use_instances')
         r.prop(m, 'export_use_subdivision')
         
+        sub.separator()
+        
         r = sub.row()
         r.prop(m, 'export_log_open')
         r.prop(m, 'export_warning_log_write')
