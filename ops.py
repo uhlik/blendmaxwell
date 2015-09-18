@@ -124,19 +124,8 @@ class ExportMXS(Operator, ExportHelper):
             sub.prop(self, 'keep_intermediates')
     
     def execute(self, context):
-        p = self.filepath
-        if(system.PLATFORM == 'Darwin'):
-            d = {'context': bpy.context,
-                 'mxs_path': p,
-                 'use_instances': self.use_instances,
-                 'keep_intermediates': self.keep_intermediates, }
-            ex = export.MXSExportLegacy(**d)
-        elif(system.PLATFORM == 'Linux'):
-            ex = export.MXSExport(bpy.context, p, self.use_instances, )
-        elif(system.PLATFORM == 'Windows'):
-            ex = export.MXSExport(bpy.context, p, self.use_instances, )
-        else:
-            pass
+        p = bpy.path.abspath(self.filepath)
+        ex = export.MXSExport(mxs_path=p, )
         
         if(self.open_log):
             system.open_file_in_default_application(LOG_FILE_PATH)

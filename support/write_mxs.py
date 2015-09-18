@@ -979,8 +979,15 @@ def mesh(d, s, ):
     if(d['num_materials'] > 1):
         # multi material
         mats = []
-        for n in d['materials']:
-            mat = get_material(n, s, )
+        # for n in d['materials']:
+        #     mat = get_material(n, s, )
+        #     mats.append(mat)
+        for i in range(d['num_materials']):
+            try:
+                n = d['materials'][i]
+                mat = get_material(n, s, )
+            except:
+                mat = material_placeholder(s)
             mats.append(mat)
         
         for tid, mid in m['triangle_materials']:

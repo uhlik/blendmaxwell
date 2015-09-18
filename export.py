@@ -1717,7 +1717,8 @@ class MXSObject(Serializable):
         self.m_num_materials = len(self.b_object.material_slots)
         self.m_materials = []
         for s in self.b_object.material_slots:
-            self.m_materials.append(s.material.name)
+            if(s.material is not None):
+                self.m_materials.append(s.material.name)
         
         self.m_backface_material = self.b_object.maxwell_render.backface_material
 
