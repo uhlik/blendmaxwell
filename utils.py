@@ -18,6 +18,7 @@
 
 import math
 import sys
+import os
 
 import bpy
 from mathutils import Matrix, Vector
@@ -33,9 +34,9 @@ def get_addon_bl_info():
 
 def get_plugin_id():
     bli = get_addon_bl_info()
-    n = m.bl_info.get('name', "")
-    d = m.bl_info.get('description', "")
-    v = m.bl_info.get('version', (0, 0, 0, ))
+    n = bli.get('name', "")
+    d = bli.get('description', "")
+    v = bli.get('version', (0, 0, 0, ))
     v = ".".join([str(i) for i in v])
     r = ""
     if(n != ""):
