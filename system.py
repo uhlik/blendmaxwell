@@ -31,6 +31,7 @@ from . import mxs
 
 
 PLATFORM = platform.system()
+REQUIRED = (3, 1, 99, 10, )
 
 
 def prefs():
@@ -348,3 +349,33 @@ def python34_run_mxm_preview(mxm_path):
         
     else:
         raise OSError("Unknown platform: {}.".format(PLATFORM))
+
+
+def check_pymaxwell_version():
+    if(PLATFORM == 'Darwin'):
+        script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "version.py", )
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        req = ".".join(str(i) for i in REQUIRED)
+        command_line = "{0} {1} {2}".format(shlex.quote(PY), shlex.quote(script_path), shlex.quote(req), )
+        args = shlex.split(command_line, )
+        o = subprocess.call(args, )
+        if(o != 0):
+            raise Exception("Found old pymaxwell, required version is: {}".format(REQUIRED))
+        
+    elif(PLATFORM == 'Linux' or PLATFORM == 'Windows'):
+        try:
+            import pymaxwell
+        except ImportError:
+            mp = os.environ.get("MAXWELL3_ROOT")
+            sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
+            if(PLATFORM == 'Windows'):
+                os.environ['PATH'] = ';'.join([mp, os.environ['PATH']])
+            import pymaxwell
+            v = pymaxwell.getPyMaxwellVersion()
+            v = tuple([int(i) for i in v.split('.')])
+            if(v < REQUIRED):
+                raise Exception("Found old pymaxwell {}, required version is: {}".format(v, REQUIRED))
+    else:
+        raise OSError("Unknown platform: {}.".format(PLATFORM))
+    
+    return True

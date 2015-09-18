@@ -63,6 +63,10 @@ class MXSExport():
         clear_log()
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         
+        ok = system.check_pymaxwell_version()
+        if(ok):
+            log("pymaxwell version >= {}".format(system.REQUIRED), 1, )
+        
         self.mxs_path = os.path.realpath(mxs_path)
         self.engine = engine
         
