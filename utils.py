@@ -17,11 +17,30 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import math
+import sys
 
 import bpy
 from mathutils import Matrix, Vector
 
 from .log import log, LogStyles
+
+
+def get_addon_bl_info():
+    a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
+    m = sys.modules[a]
+    return m.bl_info
+
+
+def get_plugin_id():
+    bli = get_addon_bl_info()
+    n = m.bl_info.get('name', "")
+    d = m.bl_info.get('description', "")
+    v = m.bl_info.get('version', (0, 0, 0, ))
+    v = ".".join([str(i) for i in v])
+    r = ""
+    if(n != ""):
+        r = "{} ({}), version: {}".format(n, d, v)
+    return r
 
 
 def add_object(name, data):

@@ -16,8 +16,8 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-bl_info = {"name": "Maxwell Render",
-           "description": "Maxwell Render integration",
+bl_info = {"name": "BlendMaxwell",
+           "description": "Maxwell Render exporter for Blender",
            "author": "Jakub Uhlik",
            "version": (0, 3, 2),
            "blender": (2, 75, 0),

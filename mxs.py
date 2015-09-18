@@ -24,6 +24,7 @@ import math
 import sys
 
 from .log import log, LogStyles
+from . import utils
 
 s = platform.system()
 if(s == 'Darwin'):
@@ -69,6 +70,12 @@ class MXSWriter():
         
         self.path = path
         self.mxs = Cmaxwell(mwcallback)
+        
+        pid = utils.get_plugin_id()
+        if(pid != ""):
+            # write here directly, even though it is also part of scene data, but api change just for this is pointless..
+            self.mxs.setPluginID(pid)
+        
         if(append):
             log("appending to existing scene..", 2, prefix="* ", )
             self.mxs.readMXS(self.path)

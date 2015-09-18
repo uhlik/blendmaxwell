@@ -1113,6 +1113,9 @@ def scene(d, s, ):
         s.setRenderParameter('EXTRA SAMPLING USER BITMAP', d['extra_sampling_user_bitmap'])
         if(d['extra_sampling_invert']):
             s.setRenderParameter('EXTRA SAMPLING INVERT', 1)
+    
+    if(d['plugin_id'] != ""):
+        s.setPluginID(d['plugin_id'])
 
 
 def environment(d, s, ):

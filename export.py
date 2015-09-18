@@ -1575,6 +1575,8 @@ class MXSScene(Serializable):
         self.m_export_clay_override_object_material = mx.export_clay_override_object_material
         self.m_export_wire_wire_material = mx.export_wire_wire_material
         self.m_export_wire_clay_material = mx.export_wire_clay_material
+        
+        self.m_plugin_id = utils.get_plugin_id()
 
 
 class MXSEnvironment(Serializable):
