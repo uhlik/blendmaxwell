@@ -5,11 +5,11 @@
 ### features:
 
 * Works on Mac OS X, Linux and Windows
-* Compatible with Maxwell Render 3.1 and Blender 2.74+
+* Compatible with Maxwell Render 3.2 (more precisely current beta 3.1.99.10) and Blender 2.5+
 * UI as close to Maxwell Studio as possible
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
-* Mesh objects using the same mesh data are exported as instances (optional)
+* Mesh objects using the same mesh data (and renderable Curves) are exported as instances (optional)
 * MXS references
 * Dupli verts and faces
 * Multiple UV channels
@@ -52,6 +52,8 @@
 
 changelog:
 
+* 0.3.2 Maxwell 3.2 update, includes majority of new features: material priority, saving to psd, reflection and refraction channels, reflectance channel, scatter and grass updates. also wireframe and auto-subdivision export is restored, added basic progress reporting, hair uvs, hair extension material and many more small fixes and tweaks
+* 0.3.1 last version working with Maxwell 3.1: [ddbad692a25c6e6e72d11092d8f063f6ed1d048e](https://github.com/uhlik/render_maxwell/tree/ddbad692a25c6e6e72d11092d8f063f6ed1d048e)
 * 0.3.0 refactored exporter part, added: hair uvs, curves instancing, material global properties, fixed: object transformations when opened and saved in Studio
 * 0.2.4 added: automatic subdivision modifiers export to speed things up
 * 0.2.3 added: mxs export menu operator, quad export when using subdivision modifier, 2.75 compatibility

@@ -41,6 +41,23 @@ def _output_depth_items(scene, context):
         return items
 
 
+def _output_file_types(scene, context):
+    a = [('EXR32', "EXR 32", ""),
+         ('EXR16', "EXR 16", ""),
+         ('TIF32', "TIF 32", ""),
+         ('TIF16', "TIF 16", ""),
+         ('TIF8', "TIF 8", ""),
+         ('PSD32', "PSD 32", ""),
+         ('PSD16', "PSD 16", ""),
+         ('PSD8', "PSD 8", ""),
+         ('PNG16', "PNG 16", ""),
+         ('PNG8', "PNG 8", ""),
+         ('JPG', "JPG", ""),
+         ('JP2', "JP2", ""),
+         ('TGA', "TGA", ""), ]
+    return a
+
+
 def _gmt_auto(self, context):
     if(self.sun_latlong_gmt_auto):
         # http://stackoverflow.com/questions/1058342/rough-estimate-of-the-time-offset-from-gmt-from-latitude-longitude
@@ -83,7 +100,7 @@ def _override_output_image(self, context):
     
     h, t = os.path.split(self.output_image)
     n, e = os.path.splitext(t)
-    es = ['.png', '.jpg', '.tga', '.tif', '.jp2', '.hdr', '.exr', '.bmp', ]
+    es = ['.png', '.psd', '.jpg', '.tga', '.tif', '.jp2', '.hdr', '.exr', '.bmp', ]
     if(not e.lower() in es):
         e = '.png'
     
@@ -178,35 +195,39 @@ class SceneProperties(PropertyGroup):
     extra_sampling_user_bitmap = StringProperty(name="Bitmap", default="", subtype='FILE_PATH', description="Path of the image to use when mask is Birmap", )
     extra_sampling_invert = BoolProperty(name="Invert Mask", default=False, description="Inverts alpha mask for render extra-sampling.", )
     
-    # render_use_layers = EnumProperty(name="Export layers", items=[('VIEWPORT', "Viewport Layers", ""), ('RENDER', "Render Layers", ""), ], default='VIEWPORT', description="Export objects from scene or render layers", )
-    
     channels_output_mode = EnumProperty(name="Output Mode", items=[('SEPARATE_0', "Separate", ""), ('EMBEDDED_1', "Embedded", "")], default='SEPARATE_0', )
     channels_render = BoolProperty(name="Render", default=True, )
-    channels_render_type = EnumProperty(name="Type", items=[('DIFFUSE_REFLECTIONS_0', "Diffuse + Reflections", ""), ('DIFFUSE_1', "Diffuse", ""), ('REFLECTIONS_2', "Reflections", "")], default='DIFFUSE_REFLECTIONS_0', )
+    channels_render_type = EnumProperty(name="Type", items=[('RENDER_LAYER_ALL_0', "All", ""),
+                                                            ('RENDER_LAYER_DIFFUSE_1', "Diffuse", ""),
+                                                            ('RENDER_LAYER_REFLECTIONS_2', "Reflections", ""),
+                                                            ('RENDER_LAYER_REFRACTIONS_3', "Refractions", ""),
+                                                            ('RENDER_LAYER_DIFFUSE_AND_REFLECTIONS_4', "Diffuse and Reflections", ""),
+                                                            ('RENDER_LAYER_REFLECTIONS_AND_REFRACTIONS_5', "Reflections and Refractions", ""), ], default='RENDER_LAYER_ALL_0', )
+    
     channels_alpha = BoolProperty(name="Alpha", default=False, )
-    channels_alpha_file = EnumProperty(name="Alpha File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", "")], default='PNG16', )
+    channels_alpha_file = EnumProperty(name="Alpha File", items=_output_file_types, )
     channels_alpha_opaque = BoolProperty(name="Opaque", default=False, )
     channels_z_buffer = BoolProperty(name="Z-buffer", default=False, )
-    channels_z_buffer_file = EnumProperty(name="Z-buffer File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_z_buffer_file = EnumProperty(name="Z-buffer File", items=_output_file_types, )
     channels_z_buffer_near = FloatProperty(name="Z-buffer Near", default=0.0, min=-100000.000, max=100000.000, precision=3, )
     channels_z_buffer_far = FloatProperty(name="Z-buffer Far", default=0.0, min=-100000.000, max=100000.000, precision=3, )
     channels_shadow = BoolProperty(name="Shadow", default=False, )
-    channels_shadow_file = EnumProperty(name="Shadow File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_shadow_file = EnumProperty(name="Shadow File", items=_output_file_types, )
     channels_material_id = BoolProperty(name="Material ID", default=False, )
-    channels_material_id_file = EnumProperty(name="Material ID File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_material_id_file = EnumProperty(name="Material ID File", items=_output_file_types, )
     channels_object_id = BoolProperty(name="Object ID", default=False, )
-    channels_object_id_file = EnumProperty(name="Object ID File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_object_id_file = EnumProperty(name="Object ID File", items=_output_file_types, )
     channels_motion_vector = BoolProperty(name="Motion Vector", default=False, )
-    channels_motion_vector_file = EnumProperty(name="Motion Vector File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_motion_vector_file = EnumProperty(name="Motion Vector File", items=_output_file_types, )
     channels_roughness = BoolProperty(name="Roughness", default=False, )
-    channels_roughness_file = EnumProperty(name="Roughness File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_roughness_file = EnumProperty(name="Roughness File", items=_output_file_types, )
     channels_fresnel = BoolProperty(name="Fresnel", default=False, )
-    channels_fresnel_file = EnumProperty(name="Fresnel File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_fresnel_file = EnumProperty(name="Fresnel File", items=_output_file_types, )
     channels_normals = BoolProperty(name="Normals", default=False, )
-    channels_normals_file = EnumProperty(name="Normals File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_normals_file = EnumProperty(name="Normals File", items=_output_file_types, )
     channels_normals_space = EnumProperty(name="Normals Space", items=[('WORLD_0', "World", ""), ('CAMERA_1', "Camera", "")], default='WORLD_0', )
     channels_position = BoolProperty(name="Position", default=False, )
-    channels_position_file = EnumProperty(name="Position File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_position_file = EnumProperty(name="Position File", items=_output_file_types, )
     channels_position_space = EnumProperty(name="Normals Space", items=[('WORLD_0', "World", ""), ('CAMERA_1', "Camera", "")], default='WORLD_0', )
     channels_deep = BoolProperty(name="Deep", default=False, )
     channels_deep_file = EnumProperty(name="Deep File", items=[('EXR_DEEP', "EXR DEEP", ""), ('DTEX', "DTEX", "")], default='EXR_DEEP', )
@@ -214,9 +235,11 @@ class SceneProperties(PropertyGroup):
     channels_deep_min_dist = FloatProperty(name="Min dist (m)", default=0.2, min=0.0, max=1000.000, precision=3, )
     channels_deep_max_samples = IntProperty(name="Max samples", default=20, min=1, max=100000, )
     channels_uv = BoolProperty(name="UV", default=False, )
-    channels_uv_file = EnumProperty(name="UV File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", ""), ('JPG', "JPG", ""), ('JP2', "JP2", ""), ('HDR', "HDR", "")], default='PNG16', )
+    channels_uv_file = EnumProperty(name="UV File", items=_output_file_types, )
     channels_custom_alpha = BoolProperty(name="Custom Alpha", default=False, )
-    channels_custom_alpha_file = EnumProperty(name="Custom Alpha File", items=[('PNG8', "PNG 8", ""), ('PNG16', "PNG 16", ""), ('TGA', "TGA", ""), ('TIF8', "TIF 8", ""), ('TIF16', "TIF 16", ""), ('TIF32', "TIF 32", ""), ('EXR16', "EXR 16", ""), ('EXR32', "EXR 32", "")], default='PNG16', )
+    channels_custom_alpha_file = EnumProperty(name="Custom Alpha File", items=_output_file_types, )
+    channels_reflectance = BoolProperty(name="Reflectance", default=False, )
+    channels_reflectance_file = EnumProperty(name="Reflectance File", items=_output_file_types, )
     
     tone_color_space = EnumProperty(name="Color Space",
                                     items=[('SRGB_0', "sRGB IEC61966-2.1", ""),
@@ -257,6 +280,7 @@ class SceneProperties(PropertyGroup):
     illum_caustics_refl_caustics = EnumProperty(name="Refl. Caustics", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Reflection caustics", )
     illum_caustics_refr_caustics = EnumProperty(name="Refr. Caustics", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Refraction caustics", )
     
+    # TODO: how to set overlay text?
     # overlay_enabled = BoolProperty(name="Overlay", default=False, )
     # overlay_text = StringProperty(name="Overlay Text", default="", )
     # overlay_position = EnumProperty(name="Position", items=[('BOTTOM', "Bottom", ""), ('TOP', "Top", "")], default='BOTTOM', )
@@ -264,34 +288,33 @@ class SceneProperties(PropertyGroup):
     # overlay_background = BoolProperty(name="Background", default=False, )
     # overlay_background_color = FloatVectorProperty(name="Background Color", description="", default=(0.69, 0.69, 0.69), min=0.0, max=1.0, subtype='COLOR', )
     
-    export_protect_mxs = BoolProperty(name="Protect MXS", default=False, description="", )
+    # TODO: split export options to its own PropertyGroup?
+    
+    export_protect_mxs = BoolProperty(name="Protect MXS", default=False, description="Protect MXS from importing.", )
     
     export_output_directory = StringProperty(name="Output Directory", subtype='DIR_PATH', default="//", description="Output directory for Maxwell scene (.MXS) file", )
     export_use_instances = BoolProperty(name="Use Instances", default=True, description="Convert multi-user mesh objects to instances", )
     export_keep_intermediates = BoolProperty(name="Keep Intermediates", default=False, description="Do not remove intermediate files used for scene export (usable only for debugging purposes)", )
-    # export_auto_open = BoolProperty(name="Open In Studio", description="", default=True, )
     
     export_open_with = EnumProperty(name="Open With", items=[('STUDIO', "Studio", ""), ('MAXWELL', "Maxwell", ""), ('NONE', "None", "")], default='STUDIO', description="After export, open in ...", )
     instance_app = BoolProperty(name="Open a new instance of application", default=False, description="Open a new instance of the application even if one is already running", )
     
-    export_wireframe = BoolProperty(name="Wireframe", default=False, description="Wireframe and Clay scene export", )
-    export_edge_radius = FloatProperty(name="Edge Radius", default=0.00025, min=0.0, max=1.0, precision=6, description="Wireframe edge radius (meters)", )
-    export_edge_resolution = IntProperty(name="Edge Resolution", default=32, min=3, max=128, description="Wireframe edge resolution", )
-    export_wire_mat_color_id = FloatVectorProperty(name="Wire Color ID", default=(1.0, 0.0, 0.0), min=0.0, max=1.0, subtype='COLOR', description="Wireframe color ID", )
-    export_wire_mat_reflectance_0 = FloatVectorProperty(name="Wire Reflectance 0", default=(20 / 255, 20 / 255, 20 / 255), min=0.0, max=1.0, subtype='COLOR', description="Wireframe reflectance 0 color", )
-    export_wire_mat_reflectance_90 = FloatVectorProperty(name="Wire Reflectance 90", default=(45 / 255, 45 / 255, 45 / 255), min=0.0, max=1.0, subtype='COLOR', description="Wireframe reflectance 90 color", )
-    export_wire_mat_roughness = FloatProperty(name="Wire Roughness", default=97.0, min=0.0, max=100.0, step=3, precision=2, subtype='PERCENTAGE', description="Wireframe roughness value", )
-    export_clay_mat_color_id = FloatVectorProperty(name="Clay Color ID", default=(0.0, 1.0, 0.0), min=0.0, max=1.0, subtype='COLOR', description="Clay color ID", )
-    export_clay_mat_reflectance_0 = FloatVectorProperty(name="Clay Reflectance 0", default=(210 / 255, 210 / 255, 210 / 255), min=0.0, max=1.0, subtype='COLOR', description="Clay reflectance 0 color", )
-    export_clay_mat_reflectance_90 = FloatVectorProperty(name="Clay Reflectance 90", default=(230 / 255, 230 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', description="Clay reflectance 90 color", )
-    export_clay_mat_roughness = FloatProperty(name="Clay Roughness", default=97.0, min=0.0, max=100.0, step=3, precision=2, subtype='PERCENTAGE', description="Clay roughness value", )
+    export_use_wireframe = BoolProperty(name="Wireframe", default=False, description="Wireframe and Clay scene export", )
+    export_wire_edge_radius = FloatProperty(name="Edge Radius", default=0.00025, min=0.0, max=1.0, precision=6, description="Wireframe edge radius (meters)", )
+    export_wire_edge_resolution = IntProperty(name="Edge Resolution", default=32, min=3, max=128, description="Wireframe edge resolution", )
+    export_clay_override_object_material = BoolProperty(name="Override Object Material", default=True, )
+    export_wire_wire_material = StringProperty(name="Wire Material", default="", )
+    export_wire_clay_material = StringProperty(name="Clay Material", default="", )
     
     export_overwrite = BoolProperty(name="Overwrite Existing", default=True, description="", )
     export_incremental = BoolProperty(name="Incremental", default=False, description="Always export a new file", )
     
-    # export_log = StringProperty(name="Export Log String", default="", )
-    # export_log_display = BoolProperty(name="Display Log", default=False, description="Display export log in Export Log panel", )
     export_log_open = BoolProperty(name="Open Log", default=False, description="Open export log in text editor when finished", )
+    export_warning_log_write = BoolProperty(name="Write Log", default=True, description="Write log file next to scene file on warnings. When running blender from terminal you can skip that and read warnings in it.", )
+    export_suppress_warning_popups = BoolProperty(name="Suppress Warnings", default=False, description="Don't popup number of warnings next to mouse cursor.", )
+    
+    export_remove_unused_materials = BoolProperty(name="Remove Unused Materials", default=False, description="Remove all materials that is not used by any object in scene. Might not work as intended in 3.1.99.9.", )
+    export_use_subdivision = BoolProperty(name="Use Subdivision Modifiers", default=False, description="Export all Subdivision modifiers if they are Catmull-Clark type and at the end of modifier stack on regular mesh objects. Manually added Subdivision will override automatic one.", )
     
     exporting_animation_now = BoolProperty(default=False, options={'HIDDEN'}, )
     exporting_animation_frame_number = IntProperty(default=1, options={'HIDDEN'}, )
@@ -405,12 +428,49 @@ class EnvironmentProperties(PropertyGroup):
 
 class CameraProperties(PropertyGroup):
     # optics
-    lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""), ('TYPE_PINHOLE_1', "Pin Hole", ""), ('TYPE_ORTHO_2', "Ortho", ""), ('TYPE_FISHEYE_3', "Fish Eye", ""), ('TYPE_SPHERICAL_4', "Spherical", ""), ('TYPE_CYLINDRICAL_5', "Cylindical", "")], default='TYPE_THIN_LENS_0', )
+    # lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""), ('TYPE_PINHOLE_1', "Pin Hole", ""), ('TYPE_ORTHO_2', "Ortho", ""), ('TYPE_FISHEYE_3', "Fish Eye", ""), ('TYPE_SPHERICAL_4', "Spherical", ""), ('TYPE_CYLINDRICAL_5', "Cylindical", "")], default='TYPE_THIN_LENS_0', )
+    # lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""),
+    #                                         ('TYPE_PINHOLE_1', "Pin Hole", ""),
+    #                                         ('TYPE_ORTHO_2', "Ortho", ""),
+    #                                         ('TYPE_FISHEYE_3', "Fish Eye", ""),
+    #                                         ('TYPE_SPHERICAL_4', "Spherical", ""),
+    #                                         ('TYPE_CYLINDRICAL_5', "Cylindical", ""),
+    #                                         ('TYPE_LAT_LONG_STEREO_6', "Lat-Long Stereo", ""),
+    #                                         ('TYPE_FISH_STEREO_7', "Fish Stereo", ""), ], default='TYPE_THIN_LENS_0', )
+    lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""),
+                                            ('TYPE_PINHOLE_1', "Pin Hole", ""),
+                                            ('TYPE_ORTHO_2', "Ortho", ""),
+                                            ('TYPE_FISHEYE_3', "Fish Eye", ""),
+                                            ('TYPE_SPHERICAL_4', "Spherical", ""),
+                                            ('TYPE_CYLINDRICAL_5', "Cylindical", ""), ], default='TYPE_THIN_LENS_0', )
     shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", )
     fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_update_gpu_dof, )
     fov = FloatProperty(name="FOV", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     azimuth = FloatProperty(name="Azimuth", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     angle = FloatProperty(name="Angle", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
+    
+    '''
+    lls_type = EnumProperty(name="Type", items=[('CENTER_0', "Center", ""), ('LEFT_1', "Left", ""), ('RIGHT_2', "Right", ""), ], default='LEFT_1', )
+    lls_fovv = FloatProperty(name="FOV Vertical", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(180.0), subtype='ANGLE', )
+    lls_fovh = FloatProperty(name="FOV Horizontal", default=math.radians(360.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
+    lls_flip_ray_x = BoolProperty(name="Flip Ray X", default=False, )
+    lls_flip_ray_y = BoolProperty(name="Flip Ray X", default=False, )
+    lls_parallax_distance = FloatProperty(name="Parallax Distance", default=math.radians(360.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
+    lls_zenith_mode = BoolProperty(name="Zenith Mode", default=False, )
+    lls_separation = FloatProperty(name="Separation", default=6.0, min=0.0, max=1000000.0, )
+    lls_separation_map = StringProperty(name="Separation Map", default="", description="Path to separation map", )
+    fs_type = EnumProperty(name="Type", items=[('CENTER_0', "Center", ""), ('LEFT_1', "Left", ""), ('RIGHT_2', "Right", ""), ], default='CENTER_0', )
+    fs_fov = FloatProperty(name="FOV", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
+    fs_separation = FloatProperty(name="Separation", default=6.0, min=0.0, max=1000000.0, )
+    fs_separation_map = StringProperty(name="Separation Map", default="", description="Path to separation map", )
+    fs_vertical_mode = EnumProperty(name="Vertical Mode", items=[('OFF_0', "Off", ""), ('ON_1', "On", ""), ], default='OFF_0', )
+    fs_dome_radius = FloatProperty(name="Dome Radius", default=136.0, min=1.0, max=1000000.0, )
+    fs_head_turn_map = StringProperty(name="Head Turn Map", default="", description="Path to separation map", )
+    fs_dome_tilt_compensation = EnumProperty(name="Dome Tilt Compensation", items=[('OFF_0', "Off", ""), ('ON_1', "On", ""), ], default='OFF_0', )
+    fs_dome_tilt = FloatProperty(name="Dome Tilt", default=0.0, min=0.0, max=90.0, )
+    fs_head_tilt_map = StringProperty(name="Head Tilt Map", default="", description="Path to separation map", )
+    '''
+    
     # sensor
     # resolution_width = IntProperty(name="Width", default=640, min=32, max=65536, subtype="PIXEL", )
     # resolution_height = IntProperty(name="Height", default=480, min=32, max=65536, subtype="PIXEL", )
@@ -481,7 +541,6 @@ class ObjectProperties(PropertyGroup):
     
     backface_material = StringProperty(name="Backface Material", default="", )
     
-    # hide = BoolProperty(name="Export, but Hide from Render", default=False, )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     override_instance = BoolProperty(name="Override Instancing", default=False, )
     
@@ -514,15 +573,33 @@ class ReferenceProperties(PropertyGroup):
         del bpy.types.Object.maxwell_render_reference
 
 
+'''
+class ExtAssetReference(PropertyGroup):
+    enabled = BoolProperty(name="Asset Reference", default=False, )
+    path = StringProperty(name="File", default="", subtype='FILE_PATH', )
+    axis = EnumProperty(name="Axis System", items=[('0', "YXZ(lw c4d rf)", ""), ('1', "ZXY(3dsmax maya)", ""), ('2', "YZX(xsi maya houdini)", "")], default='2', )
+    display = EnumProperty(name="Display Type (Studio)", items=[('0', "Bounding Box", ""), ('1', "Points", ""), ('2', "Meshes", "")], default='2', )
+    material = StringProperty(name="Material", default="", )
+    backface_material = StringProperty(name="Backface Material", default="", )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Object.maxwell_assetref_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Object.maxwell_assetref_extension
+
+
+'''
+
+
 class MaterialProperties(PropertyGroup):
     embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )
     
-    # use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""),
-    #                                        ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ('HAIR', "Hair", ""), ], default='CUSTOM', )
     use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""),
-                                           ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ], default='CUSTOM', )
-    # use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ], default='CUSTOM', )
+                                           ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ('HAIR', "Hair", ""), ], default='CUSTOM', )
     
     override_global_properties = BoolProperty(name="Override Global Properties In MXM", default=False, )
     
@@ -742,7 +819,6 @@ class SunProperties(PropertyGroup):
 
 class ParticlesProperties(PropertyGroup):
     use = EnumProperty(name="Type", items=[('HAIR', "Hair", ""),
-                                           # ('GRASS', "Grass", ""),
                                            ('PARTICLES', "Particles", ""),
                                            # ('MESHER', "Mesher", ""),
                                            ('CLONER', "Cloner", ""),
@@ -773,7 +849,7 @@ class ExtGrassProperties(PropertyGroup):
     root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.00001, max=100000.0, precision=3, )
     tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.00001, max=100000.0, precision=3, )
     
-    direction_type = EnumProperty(name="Direction Type", items=[('0', "Polygon Normal", ""), ('1', "World Z", "")], default='0', )
+    direction_type = FloatProperty(name="Grow Towards World-Y (%)", default=10.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     
     initial_angle = FloatProperty(name="Initial Angle", default=math.radians(80.000), min=math.radians(0.000), max=math.radians(90.000), precision=1, subtype='ANGLE', )
     initial_angle_variation = FloatProperty(name="Initial Angle Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
@@ -828,7 +904,6 @@ class ExtParticlesProperties(PropertyGroup):
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
-    # hide = BoolProperty(name="Hide From Render", default=False, )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
@@ -916,7 +991,6 @@ class ExtHairProperties(PropertyGroup):
     hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
-    # hide = BoolProperty(name="Hide From Render", default=False, )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
@@ -950,11 +1024,18 @@ class ExtScatterProperties(PropertyGroup):
     
     density = FloatProperty(name="Density (Units/m2)", default=100.0, min=0.0001, max=100000000.0, precision=3, )
     density_map = StringProperty(name="Density Map", default="", )
+    remove_overlapped = BoolProperty(name="Remove Overlaps", default=False, )
     seed = IntProperty(name="Random Seed", default=0, min=0, max=16300, )
+    
+    direction_type = FloatProperty(name="Grow Towards World-Y (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    initial_angle = FloatProperty(name="Initial Angle", default=math.radians(90.0), min=math.radians(0.0), max=math.radians(90.0), precision=1, subtype='ANGLE', )
+    initial_angle_variation = FloatProperty(name="Initial Angle Variation (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    initial_angle_map = StringProperty(name="Initial Angle Map", default="", )
     
     scale_x = FloatProperty(name="X", default=1.0, min=0.0, max=100000.0, precision=3, )
     scale_y = FloatProperty(name="Y", default=1.0, min=0.0, max=100000.0, precision=3, )
     scale_z = FloatProperty(name="Z", default=1.0, min=0.0, max=100000.0, precision=3, )
+    scale_uniform = BoolProperty(name="Uniform Scale", default=False, )
     scale_map = StringProperty(name="Length Map", default="", )
     scale_variation_x = FloatProperty(name="X", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     scale_variation_y = FloatProperty(name="X", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
@@ -977,9 +1058,12 @@ class ExtScatterProperties(PropertyGroup):
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max_blades = IntProperty(name="Display Max. Instances", default=1000, min=0, max=100000, )
     
+    # included but not shown in Studio ui
     # 19: ('Initial Angle', [90.0], 0.0, 90.0, '3 FLOAT', 4, 1, True)
     # 20: ('Initial Angle Variation', [0.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
     # 21: ('Initial Angle Map', <pymaxwell.MXparamList; proxy of <Swig Object of type 'MXparamList *' at 0x10107c390> >, 0, 0, '10 MXPARAMLIST', 0, 1, True)
+    
+    # new, something to investigate
     # 29: ('TRIANGLES_WITH_CLONES', [0], 0, 0, '8 BYTEARRAY', 1, 1, True)
     
     @classmethod
@@ -1196,19 +1280,19 @@ class ExtMaterialProperties(PropertyGroup):
     carpaint_metallic = FloatProperty(name="Metallic", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     carpaint_topcoat = FloatProperty(name="Topcoat", default=50.0, min=1.001, max=100.0, precision=3, subtype='PERCENTAGE', )
     
-    # hair_color_type = BoolProperty(name="Color Type", default=False, )
-    # hair_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    # hair_color_map = StringProperty(name="Color Map", default="", )
-    # hair_root_tip_map = StringProperty(name="Root-Tip Map", default="", )
-    # hair_root_tip_weight_type = BoolProperty(name="Root-Tip Weight Type", default=False, )
-    # hair_root_tip_weight = FloatProperty(name="Root-Tip Weight", default=50.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    # hair_root_tip_weight_map = StringProperty(name="Root-Tip Weight Map", default="", )
-    # hair_primary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    # hair_primary_highlight_spread = FloatProperty(name="Spread", default=36.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    # hair_primary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    # hair_secondary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    # hair_secondary_highlight_spread = FloatProperty(name="Spread", default=45.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    # hair_secondary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    hair_color_type = BoolProperty(name="Color Type", default=False, )
+    hair_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    hair_color_map = StringProperty(name="Color Map", default="", )
+    hair_root_tip_map = StringProperty(name="Root-Tip Map", default="", )
+    hair_root_tip_weight_type = BoolProperty(name="Root-Tip Weight Type", default=False, )
+    hair_root_tip_weight = FloatProperty(name="Root-Tip Weight", default=50.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_root_tip_weight_map = StringProperty(name="Root-Tip Weight Map", default="", )
+    hair_primary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_primary_highlight_spread = FloatProperty(name="Spread", default=36.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_primary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    hair_secondary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_secondary_highlight_spread = FloatProperty(name="Spread", default=45.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_secondary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
     
     @classmethod
     def register(cls):

@@ -145,18 +145,3 @@ def apply_matrix(points, matrix):
 def unapply_matrix(points, matrix):
     m = matrix.inverted()
     return apply_matrix(points, m)
-
-
-def apply_matrix_for_realflow_bin_export(points):
-    points = points.copy()
-    global_matrix = (Matrix() * io_utils.axis_conversion(to_forward='-Z', to_up='Y', ).to_4x4())
-    # fix x for realflow
-    ms = Matrix.Scale(1.0, 4)
-    ms[0][0] = -1.0
-    # rotate -90 along z
-    mr = Matrix.Rotation(math.radians(-90.0), 4, 'Z')
-    # combine
-    global_matrix = global_matrix * ms * mr
-    # apply fixed global matrix
-    points = apply_matrix(points, global_matrix)
-    return points

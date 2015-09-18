@@ -53,7 +53,11 @@ def wipe_out_object(ob, and_data=True):
     # never wipe data before unlink the ex-user object of the scene else crash (2.58 3 770 2)
     # so if there's more than one user for this data, never wipeOutData. will be done with the last user
     # if in the list
-    if(data.users > 1):
+    if(data is not None):
+        # change: if wiping empty, data in None and following will raise exception
+        if(data.users > 1):
+            and_data = False
+    else:
         and_data = False
     
     # odd:

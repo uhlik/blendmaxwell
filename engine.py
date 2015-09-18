@@ -136,10 +136,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                 # check and raise error if mxs exists, if not continue
                 p = os.path.join(ed, "{}{}{}.mxs".format(mxs_name, mxs_increment, mxs_suffix))
                 if(os.path.exists(p) and not m.export_overwrite):
-                    # # reset animation flags
-                    # m.exporting_animation_now = False
-                    # m.exporting_animation_frame_number = 1
-                    # m.exporting_animation_first_frame = True
+                    # reset animation flags
                     self.reset_workflow(scene)
                     self.report({'ERROR'}, "Scene file already exist in Output directory.")
                     return
@@ -204,7 +201,6 @@ class MaxwellRenderExportEngine(RenderEngine):
             # lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
             # log("".join(lines))
             
-            # self.report({'ERROR'}, '{}'.format(ex))
             self.reset_workflow(scene)
             self.report({'ERROR'}, m)
         
@@ -379,84 +375,33 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         log_file_path = None
         ex = None
-        if(m.export_wireframe):
-            raise Exception("Wire export disabled at this time..")
-            
-            wire_mat = {'reflectance_0': [int(255 * v) for v in m.export_wire_mat_reflectance_0],
-                        'reflectance_90': [int(255 * v) for v in m.export_wire_mat_reflectance_90],
-                        'roughness': m.export_wire_mat_roughness,
-                        'id': [int(255 * v) for v in m.export_wire_mat_color_id], }
-            clay_mat = {'reflectance_0': [int(255 * v) for v in m.export_clay_mat_reflectance_0],
-                        'reflectance_90': [int(255 * v) for v in m.export_clay_mat_reflectance_90],
-                        'roughness': m.export_clay_mat_roughness,
-                        'id': [int(255 * v) for v in m.export_clay_mat_color_id], }
-            if(system.PLATFORM == 'Darwin'):
-                d = {'context': bpy.context,
-                     'mxs_path': p,
-                     'use_instances': m.export_use_instances,
-                     'edge_radius': m.export_edge_radius,
-                     'edge_resolution': m.export_edge_resolution,
-                     'wire_mat': wire_mat,
-                     'clay_mat': clay_mat,
-                     'keep_intermediates': m.export_keep_intermediates, }
-                ex = export.MXSExportWireframeLegacy(**d)
-            elif(system.PLATFORM == 'Linux'):
-                ex = export.MXSExportWireframe(bpy.context, p, m.export_use_instances, m.export_edge_radius, m.export_edge_resolution, wire_mat, clay_mat, )
-            elif(system.PLATFORM == 'Windows'):
-                ex = export.MXSExportWireframe(bpy.context, p, m.export_use_instances, m.export_edge_radius, m.export_edge_resolution, wire_mat, clay_mat, )
+        
+        # import cProfile, pstats, io
+        # pr = cProfile.Profile()
+        # pr.enable()
+        
+        ex = export.MXSExport(mxs_path=p, engine=self, )
+        
+        from .log import NUMBER_OF_WARNINGS
+        if(NUMBER_OF_WARNINGS > 0):
+            if(m.export_suppress_warning_popups):
+                self.report({'WARNING'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
             else:
-                pass
-        else:
-            '''
-            if(system.PLATFORM == 'Darwin'):
-                d = {'context': bpy.context,
-                     'mxs_path': p,
-                     'use_instances': m.export_use_instances,
-                     'keep_intermediates': m.export_keep_intermediates, }
-                
-                # import cProfile, pstats, io
-                # pr = cProfile.Profile()
-                # pr.enable()
-                
-                ex = export.MXSExportLegacy(**d)
-                
-                # pr.disable()
-                # s = io.StringIO()
-                # sortby = 'cumulative'
-                # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-                # ps.print_stats()
-                # print(s.getvalue())
-                
-            elif(system.PLATFORM == 'Linux'):
-                ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
-            elif(system.PLATFORM == 'Windows'):
-                ex = export.MXSExport(bpy.context, p, m.export_use_instances, )
-            else:
-                pass
-            '''
-            
-            # import cProfile, pstats, io
-            # pr = cProfile.Profile()
-            # pr.enable()
-            
-            ex = export.MXSExport(mxs_path=p, )
-            
-            from .log import NUMBER_OF_WARNINGS
-            if(NUMBER_OF_WARNINGS > 0):
                 self.report({'ERROR'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
-                
+            
+            if(m.export_warning_log_write):
                 h, t = os.path.split(p)
                 n, e = os.path.splitext(t)
                 u = ex.uuid
                 log_file_path = os.path.join(h, '{}-export_log-{}.txt'.format(n, u))
                 copy_paste_log(log_file_path)
-            
-            # pr.disable()
-            # s = io.StringIO()
-            # sortby = 'cumulative'
-            # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-            # ps.print_stats()
-            # print(s.getvalue())
+        
+        # pr.disable()
+        # s = io.StringIO()
+        # sortby = 'cumulative'
+        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        # ps.print_stats()
+        # print(s.getvalue())
         
         if((m.exporting_animation_now and scene.frame_current == scene.frame_end) or not m.exporting_animation_now):
             if(m.export_log_open):
@@ -470,20 +415,6 @@ class MaxwellRenderExportEngine(RenderEngine):
         # open in..
         if(ex is not None and not m.exporting_animation_now):
             bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=m.export_open_with, instance_app=m.instance_app, )
-        
-        # # and make black rectangle as a render result
-        # c = self.size_x * self.size_y
-        # b = [[0.0, 0.0, 0.0, 1.0]] * c
-        # r = self.begin_result(0, 0, self.size_x, self.size_y)
-        # l = r.layers[0]
-        # l.rect = b
-        # self.end_result(r)
-        
-        # # leave it as it is
-        # r = self.begin_result(0, 0, self.size_x, self.size_y)
-        # self.end_result(r)
-        
-        # ehm, skip it completelly
     
     def reset_workflow(self, scene):
         m = scene.maxwell_render

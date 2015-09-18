@@ -31,6 +31,7 @@ from . import mxs
 
 
 PLATFORM = platform.system()
+REQUIRED = (3, 1, 99, 10, )
 
 
 def prefs():
@@ -45,11 +46,6 @@ def check_for_pymaxwell():
         PYMAXWELL_SO = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', '_pymaxwell.so', ))
         PYMAXWELL_PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', 'pymaxwell.py', ))
     elif(PLATFORM == 'Linux'):
-        # # import site
-        # # site.getsitepackages()
-        # self.PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'python3.4', ))
-        # self.PYMAXWELL_SO = os.path.join('/usr/local/lib/python3.4/site-packages', '_pymaxwell.so', )
-        # self.PYMAXWELL_PY = os.path.join('/usr/local/lib/python3.4/site-packages', 'pymaxwell.py', )
         pass
     elif(PLATFORM == 'Windows'):
         pass
@@ -66,7 +62,6 @@ def check_for_pymaxwell():
 
 
 def check_for_template():
-    # check for template
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_mxs.py")
     if(not os.path.exists(TEMPLATE)):
         log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )
@@ -75,7 +70,6 @@ def check_for_template():
 
 
 def check_for_import_template():
-    # check for template
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxs.py")
     if(not os.path.exists(TEMPLATE)):
         log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )
@@ -244,15 +238,15 @@ def maxwell_open_mxs_helper(path, instance):
         p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
 
 
-def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, instancer, wireframe, ):
+def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, wireframe, ):
     if(PLATFORM == 'Darwin' or PLATFORM == 'Linux'):
         switches = ''
         if(append):
             switches += '-a'
-        if(instancer):
-            if(switches != ''):
-                switches += ' '
-            switches += '-i'
+        # if(instancer):
+        #     if(switches != ''):
+        #         switches += ' '
+        #     switches += '-i'
         if(wireframe):
             if(switches != ''):
                 switches += ' '
@@ -355,3 +349,33 @@ def python34_run_mxm_preview(mxm_path):
         
     else:
         raise OSError("Unknown platform: {}.".format(PLATFORM))
+
+
+def check_pymaxwell_version():
+    if(PLATFORM == 'Darwin'):
+        script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "version.py", )
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        req = ".".join(str(i) for i in REQUIRED)
+        command_line = "{0} {1} {2}".format(shlex.quote(PY), shlex.quote(script_path), shlex.quote(req), )
+        args = shlex.split(command_line, )
+        o = subprocess.call(args, )
+        if(o != 0):
+            raise Exception("Found old pymaxwell, required version is: {}".format(REQUIRED))
+        
+    elif(PLATFORM == 'Linux' or PLATFORM == 'Windows'):
+        try:
+            import pymaxwell
+        except ImportError:
+            mp = os.environ.get("MAXWELL3_ROOT")
+            sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
+            if(PLATFORM == 'Windows'):
+                os.environ['PATH'] = ';'.join([mp, os.environ['PATH']])
+            import pymaxwell
+            v = pymaxwell.getPyMaxwellVersion()
+            v = tuple([int(i) for i in v.split('.')])
+            if(v < REQUIRED):
+                raise Exception("Found old pymaxwell {}, required version is: {}".format(v, REQUIRED))
+    else:
+        raise OSError("Unknown platform: {}.".format(PLATFORM))
+    
+    return True

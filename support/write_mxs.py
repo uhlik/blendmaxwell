@@ -290,7 +290,6 @@ def material_placeholder(s, n=None, ):
     a.activeType = MAP_TYPE_BITMAP
     t = CtextureMap()
     mgr = CextensionManager.instance()
-    mgr.loadAllExtensions()
     e = mgr.createDefaultTextureExtension('Checker')
     ch = e.getExtensionData()
     ch.setUInt('Number of elements U', 32)
@@ -332,31 +331,30 @@ def material(d, s, ):
                 if(d['override_map']):
                     t = texture(d['override_map'], s, )
                     m.setGlobalMap(t)
-            
+                
                 if(d['bump']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
                     a.textureMap = texture(d['bump_map'], s, )
                     a.value = d['bump_value']
                     m.setAttribute('bump', a)
-            
+                
                 m.setDispersion(d['dispersion'])
                 m.setMatteShadow(d['shadow'])
                 m.setMatte(d['matte'])
-            
-                # TODO: 3.2 update > set priority
-            
+                m.setNestedPriority(d['priority'])
+                
                 c = Crgb()
                 cc = [c / 255 for c in d['id']]
                 c.assign(*cc)
                 m.setColorID(c)
-            
+        
     elif(d['subtype'] == 'EXTENSION'):
         if(d['use'] == 'EMITTER'):
             m = s.createMaterial(d['name'])
             l = m.addLayer()
             e = l.createEmitter()
-        
+            
             if(d['emitter_type'] == 0):
                 e.setLobeType(EMISSION_LOBE_DEFAULT)
             elif(d['emitter_type'] == 1):
@@ -373,10 +371,10 @@ def material(d, s, ):
                 e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
                 e.setSpotFallOffType(d['emitter_spot_falloff_type'])
                 e.setSpotBlur(d['emitter_spot_blur'])
-        
+            
             if(d['emitter_emission'] == 0):
                 e.setActiveEmissionType(EMISSION_TYPE_PAIR)
-            
+                
                 ep = CemitterPair()
                 c = Crgb8()
                 c.assign(*d['emitter_color'])
@@ -389,7 +387,7 @@ def material(d, s, ):
                 ep.luminousIntensity = d['emitter_luminance_output']
                 ep.luminance = d['emitter_luminance_output']
                 e.setPair(ep)
-            
+                
                 if(d['emitter_color_black_body_enabled']):
                     e.setActivePair(EMISSION_COLOR_TEMPERATURE)
                 else:
@@ -420,7 +418,6 @@ def material(d, s, ):
             e.setState(True)
         else:
             m = CextensionManager.instance()
-            m.loadAllExtensions()
             if(d['use'] == 'AGS'):
                 e = m.createDefaultMaterialModifierExtension('AGS')
                 p = e.getExtensionData()
@@ -542,7 +539,36 @@ def material(d, s, ):
             
                 p.setFloat('Metallic', d['carpaint_metallic'])
                 p.setFloat('Topcoat', d['carpaint_topcoat'])
-        
+            
+            elif(d['use'] == 'HAIR'):
+                e = m.createDefaultMaterialModifierExtension('Hair')
+                p = e.getExtensionData()
+                
+                p.setByte('Color Type', d['hair_color_type'])
+                
+                c = Crgb8()
+                c.assign(*d['hair_color'])
+                p.setRgb('Color', c.toRGB())
+                texture_data_to_mxparams(d['hair_color_map'], p, 'Color Map', )
+                
+                texture_data_to_mxparams(d['hair_root_tip_map'], p, 'Root-Tip Map', )
+                
+                p.setByte('Root-Tip Weight Type', d['hair_root_tip_weight_type'])
+                p.setFloat('Root-Tip Weight', d['hair_root_tip_weight'])
+                texture_data_to_mxparams(d['hair_root_tip_weight_map'], p, 'Root-Tip Weight Map', )
+                
+                p.setFloat('Primary Highlight Strength', d['hair_primary_highlight_strength'])
+                p.setFloat('Primary Highlight Spread', d['hair_primary_highlight_spread'])
+                c = Crgb8()
+                c.assign(*d['hair_primary_highlight_tint'])
+                p.setRgb('Primary Highlight Tint', c.toRGB())
+                
+                p.setFloat('Secondary Highlight Strength', d['hair_secondary_highlight_strength'])
+                p.setFloat('Secondary Highlight Spread', d['hair_secondary_highlight_spread'])
+                c = Crgb8()
+                c.assign(*d['hair_secondary_highlight_tint'])
+                p.setRgb('Secondary Highlight Tint', c.toRGB())
+            
             m = s.createMaterial(d['name'])
             m.applyMaterialModifierExtension(p)
             
@@ -562,7 +588,7 @@ def material(d, s, ):
             m.setMatteShadow(d['shadow'])
             m.setMatte(d['matte'])
             
-            # TODO: 3.2 update > set priority
+            m.setNestedPriority(d['priority'])
             
             c = Crgb()
             cc = [c / 255 for c in d['id']]
@@ -592,213 +618,6 @@ def get_material(n, s, ):
         # should not happen because i stopped changing material names.. but i leave it here
         m = material_placeholder(s)
     return m
-
-
-def material_ext(d, s, embed, ):
-    p = None
-    if(d['type'] == 'EMITTER'):
-        m = s.createMaterial(d['name'])
-        l = m.addLayer()
-        e = l.createEmitter()
-        
-        if(d['emitter_type'] == 0):
-            e.setLobeType(EMISSION_LOBE_DEFAULT)
-        elif(d['emitter_type'] == 1):
-            e.setLobeType(EMISSION_LOBE_IES)
-            e.setLobeIES(d['emitter_ies_data'])
-            e.setIESLobeIntensity(d['emitter_ies_intensity'])
-        elif(d['emitter_type'] == 2):
-            # e.setLobeType(EMISSION_LOBE_BITMAP)
-            e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
-            if(d['emitter_spot_map'] is not None):
-                t = texture(d['emitter_spot_map'], s)
-                e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
-            e.setSpotConeAngle(d['emitter_spot_cone_angle'])
-            e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
-            e.setSpotFallOffType(d['emitter_spot_falloff_type'])
-            e.setSpotBlur(d['emitter_spot_blur'])
-        
-        if(d['emitter_emission'] == 0):
-            e.setActiveEmissionType(EMISSION_TYPE_PAIR)
-            
-            ep = CemitterPair()
-            c = Crgb8()
-            c.assign(*d['emitter_color'])
-            ep.rgb.assign(c.toRGB())
-            ep.temperature = d['emitter_color_black_body']
-            ep.watts = d['emitter_luminance_power']
-            ep.luminousEfficacy = d['emitter_luminance_efficacy']
-            ep.luminousPower = d['emitter_luminance_output']
-            ep.illuminance = d['emitter_luminance_output']
-            ep.luminousIntensity = d['emitter_luminance_output']
-            ep.luminance = d['emitter_luminance_output']
-            e.setPair(ep)
-            
-            if(d['emitter_color_black_body_enabled']):
-                e.setActivePair(EMISSION_COLOR_TEMPERATURE)
-            else:
-                if(d['emitter_luminance'] == 0):
-                    u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
-                elif(d['emitter_luminance'] == 1):
-                    u = EMISSION_UNITS_LUMINOUS_POWER
-                elif(d['emitter_luminance'] == 2):
-                    u = EMISSION_UNITS_ILLUMINANCE
-                elif(d['emitter_luminance'] == 3):
-                    u = EMISSION_UNITS_LUMINOUS_INTENSITY
-                elif(d['emitter_luminance'] == 4):
-                    u = EMISSION_UNITS_LUMINANCE
-                e.setActivePair(EMISSION_RGB, u)
-            
-        elif(d['emitter_emission'] == 1):
-            e.setActiveEmissionType(EMISSION_TYPE_TEMPERATURE)
-            e.setTemperature(d['emitter_temperature_value'])
-        elif(d['emitter_emission'] == 2):
-            e.setActiveEmissionType(EMISSION_TYPE_MXI)
-            a = Cattribute()
-            a.activeType = MAP_TYPE_BITMAP
-            t = texture(d['emitter_hdr_map'], s)
-            a.textureMap = t
-            a.value = d['emitter_hdr_intensity']
-            e.setMXI(a)
-        
-        e.setState(True)
-        
-        return m
-        
-    else:
-        m = CextensionManager.instance()
-        m.loadAllExtensions()
-        
-        if(d['type'] == 'AGS'):
-            e = m.createDefaultMaterialModifierExtension('AGS')
-            p = e.getExtensionData()
-            
-            c = Crgb8()
-            c.assign(*d['ags_color'])
-            p.setRgb('Color', c.toRGB())
-            p.setFloat('Reflection', d['ags_reflection'])
-            p.setUInt('Type', d['ags_type'])
-            
-        elif(d['type'] == 'OPAQUE'):
-            e = m.createDefaultMaterialModifierExtension('Opaque')
-            p = e.getExtensionData()
-            
-            p.setByte('Color Type', d['opaque_color_type'])
-            c = Crgb8()
-            c.assign(*d['opaque_color'])
-            p.setRgb('Color', c.toRGB())
-            texture_data_to_mxparams(d['opaque_color_map'], p, 'Color Map', )
-            
-            p.setByte('Shininess Type', d['opaque_shininess_type'])
-            p.setFloat('Shininess', d['opaque_shininess'])
-            texture_data_to_mxparams(d['opaque_shininess_map'], p, 'Shininess Map', )
-            
-            p.setByte('Roughness Type', d['opaque_roughness_type'])
-            p.setFloat('Roughness', d['opaque_roughness'])
-            texture_data_to_mxparams(d['opaque_roughness_map'], p, 'Roughness Map', )
-            
-            p.setByte('Clearcoat', d['opaque_clearcoat'])
-            
-        elif(d['type'] == 'TRANSPARENT'):
-            e = m.createDefaultMaterialModifierExtension('Transparent')
-            p = e.getExtensionData()
-            
-            p.setByte('Color Type', d['transparent_color_type'])
-            c = Crgb8()
-            c.assign(*d['transparent_color'])
-            p.setRgb('Color', c.toRGB())
-            texture_data_to_mxparams(d['transparent_color_map'], p, 'Color Map', )
-            
-            p.setFloat('Ior', d['transparent_ior'])
-            p.setFloat('Transparency', d['transparent_transparency'])
-            
-            p.setByte('Roughness Type', d['transparent_roughness_type'])
-            p.setFloat('Roughness', d['transparent_roughness'])
-            texture_data_to_mxparams(d['transparent_roughness_map'], p, 'Roughness Map', )
-            
-            p.setFloat('Specular Tint', d['transparent_specular_tint'])
-            p.setFloat('Dispersion', d['transparent_dispersion'])
-            p.setByte('Clearcoat', d['transparent_clearcoat'])
-            
-        elif(d['type'] == 'METAL'):
-            e = m.createDefaultMaterialModifierExtension('Metal')
-            p = e.getExtensionData()
-            
-            p.setUInt('IOR', d['metal_ior'])
-            
-            p.setFloat('Tint', d['metal_tint'])
-            
-            p.setByte('Color Type', d['metal_color_type'])
-            c = Crgb8()
-            c.assign(*d['metal_color'])
-            p.setRgb('Color', c.toRGB())
-            texture_data_to_mxparams(d['metal_color_map'], p, 'Color Map', )
-            
-            p.setByte('Roughness Type', d['metal_roughness_type'])
-            p.setFloat('Roughness', d['metal_roughness'])
-            texture_data_to_mxparams(d['metal_roughness_map'], p, 'Roughness Map', )
-            
-            p.setByte('Anisotropy Type', d['metal_anisotropy_type'])
-            p.setFloat('Anisotropy', d['metal_anisotropy'])
-            texture_data_to_mxparams(d['metal_anisotropy_map'], p, 'Anisotropy Map', )
-            
-            p.setByte('Angle Type', d['metal_angle_type'])
-            p.setFloat('Angle', d['metal_angle'])
-            texture_data_to_mxparams(d['metal_angle_map'], p, 'Angle Map', )
-            
-            p.setByte('Dust Type', d['metal_dust_type'])
-            p.setFloat('Dust', d['metal_dust'])
-            texture_data_to_mxparams(d['metal_dust_map'], p, 'Dust Map', )
-            
-            p.setByte('Perforation Enabled', d['metal_perforation_enabled'])
-            texture_data_to_mxparams(d['metal_perforation_map'], p, 'Perforation Map', )
-            
-        elif(d['type'] == 'TRANSLUCENT'):
-            e = m.createDefaultMaterialModifierExtension('Translucent')
-            p = e.getExtensionData()
-            
-            p.setFloat('Scale', d['translucent_scale'])
-            p.setFloat('Ior', d['translucent_ior'])
-            
-            p.setByte('Color Type', d['translucent_color_type'])
-            c = Crgb8()
-            c.assign(*d['translucent_color'])
-            p.setRgb('Color', c.toRGB())
-            texture_data_to_mxparams(d['translucent_color_map'], p, 'Color Map', )
-            
-            p.setFloat('Hue Shift', d['translucent_hue_shift'])
-            p.setByte('Invert Hue', d['translucent_invert_hue'])
-            p.setFloat('Vibrance', d['translucent_vibrance'])
-            p.setFloat('Density', d['translucent_density'])
-            p.setFloat('Opacity', d['translucent_opacity'])
-            
-            p.setByte('Roughness Type', d['translucent_roughness_type'])
-            p.setFloat('Roughness', d['translucent_roughness'])
-            texture_data_to_mxparams(d['translucent_roughness_map'], p, 'Roughness Map', )
-            
-            p.setFloat('Specular Tint', d['translucent_specular_tint'])
-            p.setByte('Clearcoat', d['translucent_clearcoat'])
-            p.setFloat('Clearcoat Ior', d['translucent_clearcoat_ior'])
-            
-        elif(d['type'] == 'CARPAINT'):
-            e = m.createDefaultMaterialModifierExtension('Car Paint')
-            p = e.getExtensionData()
-            
-            c = Crgb8()
-            c.assign(*d['carpaint_color'])
-            p.setRgb('Color', c.toRGB())
-            
-            p.setFloat('Metallic', d['carpaint_metallic'])
-            p.setFloat('Topcoat', d['carpaint_topcoat'])
-            
-        else:
-            return None
-    
-    if(p is not None):
-        m = s.createMaterial(d['name'])
-        m.applyMaterialModifierExtension(p)
-        return m
-    return None
 
 
 def texture(d, s, ):
@@ -932,6 +751,45 @@ def camera(d, s, ):
         c.setSphericalLensProperties(d['azimuth'])
     if(d['lens'] == 5):
         c.setCylindricalLensProperties(d['angle'])
+    
+    '''
+    if(d['lens'] == 6):
+        p = MXparamList()
+        # p.createUInt('Type', 1, 0, 2)
+        # p.createFloat('FOV Vertical', 180.0, 180.0, 0.0)
+        # p.createFloat('FOV Horizontal', 360.0, 360.0, 0.0)
+        # p.createByte('Flip Ray X', 0, 0, 1)
+        # p.createByte('Flip Ray Y', 0, 0, 1)
+        # p.createFloat('Parallax Distance', 360.0, 0.0, 360.0)
+        # p.createByte('Zenith Mode', 0, 0, 1)
+        # p.createFloat('Separation', 6.0, 0.0, 100000.0)
+        
+        p.setUInt('Type', d['lls_type'])
+        p.setFloat('FOV Vertical', d['lls_fovv'])
+        p.setFloat('FOV Horizontal', d['lls_fovh'])
+        p.setByte('Flip Ray X', d['lls_flip_ray_x'])
+        p.setByte('Flip Ray Y', d['lls_flip_ray_y'])
+        p.setFloat('Parallax Distance', d['lls_parallax_distance'])
+        p.setByte('Zenith Mode', d['lls_zenith_mode'])
+        p.setFloat('Separation', d['lls_separation'])
+        # texture_data_to_mxparams(d['lls_separation_map'], p, 'Separation Map')
+        c.applyCameraLensExtension(p)
+    
+    if(d['lens'] == 7):
+        p = MXparamList()
+        p.setUInt('Type', d['fs_type'])
+        p.setFloat('FOV', d['fs_fov'])
+        p.setFloat('Separation', d['fs_separation'])
+        texture_data_to_mxparams(d['fs_separation_map'], p, 'Separation Map')
+        p.setByte('Vertical Mode', d['fs_vertical_mode'])
+        p.setFloat('Dome Radius', d['fs_dome_radius'])
+        texture_data_to_mxparams(d['fs_head_turn_map'], p, 'Turn Map')
+        p.setByte('Dome Tilt Compensation', d['fs_dome_tilt_compensation'])
+        p.setFloat('Dome Tilt', d['fs_dome_tilt'])
+        texture_data_to_mxparams(d['fs_head_tilt_map'], p, 'Tilt Map')
+        c.applyCameraLensExtension(p)
+    '''
+    
     # c.setShutter(d['shutter'])
     c.setCutPlanes(d['set_cut_planes'][0], d['set_cut_planes'][1], d['set_cut_planes'][2], )
     c.setShiftLens(d['set_shift_lens'][0], d['set_shift_lens'][1], )
@@ -1033,6 +891,87 @@ def instance(d, s, ):
 
 
 def scene(d, s, ):
+    h, t = os.path.split(d["output_mxi"])
+    n, e = os.path.splitext(t)
+    base_path = os.path.join(h, n)
+    
+    def get_ext_depth(t, e=None):
+        if(e is not None):
+            t = "{}{}".format(e[1:].upper(), int(t[3:]))
+        
+        if(t == 'RGB8'):
+            return ('.png', 8)
+        elif(t == 'RGB16'):
+            return ('.png', 16)
+        elif(t == 'RGB32'):
+            return ('.exr', 32)
+        elif(t == 'PNG8'):
+            return ('.png', 8)
+        elif(t == 'PNG16'):
+            return ('.png', 16)
+        elif(t == 'TGA'):
+            return ('.tga', 8)
+        elif(t == 'TIF8'):
+            return ('.tif', 8)
+        elif(t == 'TIF16'):
+            return ('.tif', 16)
+        elif(t == 'TIF32'):
+            return ('.tif', 32)
+        elif(t == 'EXR16'):
+            return ('.exr', 16)
+        elif(t == 'EXR32'):
+            return ('.exr', 32)
+        elif(t == 'EXR_DEEP'):
+            return ('.exr', 32)
+        elif(t == 'JPG'):
+            return ('.jpg', 8)
+        elif(t == 'JP2'):
+            return ('.jp2', 8)
+        elif(t == 'HDR'):
+            return ('.hdr', 32)
+        elif(t == 'DTEX'):
+            return ('.dtex', 32)
+        elif(t == 'PSD8'):
+            return ('.psd', 8)
+        elif(t == 'PSD16'):
+            return ('.psd', 16)
+        elif(t == 'PSD32'):
+            return ('.psd', 32)
+        else:
+            return ('.tif', 8)
+    
+    _, depth = get_ext_depth(d["output_depth"], os.path.splitext(os.path.split(d["output_image"])[1])[1])
+    s.setPath('RENDER', d["output_image"], depth)
+    
+    e, depth = get_ext_depth(d["channels_alpha_file"])
+    s.setPath('ALPHA', "{}_alpha{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_shadow_file"])
+    s.setPath('SHADOW', "{}_shadow{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_object_id_file"])
+    s.setPath('OBJECT', "{}_object_id{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_material_id_file"])
+    s.setPath('MATERIAL', "{}_material_id{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_motion_vector_file"])
+    s.setPath('MOTION', "{}_motion_vector{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_z_buffer_file"])
+    s.setPath('Z', "{}_z_buffer{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_roughness_file"])
+    s.setPath('ROUGHNESS', "{}_roughness{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_fresnel_file"])
+    s.setPath('FRESNEL', "{}_fresnel{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_normals_file"])
+    s.setPath('NORMALS', "{}_normals{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_position_file"])
+    s.setPath('POSITION', "{}_position{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_deep_file"])
+    s.setPath('DEEP', "{}_deep{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_uv_file"])
+    s.setPath('UV', "{}_uv{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_custom_alpha_file"])
+    s.setPath('ALPHA_CUSTOM', "{}_custom_alpha{}".format(base_path, e), depth)
+    e, depth = get_ext_depth(d["channels_reflectance_file"])
+    s.setPath('REFLECTANCE', "{}_reflectance{}".format(base_path, e), depth)
+    
     s.setRenderParameter('ENGINE', d["scene_quality"])
     s.setRenderParameter('NUM THREADS', d["scene_cpu_threads"])
     s.setRenderParameter('STOP TIME', d["scene_time"] * 60)
@@ -1051,15 +990,24 @@ def scene(d, s, ):
     s.setRenderParameter('DO DISPLACEMENT', d["globals_diplacement"])
     s.setRenderParameter('DO DISPERSION', d["globals_dispersion"])
     
-    if(d['channels_render_type'] == 2):
-        s.setRenderParameter('DO DIFFUSE LAYER', 0)
-        s.setRenderParameter('DO REFLECTION LAYER', 1)
-    elif(d['channels_render_type'] == 1):
-        s.setRenderParameter('DO DIFFUSE LAYER', 1)
-        s.setRenderParameter('DO REFLECTION LAYER', 0)
-    else:
-        s.setRenderParameter('DO DIFFUSE LAYER', 1)
-        s.setRenderParameter('DO REFLECTION LAYER', 1)
+    # 'RENDER LAYERS': 0 = RENDER_LAYER_ALL (all layers)
+    #                  1 = RENDER_LAYER_DIFFUSE (diffuse)
+    #                  2 = RENDER_LAYER_REFLECTIONS (reflections)
+    #                  3 = RENDER_LAYER_REFRACTIONS (refractions)
+    #                  4 = RENDER_LAYER_DIFFUSE_AND_REFLECTIONS (diffuse and reflections)
+    #                  5 = RENDER_LAYER_REFLECTIONS_AND_REFRACTIONS (reflections and refractions)
+    s.setRenderParameter('RENDER LAYERS', d['channels_render_type'])
+    
+    # # 3.1
+    # if(d['channels_render_type'] == 2):
+    #     s.setRenderParameter('DO DIFFUSE LAYER', 0)
+    #     s.setRenderParameter('DO REFLECTION LAYER', 1)
+    # elif(d['channels_render_type'] == 1):
+    #     s.setRenderParameter('DO DIFFUSE LAYER', 1)
+    #     s.setRenderParameter('DO REFLECTION LAYER', 0)
+    # else:
+    #     s.setRenderParameter('DO DIFFUSE LAYER', 1)
+    #     s.setRenderParameter('DO REFLECTION LAYER', 1)
     
     v = d['illum_caustics_illumination']
     if(v == 3):
@@ -1103,80 +1051,6 @@ def scene(d, s, ):
         s.setRenderParameter('DO DIRECT REFRACTION CAUSTIC LAYER', 1)
         s.setRenderParameter('DO INDIRECT REFRACTION CAUSTIC LAYER', 1)
     
-    h, t = os.path.split(d["output_mxi"])
-    n, e = os.path.splitext(t)
-    base_path = os.path.join(h, n)
-    
-    def get_ext_depth(t, e=None):
-        if(e is not None):
-            t = "{}{}".format(e[1:].upper(), int(t[3:]))
-        
-        if(t == 'RGB8'):
-            return ('.png', 8)
-        elif(t == 'RGB16'):
-            return ('.png', 16)
-        elif(t == 'RGB32'):
-            return ('.exr', 32)
-        elif(t == 'PNG8'):
-            return ('.png', 8)
-        elif(t == 'PNG16'):
-            return ('.png', 16)
-        elif(t == 'TGA'):
-            return ('.tga', 8)
-        elif(t == 'TIF8'):
-            return ('.tif', 8)
-        elif(t == 'TIF16'):
-            return ('.tif', 16)
-        elif(t == 'TIF32'):
-            return ('.tif', 32)
-        elif(t == 'EXR16'):
-            return ('.exr', 16)
-        elif(t == 'EXR32'):
-            return ('.exr', 32)
-        elif(t == 'EXR_DEEP'):
-            return ('.exr', 32)
-        elif(t == 'JPG'):
-            return ('.jpg', 8)
-        elif(t == 'JP2'):
-            return ('.jp2', 8)
-        elif(t == 'HDR'):
-            return ('.hdr', 32)
-        elif(t == 'DTEX'):
-            return ('.dtex', 32)
-        else:
-            return ('.tif', 8)
-    
-    _, depth = get_ext_depth(d["output_depth"], os.path.splitext(os.path.split(d["output_image"])[1])[1])
-    s.setPath('RENDER', d["output_image"], depth)
-    
-    e, depth = get_ext_depth(d["channels_alpha_file"])
-    s.setPath('ALPHA', "{}_alpha.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_shadow_file"])
-    s.setPath('SHADOW', "{}_shadow.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_object_id_file"])
-    s.setPath('OBJECT', "{}_object_id.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_material_id_file"])
-    s.setPath('MATERIAL', "{}_material_id.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_motion_vector_file"])
-    s.setPath('MOTION', "{}_motion_vector.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_z_buffer_file"])
-    s.setPath('Z', "{}_z_buffer.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_roughness_file"])
-    s.setPath('ROUGHNESS', "{}_roughness.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_fresnel_file"])
-    s.setPath('FRESNEL', "{}_fresnel.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_normals_file"])
-    s.setPath('NORMALS', "{}_normals.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_position_file"])
-    s.setPath('POSITION', "{}_position.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_deep_file"])
-    s.setPath('DEEP', "{}_deep.{}".format(base_path, e), depth)
-    e, depth = get_ext_depth(d["channels_uv_file"])
-    s.setPath('UV', "{}_uv.{}".format(base_path, e), depth)
-    
-    e, depth = get_ext_depth(d["channels_custom_alpha_file"])
-    s.setPath('ALPHA_CUSTOM', "{}_custom_alpha.{}".format(base_path, e), depth)
-    
     s.setRenderParameter('DO RENDER CHANNEL', int(d["channels_render"]))
     s.setRenderParameter('DO ALPHA CHANNEL', int(d["channels_alpha"]))
     s.setRenderParameter('OPAQUE ALPHA', int(d["channels_alpha_opaque"]))
@@ -1198,9 +1072,9 @@ def scene(d, s, ):
     s.setRenderParameter('DEEP MIN DISTANCE', d["channels_deep_min_dist"])
     s.setRenderParameter('DEEP MAX SAMPLES', d["channels_deep_max_samples"])
     s.setRenderParameter('DO UV CHANNEL', int(d["channels_uv"]))
-    
     # s.setRenderParameter('MOTION CHANNEL TYPE', ?)
     s.setRenderParameter('DO ALPHA CUSTOM CHANNEL', int(d["channels_custom_alpha"]))
+    s.setRenderParameter('DO REFLECTANCE CHANNEL', int(d["channels_reflectance"]))
     
     s.setRenderParameter('DO DEVIGNETTING', d["simulens_devignetting"])
     s.setRenderParameter('DEVIGNETTING', d["simulens_devignetting_value"])
@@ -1336,8 +1210,6 @@ def custom_alphas(d, s, ):
 
 def particles(d, s, ):
     mgr = CextensionManager.instance()
-    mgr.loadAllExtensions()
-    
     ext = mgr.createDefaultGeometryProceduralExtension('MaxwellParticles')
     params = ext.getExtensionData()
     
@@ -1421,8 +1293,6 @@ def particles(d, s, ):
 
 def cloner(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
     e = m.createDefaultGeometryModifierExtension('MaxwellCloner')
     p = e.getExtensionData()
     
@@ -1474,8 +1344,6 @@ def cloner(d, s, ):
 
 def hair(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
     if(d['extension'] == 'MaxwellHair'):
         e = m.createDefaultGeometryProceduralExtension('MaxwellHair')
     if(d['extension'] == 'MGrassP'):
@@ -1513,7 +1381,6 @@ def hair(d, s, ):
     # p.setByteArray('HAIR_GUIDES_POINT_COUNT', d['data']['HAIR_GUIDES_POINT_COUNT'])
     m = memoryview(struct.pack("I", d['data']['HAIR_GUIDES_POINT_COUNT'][0])).tolist()
     p.setByteArray('HAIR_GUIDES_POINT_COUNT', m)
-    # TODO
     # p.setByteArray('HAIR_GUIDES_POINT_COUNT', m * d['data']['HAIR_GUIDES_COUNT'][0])
     
     c = Cbase()
@@ -1587,9 +1454,37 @@ def reference(d, s, ):
     return o
 
 
+'''
+def asset_reference(d, s, ):
+    m = CextensionManager.instance()
+    e = m.createDefaultGeometryLoaderExtension('AssetReference')
+    p = e.getExtensionData()
+    
+    p.setString('FileName', d['path'])
+    p.setUInt('Axis', d['axis'])
+    p.setUInt('Display', d['display'])
+    
+    o = s.createGeometryLoaderObject(d['name'], p)
+    
+    # FIXMENOT: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
+    if(d['material'] != ''):
+        mat = get_material(d['material'], s, )
+        o.setMaterial(mat)
+    
+    if(d['backface_material'] != ''):
+        mat = get_material(d['backface_material'], s, )
+        o.setBackfaceMaterial(mat)
+    
+    base_and_pivot(o, d)
+    object_props(o, d)
+    return o
+
+
+'''
+
+
 def volumetrics(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
     e = m.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
     p = e.getExtensionData()
     
@@ -1627,7 +1522,6 @@ def subdivision(d, s, ):
     # 7: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
     
     m = CextensionManager.instance()
-    m.loadAllExtensions()
     e = m.createDefaultGeometryModifierExtension('SubdivisionModifier')
     p = e.getExtensionData()
     
@@ -1648,7 +1542,6 @@ def subdivision(d, s, ):
 
 def scatter(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
     e = m.createDefaultGeometryModifierExtension('MaxwellScatter')
     p = e.getExtensionData()
     
@@ -1681,13 +1574,19 @@ def scatter(d, s, ):
     p.setFloat('LOD Max Distance Density', e['lod_max_distance_density'])
     p.setUInt('Display Percent', e['display_percent'])
     p.setUInt('Display Max. Blades', e['display_max_blades'])
+    
+    p.setByte('Remove Overlapped', e['remove_overlapped'])
+    p.setFloat('Direction Type', e['direction_type'])
+    p.setFloat('Initial Angle', e['initial_angle'])
+    p.setFloat('Initial Angle Variation', e['initial_angle_variation'])
+    texture_data_to_mxparams(e['initial_angle_map'], p, 'Initial Angle Map', )
+    p.setByte('Uniform Scale', e['scale_uniform'])
+    
     o.applyGeometryModifierExtension(p)
 
 
 def grass(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
     e = m.createDefaultGeometryModifierExtension('MaxwellGrass')
     p = e.getExtensionData()
     
@@ -1710,7 +1609,7 @@ def grass(d, s, ):
     p.setFloat('Root Width', d['root_width'])
     p.setFloat('Tip Width', d['tip_width'])
     
-    p.setUInt('Direction Type', d['direction_type'])
+    p.setFloat('Direction Type', d['direction_type'])
     
     p.setFloat('Initial Angle', d['initial_angle'])
     p.setFloat('Initial Angle Variation', d['initial_angle_variation'])
@@ -1751,8 +1650,6 @@ def grass(d, s, ):
 
 def sea(d, s, ):
     m = CextensionManager.instance()
-    m.loadAllExtensions()
-    
     e = m.createDefaultGeometryLoaderExtension('MaxwellSea')
     
     p = e.getExtensionData()
@@ -1787,11 +1684,15 @@ def sea(d, s, ):
 def hierarchy(d, s, ):
     log("setting object hierarchy..", 2)
     
-    a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
-         'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
-         'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', ]
+    # a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
+    #      'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
+    #      'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', 'ASSET_REFERENCE', ]
+    a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES', 'HAIR',
+         'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER', 'SEA', ]
     
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+    # object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', 'SEA', ]
+    # object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', 'WIREFRAME_CONTAINER', 'WIREFRAME_BASE', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types):
             if(d[i]['parent'] is not None):
@@ -1808,127 +1709,23 @@ def hierarchy(d, s, ):
                     p.setHide(True)
 
 
-def wireframe_hierarchy(d, s, ws, ):
-    # wire and clay empties data
-    ced = {'name': 'clay',
-           'parent': None,
-           'base': ((0.0, 0.0, -0.0), (1.0, 0.0, -0.0), (0.0, 1.0, -0.0), (-0.0, -0.0, 1.0)),
-           'pivot': ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
-           'opacity': 100.0,
-           'hidden_camera': False,
-           'hidden_camera_in_shadow_channel': False,
-           'hidden_global_illumination': False,
-           'hidden_reflections_refractions': False,
-           'hidden_zclip_planes': False,
-           'object_id': (0, 0, 0),
-           'hide': False,
-           'type': 'EMPTY', }
-    ce = empty(ced, s)
-    wed = {'name': 'wire',
-           'parent': None,
-           'base': ((0.0, 0.0, -0.0), (1.0, 0.0, -0.0), (0.0, 1.0, -0.0), (-0.0, -0.0, 1.0)),
-           'pivot': ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
-           'opacity': 100.0,
-           'hidden_camera': False,
-           'hidden_camera_in_shadow_channel': False,
-           'hidden_global_illumination': False,
-           'hidden_reflections_refractions': False,
-           'hidden_zclip_planes': False,
-           'object_id': (0, 0, 0),
-           'hide': False,
-           'type': 'EMPTY', }
-    we = empty(wed, s)
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'WIREFRAME_EDGE', 'WIREFRAME', ]
-    for i in range(len(d)):
-        if(d[i]['type'] in object_types):
-            if(d[i]['type'] == 'WIREFRAME'):
-                pass
-            elif(d[i]['type'] == 'WIREFRAME_EDGE'):
-                ch = s.getObject(d[i]['name'])
-                ch.setParent(we)
-            else:
-                if(d[i]['parent'] is None):
-                    ch = s.getObject(d[i]['name'])
-                    ch.setParent(ce)
-    # group all wires..
-    for w in ws:
-        w.setParent(we)
-
-
-def wireframe_base(d, s, ):
-    o = mesh(d, s)
-    # zero scale wire instance source base mesh to be practically invisible :)
-    o.setScale(Cvector(0, 0, 0))
-    # o.setMaterial(mat)
-    return o
-
-
 def wireframe(d, s, ):
     r = []
-    with open(d['matrices_path'], 'r') as f:
-        md = json.load(f)
     bo = s.getObject(d['instanced'])
-    for i, m in enumerate(md['matrices']):
+    for i, m in enumerate(d['wire_matrices']):
         o = s.createInstancement("{0}-{1}".format(d['name'], i), bo)
-        bp = {'base': m[0], 'pivot': m[1], }
+        bp = {'base': m[0],
+              'pivot': m[1],
+              'location': m[2],
+              'rotation': m[3],
+              'scale': m[4], }
         base_and_pivot(o, bp)
         object_props(o, d)
         r.append(o)
+        
+        # mat = get_material(d['materials'][0], s, )
         # o.setMaterial(mat)
     return r
-
-
-def wireframe_material(d, s, ):
-    n = d['name']
-    r0 = d['data']['reflectance_0']
-    r90 = d['data']['reflectance_90']
-    ci = d['data']['id']
-    rough = d['data']['roughness']
-    mat = s.createMaterial(n)
-    l = mat.addLayer()
-    l.setName(n)
-    b = l.addBSDF()
-    r = b.getReflectance()
-    a = Cattribute()
-    a.activeType = MAP_TYPE_RGB
-    c = Crgb8()
-    c.assign(*r0)
-    a.rgb.assign(c.toRGB())
-    r.setAttribute('color', a)
-    a = Cattribute()
-    a.activeType = MAP_TYPE_RGB
-    c = Crgb8()
-    c.assign(*r90)
-    a.rgb.assign(c.toRGB())
-    r.setAttribute('color.tangential', a)
-    a = Cattribute()
-    a.type = MAP_TYPE_VALUE
-    a.value = rough
-    b.setAttribute('roughness', a)
-    c = Crgb8()
-    c.assign(*ci)
-    mat.setColorID(c.toRGB())
-    return mat
-
-
-def wireframe_assign_materials(d, s, ws, wm, cm, ):
-    if(wm is None or cm is None):
-        raise RuntimeError("wire or clay material is missing..")
-    
-    object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'WIREFRAME_EDGE', 'WIREFRAME', ]
-    for i in range(len(d)):
-        if(d[i]['type'] in object_types):
-            if(d[i]['type'] == 'WIREFRAME'):
-                pass
-            elif(d[i]['type'] == 'WIREFRAME_EDGE'):
-                o = s.getObject(d[i]['name'])
-                o.setMaterial(wm)
-            else:
-                o = s.getObject(d[i]['name'])
-                o.setMaterial(cm)
-    # group all wires..
-    for w in ws:
-        w.setMaterial(wm)
 
 
 def texture_data_to_mxparams(d, mp, name, ):
@@ -1986,11 +1783,16 @@ def main(args):
         mxs.readMXS(args.result_path)
     else:
         log("creating new scene..", 2)
+    # instance manager
+    mgr = CextensionManager.instance()
+    mgr.loadAllExtensions()
     # loop over scene data and create things by type
-    if(args.wireframe):
-        w_material = None
-        c_material = None
-        all_wires = []
+    
+    use_wireframe = args.wireframe
+    all_wire_instances = []
+    wire_container = None
+    wire_base = None
+    
     log("creating objects:", 2)
     progress = PercentDone(len(data), indent=3, )
     for d in data:
@@ -2000,11 +1802,11 @@ def main(args):
             empty(d, mxs)
         elif(d['type'] == 'MESH'):
             mesh(d, mxs)
-            if(args.instancer):
-                # there should be just one mesh which is base, scale it to zero to be invisible..
-                name = d['name']
-                ob = mxs.getObject(d['name'])
-                ob.setScale(Cvector(0.0, 0.0, 0.0))
+            # if(args.instancer):
+            #     # there should be just one mesh which is base, scale it to zero to be invisible..
+            #     name = d['name']
+            #     ob = mxs.getObject(d['name'])
+            #     ob.setScale(Cvector(0.0, 0.0, 0.0))
         elif(d['type'] == 'MESH_INSTANCE'):
             try:
                 if(d['base']):
@@ -2026,6 +1828,10 @@ def main(args):
         #     cloner(d, mxs)
         elif(d['type'] == 'REFERENCE'):
             reference(d, mxs)
+        
+        # elif(d['type'] == 'ASSET_REFERENCE'):
+        #     asset_reference(d, mxs)
+        
         elif(d['type'] == 'VOLUMETRICS'):
             volumetrics(d, mxs)
         
@@ -2034,6 +1840,7 @@ def main(args):
         elif(d['type'] == 'SCATTER'):
             scatter(d, mxs)
         elif(d['type'] == 'GRASS'):
+            # FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is creted without whole python crashing..
             grass(d, mxs)
         elif(d['type'] == 'CLONER'):
             cloner(d, mxs)
@@ -2043,61 +1850,68 @@ def main(args):
         elif(d['type'] == 'MATERIAL'):
             material(d, mxs)
         
-        # elif(d['type'] == 'WIREFRAME_MATERIAL'):
-        #     mat = wireframe_material(d, mxs)
-        #     m = {'name': d['name'], 'data': mat, }
-        #     if(d['name'] == 'wire'):
-        #         w_material = mat
-        #     elif(d['name'] == 'clay'):
-        #         c_material = mat
-        #     else:
-        #         raise TypeError("'{0}' is unknown wireframe material".format(d['name']))
-        # elif(d['type'] == 'WIREFRAME_EDGE'):
-        #     wireframe_base(d, mxs)
-        # elif(d['type'] == 'WIREFRAME'):
-        #     ws = wireframe(d, mxs)
-        #     all_wires.extend(ws)
+        elif(d['type'] == 'WIREFRAME_CONTAINER'):
+            wire_container = empty(d, mxs)
+        elif(d['type'] == 'WIREFRAME_BASE'):
+            wire_base = mesh(d, mxs)
+        elif(d['type'] == 'WIREFRAME'):
+            wos = wireframe(d, mxs, )
+            all_wire_instances.extend(wos)
+        
         else:
             raise TypeError("{0} is unknown type".format(d['type']))
         progress.step()
     #
     hierarchy(data, mxs)
-    #
-    if(args.wireframe):
-        wireframe_hierarchy(data, mxs, all_wires)
-        wireframe_assign_materials(data, mxs, all_wires, w_material, c_material)
-    #
-    if(args.instancer):
-        name = "instancer"
+    
+    if(use_wireframe):
+        for wi in all_wire_instances:
+            wi.setParent(wire_container)
         
-        def get_objects_names(mxs):
-            it = CmaxwellObjectIterator()
-            o = it.first(mxs)
-            l = []
-            while not o.isNull():
-                name, _ = o.getName()
-                l.append(name)
-                o = it.next()
-            return l
+        # zero scale wire_base to be practically invisible
+        z = (0.0, 0.0, 0.0)
+        b = Cbase()
+        b.origin = Cvector(*z)
+        b.xAxis = Cvector(*z)
+        b.yAxis = Cvector(*z)
+        b.zAxis = Cvector(*z)
+        p = Cbase()
+        p.origin = Cvector(*z)
+        p.xAxis = Cvector(1.0, 0.0, 0.0)
+        p.yAxis = Cvector(0.0, 1.0, 0.0)
+        p.zAxis = Cvector(0.0, 0.0, 1.0)
+        wire_base.setBaseAndPivot(b, p)
+        wire_base.setScale(Cvector(0, 0, 0))
         
-        ns = get_objects_names(mxs)
-        ed = {'name': name,
-              'parent': None,
-              'base': ((0.0, 0.0, -0.0), (1.0, 0.0, -0.0), (0.0, 1.0, -0.0), (-0.0, -0.0, 1.0)),
-              'pivot': ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
-              'opacity': 100.0,
-              'hidden_camera': False,
-              'hidden_camera_in_shadow_channel': False,
-              'hidden_global_illumination': False,
-              'hidden_reflections_refractions': False,
-              'hidden_zclip_planes': False,
-              'object_id': (255, 255, 255),
-              'hide': False,
-              'type': 'EMPTY', }
-        e = empty(ed, mxs)
-        for n in ns:
-            ch = mxs.getObject(n)
-            ch.setParent(e)
+        # export_use_wireframe
+        export_clay_override_object_material = False
+        export_wire_wire_material = None
+        export_wire_clay_material = None
+        
+        for d in data:
+            if(d['type'] == 'SCENE'):
+                export_clay_override_object_material = d['export_clay_override_object_material']
+                export_wire_wire_material = d['export_wire_wire_material']
+                export_wire_clay_material = d['export_wire_clay_material']
+                break
+        
+        if(export_wire_clay_material is not None):
+            wire = get_material(export_wire_wire_material, mxs, )
+            for d in data:
+                if(d['type'] == 'WIREFRAME_BASE'):
+                    o = mxs.getObject(d['name'])
+                    o.setMaterial(wire)
+                    break
+            for wi in all_wire_instances:
+                wi.setMaterial(wire)
+        
+        if(export_wire_clay_material is not None and export_clay_override_object_material):
+            clay = get_material(export_wire_clay_material, mxs, )
+            clayable = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+            for d in data:
+                if(d['type'] in clayable):
+                    o = mxs.getObject(d['name'])
+                    o.setMaterial(clay)
     
     # set active camera, again.. for some reason it gets reset
     for d in data:
@@ -2106,7 +1920,14 @@ def main(args):
                 c = mxs.getCamera(d['name'])
                 c.setActive()
     # remove unused materials
-    mxs.eraseUnusedMaterials()
+    # FIXMENOT: disabled because it removes also backface materials if they are not used somewhere else as normal materials
+    # mxs.eraseUnusedMaterials()
+    for d in data:
+        if(d['type'] == 'SCENE'):
+            if(d['export_remove_unused_materials']):
+                # optional, might also remove materials not supposed to be removed
+                log("removing unused materials..", 2)
+                mxs.eraseUnusedMaterials()
     # save mxs
     log("saving scene..", 2)
     ok = mxs.writeMXS(args.result_path)
@@ -2118,7 +1939,7 @@ if __name__ == "__main__":
                                      formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
     parser.add_argument('-a', '--append', action='store_true', help='append to existing mxs (result_path)')
     parser.add_argument('-w', '--wireframe', action='store_true', help='scene data contains wireframe scene')
-    parser.add_argument('-i', '--instancer', action='store_true', help='scene data contains instancer (python only)')
+    # parser.add_argument('-i', '--instancer', action='store_true', help='scene data contains instancer (python only)')
     parser.add_argument('-q', '--quiet', action='store_true', help='no logging except errors')
     parser.add_argument('log_file', type=str, help='path to log file')
     parser.add_argument('scene_data_path', type=str, help='path to serialized scene data file')
@@ -2145,14 +1966,9 @@ if __name__ == "__main__":
         # print(s.getvalue())
         
     except Exception as e:
-        # exc_type, exc_value, exc_traceback = sys.exc_info()
-        # lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        # sys.stdout.write("".join(lines))
-        
         import traceback
         m = traceback.format_exc()
         log(m)
         
-        # log("".join(lines))
         sys.exit(1)
     sys.exit(0)
