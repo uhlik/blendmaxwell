@@ -628,9 +628,10 @@ class MXSExport():
                         mx = ps.settings.maxwell_render
                         mod = None
                         for m in ob.modifiers:
-                            if(m.particle_system == ps):
-                                mod = m
-                                break
+                            if(m.type == 'PARTICLE_SYSTEM'):
+                                if(m.particle_system == ps):
+                                    mod = m
+                                    break
                         if(not mod.show_render):
                             # not renderable, skip
                             continue
