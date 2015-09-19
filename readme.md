@@ -1,4 +1,5 @@
-# **Maxwell Render integration for Blender**
+# **BlendMaxwell**
+#### Maxwell Render exporter for Blender
 
 ![teaser](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr2.jpg)
 
@@ -32,19 +33,19 @@
 
 * Download python 3.4.1 from [https://www.python.org/downloads/release/python-341/](https://www.python.org/downloads/release/python-341/) and install
 * Copy ```_pymaxwell.so``` and ```pymaxwell.py``` from ```/Applications/Maxwell 3/Libs/pymaxwell/python3.4/``` to ```/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/```
-* Download this repository clicking 'Download ZIP', extract, rename directory to ```render_maxwell``` and put to ```~/Library/Application Support/Blender/2.75/scripts/addons/```
+* Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/Library/Application Support/Blender/2.75/scripts/addons/```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
 ### addon installation - Windows:
 
-* Download this repository clicking 'Download ZIP', extract, rename directory to ```render_maxwell``` and put to ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.75\scripts\addons\```
+* Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.75\scripts\addons\```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
 ### addon installation - Linux:
 
 * append this ```export LD_LIBRARY_PATH=$MAXWELL3_ROOT:$LD_LIBRARY_PATH``` to your .bashrc AFTER generated stuff from Maxwell installation, after MAXWELL3_ROOT is exported
 * to fix complains of some extensions, install ```libtbb-dev```, but this step might be optional, it is used by extension not supported in addon
-* Download this repository clicking 'Download ZIP', extract, rename directory to ```render_maxwell``` and put to ```~/.config/blender/2.75/scripts/addons/```
+* Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/.config/blender/2.75/scripts/addons/```
 * Start Blender from terminal, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
 
@@ -53,7 +54,7 @@
 changelog:
 
 * 0.3.2 Maxwell 3.2 update, includes majority of new features: material priority, saving to psd, reflection and refraction channels, reflectance channel, scatter and grass updates. also wireframe and auto-subdivision export is restored, added basic progress reporting, hair uvs, hair extension material and many more small fixes and tweaks
-* 0.3.1 last version working with Maxwell 3.1: [ddbad692a25c6e6e72d11092d8f063f6ed1d048e](https://github.com/uhlik/render_maxwell/tree/ddbad692a25c6e6e72d11092d8f063f6ed1d048e)
+* 0.3.1 last version working with Maxwell 3.1: [ddbad692a25c6e6e72d11092d8f063f6ed1d048e](https://github.com/uhlik/blendmaxwell/tree/ddbad692a25c6e6e72d11092d8f063f6ed1d048e)
 * 0.3.0 refactored exporter part, added: hair uvs, curves instancing, material global properties, fixed: object transformations when opened and saved in Studio
 * 0.2.4 added: automatic subdivision modifiers export to speed things up
 * 0.2.3 added: mxs export menu operator, quad export when using subdivision modifier, 2.75 compatibility

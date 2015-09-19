@@ -23,8 +23,8 @@ bl_info = {"name": "BlendMaxwell",
            "blender": (2, 75, 0),
            "location": "Info header > render engine menu",
            "warning": "Alpha",
-           "wiki_url": "https://github.com/uhlik/render_maxwell/wiki",
-           "tracker_url": "https://github.com/uhlik/render_maxwell/issues",
+           "wiki_url": "https://github.com/uhlik/blendmaxwell/wiki",
+           "tracker_url": "https://github.com/uhlik/blendmaxwell/issues",
            "category": "Render", }
 
 
