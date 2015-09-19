@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-bl_info = {"name": "BlendMaxwell",
+bl_info = {"name": "blendmaxwell",
            "description": "Maxwell Render exporter for Blender",
            "author": "Jakub Uhlik",
            "version": (0, 3, 3),

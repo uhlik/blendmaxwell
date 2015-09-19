@@ -1,4 +1,4 @@
-# **BlendMaxwell**
+# **blendmaxwell**
 #### Maxwell Render exporter for Blender
 
 ![teaser](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr2.jpg)
