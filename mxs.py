@@ -746,8 +746,15 @@ class MXSWriter():
             if(num_materials > 1):
                 # multi material
                 mats = []
-                for n in materials:
-                    mat = self.get_material(n)
+                # for n in materials:
+                #     mat = self.get_material(n)
+                #     mats.append(mat)
+                for i in range(num_materials):
+                    try:
+                        n = materials[i]
+                        mat = self.get_material(n)
+                    except:
+                        mat = self.material_placeholder()
                     mats.append(mat)
                 
                 for tid, mid in triangle_materials:
@@ -1260,7 +1267,8 @@ class MXSWriter():
                 # wtf?
                 s.setRenderParameter('MXI FULLNAME', bytes(mxi, encoding='UTF-8'))
             else:
-                s.setRenderParameter('MXI FULLNAME', mxi)
+                # s.setRenderParameter('MXI FULLNAME', mxi)
+                s.setRenderParameter('MXI FULLNAME', bytes(mxi, encoding='UTF-8'))
         if(image is not None):
             if(image_depth is None):
                 image_depth = 'RGB8'
@@ -1820,7 +1828,7 @@ class MXSWriter():
             p.setFloat('Direction Type', angle[0])
             p.setFloat('Initial Angle', angle[1])
             p.setFloat('Initial Angle Variation', angle[2])
-            texture_data_to_mxparams(angle[3], p, 'Initial Angle Map', )
+            self.texture_data_to_mxparams('Initial Angle Map', angle[3], p, )
             
         p.setUInt('Display Percent', display_percent)
         p.setUInt('Display Max. Blades', display_max)

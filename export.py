@@ -2978,6 +2978,7 @@ class MXSCloner(MXSModifier):
                         'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2, }
                 rfbw = rfbin.RFBinWriter(**prms)
                 mxex.filename = rfbw.path
+                pdata = rfbw.path
         else:
             pass
         
