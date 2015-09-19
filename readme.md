@@ -31,8 +31,8 @@
 
 ### addon installation - Mac OS X:
 
+* Maxwell must be installed in usual place i.e. ```/Applications/Maxwell 3```
 * Download python 3.4.1 from [https://www.python.org/downloads/release/python-341/](https://www.python.org/downloads/release/python-341/) and install
-* Copy ```_pymaxwell.so``` and ```pymaxwell.py``` from ```/Applications/Maxwell 3/Libs/pymaxwell/python3.4/``` to ```/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages/```
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/Library/Application Support/Blender/2.75/scripts/addons/```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
@@ -53,6 +53,7 @@
 
 changelog:
 
+* 0.3.3 simplified installation procedure on Mac OS X, pymaxwell is now imported directly from ```/Applications/Maxwell 3```, also fixed some bugs..
 * 0.3.2 Maxwell 3.2 update, includes majority of new features: material priority, saving to psd, reflection and refraction channels, reflectance channel, scatter and grass updates. also wireframe and auto-subdivision export is restored, added basic progress reporting, hair uvs, hair extension material and many more small fixes and tweaks
 * 0.3.1 last version working with Maxwell 3.1: [ddbad692a25c6e6e72d11092d8f063f6ed1d048e](https://github.com/uhlik/blendmaxwell/tree/ddbad692a25c6e6e72d11092d8f063f6ed1d048e)
 * 0.3.0 refactored exporter part, added: hair uvs, curves instancing, material global properties, fixed: object transformations when opened and saved in Studio

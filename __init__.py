@@ -19,7 +19,7 @@
 bl_info = {"name": "BlendMaxwell",
            "description": "Maxwell Render exporter for Blender",
            "author": "Jakub Uhlik",
-           "version": (0, 3, 2),
+           "version": (0, 3, 3),
            "blender": (2, 75, 0),
            "location": "Info header > render engine menu",
            "warning": "Alpha",
