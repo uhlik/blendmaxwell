@@ -26,7 +26,7 @@ import textwrap
 import json
 import os
 
-from pymaxwell import *
+# from pymaxwell import *
 
 
 LOG_FILE_PATH = None
@@ -303,7 +303,36 @@ def material(d, s, ):
             
                 p.setFloat('Metallic', d['carpaint_metallic'])
                 p.setFloat('Topcoat', d['carpaint_topcoat'])
-        
+            
+            elif(d['use'] == 'HAIR'):
+                e = m.createDefaultMaterialModifierExtension('Hair')
+                p = e.getExtensionData()
+                
+                p.setByte('Color Type', d['hair_color_type'])
+                
+                c = Crgb8()
+                c.assign(*d['hair_color'])
+                p.setRgb('Color', c.toRGB())
+                texture_data_to_mxparams(d['hair_color_map'], p, 'Color Map', )
+                
+                texture_data_to_mxparams(d['hair_root_tip_map'], p, 'Root-Tip Map', )
+                
+                p.setByte('Root-Tip Weight Type', d['hair_root_tip_weight_type'])
+                p.setFloat('Root-Tip Weight', d['hair_root_tip_weight'])
+                texture_data_to_mxparams(d['hair_root_tip_weight_map'], p, 'Root-Tip Weight Map', )
+                
+                p.setFloat('Primary Highlight Strength', d['hair_primary_highlight_strength'])
+                p.setFloat('Primary Highlight Spread', d['hair_primary_highlight_spread'])
+                c = Crgb8()
+                c.assign(*d['hair_primary_highlight_tint'])
+                p.setRgb('Primary Highlight Tint', c.toRGB())
+                
+                p.setFloat('Secondary Highlight Strength', d['hair_secondary_highlight_strength'])
+                p.setFloat('Secondary Highlight Spread', d['hair_secondary_highlight_spread'])
+                c = Crgb8()
+                c.assign(*d['hair_secondary_highlight_tint'])
+                p.setRgb('Secondary Highlight Tint', c.toRGB())
+            
             m = s.createMaterial(d['name'])
             m.applyMaterialModifierExtension(p)
             
@@ -329,53 +358,10 @@ def material(d, s, ):
             cc = [c / 255 for c in d['id']]
             c.assign(*cc)
             m.setColorID(c)
+            
+            return m
     else:
         raise TypeError("Material '{}' {} is unknown type".format(d['name'], d['subtype']))
-    return m
-
-
-def texture_data_to_mxparams(d, mp, name, ):
-    if(d is None):
-        return
-    
-    # t = mp.getTextureMap(name)[0]
-    t = CtextureMap()
-    t.setPath(d['path'])
-    v = Cvector2D()
-    v.assign(*d['repeat'])
-    t.scale = v
-    v = Cvector2D()
-    v.assign(*d['offset'])
-    t.offset = v
-    t.rotation = d['rotation']
-    t.uvwChannelID = d['channel']
-    t.uIsTiled = d['tile_method_type'][0]
-    t.vIsTiled = d['tile_method_type'][1]
-    t.uIsMirrored = d['mirror'][0]
-    t.vIsMirrored = d['mirror'][1]
-    t.invert = d['invert']
-    # t.doGammaCorrection = 0
-    t.useAbsoluteUnits = d['tile_method_units']
-    # t.normalMappingFlipRed = 0
-    # t.normalMappingFlipGreen = 0
-    # t.normalMappingFullRangeBlue = 0
-    t.useAlpha = d['alpha_only']
-    t.typeInterpolation = d['interpolation']
-    
-    t.brightness = d['brightness'] / 100
-    t.contrast = d['contrast'] / 100
-    t.hue = d['hue'] / 180
-    t.saturation = d['saturation'] / 100
-    
-    t.clampMin = d['rgb_clamp'][0] / 255
-    t.clampMax = d['rgb_clamp'][1] / 255
-    
-    t.useGlobalMap = d['use_override_map']
-    # t.cosA = 1.000000
-    # t.sinA = 0.000000
-    ok = mp.setTextureMap(name, t)
-    
-    return mp
 
 
 def texture(d, s, ):
@@ -426,6 +412,50 @@ def texture(d, s, ):
     return t
 
 
+def texture_data_to_mxparams(d, mp, name, ):
+    if(d is None):
+        return
+    
+    # t = mp.getTextureMap(name)[0]
+    t = CtextureMap()
+    t.setPath(d['path'])
+    v = Cvector2D()
+    v.assign(*d['repeat'])
+    t.scale = v
+    v = Cvector2D()
+    v.assign(*d['offset'])
+    t.offset = v
+    t.rotation = d['rotation']
+    t.uvwChannelID = d['channel']
+    t.uIsTiled = d['tile_method_type'][0]
+    t.vIsTiled = d['tile_method_type'][1]
+    t.uIsMirrored = d['mirror'][0]
+    t.vIsMirrored = d['mirror'][1]
+    t.invert = d['invert']
+    # t.doGammaCorrection = 0
+    t.useAbsoluteUnits = d['tile_method_units']
+    # t.normalMappingFlipRed = 0
+    # t.normalMappingFlipGreen = 0
+    # t.normalMappingFullRangeBlue = 0
+    t.useAlpha = d['alpha_only']
+    t.typeInterpolation = d['interpolation']
+    
+    t.brightness = d['brightness'] / 100
+    t.contrast = d['contrast'] / 100
+    t.hue = d['hue'] / 180
+    t.saturation = d['saturation'] / 100
+    
+    t.clampMin = d['rgb_clamp'][0] / 255
+    t.clampMax = d['rgb_clamp'][1] / 255
+    
+    t.useGlobalMap = d['use_override_map']
+    # t.cosA = 1.000000
+    # t.sinA = 0.000000
+    ok = mp.setTextureMap(name, t)
+    
+    return mp
+
+
 def main(args):
     log("loading data..", 2)
     with open(args.data_path, 'r') as f:
@@ -449,10 +479,19 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=textwrap.dedent('''Make Maxwell Extension Material from serialized data'''), epilog='',
                                      formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
+    parser.add_argument('pymaxwell_path', type=str, help='path to directory containing pymaxwell')
     parser.add_argument('log_file', type=str, help='path to log file')
     parser.add_argument('data_path', type=str, help='path to serialized material data file')
     parser.add_argument('result_path', type=str, help='path to result .mxs')
     args = parser.parse_args()
+    
+    PYMAXWELL_PATH = args.pymaxwell_path
+    
+    try:
+        from pymaxwell import *
+    except ImportError:
+        sys.path.insert(0, PYMAXWELL_PATH)
+        from pymaxwell import *
     
     LOG_FILE_PATH = args.log_file
     

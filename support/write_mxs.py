@@ -30,7 +30,7 @@ import math
 import datetime
 import os
 
-from pymaxwell import *
+# from pymaxwell import *
 
 
 # logger = None
@@ -1944,12 +1944,22 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--wireframe', action='store_true', help='scene data contains wireframe scene')
     # parser.add_argument('-i', '--instancer', action='store_true', help='scene data contains instancer (python only)')
     parser.add_argument('-q', '--quiet', action='store_true', help='no logging except errors')
+    parser.add_argument('pymaxwell_path', type=str, help='path to directory containing pymaxwell')
     parser.add_argument('log_file', type=str, help='path to log file')
     parser.add_argument('scene_data_path', type=str, help='path to serialized scene data file')
     parser.add_argument('result_path', type=str, help='path to result .mxs')
     args = parser.parse_args()
     
     quiet = args.quiet
+    
+    PYMAXWELL_PATH = args.pymaxwell_path
+    
+    try:
+        from pymaxwell import *
+    except ImportError:
+        sys.path.insert(0, PYMAXWELL_PATH)
+        # sys.path.append(PYMAXWELL_PATH)
+        from pymaxwell import *
     
     LOG_FILE_PATH = args.log_file
     

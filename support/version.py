@@ -25,7 +25,7 @@ import traceback
 import argparse
 import textwrap
 import os
-import pymaxwell
+# import pymaxwell
 
 
 def log(msg, indent=0):
@@ -38,20 +38,35 @@ def main(args):
     s = pymaxwell.getPyMaxwellVersion()
     v = tuple([int(i) for i in s.split('.')])
     if(v < required):
-        sys.exit(1)
+        # older version
+        sys.exit(3)
+    # ok
     sys.exit(0)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=textwrap.dedent('''Check pymaxwell version number'''), epilog='',
                                      formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
+    parser.add_argument('pymaxwell_path', type=str, help='path to directory containing pymaxwell')
     parser.add_argument('version', type=str, help='minimum required version string, as returned from pymaxwell.getPyMaxwellVersion()')
     args = parser.parse_args()
+    
+    try:
+        import pymaxwell
+    except ImportError:
+        sys.path.insert(0, args.pymaxwell_path)
+        try:
+            import pymaxwell
+        except ImportError:
+            # import error
+            sys.exit(2)
     
     try:
         main(args)
     except Exception as e:
         m = traceback.format_exc()
         log(m)
+        # unexpected error
         sys.exit(1)
+    # ok
     sys.exit(0)

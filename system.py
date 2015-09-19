@@ -40,27 +40,6 @@ def prefs():
     return p
 
 
-def check_for_pymaxwell():
-    if(PLATFORM == 'Darwin'):
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
-        PYMAXWELL_SO = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', '_pymaxwell.so', ))
-        PYMAXWELL_PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'lib', 'python3.4', 'site-packages', 'pymaxwell.py', ))
-    elif(PLATFORM == 'Linux'):
-        pass
-    elif(PLATFORM == 'Windows'):
-        pass
-    else:
-        raise OSError("Unknown platform: {}.".format(PLATFORM))
-    
-    ok = (os.path.exists(PY) and os.path.exists(PYMAXWELL_SO) and os.path.exists(PYMAXWELL_PY))
-    if(ok):
-        return True
-    
-    log("ERROR: python 3.4 with pymaxwell seems not to be installed..", 1, LogStyles.ERROR, )
-    raise OSError("python 3.4 with pymaxwell seems not to be installed..")
-    return False
-
-
 def check_for_template():
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_mxs.py")
     if(not os.path.exists(TEMPLATE)):
@@ -154,12 +133,15 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, ):
             # write template to a new file
             f.write(code)
         
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
-        command_line = "{0} {1} {2} {3} {4}".format(shlex.quote(PY),
-                                                    shlex.quote(script_path),
-                                                    shlex.quote(LOG_FILE_PATH),
-                                                    shlex.quote(mxm_data_path),
-                                                    shlex.quote(path), )
+        command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
+                                                        shlex.quote(script_path),
+                                                        shlex.quote(PYMAXWELL_PATH),
+                                                        shlex.quote(LOG_FILE_PATH),
+                                                        shlex.quote(mxm_data_path),
+                                                        shlex.quote(path), )
         log("command:", 2)
         log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
         args = shlex.split(command_line, )
@@ -265,19 +247,23 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, w
         if(PY == ""):
             raise Exception("huh?")
         
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        
         if(switches != ''):
+            command_line = "{0} {1} {2} {3} {4} {5} {6}".format(shlex.quote(PY),
+                                                                shlex.quote(script_path),
+                                                                switches,
+                                                                shlex.quote(PYMAXWELL_PATH),
+                                                                shlex.quote(LOG_FILE_PATH),
+                                                                shlex.quote(scene_data_path),
+                                                                shlex.quote(mxs_path), )
+        else:
             command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
                                                             shlex.quote(script_path),
-                                                            switches,
+                                                            shlex.quote(PYMAXWELL_PATH),
                                                             shlex.quote(LOG_FILE_PATH),
                                                             shlex.quote(scene_data_path),
                                                             shlex.quote(mxs_path), )
-        else:
-            command_line = "{0} {1} {2} {3} {4}".format(shlex.quote(PY),
-                                                        shlex.quote(script_path),
-                                                        shlex.quote(LOG_FILE_PATH),
-                                                        shlex.quote(scene_data_path),
-                                                        shlex.quote(mxs_path), )
         
         log("command:", 2)
         log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
@@ -314,13 +300,16 @@ def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, im
                 switches += ' '
             switches += '-s'
         
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        
         # execute the script
-        command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
-                                                        shlex.quote(script_path),
-                                                        switches,
-                                                        shlex.quote(LOG_FILE_PATH),
-                                                        shlex.quote(mxs_path),
-                                                        shlex.quote(scene_data_path), )
+        command_line = "{0} {1} {2} {3} {4} {5} {6}".format(shlex.quote(PY),
+                                                            shlex.quote(script_path),
+                                                            switches,
+                                                            shlex.quote(PYMAXWELL_PATH),
+                                                            shlex.quote(LOG_FILE_PATH),
+                                                            shlex.quote(mxs_path),
+                                                            shlex.quote(scene_data_path), )
         log("command:", 2)
         log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
         args = shlex.split(command_line, )
@@ -336,7 +325,11 @@ def python34_run_mxm_preview(mxm_path):
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm_preview.py", )
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
-        command_line = "{0} {1} {2}".format(shlex.quote(PY), shlex.quote(script_path), shlex.quote(mxm_path), )
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
+                                                shlex.quote(script_path),
+                                                shlex.quote(PYMAXWELL_PATH),
+                                                shlex.quote(mxm_path), )
         
         log("read material preview from mxm:", 1)
         log("command:", 2)
@@ -356,11 +349,21 @@ def check_pymaxwell_version():
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "version.py", )
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
         req = ".".join(str(i) for i in REQUIRED)
-        command_line = "{0} {1} {2}".format(shlex.quote(PY), shlex.quote(script_path), shlex.quote(req), )
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
+                                                shlex.quote(script_path),
+                                                shlex.quote(PYMAXWELL_PATH),
+                                                shlex.quote(req), )
         args = shlex.split(command_line, )
         o = subprocess.call(args, )
-        if(o != 0):
+        if(o == 1):
+            raise Exception("Unexpected error in version check, please contact developer..")
+        elif(o == 2):
+            raise Exception("Cannot import pymaxwell, not found at path: '{}'".format(PYMAXWELL_PATH))
+        elif(o == 3):
             raise Exception("Found old pymaxwell, required version is: {}".format(REQUIRED))
+        else:
+            return True
         
     elif(PLATFORM == 'Linux' or PLATFORM == 'Windows'):
         try:

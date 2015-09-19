@@ -27,7 +27,7 @@ import argparse
 import textwrap
 import os
 
-from pymaxwell import *
+# from pymaxwell import *
 
 
 quiet = False
@@ -431,10 +431,20 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--objects', action='store_true', help='read objects')
     parser.add_argument('-c', '--cameras', action='store_true', help='read cameras')
     parser.add_argument('-s', '--sun', action='store_true', help='read sun')
+    parser.add_argument('pymaxwell_path', type=str, help='path to directory containing pymaxwell')
     parser.add_argument('log_file', type=str, help='path to log file')
     parser.add_argument('mxs_path', type=str, help='path to source .mxs')
     parser.add_argument('scene_data_path', type=str, help='path to serialized data')
     args = parser.parse_args()
+    
+    PYMAXWELL_PATH = args.pymaxwell_path
+    
+    try:
+        from pymaxwell import *
+    except ImportError:
+        sys.path.insert(0, PYMAXWELL_PATH)
+        # sys.path.append(PYMAXWELL_PATH)
+        from pymaxwell import *
     
     quiet = args.quiet
     LOG_FILE_PATH = args.log_file
