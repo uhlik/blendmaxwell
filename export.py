@@ -3274,10 +3274,12 @@ class MXSMaterialMXM(MXSMaterial):
         
         super().__init__(name)
         self.m_subtype = 'EXTERNAL'
-        if(path != ''):
+        if(path == ''):
+            log("mxm path is empty.".format(), 3, LogStyles.WARNING, )
+        else:
             path = bpy.path.abspath(path)
             if(not os.path.exists(path)):
-                log("{1}: mxm ('{0}') does not exist.".format(path, self.__class__.__name__), 3, LogStyles.WARNING, )
+                log("mxm ('{}') does not exist.".format(path), 3, LogStyles.WARNING, )
                 path = ''
         self.m_path = path
         self.m_embed = embed
