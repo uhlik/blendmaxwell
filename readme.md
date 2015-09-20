@@ -35,6 +35,7 @@
 * Download python 3.4.1 from [https://www.python.org/downloads/release/python-341/](https://www.python.org/downloads/release/python-341/) and install
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/Library/Application Support/Blender/2.75/scripts/addons/```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
+* if you are updating from version before 0.3.3, please remove ```_pymaxwell.so``` and ```pymaxwell.py``` from ```/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages``` it is no longer necessary and it might cause conflicts
 
 ### addon installation - Windows:
 
