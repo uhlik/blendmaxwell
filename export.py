@@ -2463,7 +2463,8 @@ class MXSParticles(MXSObject):
                         'frame': cf,
                         'particles': particles,
                         'fps': bpy.context.scene.render.fps,
-                        'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2, }
+                        'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2,
+                        'log_indent': 3, }
                 rfbw = rfbin.RFBinWriter(**prms)
                 mxex.bin_filename = rfbw.path
         else:
@@ -3046,7 +3047,8 @@ class MXSCloner(MXSModifier):
                         'frame': cf,
                         'particles': particles,
                         'fps': bpy.context.scene.render.fps,
-                        'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2, }
+                        'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2,
+                        'log_indent': 3, }
                 rfbw = rfbin.RFBinWriter(**prms)
                 mxex.filename = rfbw.path
                 pdata = rfbw.path

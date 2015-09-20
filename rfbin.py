@@ -29,7 +29,7 @@ from .log import log, LogStyles
 
 class RFBinWriter():
     """RealFlow particle .bin writer"""
-    def __init__(self, directory, name, frame, particles, fps=24, size=0.001, ):
+    def __init__(self, directory, name, frame, particles, fps=24, size=0.001, log_indent=0, ):
         """
         directory   string (path)
         name        string ascii
@@ -39,7 +39,8 @@ class RFBinWriter():
         size        float > 0
         """
         cn = self.__class__.__name__
-        log("{}:".format(cn), 0, LogStyles.MESSAGE)
+        self.log_indent = log_indent
+        log("{}:".format(cn), 0 + self.log_indent, LogStyles.MESSAGE)
         
         if(not os.path.exists(directory)):
             raise OSError("{}: did you point me to an imaginary directory? ({})".format(cn, directory))
@@ -54,7 +55,7 @@ class RFBinWriter():
         ch = "-_.() {0}{1}".format(string.ascii_letters, string.digits)
         valid = "".join(c for c in name if c in ch)
         if(name != valid):
-            log("invalid name.. changed to {0}".format(valid), 1, LogStyles.WARNING)
+            log("invalid name.. changed to {0}".format(valid), 1 + self.log_indent, LogStyles.WARNING)
         self.name = valid
         
         if(int(frame) < 0):
@@ -83,20 +84,20 @@ class RFBinWriter():
     def _write(self):
         self._t = time.time()
         p = self.path
-        log("writing particles to: {0}".format(p), 1)
+        log("writing particles to: {0}".format(p), 1 + self.log_indent, )
         with open("{0}.tmp".format(p), 'wb') as f:
-            log("writing header..", 1)
+            log("writing header..", 1 + self.log_indent, )
             self._header(f)
-            log("writing particles..", 1)
+            log("writing particles..", 1 + self.log_indent, )
             self._particles(f)
-            log("writing appendix..", 1)
+            log("writing appendix..", 1 + self.log_indent, )
             self._appendix(f)
         if(os.path.exists(p)):
             os.remove(p)
         shutil.move("{0}.tmp".format(p), p)
-        log("done.", 1)
+        log("done.", 1 + self.log_indent, )
         _d = datetime.timedelta(seconds=time.time() - self._t)
-        log("completed in {0}".format(_d), 1, LogStyles.MESSAGE)
+        log("completed in {0}".format(_d), 1 + self.log_indent, )
     
     def _header(self, f, ):
         p = struct.pack
