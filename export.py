@@ -2668,60 +2668,85 @@ class MXSHair(MXSObject):
             
             uv_locs = tuple()
             
-            # make helper object - triangulated emitter with modifiers applied
-            me = o.to_mesh(bpy.context.scene, True, 'RENDER', )
-            # me.transform(ROTATE_X_MINUS_90)
-            me.transform(o.matrix_world)
-            me.validate()
-            bm = bmesh.new()
-            bm.from_mesh(me)
-            bmesh.ops.triangulate(bm, faces=bm.faces)
-            bm.to_mesh(me)
-            bm.free()
-            me.calc_tessface()
-            me.calc_normals()
-            n = 'PARTICLES_UVS_{}'.format(uuid.uuid1())
-            op = utils.add_object(n, me)
-            bpy.context.scene.update()
-            
-            from mathutils.geometry import barycentric_transform
-            
-            uv_layers = op.data.uv_layers
-            for p in range(0, num_curves):
-                # global hair root location
-                root_co = ps.co_hair(o, p, 0)
-                # find closest triangle on helper
-                polyloc, polynor, polyind = op.closest_point_on_mesh(root_co)
-                poly = op.data.polygons[polyind]
-                # loop indexes
-                pl = me.loops[poly.loop_start:poly.loop_start + poly.loop_total]
-                pli = [pl[i].vertex_index for i in range(len(pl))]
-                uvl = uv_layers[uv_layers.active_index].data[poly.loop_start:poly.loop_start + poly.loop_total]
-                # uv locs for triangle
-                uvv = []
-                for l in uvl:
-                    uvv.append(l.uv)
-                # mesh triangle locs
-                def get_vert(index):
-                    for vi in poly.vertices:
-                        if(me.vertices[vi].index == index):
-                            return me.vertices[vi]
+            if(len(ps.child_particles) > 0):
+                log("using hack to get child particles root uv locations, consider switching child particles off..", 3, LogStyles.WARNING, )
+                # make helper object - triangulated emitter with modifiers applied
+                me = o.to_mesh(bpy.context.scene, True, 'RENDER', )
+                # me.transform(ROTATE_X_MINUS_90)
+                me.transform(o.matrix_world)
+                me.validate()
+                bm = bmesh.new()
+                bm.from_mesh(me)
+                bmesh.ops.triangulate(bm, faces=bm.faces)
+                bm.to_mesh(me)
+                bm.free()
+                me.calc_tessface()
+                me.calc_normals()
+                n = 'PARTICLES_UVS_{}'.format(uuid.uuid1())
+                op = utils.add_object(n, me)
+                bpy.context.scene.update()
                 
-                x = get_vert(pli[0]).co
-                y = get_vert(pli[1]).co
-                z = get_vert(pli[2]).co
-                # triangle uv locs, flip y
-                ux = Vector((uvv[0].x, uvv[0].y * -1, 0.0, ))
-                uy = Vector((uvv[1].x, uvv[1].y * -1, 0.0, ))
-                uz = Vector((uvv[2].x, uvv[2].y * -1, 0.0, ))
-                # transform
-                v = barycentric_transform(root_co, x, y, z, ux, uy, uz, )
+                from mathutils.geometry import barycentric_transform
                 
-                # add just (x, y)
-                uv_locs += v.to_tuple()[:2]
-            
-            # remove helper
-            utils.wipe_out_object(op, and_data=True, )
+                uv_layers = op.data.uv_layers
+                for p in range(0, num_curves):
+                    # global hair root location
+                    root_co = ps.co_hair(o, p, 0)
+                    # find closest triangle on helper
+                    polyloc, polynor, polyind = op.closest_point_on_mesh(root_co)
+                    poly = op.data.polygons[polyind]
+                    # loop indexes
+                    pl = me.loops[poly.loop_start:poly.loop_start + poly.loop_total]
+                    pli = [pl[i].vertex_index for i in range(len(pl))]
+                    uvl = uv_layers[uv_layers.active_index].data[poly.loop_start:poly.loop_start + poly.loop_total]
+                    # uv locs for triangle
+                    uvv = []
+                    for l in uvl:
+                        uvv.append(l.uv)
+                    # mesh triangle locs
+                    def get_vert(index):
+                        for vi in poly.vertices:
+                            if(me.vertices[vi].index == index):
+                                return me.vertices[vi]
+                    
+                    x = get_vert(pli[0]).co
+                    y = get_vert(pli[1]).co
+                    z = get_vert(pli[2]).co
+                    # triangle uv locs, flip y
+                    ux = Vector((uvv[0].x, uvv[0].y * -1, 0.0, ))
+                    uy = Vector((uvv[1].x, uvv[1].y * -1, 0.0, ))
+                    uz = Vector((uvv[2].x, uvv[2].y * -1, 0.0, ))
+                    # transform
+                    v = barycentric_transform(root_co, x, y, z, ux, uy, uz, )
+                    
+                    # add just (x, y)
+                    uv_locs += v.to_tuple()[:2]
+                
+                # remove helper
+                utils.wipe_out_object(op, and_data=True, )
+            else:
+                # no child particles, use 'uv_on_emitter'
+                nc0 = len(ps.particles)
+                nc1 = len(ps.child_particles) - nc0
+                uv_no = 0
+                for i, uv in enumerate(o.data.uv_textures):
+                    if(mxex.uv_layer == uv.name):
+                        uv_no = i
+                        break
+                mod = None
+                for m in o.modifiers:
+                    if(m.type == 'PARTICLE_SYSTEM'):
+                        if(m.particle_system == ps):
+                            mod = m
+                            break
+                uv_locs = tuple()
+                for i, p in enumerate(ps.particles):
+                    co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
+                    uv_locs += co.to_tuple()
+                if(nc1 != 0):
+                    ex = int(nc1 / nc0)
+                for i in range(ex):
+                    uv_locs += uv_locs
             
             root_uvs = 1
         else:
@@ -2742,42 +2767,6 @@ class MXSHair(MXSObject):
         # just list of floats
         locs = [v for l in points for v in l]
         # locs = [round(v, 6) for v in locs]
-        
-        '''
-        if(mxex.uv_layer is not ""):
-            nc0 = len(ps.particles)
-            nc1 = len(ps.child_particles) - nc0
-            
-            uv_no = 0
-            for i, uv in enumerate(o.data.uv_textures):
-                if(mxex.uv_layer == uv.name):
-                    uv_no = i
-                    break
-            mod = None
-            for m in o.modifiers:
-                if(m.type == 'PARTICLE_SYSTEM'):
-                    if(m.particle_system == ps):
-                        mod = m
-                        break
-            uv_locs = tuple()
-            for i, p in enumerate(ps.particles):
-                co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
-                uv_locs += co.to_tuple()
-            # for i, p in enumerate(ps.child_particles):
-            #     co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
-            #     uv_locs += co.to_tuple()
-            if(nc1 != 0):
-                ex = int(nc1 / nc0)
-            for i in range(ex):
-                uv_locs += uv_locs
-            
-            # data['HAIR_FLAG_ROOT_UVS'] = [1]
-            # data['HAIR_ROOT_UVS'] = uv_locs
-            root_uvs = 1
-        else:
-            root_uvs = 0
-            uv_locs = []
-        '''
         
         data = {'HAIR_MAJOR_VER': [1, 0, 0, 0],
                 'HAIR_MINOR_VER': [0, 0, 0, 0],
