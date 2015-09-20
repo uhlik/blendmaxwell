@@ -45,16 +45,8 @@ AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).t
 ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
-# 3.2 update list:
-# Nested Dielectrics: new material parameter called “Nested Priority”       DONE
-# TODO New stereo lenses: Lat/Long and Stereo Fish Lens                     postponed..
-# Export to PSD files: PSD format in 8, 16 and 32 bits                      DONE
-# Separated reflection and refraction channels                              DONE
-# Remove overlaps in the Maxwell Scatter                                    DONE
-# New Reflectance channel                                                   DONE
-# Improvements in the Maxwell Grass fibers growth                           DONE
-# New Asset Reference extension                                             X
 
+# TODO New stereo lenses: Lat/Long and Stereo Fish Lens - postponed. seems like there is no python api now
 # TODO: restore instancer support for my personal use (python only)
 
 
@@ -2703,6 +2695,7 @@ class MXSHair(MXSObject):
                     uvv = []
                     for l in uvl:
                         uvv.append(l.uv)
+                    
                     # mesh triangle locs
                     def get_vert(index):
                         for vi in poly.vertices:

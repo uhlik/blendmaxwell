@@ -276,7 +276,7 @@ def get_default_presets():
                         'hair_color_type': True,
                         'hair_color': (55 / 255, 30 / 255, 15 / 255),
                         'hair_color_map': {
-                            'name':'light_brown-hair_color_map',
+                            'name': 'light_brown-hair_color_map',
                             'path': os.path.join(get_prefs().maxwell_path, 'materials database', 'textures', 'hairTex_lightBrown.png'),
                             'use_global_map': 0, 'channel': 1, 'tiling_method': 'TILE_XY', 'tiling_units': '0', 'repeat': (3.0, 3.0, ), 'mirror_x': False, 'mirror_y': False,
                             'offset': (0.0, 0.0, ), 'rotation': 0.0, 'invert': False, 'use_alpha': False, 'interpolation': False,
@@ -299,7 +299,7 @@ def get_default_presets():
                         'hair_color_type': True,
                         'hair_color': (55 / 255, 30 / 255, 15 / 255),
                         'hair_color_map': {
-                            'name':'dark_blonde-hair_color_map',
+                            'name': 'dark_blonde-hair_color_map',
                             'path': os.path.join(get_prefs().maxwell_path, 'materials database', 'textures', 'hairTex_Blonde.png'),
                             'use_global_map': 0, 'channel': 1, 'tiling_method': 'TILE_XY', 'tiling_units': '0', 'repeat': (2.0, 2.0, ), 'mirror_x': False, 'mirror_y': False,
                             'offset': (0.0, 0.0, ), 'rotation': 0.0, 'invert': False, 'use_alpha': False, 'interpolation': False,
@@ -321,7 +321,7 @@ def get_default_presets():
                         'hair_color_type': True,
                         'hair_color': (55 / 255, 30 / 255, 15 / 255),
                         'hair_color_map': {
-                            'name':'hollywood_blonde-hair_color_map',
+                            'name': 'hollywood_blonde-hair_color_map',
                             'path': os.path.join(get_prefs().maxwell_path, 'materials database', 'textures', 'hairTex_Blonde.png'),
                             'use_global_map': 0, 'channel': 1, 'tiling_method': 'TILE_XY', 'tiling_units': '0', 'repeat': (2.0, 2.0, ), 'mirror_x': False, 'mirror_y': False,
                             'offset': (0.0, 0.0, ), 'rotation': 0.0, 'invert': False, 'use_alpha': False, 'interpolation': False,
@@ -343,7 +343,7 @@ def get_default_presets():
                         'hair_color_type': True,
                         'hair_color': (55 / 255, 30 / 255, 15 / 255),
                         'hair_color_map': {
-                            'name':'red_hair-hair_color_map',
+                            'name': 'red_hair-hair_color_map',
                             'path': os.path.join(get_prefs().maxwell_path, 'materials database', 'textures', 'hairTex_Red.png'),
                             'use_global_map': 0, 'channel': 1, 'tiling_method': 'TILE_XY', 'tiling_units': '0', 'repeat': (2.0, 2.0, ), 'mirror_x': False, 'mirror_y': False,
                             'offset': (0.0, 0.0, ), 'rotation': 0.0, 'invert': False, 'use_alpha': False, 'interpolation': False,
