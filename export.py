@@ -2940,8 +2940,10 @@ class MXSCloner(MXSModifier):
         self.ps = self.o['object']
         self.mxex = self.ps.settings.maxwell_cloner_extension
         
-        self.m_parent = MXSDatabase.object_name(self.b_object, self.b_object.name)
-        self.m_name = MXSDatabase.object_name(self.b_object, "{}-{}".format(self.m_parent, self.ps.name))
+        # # cloner is not an object, it is modifier, so no name is required and no need to check for duplicate,
+        # # for compatibility, default name ( from MXSModifier.__init__) is enough..
+        # self.m_parent = MXSDatabase.object_name(self.b_object, self.b_object.name)
+        # self.m_name = MXSDatabase.object_name(self.b_object, "{}-{}".format(self.m_parent, self.ps.name))
         
         self._to_data()
     
