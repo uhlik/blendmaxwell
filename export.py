@@ -117,6 +117,7 @@ class MXSExport():
             self.mesh_data_paths = []
             self.hair_data_paths = []
             self.part_data_paths = []
+            self.wire_data_paths = []
             self.scene_data_name = "{0}-{1}.json".format(n, self.uuid)
             self.script_name = "{0}-{1}.py".format(n, self.uuid)
             
@@ -1026,6 +1027,13 @@ class MXSExport():
                         self.part_data_paths.append(p)
                 a = o._repr()
                 self.serialized_data.append(a)
+            elif(o.m_type == 'WIREFRAME'):
+                n = '{}-{}.wire_matrices.json'.format(o.m_name, uuid.uuid1(), )
+                p = self._serialize(o.m_wire_matrices, n, )
+                a = o._repr()
+                a['wire_matrices'] = p
+                self.serialized_data.append(a)
+                self.wire_data_paths.append(p)
             else:
                 a = o._repr()
                 self.serialized_data.append(a)
@@ -1366,6 +1374,10 @@ class MXSExport():
         
         if(hasattr(self, 'part_data_paths')):
             for p in self.part_data_paths:
+                rm(p)
+        
+        if(hasattr(self, 'wire_data_paths')):
+            for p in self.wire_data_paths:
                 rm(p)
         
         if(os.path.exists(self.tmp_dir)):

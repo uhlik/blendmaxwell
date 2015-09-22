@@ -1715,7 +1715,11 @@ def hierarchy(d, s, ):
 def wireframe(d, s, ):
     r = []
     bo = s.getObject(d['instanced'])
-    for i, m in enumerate(d['wire_matrices']):
+    
+    with open(d['wire_matrices'], 'r') as f:
+        wire_matrices = json.load(f)
+    
+    for i, m in enumerate(wire_matrices):
         o = s.createInstancement("{0}-{1}".format(d['name'], i), bo)
         bp = {'base': m[0],
               'pivot': m[1],
