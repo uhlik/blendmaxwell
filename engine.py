@@ -41,8 +41,22 @@ class MaxwellRenderExportEngine(RenderEngine):
     _t = None
     
     def render(self, scene):
+        # # skip it completely..
+        # s = scene.render
+        # xr = int(s.resolution_x * s.resolution_percentage / 100.0)
+        # yr = int(s.resolution_y * s.resolution_percentage / 100.0)
+        # c = xr * yr
+        # b = [[0.0, 0.0, 0.0, 1.0]] * c
+        # r = self.begin_result(0, 0, xr, yr)
+        # l = r.layers[0]
+        # p = l.passes[0]
+        # p.rect = b
+        # self.end_result(r)
+        pass
+    
+    def update(self, data, scene):
         if(self.is_preview):
-            self.material_preview(scene)
+            self._material_preview(scene)
             return
         
         self._t = time.time()
@@ -137,7 +151,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                 p = os.path.join(ed, "{}{}{}.mxs".format(mxs_name, mxs_increment, mxs_suffix))
                 if(os.path.exists(p) and not m.export_overwrite):
                     # reset animation flags
-                    self.reset_workflow(scene)
+                    self._reset_workflow(scene)
                     self.report({'ERROR'}, "Scene file already exist in Output directory.")
                     return
         else:
@@ -167,11 +181,11 @@ class MaxwellRenderExportEngine(RenderEngine):
                 # check and raise error if mxs exists, if not continue
                 p = os.path.join(ed, "{}{}{}.mxs".format(mxs_name, mxs_increment, mxs_suffix))
                 if(os.path.exists(p) and not m.export_overwrite):
-                    self.reset_workflow(scene)
+                    self._reset_workflow(scene)
                     self.report({'ERROR'}, "Scene file already exist in Output directory.")
                     return
         
-        # store it to use it render_scene (is this needed? it was in example.. i can do whole work here)
+        # store it to use it _render_scene (is this needed? it was in example.. i can do whole work here)
         # but the problem is, when exporting animation, this is called for each frame, so i got to store these props
         # maybe.. maybe not
         m.private_name = mxs_name
@@ -187,7 +201,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             if(scene.name == 'preview'):
                 pass
             else:
-                self.render_scene(scene)
+                self._render_scene(scene)
                 m.output_image = m.private_image
                 m.output_mxi = m.private_mxi
         except Exception as ex:
@@ -201,13 +215,13 @@ class MaxwellRenderExportEngine(RenderEngine):
             # lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
             # log("".join(lines))
             
-            self.reset_workflow(scene)
+            self._reset_workflow(scene)
             self.report({'ERROR'}, m)
         
         _d = datetime.timedelta(seconds=time.time() - self._t)
         log("export completed in {0}".format(_d), 1, LogStyles.MESSAGE)
     
-    def material_preview(self, scene):
+    def _material_preview(self, scene):
         def get_material(scene):
             objects_materials = {}
             
@@ -326,7 +340,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             else:
                 fill_black()
     
-    def render_scene(self, scene):
+    def _render_scene(self, scene):
         m = scene.maxwell_render
         p = m.private_path
         bp = m.private_basepath
@@ -416,7 +430,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(ex is not None and not m.exporting_animation_now):
             bpy.ops.maxwell_render.open_mxs(filepath=ex.mxs_path, application=m.export_open_with, instance_app=m.instance_app, )
     
-    def reset_workflow(self, scene):
+    def _reset_workflow(self, scene):
         m = scene.maxwell_render
         m.exporting_animation_now = False
         m.exporting_animation_frame_number = 1

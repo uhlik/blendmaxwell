@@ -66,6 +66,14 @@ def add_object(name, data):
     return o
 
 
+def add_object2(name, data, ):
+    # skip select / active part..
+    o = bpy.data.objects.new(name, data, )
+    s = bpy.context.scene
+    s.objects.link(o)
+    return o
+
+
 def wipe_out_object(ob, and_data=True):
     # http://blenderartists.org/forum/showthread.php?222667-Remove-object-and-clear-from-memory&p=1888116&viewfull=1#post1888116
     

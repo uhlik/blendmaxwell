@@ -2675,7 +2675,7 @@ class MXSHair(MXSObject):
                 me.calc_tessface()
                 me.calc_normals()
                 n = 'PARTICLES_UVS_{}'.format(uuid.uuid1())
-                op = utils.add_object(n, me)
+                op = utils.add_object2(n, me)
                 bpy.context.scene.update()
                 
                 from mathutils.geometry import barycentric_transform
@@ -3501,7 +3501,7 @@ class MXSWireframeBase(MXSMesh):
         me = bpy.data.meshes.new(n)
         v, e, f = gen.generate()
         me.from_pydata(v, [], f)
-        ob = utils.add_object(n, me)
+        ob = utils.add_object2(n, me)
         
         o = {'type': 'MESH', 'export': True, 'object': ob, 'mesh': me, 'export_type': 'MESH', 'parent': None, 'children': [], 'converted': False, }
         super().__init__(o)
@@ -3516,7 +3516,7 @@ class MXSWireframeBase(MXSMesh):
 class MXSWireframeContainer(MXSEmpty):
     def __init__(self, euuid, ):
         n = 'WIREFRAME_CONTAINER_{}'.format(euuid)
-        ob = utils.add_object(n, None, )
+        ob = utils.add_object2(n, None, )
         
         o = {'parent': None, 'type': 'EMPTY', 'object': ob, 'export_type': 'EMPTY', 'mesh': None, 'converted': False, 'children': [], 'export': True, }
         super().__init__(o)
