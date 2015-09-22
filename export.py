@@ -1028,12 +1028,13 @@ class MXSExport():
                 a = o._repr()
                 self.serialized_data.append(a)
             elif(o.m_type == 'WIREFRAME'):
-                n = '{}-{}.wire_matrices.json'.format(o.m_name, uuid.uuid1(), )
-                p = self._serialize(o.m_wire_matrices, n, )
+                n = "{}-{}".format(o.m_name, uuid.uuid1())
+                p = os.path.join(self.tmp_dir, "{0}.binwire".format(n))
+                w = MXSBinWireWriterLegacy(p, o.m_wire_matrices)
+                self.wire_data_paths.append(p)
                 a = o._repr()
                 a['wire_matrices'] = p
                 self.serialized_data.append(a)
-                self.wire_data_paths.append(p)
             else:
                 a = o._repr()
                 self.serialized_data.append(a)
@@ -3938,6 +3939,88 @@ class MXSBinParticlesReaderLegacy():
         n = r(o + "i")[0]
         self.PARTICLE_IDS = r(o + "{}i".format(n))
         # eof
+        e = r(o + "?")
+        if(self.offset != len(self.bindata)):
+            raise RuntimeError("expected EOF")
+
+
+class MXSBinWireWriterLegacy():
+    def __init__(self, path, data):
+        d = data
+        o = "@"
+        with open("{0}.tmp".format(path), 'wb') as f:
+            p = struct.pack
+            fw = f.write
+            # header
+            fw(p(o + "7s", 'BINWIRE'.encode('utf-8')))
+            fw(p(o + "?", False))
+            # number of wires
+            n = len(d)
+            fw(p(o + "i", n))
+            fw(p(o + "?", False))
+            # data
+            for base, pivot, loc, rot, sca in data:
+                base = list(sum(base, ()))
+                fw(p(o + "12d", *base))
+                pivot = list(sum(pivot, ()))
+                fw(p(o + "12d", *pivot))
+                fw(p(o + "3d", *loc))
+                fw(p(o + "3d", *rot))
+                fw(p(o + "3d", *sca))
+            # end
+            fw(p(o + "?", False))
+        if(os.path.exists(path)):
+            os.remove(path)
+        shutil.move("{0}.tmp".format(path), path)
+        self.path = path
+
+
+class MXSBinWireReaderLegacy():
+    def __init__(self, path):
+        self.offset = 0
+        with open(path, "rb") as bf:
+            self.bindata = bf.read()
+        
+        def r(f):
+            d = struct.unpack_from(f, self.bindata, self.offset)
+            self.offset += struct.calcsize(f)
+            return d
+        
+        # endianness?
+        signature = 19512248343873858
+        l = r("<q")[0]
+        self.offset = 0
+        b = r(">q")[0]
+        self.offset = 0
+        if(l == signature):
+            if(sys.byteorder != "little"):
+                raise RuntimeError()
+            self.order = "<"
+        elif(b == signature):
+            if(sys.byteorder != "big"):
+                raise RuntimeError()
+            self.order = ">"
+        else:
+            raise AssertionError("{}: not a MXSBinWire file".format(self.__class__.__name__))
+        o = self.order
+        # magic
+        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
+        if(self.magic != 'BINWIRE'):
+            raise RuntimeError()
+        _ = r(o + "?")
+        # number floats
+        self.num = r(o + "i")[0]
+        _ = r(o + "?")
+        self.data = []
+        for i in range(self.num):
+            base = r(o + "12d")
+            base = [base[i * 3:(i + 1) * 3] for i in range(4)]
+            pivot = r(o + "12d")
+            pivot = [pivot[i * 3:(i + 1) * 3] for i in range(4)]
+            loc = r(o + "3d")
+            rot = r(o + "3d")
+            sca = r(o + "3d")
+            self.data.append((base, pivot, loc, rot, sca, ))
         e = r(o + "?")
         if(self.offset != len(self.bindata)):
             raise RuntimeError("expected EOF")

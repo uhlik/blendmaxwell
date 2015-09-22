@@ -245,6 +245,57 @@ class MXSBinParticlesReaderLegacy():
             raise RuntimeError("expected EOF")
 
 
+class MXSBinWireReaderLegacy():
+    def __init__(self, path):
+        self.offset = 0
+        with open(path, "rb") as bf:
+            self.bindata = bf.read()
+        
+        def r(f):
+            d = struct.unpack_from(f, self.bindata, self.offset)
+            self.offset += struct.calcsize(f)
+            return d
+        
+        # endianness?
+        signature = 19512248343873858
+        l = r("<q")[0]
+        self.offset = 0
+        b = r(">q")[0]
+        self.offset = 0
+        if(l == signature):
+            if(sys.byteorder != "little"):
+                raise RuntimeError()
+            self.order = "<"
+        elif(b == signature):
+            if(sys.byteorder != "big"):
+                raise RuntimeError()
+            self.order = ">"
+        else:
+            raise AssertionError("{}: not a MXSBinWire file".format(self.__class__.__name__))
+        o = self.order
+        # magic
+        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
+        if(self.magic != 'BINWIRE'):
+            raise RuntimeError()
+        _ = r(o + "?")
+        # number floats
+        self.num = r(o + "i")[0]
+        _ = r(o + "?")
+        self.data = []
+        for i in range(self.num):
+            base = r(o + "12d")
+            base = [base[i * 3:(i + 1) * 3] for i in range(4)]
+            pivot = r(o + "12d")
+            pivot = [pivot[i * 3:(i + 1) * 3] for i in range(4)]
+            loc = r(o + "3d")
+            rot = r(o + "3d")
+            sca = r(o + "3d")
+            self.data.append((base, pivot, loc, rot, sca, ))
+        e = r(o + "?")
+        if(self.offset != len(self.bindata)):
+            raise RuntimeError("expected EOF")
+
+
 class PercentDone():
     def __init__(self, total, prefix="> ", indent=0):
         self.current = 0
@@ -1716,8 +1767,8 @@ def wireframe(d, s, ):
     r = []
     bo = s.getObject(d['instanced'])
     
-    with open(d['wire_matrices'], 'r') as f:
-        wire_matrices = json.load(f)
+    wr = MXSBinWireReaderLegacy(d['wire_matrices'])
+    wire_matrices = wr.data
     
     for i, m in enumerate(wire_matrices):
         o = s.createInstancement("{0}-{1}".format(d['name'], i), bo)
