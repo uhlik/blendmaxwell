@@ -50,6 +50,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # TODO: New stereo lenses: Lat/Long and Stereo Fish Lens - postponed. seems like there is no python api now
 # TODO: restore instancer support for my personal use (python only)
+# TODO: dupli group, particles instancing group
 
 
 class MXSExport():
@@ -681,6 +682,23 @@ class MXSExport():
         # collect all objects to be exported, split them by type. keep this dict if hierarchy would be needed
         log("collecting objects..", 1, LogStyles.MESSAGE, )
         self.tree = self._collect()
+        
+        ls = []
+        for o in self._empties:
+            ls.append(o['object'])
+        for o in self._meshes:
+            ls.append(o['object'])
+        for o in self._bases:
+            ls.append(o['object'])
+        for o in self._instances:
+            ls.append(o['object'])
+        for o in self._duplicates:
+            ls.append(o['object'])
+        for o in self._references:
+            ls.append(o['object'])
+        for o in self._volumetrics:
+            ls.append(o['object'])
+        MXSDatabase.set_object_export_list(ls)
         
         # count all objects, will be used for progress reporting.. not quite precise, but good for now.. better than nothing
         self.progress_current = 0
@@ -1399,12 +1417,26 @@ class MXSDatabase():
     All objects which defines m_name and m_parent variable should include this:
     self.m_name = MXSDatabase.object_name(self.b_object, self.b_name)
     self.m_parent = MXSDatabase.object_name(self.b_parent, self.b_parent.name)
+    Also all extension which use some other object must use the final name.
     """
     
     # TODO: use similar mechanism for materials to skip unused before actual export
     
     __objects = []
     __valid_chars = "-_ {}{}".format(string.ascii_letters, string.digits)
+    
+    __objects_marked_to_export = []
+    
+    @classmethod
+    def set_object_export_list(cls, ls, ):
+        cls.__objects_marked_to_export = ls
+    
+    @classmethod
+    def is_in_object_export_list(cls, ob, ):
+        for o in cls.__objects_marked_to_export:
+            if(ob == o):
+                return True
+        return False
     
     @classmethod
     def object_name(cls, ob, nm, ):
@@ -1449,6 +1481,7 @@ class MXSDatabase():
     @classmethod
     def clear(cls):
         cls.__objects = []
+        cls.__objects_marked_to_export = []
 
 
 class Serializable():
@@ -3068,6 +3101,11 @@ class MXSCloner(MXSModifier):
         self.m_display_max = int(mxex.display_max)
         if(cloned is not None):
             # self.m_cloned_object = ps.settings.dupli_object.name
+            
+            if(not MXSDatabase.is_in_object_export_list(cloned)):
+                log("{}: '{}': cloned object is hidden, skipping..".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                self.skip = True
+            
             self.m_cloned_object = cloned
         else:
             self.m_cloned_object = ''
@@ -3086,10 +3124,19 @@ class MXSScatter(MXSModifier):
         
         mxex = self.mxex
         
-        self.m_scatter_object = mxex.scatter_object
-        if(self.m_scatter_object is ''):
+        if(mxex.scatter_object == ''):
             log("{}: '{}': no scatter object, skipping Maxwell Scatter modifier..".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
             self.skip = True
+            self.m_scatter_object = ""
+        else:
+            so = bpy.data.objects[mxex.scatter_object]
+            # check if object is marked to export, and if not, warn user and skip it
+            if(not MXSDatabase.is_in_object_export_list(so)):
+                log("{}: '{}': scatter object is hidden, skipping Maxwell Scatter modifier..".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                self.skip = True
+                self.m_scatter_object = ""
+            else:
+                self.m_scatter_object = MXSDatabase.object_name(so, so.name)
         
         self.m_inherit_objectid = mxex.inherit_objectid
         self.m_density = mxex.density
@@ -3501,7 +3548,7 @@ class MXSTexture(Serializable):
 
 class MXSWireframeBase(MXSMesh):
     def __init__(self, euuid, ):
-        # FIXME: try to do it without modifying scene during export, blender might crash, for now this is just hack 
+        # FIXME: try to do it without modifying scene during export, blender might crash, for now this is just hack..
         n = 'WIREFRAME_BASE_{}'.format(euuid)
         mx = bpy.context.scene.maxwell_render
         gen = utils.CylinderMeshGenerator(height=1, radius=mx.export_wire_edge_radius, sides=mx.export_wire_edge_resolution, enhanced=True, )
@@ -3524,7 +3571,7 @@ class MXSWireframeBase(MXSMesh):
 
 class MXSWireframeContainer(MXSEmpty):
     def __init__(self, euuid, ):
-        # FIXME: try to do it without modifying scene during export, blender might crash, for now this is just hack
+        # FIXME: try to do it without modifying scene during export, blender might crash, for now this is just hack..
         n = 'WIREFRAME_CONTAINER_{}'.format(euuid)
         ob = utils.add_object2(n, None, )
         
