@@ -756,7 +756,7 @@ class MXSExport():
             meshes.append(o)
             
             if(self.use_wireframe):
-                w = MXSWireframe(o, self.wireframe_base_name)
+                w = MXSWireframeInstances(o, self.wireframe_base_name)
                 w.m_parent = self.wireframe_container_name
                 self._write(w)
             
@@ -775,7 +775,7 @@ class MXSExport():
             meshes.append(o)
             
             if(self.use_wireframe):
-                w = MXSWireframe(o, self.wireframe_base_name)
+                w = MXSWireframeInstances(o, self.wireframe_base_name)
                 w.m_parent = self.wireframe_container_name
                 self._write(w)
             
@@ -799,7 +799,7 @@ class MXSExport():
             self._write(o)
             
             if(self.use_wireframe):
-                w = MXSWireframe(o, self.wireframe_base_name)
+                w = MXSWireframeInstances(o, self.wireframe_base_name)
                 w.m_parent = self.wireframe_container_name
                 self._write(w)
         
@@ -814,7 +814,7 @@ class MXSExport():
                 self._write(o)
             
             if(self.use_wireframe):
-                w = MXSWireframe(o, self.wireframe_base_name)
+                w = MXSWireframeInstances(o, self.wireframe_base_name)
                 w.m_parent = self.wireframe_container_name
                 self._write(w)
         
@@ -1027,7 +1027,7 @@ class MXSExport():
                         self.part_data_paths.append(p)
                 a = o._repr()
                 self.serialized_data.append(a)
-            elif(o.m_type == 'WIREFRAME'):
+            elif(o.m_type == 'WIREFRAME_INSTANCES'):
                 n = "{}-{}".format(o.m_name, uuid.uuid1())
                 p = os.path.join(self.tmp_dir, "{0}.binwire".format(n))
                 w = MXSBinWireWriterLegacy(p, o.m_wire_matrices)
@@ -1278,7 +1278,7 @@ class MXSExport():
                               o.m_uv_channels, pack_object_props(o), o.m_num_materials,
                               o.m_materials, o.m_triangle_materials, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
-            elif(o.m_type == 'WIREFRAME'):
+            elif(o.m_type == 'WIREFRAME_INSTANCES'):
                 e = self.wireframe_base_name
                 c = self.wireframe_container_name
                 p = pack_object_props(o)
@@ -3510,10 +3510,12 @@ class MXSWireframeBase(MXSMesh):
     def __init__(self, euuid, ):
         n = 'WIREFRAME_BASE_{}'.format(euuid)
         mx = bpy.context.scene.maxwell_render
-        gen = utils.CylinderMeshGenerator(height=1, radius=mx.export_wire_edge_radius, sides=mx.export_wire_edge_resolution, )
+        gen = utils.CylinderMeshGenerator(height=1, radius=mx.export_wire_edge_radius, sides=mx.export_wire_edge_resolution, enhanced=True, )
         me = bpy.data.meshes.new(n)
         v, e, f = gen.generate()
         me.from_pydata(v, [], f)
+        for p in me.polygons:
+            p.use_smooth = True
         ob = utils.add_object2(n, me)
         
         o = {'type': 'MESH', 'export': True, 'object': ob, 'mesh': me, 'export_type': 'MESH', 'parent': None, 'children': [], 'converted': False, }
@@ -3538,7 +3540,7 @@ class MXSWireframeContainer(MXSEmpty):
         self.wipe_out_object = ob
 
 
-class MXSWireframe(MXSObject):
+class MXSWireframeInstances(MXSObject):
     def __init__(self, o, wire_base_name, ):
         # log("wireframe: '{}'".format(o.m_name), 3, )
         log("wireframe..", 3, )
@@ -3554,7 +3556,7 @@ class MXSWireframe(MXSObject):
         
         super().__init__(d)
         
-        self.m_type = 'WIREFRAME'
+        self.m_type = 'WIREFRAME_INSTANCES'
         self.m_instanced = wire_base_name
         self.base_b_object = bpy.data.objects[wire_base_name]
         
@@ -3960,13 +3962,10 @@ class MXSBinWireWriterLegacy():
             fw(p(o + "?", False))
             # data
             for base, pivot, loc, rot, sca in data:
-                base = list(sum(base, ()))
-                fw(p(o + "12d", *base))
-                pivot = list(sum(pivot, ()))
-                fw(p(o + "12d", *pivot))
-                fw(p(o + "3d", *loc))
-                fw(p(o + "3d", *rot))
-                fw(p(o + "3d", *sca))
+                base = tuple(sum(base, ()))
+                pivot = tuple(sum(pivot, ()))
+                w = base + pivot + loc + rot + sca
+                fw(p(o + "33d", *w))
             # end
             fw(p(o + "?", False))
         if(os.path.exists(path)):
@@ -4013,13 +4012,14 @@ class MXSBinWireReaderLegacy():
         _ = r(o + "?")
         self.data = []
         for i in range(self.num):
-            base = r(o + "12d")
+            w = r(o + "33d")
+            base = w[0:12]
             base = [base[i * 3:(i + 1) * 3] for i in range(4)]
-            pivot = r(o + "12d")
+            pivot = w[12:24]
             pivot = [pivot[i * 3:(i + 1) * 3] for i in range(4)]
-            loc = r(o + "3d")
-            rot = r(o + "3d")
-            sca = r(o + "3d")
+            loc = w[24:27]
+            rot = w[27:30]
+            sca = w[30:33]
             self.data.append((base, pivot, loc, rot, sca, ))
         e = r(o + "?")
         if(self.offset != len(self.bindata)):

@@ -283,13 +283,14 @@ class MXSBinWireReaderLegacy():
         _ = r(o + "?")
         self.data = []
         for i in range(self.num):
-            base = r(o + "12d")
+            w = r(o + "33d")
+            base = w[0:12]
             base = [base[i * 3:(i + 1) * 3] for i in range(4)]
-            pivot = r(o + "12d")
+            pivot = w[12:24]
             pivot = [pivot[i * 3:(i + 1) * 3] for i in range(4)]
-            loc = r(o + "3d")
-            rot = r(o + "3d")
-            sca = r(o + "3d")
+            loc = w[24:27]
+            rot = w[27:30]
+            sca = w[30:33]
             self.data.append((base, pivot, loc, rot, sca, ))
         e = r(o + "?")
         if(self.offset != len(self.bindata)):
@@ -1737,15 +1738,9 @@ def sea(d, s, ):
 
 def hierarchy(d, s, ):
     log("setting object hierarchy..", 2)
-    
-    # a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES',
-    #      'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER',
-    #      'SEA', 'WIREFRAME_MATERIAL', 'WIREFRAME_EDGE', 'WIREFRAME', 'ASSET_REFERENCE', ]
     a = ['CAMERA', 'EMPTY', 'MESH', 'MESH_INSTANCE', 'SCENE', 'ENVIRONMENT', 'PARTICLES', 'HAIR',
          'REFERENCE', 'VOLUMETRICS', 'SUBDIVISION', 'SCATTER', 'GRASS', 'CLONER', 'SEA', ]
     
-    # object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', 'SEA', ]
-    # object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
     object_types = ['EMPTY', 'MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', 'WIREFRAME_CONTAINER', 'WIREFRAME_BASE', ]
     for i in range(len(d)):
         if(d[i]['type'] in object_types):
@@ -1912,7 +1907,7 @@ def main(args):
             wire_container = empty(d, mxs)
         elif(d['type'] == 'WIREFRAME_BASE'):
             wire_base = mesh(d, mxs)
-        elif(d['type'] == 'WIREFRAME'):
+        elif(d['type'] == 'WIREFRAME_INSTANCES'):
             wos = wireframe(d, mxs, )
             all_wire_instances.extend(wos)
         
