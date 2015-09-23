@@ -1703,7 +1703,7 @@ class MXSEnvironment(Serializable):
         
         if(mx.sun_lamp_priority):
             # extract suns from objects
-            objs = self.context.scene.objects
+            objs = bpy.context.scene.objects
             suns = []
             for o in objs:
                 if(o.type == 'LAMP'):
@@ -1717,15 +1717,15 @@ class MXSEnvironment(Serializable):
                 if(len(suns) == 1):
                     return suns[0]
                 else:
-                    log("more than one sun in scene", 1, LogStyles.WARNING)
+                    log("more than one sun in scene", 2, LogStyles.WARNING)
                     nm = []
                     for o in suns:
-                        nm.append(o['object'].name)
+                        nm.append(o.name)
                     snm = sorted(nm)
                     n = snm[0]
                     for o in suns:
-                        if(o['object'].name == n):
-                            log("using {0} as sun".format(n), 1, LogStyles.WARNING)
+                        if(o.name == n):
+                            log("using '{0}' as sun".format(n), 2, LogStyles.WARNING)
                             return o
             
             sun = get_sun(suns)

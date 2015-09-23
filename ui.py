@@ -788,7 +788,8 @@ class SunLampPanel(DataButtonsPanel, Panel):
         sub = l.column()
         m = context.object.data.maxwell_render
         
-        sub.prop(m, 'override')
+        # sub.prop(m, 'override')
+        sub.label("See Sun Panel in World Settings")
 
 
 class CameraPresetsPanel(CameraButtonsPanel, Panel):
