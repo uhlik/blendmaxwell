@@ -2458,6 +2458,11 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
         if(len(o.data.uv_textures) == 0):
             r.label("No UV Maps", icon='ERROR', )
         else:
+            if(len(p.child_particles) > 0):
+                r.label("Using hack to get child particles root uv locations.", icon='ERROR', )
+                r = sub.row()
+                r.label("Blender might crash..", icon='ERROR', )
+                r = sub.row()
             r.prop_search(m, "uv_layer", o.data, "uv_textures", )
         
         sub.separator()
