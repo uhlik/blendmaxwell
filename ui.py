@@ -118,6 +118,10 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
         
         b.prop(m, 'export_use_wireframe')
         if(m.export_use_wireframe):
+            b.label("Current implementation is not quite standard.", icon='ERROR', )
+            b.label("Because of this Blender might crash..", icon='ERROR', )
+            b.label("Save your work before hitting F12!", icon='ERROR', )
+            
             c = b.column()
             c.label("Wireframe Options:")
             sc = c.column(align=True)
@@ -2458,11 +2462,6 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
         if(len(o.data.uv_textures) == 0):
             r.label("No UV Maps", icon='ERROR', )
         else:
-            if(len(p.child_particles) > 0):
-                r.label("Using hack to get child particles root uv locations.", icon='ERROR', )
-                r = sub.row()
-                r.label("Blender might crash..", icon='ERROR', )
-                r = sub.row()
             r.prop_search(m, "uv_layer", o.data, "uv_textures", )
         
         sub.separator()

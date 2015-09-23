@@ -32,6 +32,8 @@ import bpy
 from mathutils import Matrix, Vector
 from bpy_extras import io_utils
 import bmesh
+from mathutils.geometry import barycentric_transform
+from mathutils.bvhtree import BVHTree
 
 from .log import log, clear_log, LogStyles
 from . import utils
@@ -46,7 +48,7 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
-# TODO New stereo lenses: Lat/Long and Stereo Fish Lens - postponed. seems like there is no python api now
+# TODO: New stereo lenses: Lat/Long and Stereo Fish Lens - postponed. seems like there is no python api now
 # TODO: restore instancer support for my personal use (python only)
 
 
@@ -2674,32 +2676,24 @@ class MXSHair(MXSObject):
             uv_locs = tuple()
             
             if(len(ps.child_particles) > 0):
-                log("using hack to get child particles root uv locations, consider switching child particles off..", 3, LogStyles.WARNING, )
-                # make helper object - triangulated emitter with modifiers applied
+                # object to mesh the same way as when exporting
                 me = o.to_mesh(bpy.context.scene, True, 'RENDER', )
-                # me.transform(ROTATE_X_MINUS_90)
-                me.transform(o.matrix_world)
-                me.validate()
                 bm = bmesh.new()
                 bm.from_mesh(me)
+                # apply matrix_world to calculate all in global coords
+                bm.transform(o.matrix_world)
+                # triangulate, the same way as when exporting mesh
                 bmesh.ops.triangulate(bm, faces=bm.faces)
+                tree = BVHTree.FromBMesh(bm)
+                # put to mesh again..
                 bm.to_mesh(me)
-                bm.free()
-                me.calc_tessface()
-                me.calc_normals()
-                n = 'PARTICLES_UVS_{}'.format(uuid.uuid1())
-                op = utils.add_object2(n, me)
-                bpy.context.scene.update()
-                
-                from mathutils.geometry import barycentric_transform
-                
-                uv_layers = op.data.uv_layers
+                uv_layers = me.uv_layers
                 for p in range(0, num_curves):
                     # global hair root location
                     root_co = ps.co_hair(o, p, 0)
-                    # find closest triangle on helper
-                    polyloc, polynor, polyind = op.closest_point_on_mesh(root_co)
-                    poly = op.data.polygons[polyind]
+                    # find closest polygon
+                    polyloc, polynor, polyind, distance = tree.find(root_co)
+                    poly = me.polygons[polyind]
                     # loop indexes
                     pl = me.loops[poly.loop_start:poly.loop_start + poly.loop_total]
                     pli = [pl[i].vertex_index for i in range(len(pl))]
@@ -2724,12 +2718,11 @@ class MXSHair(MXSObject):
                     uz = Vector((uvv[2].x, uvv[2].y * -1, 0.0, ))
                     # transform
                     v = barycentric_transform(root_co, x, y, z, ux, uy, uz, )
-                    
                     # add just (x, y)
                     uv_locs += v.to_tuple()[:2]
-                
-                # remove helper
-                utils.wipe_out_object(op, and_data=True, )
+                # cleanup
+                bm.free()
+                bpy.data.meshes.remove(me)
             else:
                 # no child particles, use 'uv_on_emitter'
                 nc0 = len(ps.particles)
@@ -3508,6 +3501,7 @@ class MXSTexture(Serializable):
 
 class MXSWireframeBase(MXSMesh):
     def __init__(self, euuid, ):
+        # FIXME: try to do it without modifying scene during export, blender might crash, for now this is just hack 
         n = 'WIREFRAME_BASE_{}'.format(euuid)
         mx = bpy.context.scene.maxwell_render
         gen = utils.CylinderMeshGenerator(height=1, radius=mx.export_wire_edge_radius, sides=mx.export_wire_edge_resolution, enhanced=True, )
@@ -3530,6 +3524,7 @@ class MXSWireframeBase(MXSMesh):
 
 class MXSWireframeContainer(MXSEmpty):
     def __init__(self, euuid, ):
+        # FIXME: try to do it without modifying scene during export, blender might crash, for now this is just hack
         n = 'WIREFRAME_CONTAINER_{}'.format(euuid)
         ob = utils.add_object2(n, None, )
         
