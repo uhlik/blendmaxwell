@@ -12,7 +12,7 @@
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
 * Mesh objects using the same mesh data (and renderable Curves) are exported as instances (optional)
 * MXS references
-* Dupli verts and faces
+* Dupli verts, faces and group
 * Multiple UV channels
 * Material assignment (including backface materials) and multiple materials per object
 * Extension Materials creation and editing inside Blender

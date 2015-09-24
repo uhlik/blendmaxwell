@@ -50,7 +50,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # TODO: New stereo lenses: Lat/Long and Stereo Fish Lens - postponed. seems like there is no python api now
 # TODO: restore instancer support for my personal use (python only)
-# TODO: dupli group, particles instancing group
+# TODO: particles instancing group
 
 
 class MXSExport():
@@ -556,7 +556,7 @@ class MXSExport():
         for o in self._meshes:
             ob = o['object']
             if(ob.dupli_type != 'NONE'):
-                if(ob.dupli_type == 'FACES' or ob.dupli_type == 'VERTS'):
+                if(ob.dupli_type == 'FACES' or ob.dupli_type == 'VERTS' or ob.dupli_type == 'GROUP'):
                     ob.dupli_list_create(self.context.scene, settings='RENDER')
                     for dli in ob.dupli_list:
                         do = dli.object
@@ -1479,6 +1479,12 @@ class MXSDatabase():
         return nm
     
     @classmethod
+    def object_original_name(cls, ob, ):
+        for o, n, onm in cls.__objects:
+            if(o == ob):
+                return onm
+    
+    @classmethod
     def clear(cls):
         cls.__objects = []
         cls.__objects_marked_to_export = []
@@ -2263,7 +2269,10 @@ class MXSMeshInstance(MXSObject):
             self.dupli = True
         
         if(self.dupli):
+            # parent will be always the one set in _collect(), in dupli groups dupli object don't have to be parented and result is wrong transformation
             self.m_name = MXSDatabase.object_name(self.b_object, self.o['dupli_name'])
+            dpo = bpy.data.objects[self.o['parent']['object'].name]
+            self.m_parent = MXSDatabase.object_name(dpo, dpo.name)
             
             mw = self.o['dupli_matrix'].copy()
             m = self.o['parent']['object'].matrix_world.inverted() * mw
@@ -2992,6 +3001,8 @@ class MXSCloner(MXSModifier):
             # FIXME: also here i have 10 particles, but only 8 clones is rendered in place and one clone is far away, reimporting bin show all 10 particles are where they should be
             # FIXME: update, when based-cloned-with-modifier object is in scene root (not child of anything) the missing particle is back, but this works only for externally linked bin files, not for embedded particles..
             
+            # FIXME: also would be nice to have predictable results, link more with particles in blender to get better result in viewport - actual render, would be nice to calculate size automatically etc. like checkbox use blender size or not.
+            
             # i get particle locations in global coordinates, so need to fix that
             # mat = bpy.data.objects[self.m_parent].matrix_world.copy()
             # mat.invert()
@@ -3102,7 +3113,8 @@ class MXSCloner(MXSModifier):
         if(cloned is not None):
             # self.m_cloned_object = ps.settings.dupli_object.name
             
-            if(not MXSDatabase.is_in_object_export_list(cloned)):
+            co = bpy.data.objects[MXSDatabase.object_original_name(ps.settings.dupli_object)]
+            if(not MXSDatabase.is_in_object_export_list(co)):
                 log("{}: '{}': cloned object is hidden, skipping..".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
                 self.skip = True
             
