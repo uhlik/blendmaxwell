@@ -839,41 +839,42 @@ class ExtGrassProperties(PropertyGroup):
     material = StringProperty(name="Material", default="", )
     backface_material = StringProperty(name="Backface Material", default="", )
     
+    primitive_type = EnumProperty(name="Primitive Type", items=[('0', "Curve", ""), ('1', "Flat", ""), ('2', "Cylinder", "")], default='1', )
+    points_per_blade = IntProperty(name="Points Per Blade", default=8, min=2, max=20, )
+    
     density = IntProperty(name="Density (blades/m2)", default=3000, min=0, max=100000000, )
     density_map = StringProperty(name="Density Map", default="", )
     
-    length = FloatProperty(name="Length (cm)", default=10.0, min=0.0, max=100000.0, precision=3, )
+    seed = IntProperty(name="Random Seed", default=0, min=0, max=16300, )
+    
+    length = FloatProperty(name="Length (cm)", default=7.5, min=0.0, max=100000.0, precision=3, )
     length_map = StringProperty(name="Length Map", default="", )
-    length_variation = FloatProperty(name="Length Variation (%)", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    length_variation = FloatProperty(name="Length Variation (%)", default=60.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     
-    root_width = FloatProperty(name="Root Width (mm)", default=5.0, min=0.00001, max=100000.0, precision=3, )
-    tip_width = FloatProperty(name="Tip Width (mm)", default=1.0, min=0.00001, max=100000.0, precision=3, )
+    root_width = FloatProperty(name="Root Width (mm)", default=6.0, min=0.00001, max=100000.0, precision=3, )
+    tip_width = FloatProperty(name="Tip Width (mm)", default=2.5, min=0.00001, max=100000.0, precision=3, )
     
-    direction_type = FloatProperty(name="Grow Towards World-Y (%)", default=10.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    direction_type = FloatProperty(name="Grow Towards World-Y (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     
-    initial_angle = FloatProperty(name="Initial Angle", default=math.radians(80.000), min=math.radians(0.000), max=math.radians(90.000), precision=1, subtype='ANGLE', )
-    initial_angle_variation = FloatProperty(name="Initial Angle Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    initial_angle = FloatProperty(name="Initial Angle", default=math.radians(60.000), min=math.radians(0.000), max=math.radians(90.000), precision=1, subtype='ANGLE', )
+    initial_angle_variation = FloatProperty(name="Initial Angle Variation (%)", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     initial_angle_map = StringProperty(name="Initial Angle Map", default="", )
     
     start_bend = FloatProperty(name="Start Bend (%)", default=40.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     start_bend_variation = FloatProperty(name="Start Bend Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     start_bend_map = StringProperty(name="Start Bend Map", default="", )
     
-    bend_radius = FloatProperty(name="Bend Radius (cm)", default=10.0, min=0.0, max=10000.0, precision=1, )
-    bend_radius_variation = FloatProperty(name="Bend Radius Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    bend_radius = FloatProperty(name="Bend Radius (cm)", default=5.0, min=0.0, max=10000.0, precision=1, )
+    bend_radius_variation = FloatProperty(name="Bend Radius Variation (%)", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     bend_radius_map = StringProperty(name="Bend Radius Map", default="", )
     
     bend_angle = FloatProperty(name="Bend Angle", default=math.radians(80.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )
-    bend_angle_variation = FloatProperty(name="Bend Radius Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    bend_angle_variation = FloatProperty(name="Bend Radius Variation (%)", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     bend_angle_map = StringProperty(name="Bend Radius Map", default="", )
     
     cut_off = FloatProperty(name="Cut Off (%)", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     cut_off_variation = FloatProperty(name="Cut Off Variation (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     cut_off_map = StringProperty(name="Cut Off Map", default="", )
-    
-    points_per_blade = IntProperty(name="Points Per Blade", default=4, min=2, max=20, )
-    primitive_type = EnumProperty(name="Primitive Type", items=[('0', "Curve", ""), ('1', "Flat", ""), ('2', "Cylinder", "")], default='0', )
-    seed = IntProperty(name="Random Seed", default=0, min=0, max=16300, )
     
     lod = BoolProperty(name="Enable Level of Detail", default=False, )
     lod_min_distance = FloatProperty(name="Min Distance (m)", default=10.0, min=0.0, max=100000.0, precision=2, )
