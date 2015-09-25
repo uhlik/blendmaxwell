@@ -43,7 +43,7 @@ def prefs():
 def check_for_template():
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_mxs.py")
     if(not os.path.exists(TEMPLATE)):
-        log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )
+        log("support directory is missing..", 1, LogStyles.ERROR, )
         raise OSError("support directory is missing..")
     return TEMPLATE
 
@@ -51,7 +51,7 @@ def check_for_template():
 def check_for_import_template():
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxs.py")
     if(not os.path.exists(TEMPLATE)):
-        log("ERROR: support directory is missing..", 1, LogStyles.ERROR, )
+        log("support directory is missing..", 1, LogStyles.ERROR, )
         raise OSError("support directory is missing..")
     return TEMPLATE
 

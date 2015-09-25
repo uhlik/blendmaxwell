@@ -517,8 +517,8 @@ class MXSExport():
         
         # no visible camera
         if(len(self._cameras) == 0):
-            log("No visible and active camera in scene!", 2, LogStyles.WARNING)
-            log("Trying to find hidden active camera..", 3)
+            log("no visible and active camera in scene!", 2, LogStyles.WARNING)
+            log("trying to find hidden active camera..", 3)
             ac = self.context.scene.camera
             if(ac is not None):
                 # there is one active in scene, try to find it
@@ -530,7 +530,7 @@ class MXSExport():
                         cam = o
                         cam['export'] = True
                         self._cameras.append(cam)
-                        log("Found active camera: '{0}' and added to scene.".format(cam['object'].name), 3)
+                        log("found active camera: '{}' and added to scene.".format(cam['object'].name), 3)
                 for o in h:
                     walk(o)
         
@@ -1375,7 +1375,7 @@ class MXSExport():
             if(os.path.exists(p)):
                 os.remove(p)
             else:
-                log("{1}: WARNING: _cleanup(): {0} does not exist?".format(p, self.__class__.__name__), 1, LogStyles.WARNING, )
+                log("_cleanup(): {} does not exist?".format(p), 1, LogStyles.WARNING, )
         
         rm(self.script_path)
         rm(self.scene_data_path)
@@ -1404,7 +1404,7 @@ class MXSExport():
         if(os.path.exists(self.tmp_dir)):
             os.rmdir(self.tmp_dir)
         else:
-            log("{1}: WARNING: _cleanup(): {0} does not exist?".format(self.tmp_dir, self.__class__.__name__), 1, LogStyles.WARNING, )
+            log("_cleanup(): {} does not exist?".format(self.tmp_dir), 1, LogStyles.WARNING, )
 
 
 class MXSDatabase():
@@ -1723,7 +1723,7 @@ class MXSEnvironment(Serializable):
                 if(len(suns) == 1):
                     return suns[0]
                 else:
-                    log("more than one sun in scene", 2, LogStyles.WARNING)
+                    log("more than one sun in scene!", 2, LogStyles.WARNING)
                     nm = []
                     for o in suns:
                         nm.append(o.name)
@@ -1731,12 +1731,12 @@ class MXSEnvironment(Serializable):
                     n = snm[0]
                     for o in suns:
                         if(o.name == n):
-                            log("using '{0}' as sun".format(n), 2, LogStyles.WARNING)
+                            log("using '{}' as sun..".format(n), 2, LogStyles.WARNING)
                             return o
             
             sun = get_sun(suns)
             if(sun is None):
-                log("'Sun Lamp Priority' is True, but there is not Sun object in scene. Using World settings..", 1, LogStyles.WARNING)
+                log("'Sun Lamp Priority' is True, but there is no Sun object in scene. using World settings..", 1, LogStyles.WARNING)
                 self.m_sun_lamp_priority = False
             else:
                 # direction from matrix
@@ -2033,7 +2033,7 @@ class MXSObject(Serializable):
             if(s.material is not None):
                 self.m_materials.append(s.material.name)
             else:
-                log("{}: slot: '{}' has no material assigned, material placeholder will be used..".format(self.__class__.__name__, i, ), 3, LogStyles.WARNING, )
+                log("slot '{}' has no material assigned, material placeholder will be used..".format(i), 3, LogStyles.WARNING, )
         
         self.m_backface_material = self.b_object.maxwell_render.backface_material
 
@@ -2103,7 +2103,7 @@ class MXSMesh(MXSObject):
                         last_modifier.show_render = False
                     else:
                         if(last_modifier.type == 'SUBSURF'):
-                            log("{}: WARNING: '{}': (auto subdivision modifiers) last subdivision modifier can't be used".format(self.__class__.__name__, ob.name), 3, LogStyles.WARNING, )
+                            log("'{}': (auto subdivision modifiers) last subdivision modifier can't be used".format(ob.name), 3, LogStyles.WARNING, )
             
             # or make new flattened mesh (regular meshes, with modifiers applied)
             me = ob.to_mesh(bpy.context.scene, True, 'RENDER', )
@@ -2157,7 +2157,7 @@ class MXSMesh(MXSObject):
             quad_pairs = []
             for k, v in quadd.items():
                 if(len(v) > 2):
-                    log("{}: WARNING: {}: triangulation result is non-manifold, Catmull-Clark subdivision will not work".format(self.__class__.__name__, ob.name), 3, LogStyles.WARNING, )
+                    log("{}: triangulation result is non-manifold, Catmull-Clark subdivision will not work".format(ob.name), 3, LogStyles.WARNING, )
                     v = v[:2]
                 quad_pairs.append(v)
         
@@ -2298,8 +2298,11 @@ class MXSReference(MXSObject):
         
         self.ref = mx
         
-        if(not os.path.exists(bpy.path.abspath(mx.path))):
-            log("{}: mxs file: '{}' does not exist, skipping..".format(self.__class__.__name__, bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
+        if(mx.path == ""):
+            log("mxs file path is empty, skipping..", 3, LogStyles.WARNING)
+            self.skip = True
+        elif(not os.path.exists(bpy.path.abspath(mx.path))):
+            log("mxs file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
             self.skip = True
         
         self.m_path = bpy.path.abspath(bpy.path.abspath(mx.path))
@@ -2318,12 +2321,12 @@ class MXSReference(MXSObject):
             try:
                 self.m_material = bpy.data.materials[self.ref.material].name
             except:
-                log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.ref.material, ), 3, LogStyles.WARNING, )
         if(self.ref.backface_material != ''):
             try:
                 self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
             except:
-                log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.backface_material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.ref.backface_material, ), 3, LogStyles.WARNING, )
 
 
 '''
@@ -2340,7 +2343,7 @@ class MXSAssetReference(MXSObject):
         self.ref = mx
         
         if(not os.path.exists(bpy.path.abspath(mx.path))):
-            log("{}: asset file: '{}' does not exist, skipping..".format(self.__class__.__name__, bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
+            log("asset file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
             self.skip = True
         
         self.m_path = bpy.path.abspath(bpy.path.abspath(mx.path))
@@ -2361,12 +2364,12 @@ class MXSAssetReference(MXSObject):
             try:
                 self.m_material = bpy.data.materials[self.ref.material].name
             except:
-                log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.ref.material, ), 3, LogStyles.WARNING, )
         if(self.ref.backface_material != ''):
             try:
                 self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
             except:
-                log("{0}: material '{1}' does not exist.".format(self.__class__.__name__, self.ref.backface_material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.ref.backface_material, ), 3, LogStyles.WARNING, )
 
 
 '''
@@ -2619,12 +2622,12 @@ class MXSParticles(MXSObject):
             try:
                 self.m_material = bpy.data.materials[self.mxex.material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
             try:
                 self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSHair(MXSObject):
@@ -2828,12 +2831,12 @@ class MXSHair(MXSObject):
             try:
                 self.m_material = bpy.data.materials[self.mxex.material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
             try:
                 self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSVolumetrics(MXSObject):
@@ -2872,12 +2875,12 @@ class MXSVolumetrics(MXSObject):
             try:
                 self.m_material = bpy.data.materials[self.mxex.material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
             try:
                 self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSModifier(Serializable):
@@ -2951,17 +2954,17 @@ class MXSGrass(MXSModifier):
             try:
                 self.m_material = bpy.data.materials[self.mxex.material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
             try:
                 self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSCloner(MXSModifier):
     def __init__(self, o, ):
-        log("'{}' ({})".format(o['object'].name, 'CLONER', ), 2)
+        log("'{}' > '{}' ({})".format(o['parent'].name, o['object'].name, 'CLONER', ), 2)
         
         super().__init__(o)
         self.m_type = 'CLONER'
@@ -3093,7 +3096,8 @@ class MXSCloner(MXSModifier):
         try:
             cloned = MXSDatabase.object_name(ps.settings.dupli_object, ps.settings.dupli_object.name)
         except AttributeError:
-            log("{}: {}: Maxwell Cloner: cloned object is not available. Skipping..".format(o.name, ps.name), 1, LogStyles.WARNING, )
+            log("{}: {}: Maxwell Cloner: cloned object is not available. Skipping..".format(o.name, ps.name), 3, LogStyles.WARNING, )
+            self.skip = True
         
         self.m_filename = bpy.path.abspath(mxex.filename)
         self.m_radius = mxex.radius
@@ -3115,7 +3119,7 @@ class MXSCloner(MXSModifier):
             
             co = bpy.data.objects[MXSDatabase.object_original_name(ps.settings.dupli_object)]
             if(not MXSDatabase.is_in_object_export_list(co)):
-                log("{}: '{}': cloned object is hidden, skipping..".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                log("'{}': cloned object is hidden, skipping..".format(self.b_object.name), 3, LogStyles.WARNING, )
                 self.skip = True
             
             self.m_cloned_object = cloned
@@ -3137,14 +3141,14 @@ class MXSScatter(MXSModifier):
         mxex = self.mxex
         
         if(mxex.scatter_object == ''):
-            log("{}: '{}': no scatter object, skipping Maxwell Scatter modifier..".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+            log("'{}': no scatter object, skipping Maxwell Scatter modifier..".format(self.b_object.name), 3, LogStyles.WARNING, )
             self.skip = True
             self.m_scatter_object = ""
         else:
             so = bpy.data.objects[mxex.scatter_object]
             # check if object is marked to export, and if not, warn user and skip it
             if(not MXSDatabase.is_in_object_export_list(so)):
-                log("{}: '{}': scatter object is hidden, skipping Maxwell Scatter modifier..".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                log("'{}': scatter object is hidden, skipping Maxwell Scatter modifier..".format(self.b_object.name), 3, LogStyles.WARNING, )
                 self.skip = True
                 self.m_scatter_object = ""
             else:
@@ -3233,11 +3237,11 @@ class MXSSubdivision(MXSModifier):
                 
                 # self.m_scheme = 1
                 nm = True
-                log("{}: WARNING: {}: Subdivision modifier on non-mesh object, Catmull-Clark subdivision may not work, if so, switch to Loop Subdivision".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                log("{}: Subdivision modifier on non-mesh object, Catmull-Clark subdivision may not work, if so, switch to Loop Subdivision".format(self.b_object.name), 3, LogStyles.WARNING, )
             else:
                 nm = is_non_manifold(self.b_object.data)
             if(not nm):
-                log("{}: WARNING: {}: Subdivision modifier on non-manifold object, a non-manifold edge incident to more than 2 faces was found, Catmull-Clark subdivision will not work, switching it off.".format(self.__class__.__name__, self.b_object.name), 3, LogStyles.WARNING, )
+                log("{}: Subdivision modifier on non-manifold object, a non-manifold edge incident to more than 2 faces was found, Catmull-Clark subdivision will not work, switching it off.".format(self.b_object.name), 3, LogStyles.WARNING, )
                 self.skip = True
 
 
@@ -3293,12 +3297,12 @@ class MXSSea(MXSObject):
             try:
                 self.m_material = bpy.data.materials[self.mxex.material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.material, ), 3, LogStyles.WARNING, )
         if(self.mxex.backface_material != ''):
             try:
                 self.m_backface_material = bpy.data.materials[self.mxex.backface_material].name
             except:
-                log("{0}: material ('{1}') does not exist.".format(self.__class__.__name__, self.mxex.backface_material, ), 3, LogStyles.WARNING, )
+                log("material '{}' does not exist.".format(self.mxex.backface_material, ), 3, LogStyles.WARNING, )
 
 
 class MXSMaterial(Serializable):
@@ -3393,7 +3397,7 @@ class MXSMaterialExtension(MXSMaterial):
         elif(self.m_use == 'HAIR'):
             self._hair()
         else:
-            raise TypeError("{}: ({}): Unsupported extension material type: {}".format(self.__class__.__name__, self.m_name, self.m_use, ))
+            raise TypeError("{}: Unsupported extension material type: {}".format(self.m_name, self.m_use, ))
     
     def _emitter(self):
         mx = self.mx
@@ -3517,19 +3521,33 @@ class MXSMaterialExtension(MXSMaterial):
 
 class MXSTexture(Serializable):
     def __init__(self, name, ):
-        log("'{}' ({}: {})".format(name, 'TEXTURE', 'IMAGE', ), 2)
+        try:
+            tex = bpy.data.textures[name]
+            log("'{}' ({}: {}) '{}'".format(name, 'TEXTURE', 'IMAGE', bpy.path.abspath(tex.image.filepath), ), 3, )
+            self.invalid = False
+        except KeyError:
+            log("'{}' ({}: {}) does not exist!".format(name, 'TEXTURE', 'IMAGE', ), 3, LogStyles.WARNING, )
+            self.invalid = True
+            return
         
         self.m_name = name
         self.m_type = 'TEXTURE'
         self.m_subtype = 'IMAGE'
         
-        tex = bpy.data.textures[name]
+        # tex = bpy.data.textures[name]
         if(tex.type != 'IMAGE'):
-            raise TypeError("{}: ({}): Unsupported texture type: {}".format(self.__class__.__name__, self.m_name, tex.type, ))
+            raise TypeError("{}: Unsupported texture type: {}".format(self.m_name, tex.type, ))
         m = tex.maxwell_render
         
-        self.m_type = 'IMAGE'
+        # self.m_type = 'IMAGE'
         self.m_path = bpy.path.abspath(tex.image.filepath)
+        
+        if(self.m_path == ""):
+            log("image path is empty..", 4, LogStyles.WARNING, )
+            self.invalid = True
+        elif(not os.path.exists(self.m_path)):
+            log("image file '{}' does not exist..".format(self.m_path), 4, LogStyles.WARNING, )
+            self.invalid = True
         
         self.m_use_override_map = m.use_global_map
         self.m_channel = m.channel
@@ -3556,6 +3574,16 @@ class MXSTexture(Serializable):
         else:
             tm = (True, True, )
         self.m_tile_method_type = tm
+    
+    def _repr(self):
+        if(self.invalid):
+            return None
+        
+        d = self._dict()
+        a = {}
+        for k, v in d.items():
+            a[k[2:]] = v
+        return a
 
 
 class MXSWireframeBase(MXSMesh):

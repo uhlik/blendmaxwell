@@ -380,7 +380,7 @@ class MXSImportLegacy():
             if(os.path.exists(p)):
                 os.remove(p)
             else:
-                log("{}: WARNING: _cleanup(): {} does not exist?".format(self.__class__.__name__, p), 1, LogStyles.WARNING, )
+                log("_cleanup(): {} does not exist?".format(p), 1, LogStyles.WARNING, )
         
         rm(self.script_path)
         rm(self.scene_data_path)
@@ -388,7 +388,7 @@ class MXSImportLegacy():
         if(os.path.exists(self.tmp_dir)):
             os.rmdir(self.tmp_dir)
         else:
-            log("{}: WARNING: _cleanup(): {} does not exist?".format(self.__class__.__name__, self.tmp_dir), 1, LogStyles.WARNING, )
+            log("_cleanup(): {} does not exist?".format(self.tmp_dir), 1, LogStyles.WARNING, )
 
 
 class MXSImport():

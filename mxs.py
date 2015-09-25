@@ -2428,7 +2428,7 @@ class MXSReader():
         is_instance, _ = o.isInstance()
         is_mesh, _ = o.isMesh()
         if(is_instance == 0 and is_mesh == 0):
-            log("WARNING: only empties, meshes and instances are supported..", 2)
+            log("only empties, meshes and instances are supported..", 2, LogStyles.WARNING, )
             return None
         r = {'name': o.getName()[0],
              'vertices': [],
@@ -2508,7 +2508,7 @@ class MXSReader():
             r['colorid'] = ", ".join(col)
         
         if(nppv - 1 != ppv and nv != 0):
-            log("WARNING: only one position per vertex is supported..", 2)
+            log("only one position per vertex is supported..", 2, LogStyles.WARNING, )
         # vertices
         for i in range(nv):
             v, _ = o.getVertex(i, ppv)

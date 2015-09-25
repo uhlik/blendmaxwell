@@ -382,12 +382,15 @@ def material(d, s, ):
                 # global properties
                 if(d['override_map']):
                     t = texture(d['override_map'], s, )
-                    m.setGlobalMap(t)
+                    if(t is not None):
+                        m.setGlobalMap(t)
                 
                 if(d['bump']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    a.textureMap = texture(d['bump_map'], s, )
+                    t = texture(d['bump_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
                     a.value = d['bump_value']
                     m.setAttribute('bump', a)
                 
@@ -418,7 +421,8 @@ def material(d, s, ):
                 e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
                 if(d['emitter_spot_map'] is not None):
                     t = texture(d['emitter_spot_map'], s)
-                    e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
+                    if(t is not None):
+                        e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
                 e.setSpotConeAngle(d['emitter_spot_cone_angle'])
                 e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
                 e.setSpotFallOffType(d['emitter_spot_falloff_type'])
@@ -463,7 +467,8 @@ def material(d, s, ):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(d['emitter_hdr_map'], s)
-                a.textureMap = t
+                if(t is not None):
+                    a.textureMap = t
                 a.value = d['emitter_hdr_intensity']
                 e.setMXI(a)
             
@@ -627,12 +632,15 @@ def material(d, s, ):
             # global properties
             if(d['override_map']):
                 t = texture(d['override_map'], s, )
-                m.setGlobalMap(t)
+                if(t is not None):
+                    m.setGlobalMap(t)
             
             if(d['bump']):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                a.textureMap = texture(d['bump_map'], s, )
+                t = texture(d['bump_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
                 a.value = d['bump_value']
                 m.setAttribute('bump', a)
             
@@ -673,6 +681,9 @@ def get_material(n, s, ):
 
 
 def texture(d, s, ):
+    if(d is None):
+        return
+    
     t = CtextureMap()
     t.setPath(d['path'])
     

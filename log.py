@@ -46,8 +46,8 @@ class LogStyles:
     NORMAL = "\033[40m\033[32m"
     HEADER = "\033[46m\033[30m"
     MESSAGE = "\033[42m\033[30m"
-    WARNING = "\033[43m\033[1;30m"
-    ERROR = "\033[41m\033[1;30m"
+    WARNING = "\033[43m\033[1;30mWARNING: "
+    ERROR = "\033[41m\033[1;30mERROR: "
     END = "\033[0m"
     EOL = "\n"
 
