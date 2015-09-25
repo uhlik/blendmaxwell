@@ -400,6 +400,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(NUMBER_OF_WARNINGS > 0):
             if(m.export_suppress_warning_popups):
                 self.report({'WARNING'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
+                log("There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS), 1, LogStyles.WARNING, )
             else:
                 self.report({'ERROR'}, "There was {} warnings during export. Check log file for details.".format(NUMBER_OF_WARNINGS))
             
