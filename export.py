@@ -3243,6 +3243,16 @@ class MXSSubdivision(MXSModifier):
             if(not nm):
                 log("{}: Subdivision modifier on non-manifold object, a non-manifold edge incident to more than 2 faces was found, Catmull-Clark subdivision will not work, switching it off.".format(self.b_object.name), 3, LogStyles.WARNING, )
                 self.skip = True
+            
+            def some_quads(me):
+                for p in me.polygons:
+                    if(len(p.vertices) == 4):
+                        return True
+                return False
+            
+            q = some_quads(self.b_object.data)
+            if(not q):
+                log("{}: Catmull-Clark subdivision option selected but the mesh does not contain quads, switching to Loop is recommended if results are not good.".format(self.b_object.name), 3, LogStyles.WARNING, )
 
 
 class MXSSea(MXSObject):
