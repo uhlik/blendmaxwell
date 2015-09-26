@@ -50,7 +50,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 # TODO: New stereo lenses: Lat/Long and Stereo Fish Lens - postponed. seems like there is no python api now
 # TODO: restore instancer support for my personal use (python only)
-# TODO: particles instancing group
 
 
 class MXSExport():
@@ -553,7 +552,9 @@ class MXSExport():
                 self._meshes.remove(o)
                 self._bases.append(o)
         
-        for o in self._meshes:
+        # duplicate list, because i might modify it while looping it..
+        meshes = self._meshes[:]
+        for o in meshes:
             ob = o['object']
             if(ob.dupli_type != 'NONE'):
                 if(ob.dupli_type == 'FACES' or ob.dupli_type == 'VERTS' or ob.dupli_type == 'GROUP'):
@@ -584,6 +585,52 @@ class MXSExport():
                                  'type': 'MESH', }
                             self._duplicates.append(d)
                     ob.dupli_list_clear()
+            
+            if(len(ob.particle_systems) > 0):
+                for ps in ob.particle_systems:
+                    pset = ps.settings
+                    if(pset.maxwell_render.use == 'PARTICLE_INSTANCES'):
+                        if(pset.render_type in ['OBJECT', 'GROUP', ]):
+                            mpi = pset.maxwell_particle_instances
+                            def process_dupli_list(ob):
+                                ob.dupli_list_create(self.context.scene, settings='RENDER')
+                                for dli in ob.dupli_list:
+                                    do = dli.object
+                                    dm = dli.matrix.copy()
+                                    di = dli.index
+                                    io = find_dupli_object(do)
+                                    if(self.use_instances and io is not None):
+                                        put_to_bases(io)
+                                    if(io is not None):
+                                        nm = "{0}-duplicator-{1}-{2}".format(ob.name, io['object'].name, di)
+                                        d = {'object': do,
+                                             'dupli_name': nm,
+                                             'dupli_matrix': dm,
+                                             'children': [],
+                                             'export': True,
+                                             'export_type': 'INSTANCE',
+                                             'mesh': io['mesh'],
+                                             'converted': False,
+                                             # 'parent': None,
+                                             'extra_options': {'hide': mpi.hide, },
+                                             'parent': o,
+                                             'type': 'MESH', }
+                                        self._duplicates.append(d)
+                                    else:
+                                        log("{} > {} > {}: instance base object not visible and renderable".format(ob.name, ps.name, 'PARTICLE_INSTANCES'), 2, LogStyles.WARNING, )
+                                ob.dupli_list_clear()
+                            
+                            if(pset.render_type == 'GROUP' and pset.dupli_group is not None):
+                                process_dupli_list(ob)
+                            elif(pset.render_type == 'OBJECT' and pset.dupli_object is not None):
+                                process_dupli_list(ob)
+                            else:
+                                log("{} > {} > {}: invalid settings, see 'Maxwell Particle Instances' panel.".format(ob.name, ps.name, 'PARTICLE_INSTANCES'), 2, LogStyles.WARNING, )
+                            
+                        else:
+                            # this is user's error, is clearly visible in ui that only OBJECT and GROUP are supported
+                            # no.. report it as well..
+                            log("{} > {} > {}: invalid settings, see 'Maxwell Particle Instances' panel.".format(ob.name, ps.name, 'PARTICLE_INSTANCES'), 2, LogStyles.WARNING, )
         
         # find instances without base and change first one to base, quick and dirty..
         # this case happens when object (by name chosen as base) is on hidden layer and marked to be not exported
@@ -2255,7 +2302,11 @@ class MXSMesh(MXSObject):
 
 class MXSMeshInstance(MXSObject):
     def __init__(self, o, base, ):
-        log("'{}'".format(o['object'].name), 2)
+        # log("'{}'".format(o['object'].name), 2)
+        if('dupli_matrix' in o):
+            log("'{}'".format(o['dupli_name']), 2, )
+        else:
+            log("'{}'".format(o['object'].name), 2, )
         
         super().__init__(o)
         self.m_type = 'MESH_INSTANCE'
@@ -2284,6 +2335,11 @@ class MXSMeshInstance(MXSObject):
             self.m_location = l
             self.m_rotation = r
             self.m_scale = s
+            
+            if('extra_options' in self.o):
+                if('hide' in self.o['extra_options']):
+                    if(self.o['extra_options']['hide'] is True):
+                        self.m_hide = True
 
 
 class MXSReference(MXSObject):

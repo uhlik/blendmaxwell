@@ -822,6 +822,7 @@ class ParticlesProperties(PropertyGroup):
                                            ('PARTICLES', "Particles", ""),
                                            # ('MESHER', "Mesher", ""),
                                            ('CLONER', "Cloner", ""),
+                                           ('PARTICLE_INSTANCES', "Instances", ""),
                                            ('NONE', "None", "")], default='NONE', )
     
     @classmethod
@@ -1162,6 +1163,31 @@ class ExtClonerProperties(PropertyGroup):
     @classmethod
     def unregiser(cls):
         del bpy.types.ParticleSettings.maxwell_cloner_extension
+
+
+class ParticleInstancesProperties(PropertyGroup):
+    # inherit_objectid = BoolProperty(name="Inherit Object ID From Emitter", default=False, )
+    
+    # override_material = StringProperty(name="Override Material", default="", )
+    # override_backface_material = StringProperty(name="Override Backface Material", default="", )
+    
+    # opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
+    # hidden_camera = BoolProperty(name="Camera", default=False, )
+    # hidden_camera_in_shadow_channel = BoolProperty(name="Camera In Shadow Channel", default=False, )
+    # hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
+    # hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
+    # hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
+    # object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    hide = BoolProperty(name="Export Instances as Hidden Objects", default=False, description="Objects will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
+    # hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.ParticleSettings.maxwell_particle_instances = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.ParticleSettings.maxwell_particle_instances
 
 
 class ExtVolumetricsProperties(PropertyGroup):

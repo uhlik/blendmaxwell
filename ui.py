@@ -2714,6 +2714,78 @@ class ExtClonerPanel(ParticleButtonsPanel, Panel):
         c.prop(m, 'display_max')
 
 
+class ParticlesInstancePanel(ParticleButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Particle Instances"
+    
+    @classmethod
+    def poll(cls, context):
+        psys = context.particle_system
+        engine = context.scene.render.engine
+        settings = 0
+        
+        if psys:
+            settings = psys.settings
+        elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
+            settings = context.space_data.pin_id
+        
+        if not settings:
+            return False
+        
+        m = context.particle_system.settings.maxwell_render
+        if(m.use != 'PARTICLE_INSTANCES'):
+            return False
+        
+        return settings.is_fluid is False and (engine in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        
+        o = context.object
+        p = context.particle_system
+        if(p is None):
+            return
+        
+        m = context.particle_system.settings.maxwell_particle_instances
+        
+        # sub.label("See 'Render' panel for settings.")
+        # sub.label("'Object' and 'Group' types are supported.")
+        
+        # sub.prop(m, 'inherit_objectid')
+        
+        if(p.settings.render_type not in ['OBJECT', 'GROUP', ]):
+            sub.label("See 'Render' panel for settings.", icon='ERROR', )
+            sub.label("'Object' and 'Group' types are supported.", icon='ERROR', )
+            return
+        
+        # sub.prop_search(m, 'override_material', bpy.data, 'materials', icon='MATERIAL')
+        # sub.prop_search(m, 'override_backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
+        #
+        # sub.separator()
+        
+        sub.prop(m, 'hide')
+        sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object (Emitter)", )
+        
+        
+        # sub.prop(m, 'hide_parent')
+        # sub.prop(m, 'opacity')
+        # sub.separator()
+        # r = sub.row()
+        # r.prop(m, 'object_id')
+        # sub.separator()
+        # sub.label("Hidden from:")
+        # s = sub.split(percentage=0.5)
+        # c = s.column()
+        # c.prop(m, 'hidden_camera')
+        # c.prop(m, 'hidden_camera_in_shadow_channel')
+        # c.prop(m, 'hidden_global_illumination')
+        # c = s.column()
+        # c.prop(m, 'hidden_reflections_refractions')
+        # c.prop(m, 'hidden_zclip_planes')
+        # sub.separator()
+
+
 class Render_presets(Menu):
     '''Presets for render options.'''
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
