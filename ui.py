@@ -1389,7 +1389,10 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
         
         sub.separator()
         
-        sub.prop(m, 'hide_parent')
+        sub.prop(m, 'hide')
+        # sub.prop(m, 'hide_parent')
+        o = context.object
+        sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object", )
         
         c = sub.column()
         c.label("Geometry:")
@@ -2391,7 +2394,8 @@ class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
         sub.separator()
         
         sub.prop(m, 'hide')
-        sub.prop(m, 'hide_parent')
+        # sub.prop(m, 'hide_parent')
+        sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object (Emitter)", )
         sub.prop(m, 'opacity')
         sub.separator()
         r = sub.row()

@@ -2457,6 +2457,9 @@ class MXSParticles(MXSObject):
         self.mxex = self.ps.settings.maxwell_particles_extension
         
         self._object_properties()
+        if(not self.mxex.hide):
+            self.m_hide = False
+        
         self._transformation()
         
         self._to_data()
@@ -2665,7 +2668,7 @@ class MXSParticles(MXSObject):
         self.m_bin_max_velocity = mxex.bin_max_velocity
         self.m_embed = mxex.embed
         self.m_pdata = pdata
-        self.m_hide_parent = mxex.hide_parent
+        # self.m_hide_parent = mxex.hide_parent
         self.m_type = 'PARTICLES'
         
         if(mxex.private_bin_filename != ''):
@@ -2712,6 +2715,9 @@ class MXSHair(MXSObject):
         self.mxex = self.ps.settings.maxwell_hair_extension
         
         self._object_properties()
+        if(not self.mxex.hide):
+            self.m_hide = False
+        
         self._transformation()
         
         self._to_data()
@@ -2722,7 +2728,7 @@ class MXSHair(MXSObject):
         ps = self.ps
         o = self.b_object
         
-        self.m_hide_parent = mxex.hide_parent
+        # self.m_hide_parent = mxex.hide_parent
         self.m_display_percent = int(mxex.display_percent)
         
         pmw = o.matrix_world
@@ -2853,7 +2859,7 @@ class MXSHair(MXSObject):
         else:
             # always export root uvs so it will not render as strange stripes, but warn user there is not root uv created
             root_uvs = 1
-            uv_locs = [0.0] * num_curves
+            uv_locs = [0.0] * (num_curves * 2)
             
             log("emitter has no UVs or no UV is selected to be used.. root UVs will be exported all roots will be set to (0.0, 0.0)".format(self.mxex.material, ), 3, LogStyles.WARNING, )
         
@@ -3337,11 +3343,14 @@ class MXSSea(MXSObject):
         self.mxex = self.b_object.maxwell_sea_extension
         
         self._object_properties()
+        if(not self.mxex.hide):
+            self.m_hide = False
+        
         self._transformation()
         
         mxex = self.mxex
         
-        self.m_hide_parent = mxex.hide_parent
+        # self.m_hide_parent = mxex.hide_parent
         
         self.m_resolution = int(mxex.resolution)
         self.m_reference_time = mxex.reference_time

@@ -907,7 +907,7 @@ class ExtParticlesProperties(PropertyGroup):
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
-    hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
+    # hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
     source = EnumProperty(name="Source", items=[('BLENDER_PARTICLES', "Blender Particles", ""), ('EXTERNAL_BIN', "External Bin", "")], default='BLENDER_PARTICLES', )
     bin_directory = StringProperty(name=".bin Output Directory", default="//", subtype='DIR_PATH', description="Output directory for .bin file(s)", )
@@ -994,7 +994,7 @@ class ExtHairProperties(PropertyGroup):
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
     object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
-    hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
+    # hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
     hair_type = EnumProperty(name="Hair Type", items=[('HAIR', "Hair", ""), ('GRASS', "Grass", ""), ], default='HAIR', )
     
@@ -1096,7 +1096,8 @@ class ExtSubdivisionProperties(PropertyGroup):
 
 class ExtSeaProperties(PropertyGroup):
     enabled = BoolProperty(name="Maxwell Sea", default=False, )
-    hide_parent = BoolProperty(name="Hide Container Object", default=True, )
+    hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
+    # hide_parent = BoolProperty(name="Hide Container Object", default=True, )
     
     material = StringProperty(name="Material", default="", )
     backface_material = StringProperty(name="Backface Material", default="", )

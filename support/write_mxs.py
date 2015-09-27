@@ -1760,13 +1760,13 @@ def hierarchy(d, s, ):
                 p = s.getObject(d[i]['parent'])
                 ch.setParent(p)
     
-    object_types = ['PARTICLES', 'HAIR', 'SEA', ]
-    for i in range(len(d)):
-        if(d[i]['type'] in object_types):
-            if(d[i]['parent'] is not None):
-                if(d[i]['hide_parent']):
-                    p = s.getObject(d[i]['parent'])
-                    p.setHide(True)
+    # object_types = ['PARTICLES', 'HAIR', 'SEA', ]
+    # for i in range(len(d)):
+    #     if(d[i]['type'] in object_types):
+    #         if(d[i]['parent'] is not None):
+    #             if(d[i]['hide_parent']):
+    #                 p = s.getObject(d[i]['parent'])
+    #                 p.setHide(True)
 
 
 def wireframe(d, s, ):
