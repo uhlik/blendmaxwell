@@ -231,6 +231,9 @@ class MXSWriter():
         """Create CtextureMap from parameters
         d   dict
         """
+        if(d is None):
+            return
+        
         s = self.mxs
         
         t = CtextureMap()
@@ -326,12 +329,15 @@ class MXSWriter():
                     # global properties
                     if(d['override_map']):
                         t = self.texture(d['override_map'])
-                        m.setGlobalMap(t)
+                        if(t is not None):
+                            m.setGlobalMap(t)
                     
                     if(d['bump']):
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        a.textureMap = self.texture(d['bump_map'])
+                        t = self.texture(d['bump_map'])
+                        if(t is not None):
+                            a.textureMap = t
                         a.value = d['bump_value']
                         m.setAttribute('bump', a)
                     
@@ -362,7 +368,8 @@ class MXSWriter():
                     e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
                     if(d['emitter_spot_map'] is not None):
                         t = self.texture(d['emitter_spot_map'])
-                        e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
+                        if(t is not None):
+                            e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
                     e.setSpotConeAngle(d['emitter_spot_cone_angle'])
                     e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
                     e.setSpotFallOffType(d['emitter_spot_falloff_type'])
@@ -407,7 +414,8 @@ class MXSWriter():
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
                     t = self.texture(d['emitter_hdr_map'])
-                    a.textureMap = t
+                    if(t is not None):
+                        a.textureMap = t
                     a.value = d['emitter_hdr_intensity']
                     e.setMXI(a)
                 
@@ -572,12 +580,15 @@ class MXSWriter():
                 # global properties
                 if(d['override_map']):
                     t = self.texture(d['override_map'])
-                    m.setGlobalMap(t)
+                    if(t is not None):
+                        m.setGlobalMap(t)
                 
                 if(d['bump']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    a.textureMap = self.texture(d['bump_map'])
+                    t = self.texture(d['bump_map'])
+                    if(t is not None):
+                        a.textureMap = t
                     a.value = d['bump_value']
                     m.setAttribute('bump', a)
                 
@@ -1496,6 +1507,13 @@ class MXSWriter():
         
         o = s.createGeometryProceduralObject(name, p)
         
+        a, _ = o.addChannelUVW()
+        o.generateCustomUVW(0, a)
+        b, _ = o.addChannelUVW()
+        o.generateCustomUVW(1, b)
+        c, _ = o.addChannelUVW()
+        o.generateCustomUVW(2, c)
+        
         self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
@@ -2134,12 +2152,15 @@ class ExtMXMWriter():
                     # global properties
                     if(d['override_map']):
                         t = self.texture(d['override_map'])
-                        m.setGlobalMap(t)
+                        if(t is not None):
+                            m.setGlobalMap(t)
                     
                     if(d['bump']):
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        a.textureMap = self.texture(d['bump_map'])
+                        t = self.texture(d['bump_map'])
+                        if(t is not None):
+                            a.textureMap = t
                         a.value = d['bump_value']
                         m.setAttribute('bump', a)
                     
@@ -2170,7 +2191,8 @@ class ExtMXMWriter():
                     e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
                     if(d['emitter_spot_map'] is not None):
                         t = self.texture(d['emitter_spot_map'])
-                        e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
+                        if(t is not None):
+                            e.setLobeImageProjectedMap(d['emitter_spot_map_enabled'], t)
                     e.setSpotConeAngle(d['emitter_spot_cone_angle'])
                     e.setSpotFallOffAngle(d['emitter_spot_falloff_angle'])
                     e.setSpotFallOffType(d['emitter_spot_falloff_type'])
@@ -2215,7 +2237,8 @@ class ExtMXMWriter():
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
                     t = self.texture(d['emitter_hdr_map'])
-                    a.textureMap = t
+                    if(t is not None):
+                        a.textureMap = t
                     a.value = d['emitter_hdr_intensity']
                     e.setMXI(a)
                 
@@ -2351,12 +2374,15 @@ class ExtMXMWriter():
                 # global properties
                 if(d['override_map']):
                     t = self.texture(d['override_map'])
-                    m.setGlobalMap(t)
+                    if(t is not None):
+                        m.setGlobalMap(t)
                 
                 if(d['bump']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    a.textureMap = self.texture(d['bump_map'])
+                    t = self.texture(d['bump_map'])
+                    if(t is not None):
+                        a.textureMap = t
                     a.value = d['bump_value']
                     m.setAttribute('bump', a)
                 
