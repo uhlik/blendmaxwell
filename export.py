@@ -592,6 +592,7 @@ class MXSExport():
                     if(pset.maxwell_render.use == 'PARTICLE_INSTANCES'):
                         if(pset.render_type in ['OBJECT', 'GROUP', ]):
                             mpi = pset.maxwell_particle_instances
+                            
                             def process_dupli_list(ob):
                                 ob.dupli_list_create(self.context.scene, settings='RENDER')
                                 for dli in ob.dupli_list:
@@ -2850,8 +2851,11 @@ class MXSHair(MXSObject):
             
             root_uvs = 1
         else:
-            root_uvs = 0
-            uv_locs = []
+            # always export root uvs so it will not render as strange stripes, but warn user there is not root uv created
+            root_uvs = 1
+            uv_locs = [0.0] * num_curves
+            
+            log("emitter has no UVs or no UV is selected to be used.. root UVs will be exported all roots will be set to (0.0, 0.0)".format(self.mxex.material, ), 3, LogStyles.WARNING, )
         
         ps.set_resolution(bpy.context.scene, o, 'PREVIEW')
         
