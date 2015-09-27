@@ -2767,7 +2767,6 @@ class ParticlesInstancePanel(ParticleButtonsPanel, Panel):
         sub.prop(m, 'hide')
         sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object (Emitter)", )
         
-        
         # sub.prop(m, 'hide_parent')
         # sub.prop(m, 'opacity')
         # sub.separator()
