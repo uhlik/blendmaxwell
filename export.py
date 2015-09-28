@@ -41,6 +41,7 @@ from . import maths
 from . import system
 from . import rfbin
 from . import mxs
+from . import tmpio
 
 
 AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).to_4x4()
@@ -1025,7 +1026,7 @@ class MXSExport():
                       'num_materials': o.m_num_materials,
                       'triangle_materials': o.m_triangle_materials, }
                 p = os.path.join(self.tmp_dir, "{0}.binmesh".format(nm))
-                w = MXSBinMeshWriterLegacy(p, **md)
+                w = tmpio.MXSBinMeshWriter(p, **md)
                 
                 d = {'name': o.m_name,
                      'num_vertexes': len(o.m_vertices[0]),
@@ -1067,7 +1068,7 @@ class MXSExport():
             elif(o.m_type == 'HAIR'):
                 nm = "{}-{}".format(o.m_name, uuid.uuid1())
                 p = os.path.join(self.tmp_dir, "{0}.binhair".format(nm))
-                w = MXSBinHairWriterLegacy(p, o.data_locs)
+                w = tmpio.MXSBinHairWriter(p, o.data_locs)
                 a = o._repr()
                 a['hair_data_path'] = p
                 self.hair_data_paths.append(p)
@@ -1080,7 +1081,7 @@ class MXSExport():
                         # and data will be embedded in mxs (no external bin created)
                         nm = "{}-{}".format(o.m_name, uuid.uuid1())
                         p = os.path.join(self.tmp_dir, "{0}.binpart".format(nm))
-                        w = MXSBinParticlesWriterLegacy(p, o.m_pdata)
+                        w = tmpio.MXSBinParticlesWriter(p, o.m_pdata)
                         o.m_pdata = p
                         self.part_data_paths.append(p)
                 a = o._repr()
@@ -1090,7 +1091,7 @@ class MXSExport():
                     if(o.m_embed):
                         nm = "{}-{}".format(o.m_name, uuid.uuid1())
                         p = os.path.join(self.tmp_dir, "{0}.binpart".format(nm))
-                        w = MXSBinParticlesWriterLegacy(p, o.m_pdata)
+                        w = tmpio.MXSBinParticlesWriter(p, o.m_pdata)
                         o.m_pdata = p
                         self.part_data_paths.append(p)
                 a = o._repr()
@@ -1098,7 +1099,7 @@ class MXSExport():
             elif(o.m_type == 'WIREFRAME_INSTANCES'):
                 n = "{}-{}".format(o.m_name, uuid.uuid1())
                 p = os.path.join(self.tmp_dir, "{0}.binwire".format(n))
-                w = MXSBinWireWriterLegacy(p, o.m_wire_matrices)
+                w = tmpio.MXSBinWireWriter(p, o.m_wire_matrices)
                 self.wire_data_paths.append(p)
                 a = o._repr()
                 a['wire_matrices'] = p
@@ -3786,402 +3787,3 @@ class MXSWireframeInstances(MXSObject):
         m *= ROTATE_X_90
         b, p, l, r, s = self._matrix_to_base_and_pivot(m)
         return (b, p, l, r, s, )
-
-
-class MXSBinMeshWriterLegacy():
-    def __init__(self, path, name, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, num_materials, triangle_materials, ):
-        """
-        name                sting
-        num_positions       int
-        vertices            [[(float x, float y, float z), ..., ], [...], ]
-        normals             [[(float x, float y, float z), ..., ], [...], ]
-        triangles           [(int iv0, int iv1, int iv2, int in0, int in1, int in2, ), ..., ], ]   # (3x vertex index, 3x normal index)
-        triangle_normals    [[(float x, float y, float z), ..., ], [...], ]
-        uv_channels         [[(float u1, float v1, float w1, float u2, float v2, float w2, float u3, float v3, float w3, ), ..., ], ..., ] or None      # ordered by uv index and ordered by triangle index
-        num_materials       int
-        triangle_materials  [(int tri_id, int mat_id), ..., ] or None
-        """
-        o = "@"
-        with open("{0}.tmp".format(path), 'wb') as f:
-            p = struct.pack
-            fw = f.write
-            # header
-            fw(p(o + "7s", 'BINMESH'.encode('utf-8')))
-            fw(p(o + "?", False))
-            # name 250 max length
-            fw(p(o + "250s", name.encode('utf-8')))
-            # number of steps
-            fw(p(o + "i", num_positions))
-            # number of vertices
-            lv = len(vertices[0])
-            fw(p(o + "i", lv))
-            # vertex positions
-            for i in range(num_positions):
-                fw(p(o + "{}d".format(lv * 3), *[f for v in vertices[i] for f in v]))
-            # vertex normals
-            for i in range(num_positions):
-                fw(p(o + "{}d".format(lv * 3), *[f for v in normals[i] for f in v]))
-            # number triangle normals
-            ltn = len(triangle_normals[0])
-            fw(p(o + "i", ltn))
-            # triangle normals
-            for i in range(num_positions):
-                fw(p(o + "{}d".format(ltn * 3), *[f for v in triangle_normals[i] for f in v]))
-            # number of triangles
-            lt = len(triangles)
-            fw(p(o + "i", lt))
-            # triangles
-            fw(p(o + "{}i".format(lt * 6), *[f for v in triangles for f in v]))
-            # number of uv channels
-            luc = len(uv_channels)
-            fw(p(o + "i", luc))
-            # uv channels
-            for i in range(luc):
-                fw(p(o + "{}d".format(lt * 9), *[f for v in uv_channels[i] for f in v]))
-            # number of materials
-            fw(p(o + "i", num_materials))
-            # triangle materials
-            fw(p(o + "{}i".format(lt * 2), *[f for v in triangle_materials for f in v]))
-            # end
-            fw(p(o + "?", False))
-        # swap files
-        if(os.path.exists(path)):
-            os.remove(path)
-        shutil.move("{0}.tmp".format(path), path)
-        self.path = path
-
-
-class MXSBinMeshReaderLegacy():
-    def __init__(self, path):
-        def r(f, b, o):
-            d = struct.unpack_from(f, b, o)
-            o += struct.calcsize(f)
-            return d, o
-        
-        def r0(f, b, o):
-            d = struct.unpack_from(f, b, o)[0]
-            o += struct.calcsize(f)
-            return d, o
-        
-        offset = 0
-        with open(path, "rb") as bf:
-            buff = bf.read()
-        # endianness?
-        signature = 20357755437992258
-        l, _ = r0("<q", buff, 0)
-        b, _ = r0(">q", buff, 0)
-        if(l == signature):
-            if(sys.byteorder != "little"):
-                raise RuntimeError()
-            order = "<"
-        elif(b == signature):
-            if(sys.byteorder != "big"):
-                raise RuntimeError()
-            order = ">"
-        else:
-            raise AssertionError("{}: not a MXSBinMesh file".format(self.__class__.__name__))
-        o = order
-        # magic
-        magic, offset = r0(o + "7s", buff, offset)
-        magic = magic.decode(encoding="utf-8")
-        if(magic != 'BINMESH'):
-            raise RuntimeError()
-        # throwaway
-        _, offset = r(o + "?", buff, offset)
-        # name
-        name, offset = r0(o + "250s", buff, offset)
-        name = name.decode(encoding="utf-8").replace('\x00', '')
-        # number of steps
-        num_positions, offset = r0(o + "i", buff, offset)
-        # number of vertices
-        lv, offset = r0(o + "i", buff, offset)
-        # vertex positions
-        vertices = []
-        for i in range(num_positions):
-            vs, offset = r(o + "{}d".format(lv * 3), buff, offset)
-            vs3 = [vs[i:i + 3] for i in range(0, len(vs), 3)]
-            vertices.append(vs3)
-        # vertex normals
-        normals = []
-        for i in range(num_positions):
-            ns, offset = r(o + "{}d".format(lv * 3), buff, offset)
-            ns3 = [ns[i:i + 3] for i in range(0, len(ns), 3)]
-            normals.append(ns3)
-        # number of triangle normals
-        ltn, offset = r0(o + "i", buff, offset)
-        # triangle normals
-        triangle_normals = []
-        for i in range(num_positions):
-            tns, offset = r(o + "{}d".format(ltn * 3), buff, offset)
-            tns3 = [tns[i:i + 3] for i in range(0, len(tns), 3)]
-            triangle_normals.append(tns3)
-        # number of triangles
-        lt, offset = r0(o + "i", buff, offset)
-        # triangles
-        ts, offset = r(o + "{}i".format(lt * 6), buff, offset)
-        triangles = [ts[i:i + 6] for i in range(0, len(ts), 6)]
-        # number uv channels
-        num_channels, offset = r0(o + "i", buff, offset)
-        # uv channels
-        uv_channels = []
-        for i in range(num_channels):
-            uvc, offset = r(o + "{}d".format(lt * 9), buff, offset)
-            uv9 = [uvc[i:i + 9] for i in range(0, len(uvc), 9)]
-            uv_channels.append(uv9)
-        # number of materials
-        num_materials, offset = r0(o + "i", buff, offset)
-        # triangle materials
-        tms, offset = r(o + "{}i".format(2 * lt), buff, offset)
-        triangle_materials = [tms[i:i + 2] for i in range(0, len(tms), 2)]
-        # throwaway
-        _, offset = r(o + "?", buff, offset)
-        # and now.. eof
-        if(offset != len(buff)):
-            raise RuntimeError("expected EOF")
-        # collect data
-        self.data = {'name': name,
-                     'num_positions': num_positions,
-                     'vertices': vertices,
-                     'normals': normals,
-                     'triangles': triangles,
-                     'triangle_normals': triangle_normals,
-                     'uv_channels': uv_channels,
-                     'num_materials': num_materials,
-                     'triangle_materials': triangle_materials, }
-
-
-class MXSBinHairWriterLegacy():
-    def __init__(self, path, data):
-        d = data
-        o = "@"
-        with open("{0}.tmp".format(path), 'wb') as f:
-            p = struct.pack
-            fw = f.write
-            # header
-            fw(p(o + "7s", 'BINHAIR'.encode('utf-8')))
-            fw(p(o + "?", False))
-            # number of floats
-            n = len(d)
-            fw(p(o + "i", n))
-            # floats
-            fw(p(o + "{}d".format(n), *d))
-            # end
-            fw(p(o + "?", False))
-        if(os.path.exists(path)):
-            os.remove(path)
-        shutil.move("{0}.tmp".format(path), path)
-        self.path = path
-
-
-class MXSBinHairReaderLegacy():
-    def __init__(self, path):
-        self.offset = 0
-        with open(path, "rb") as bf:
-            self.bindata = bf.read()
-        
-        def r(f):
-            d = struct.unpack_from(f, self.bindata, self.offset)
-            self.offset += struct.calcsize(f)
-            return d
-        
-        # endianness?
-        signature = 23161492825065794
-        l = r("<q")[0]
-        self.offset = 0
-        b = r(">q")[0]
-        self.offset = 0
-        if(l == signature):
-            if(sys.byteorder != "little"):
-                raise RuntimeError()
-            self.order = "<"
-        elif(b == signature):
-            if(sys.byteorder != "big"):
-                raise RuntimeError()
-            self.order = ">"
-        else:
-            raise AssertionError("{}: not a MXSBinHair file".format(self.__class__.__name__))
-        o = self.order
-        # magic
-        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
-        if(self.magic != 'BINHAIR'):
-            raise RuntimeError()
-        _ = r(o + "?")
-        # number floats
-        self.num = r(o + "i")[0]
-        self.data = r(o + "{}d".format(self.num))
-        e = r(o + "?")
-        if(self.offset != len(self.bindata)):
-            raise RuntimeError("expected EOF")
-
-
-class MXSBinParticlesWriterLegacy():
-    def __init__(self, path, data):
-        d = data
-        o = "@"
-        with open("{0}.tmp".format(path), 'wb') as f:
-            p = struct.pack
-            fw = f.write
-            # header
-            fw(p(o + "7s", 'BINPART'.encode('utf-8')))
-            fw(p(o + "?", False))
-            # 'PARTICLE_POSITIONS'
-            n = len(d['PARTICLE_POSITIONS'])
-            fw(p(o + "i", n))
-            fw(p(o + "{}d".format(n), *d['PARTICLE_POSITIONS']))
-            # 'PARTICLE_SPEEDS'
-            n = len(d['PARTICLE_SPEEDS'])
-            fw(p(o + "i", n))
-            fw(p(o + "{}d".format(n), *d['PARTICLE_SPEEDS']))
-            # 'PARTICLE_RADII'
-            n = len(d['PARTICLE_RADII'])
-            fw(p(o + "i", n))
-            fw(p(o + "{}d".format(n), *d['PARTICLE_RADII']))
-            # 'PARTICLE_NORMALS'
-            n = len(d['PARTICLE_NORMALS'])
-            fw(p(o + "i", n))
-            fw(p(o + "{}d".format(n), *d['PARTICLE_NORMALS']))
-            # 'PARTICLE_IDS'
-            n = len(d['PARTICLE_IDS'])
-            fw(p(o + "i", n))
-            fw(p(o + "{}i".format(n), *d['PARTICLE_IDS']))
-            # end
-            fw(p(o + "?", False))
-        if(os.path.exists(path)):
-            os.remove(path)
-        shutil.move("{0}.tmp".format(path), path)
-        self.path = path
-
-
-class MXSBinParticlesReaderLegacy():
-    def __init__(self, path):
-        self.offset = 0
-        with open(path, "rb") as bf:
-            self.bindata = bf.read()
-        
-        def r(f):
-            d = struct.unpack_from(f, self.bindata, self.offset)
-            self.offset += struct.calcsize(f)
-            return d
-        
-        # endianness?
-        signature = 23734338517354818
-        l = r("<q")[0]
-        self.offset = 0
-        b = r(">q")[0]
-        self.offset = 0
-        
-        if(l == signature):
-            if(sys.byteorder != "little"):
-                raise RuntimeError()
-            self.order = "<"
-        elif(b == signature):
-            if(sys.byteorder != "big"):
-                raise RuntimeError()
-            self.order = ">"
-        else:
-            raise AssertionError("{}: not a MXSBinParticles file".format(self.__class__.__name__))
-        o = self.order
-        # magic
-        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
-        if(self.magic != 'BINPART'):
-            raise RuntimeError()
-        _ = r(o + "?")
-        # 'PARTICLE_POSITIONS'
-        n = r(o + "i")[0]
-        self.PARTICLE_POSITIONS = r(o + "{}d".format(n))
-        # 'PARTICLE_SPEEDS'
-        n = r(o + "i")[0]
-        self.PARTICLE_SPEEDS = r(o + "{}d".format(n))
-        # 'PARTICLE_RADII'
-        n = r(o + "i")[0]
-        self.PARTICLE_RADII = r(o + "{}d".format(n))
-        # 'PARTICLE_NORMALS'
-        n = r(o + "i")[0]
-        self.PARTICLE_NORMALS = r(o + "{}d".format(n))
-        # 'PARTICLE_IDS'
-        n = r(o + "i")[0]
-        self.PARTICLE_IDS = r(o + "{}i".format(n))
-        # eof
-        e = r(o + "?")
-        if(self.offset != len(self.bindata)):
-            raise RuntimeError("expected EOF")
-
-
-class MXSBinWireWriterLegacy():
-    def __init__(self, path, data):
-        d = data
-        o = "@"
-        with open("{0}.tmp".format(path), 'wb') as f:
-            p = struct.pack
-            fw = f.write
-            # header
-            fw(p(o + "7s", 'BINWIRE'.encode('utf-8')))
-            fw(p(o + "?", False))
-            # number of wires
-            n = len(d)
-            fw(p(o + "i", n))
-            fw(p(o + "?", False))
-            # data
-            for base, pivot, loc, rot, sca in data:
-                base = tuple(sum(base, ()))
-                pivot = tuple(sum(pivot, ()))
-                w = base + pivot + loc + rot + sca
-                fw(p(o + "33d", *w))
-            # end
-            fw(p(o + "?", False))
-        if(os.path.exists(path)):
-            os.remove(path)
-        shutil.move("{0}.tmp".format(path), path)
-        self.path = path
-
-
-class MXSBinWireReaderLegacy():
-    def __init__(self, path):
-        self.offset = 0
-        with open(path, "rb") as bf:
-            self.bindata = bf.read()
-        
-        def r(f):
-            d = struct.unpack_from(f, self.bindata, self.offset)
-            self.offset += struct.calcsize(f)
-            return d
-        
-        # endianness?
-        signature = 19512248343873858
-        l = r("<q")[0]
-        self.offset = 0
-        b = r(">q")[0]
-        self.offset = 0
-        if(l == signature):
-            if(sys.byteorder != "little"):
-                raise RuntimeError()
-            self.order = "<"
-        elif(b == signature):
-            if(sys.byteorder != "big"):
-                raise RuntimeError()
-            self.order = ">"
-        else:
-            raise AssertionError("{}: not a MXSBinWire file".format(self.__class__.__name__))
-        o = self.order
-        # magic
-        self.magic = r(o + "7s")[0].decode(encoding="utf-8")
-        if(self.magic != 'BINWIRE'):
-            raise RuntimeError()
-        _ = r(o + "?")
-        # number floats
-        self.num = r(o + "i")[0]
-        _ = r(o + "?")
-        self.data = []
-        for i in range(self.num):
-            w = r(o + "33d")
-            base = w[0:12]
-            base = [base[i * 3:(i + 1) * 3] for i in range(4)]
-            pivot = w[12:24]
-            pivot = [pivot[i * 3:(i + 1) * 3] for i in range(4)]
-            loc = w[24:27]
-            rot = w[27:30]
-            sca = w[30:33]
-            self.data.append((base, pivot, loc, rot, sca, ))
-        e = r(o + "?")
-        if(self.offset != len(self.bindata)):
-            raise RuntimeError("expected EOF")

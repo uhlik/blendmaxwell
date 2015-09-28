@@ -50,7 +50,7 @@ def log(msg, indent=0):
             f.write("{}{}".format(m, "\n"))
 
 
-class MXSBinMeshReaderLegacy():
+class MXSBinMeshReader():
     def __init__(self, path):
         def r(f, b, o):
             d = struct.unpack_from(f, b, o)
@@ -149,7 +149,7 @@ class MXSBinMeshReaderLegacy():
                      'triangle_materials': triangle_materials, }
 
 
-class MXSBinHairReaderLegacy():
+class MXSBinHairReader():
     def __init__(self, path):
         self.offset = 0
         with open(path, "rb") as bf:
@@ -190,7 +190,7 @@ class MXSBinHairReaderLegacy():
             raise RuntimeError("expected EOF")
 
 
-class MXSBinParticlesReaderLegacy():
+class MXSBinParticlesReader():
     def __init__(self, path):
         self.offset = 0
         with open(path, "rb") as bf:
@@ -245,7 +245,7 @@ class MXSBinParticlesReaderLegacy():
             raise RuntimeError("expected EOF")
 
 
-class MXSBinWireReaderLegacy():
+class MXSBinWireReader():
     def __init__(self, path):
         self.offset = 0
         with open(path, "rb") as bf:
@@ -872,7 +872,7 @@ def empty(d, s, ):
 
 
 def mesh(d, s, ):
-    r = MXSBinMeshReaderLegacy(d['mesh_data_path'])
+    r = MXSBinMeshReader(d['mesh_data_path'])
     m = r.data
     o = s.createMesh(d['name'], d['num_vertexes'], d['num_normals'], d['num_triangles'], d['num_positions_per_vertex'], )
     
@@ -1281,7 +1281,7 @@ def particles(d, s, ):
     
     if(d['embed'] is True):
         bpp = d['pdata']
-        r = MXSBinParticlesReaderLegacy(bpp)
+        r = MXSBinParticlesReader(bpp)
         
         c = Cbase()
         c.origin = Cvector(0.0, 0.0, 0.0)
@@ -1365,7 +1365,7 @@ def cloner(d, s, ):
     if(d['embed'] is True):
         bpp = d['pdata']
         
-        r = MXSBinParticlesReaderLegacy(bpp)
+        r = MXSBinParticlesReader(bpp)
         
         c = Cbase()
         c.origin = Cvector(0.0, 0.0, 0.0)
@@ -1456,7 +1456,7 @@ def hair(d, s, ):
     c.zAxis = Cvector(0.0, 0.0, 1.0)
     
     bhp = d['hair_data_path']
-    r = MXSBinHairReaderLegacy(bhp)
+    r = MXSBinHairReader(bhp)
     p.setFloatArray('HAIR_POINTS', list(r.data), c)
     
     # p.setFloatArray('HAIR_POINTS', d['data']['HAIR_POINTS'], c)
@@ -1773,7 +1773,7 @@ def wireframe(d, s, ):
     r = []
     bo = s.getObject(d['instanced'])
     
-    wr = MXSBinWireReaderLegacy(d['wire_matrices'])
+    wr = MXSBinWireReader(d['wire_matrices'])
     wire_matrices = wr.data
     
     for i, m in enumerate(wire_matrices):

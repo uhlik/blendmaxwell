@@ -40,7 +40,7 @@ from . import rfbin
 from . import mxs
 
 
-class MXSImportLegacy():
+class MXSImportMacOSX():
     def __init__(self, mxs_path, emitters, objects, cameras, sun, keep_intermediates=False, ):
         self.TEMPLATE = system.check_for_import_template()
         self.mxs_path = os.path.realpath(mxs_path)
