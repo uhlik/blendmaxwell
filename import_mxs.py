@@ -391,7 +391,7 @@ class MXSImportMacOSX():
             log("_cleanup(): {} does not exist?".format(self.tmp_dir), 1, LogStyles.WARNING, )
 
 
-class MXSImport():
+class MXSImportWinLin():
     def __init__(self, mxs_path, emitters=True, objects=True, cameras=True, sun=True, ):
         self.mxs_path = os.path.realpath(mxs_path)
         self.import_emitters = emitters

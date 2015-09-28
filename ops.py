@@ -77,10 +77,8 @@ class ImportMXS(Operator, ImportHelper):
         if(system.PLATFORM == 'Darwin'):
             d['keep_intermediates'] = self.keep_intermediates
             im = import_mxs.MXSImportMacOSX(**d)
-        elif(system.PLATFORM == 'Linux'):
-            im = import_mxs.MXSImport(**d)
-        elif(system.PLATFORM == 'Windows'):
-            im = import_mxs.MXSImport(**d)
+        elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+            im = import_mxs.MXSImportWinLin(**d)
         else:
             pass
         
