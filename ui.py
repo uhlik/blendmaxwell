@@ -2045,6 +2045,9 @@ class TexturePanel(TextureButtonsPanel, Panel):
         
         ts = context.texture_slot
         
+        # l.label("Texture Type:")
+        # l.prop(m, 'use', text="")
+        
         if(m.use == 'IMAGE'):
             tex = None
             if(ts.texture is not None):
