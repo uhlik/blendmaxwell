@@ -615,6 +615,8 @@ class MaterialProperties(PropertyGroup):
     
     # flag = BoolProperty(name="Flag", default=False, description="True - redraw preview, False - skip", options={'HIDDEN'}, )
     
+    force_preview = BoolProperty(name="Force Preview", default=True, description="Force preview rendering when opened in Mxed", )
+    
     @classmethod
     def register(cls):
         bpy.types.Material.maxwell_render = PointerProperty(type=cls)

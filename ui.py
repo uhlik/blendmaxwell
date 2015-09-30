@@ -1996,12 +1996,18 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r = sub.row(align=True)
             if(m.mxm_file == ''):
                 r.operator('maxwell_render.create_material').backface = False
+                r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
             else:
                 r.operator('maxwell_render.edit_material').backface = False
+                r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
         
         if(m.use != 'CUSTOM'):
             sub.separator()
-            sub.operator('maxwell_render.edit_extension_material')
+            r = sub.row(align=True)
+            r.operator('maxwell_render.edit_extension_material')
+            # r.prop(m, 'force_preview', toggle=True, text="", icon='MATERIAL', )
+            # r.prop(m, 'force_preview', toggle=True, text="", icon='IMAGE_DATA', )
+            r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
 
 
 class MaterialBackfacePanel(MaterialButtonsPanel, Panel):

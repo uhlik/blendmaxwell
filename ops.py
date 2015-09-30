@@ -282,6 +282,8 @@ class CreateMaterial(Operator):
     
     backface = BoolProperty(name="", default=False, options={'HIDDEN'}, )
     
+    force_preview = BoolProperty(name="Force Preview", default=True, )
+    
     @classmethod
     def poll(cls, context):
         return (context.material or context.object)
@@ -295,6 +297,7 @@ class CreateMaterial(Operator):
             self.filepath = os.path.join(context.scene.maxwell_render.materials_directory, "{}_backface.mxm".format(n))
         else:
             self.filepath = os.path.join(context.scene.maxwell_render.materials_directory, "{}.mxm".format(n))
+        self.force_preview = context.material.maxwell_render.force_preview
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
     
@@ -345,7 +348,7 @@ class CreateMaterial(Operator):
             self.report({'ERROR'}, "Directory is not writeable")
             return {'CANCELLED'}
         
-        system.mxed_create_material_helper(p)
+        system.mxed_create_material_helper(p, self.force_preview, )
         
         if(self.backface):
             context.object.maxwell_render.backface_material_file = bpy.path.relpath(self.filepath)
@@ -392,7 +395,8 @@ class EditMaterial(Operator):
             self.report({'ERROR'}, "Directory is not writeable")
             return {'CANCELLED'}
         
-        system.mxed_edit_material_helper(p)
+        f = context.material.maxwell_render.force_preview
+        system.mxed_edit_material_helper(p, f, )
         
         return {'FINISHED'}
 
@@ -413,6 +417,8 @@ class EditExtensionMaterial(Operator):
     
     backface = BoolProperty(name="", default=False, options={'HIDDEN'}, )
     
+    force_preview = BoolProperty(name="Force Preview", default=True, )
+    
     @classmethod
     def poll(cls, context):
         return (context.material or context.object)
@@ -426,6 +432,7 @@ class EditExtensionMaterial(Operator):
             self.filepath = os.path.join(context.scene.maxwell_render.materials_directory, "{}_backface.mxm".format(n))
         else:
             self.filepath = os.path.join(context.scene.maxwell_render.materials_directory, "{}.mxm".format(n))
+        self.force_preview = context.material.maxwell_render.force_preview
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
     
@@ -479,7 +486,7 @@ class EditExtensionMaterial(Operator):
         mat = export.MXSMaterialExtension(context.material.name)
         d = mat._repr()
         
-        path = system.mxed_create_and_edit_ext_material_helper(p, d)
+        path = system.mxed_create_and_edit_ext_material_helper(p, d, self.force_preview, )
         
         m = context.material.maxwell_render
         m.use = 'CUSTOM'
