@@ -544,6 +544,8 @@ class ObjectProperties(PropertyGroup):
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     override_instance = BoolProperty(name="Override Instancing", default=False, description="Enable when object is an instance, but has different modifiers then original.", )
     
+    # TODO: add blocked emitters
+    
     @classmethod
     def register(cls):
         bpy.types.Object.maxwell_render = PointerProperty(type=cls)
