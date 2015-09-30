@@ -2798,6 +2798,19 @@ class ParticlesInstancePanel(ParticleButtonsPanel, Panel):
         # sub.separator()
 
 
+class MaxwellTools(bpy.types.Panel):
+    bl_label = "Maxwell Tools"
+    # bl_idname = ""
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    # bl_category = "Maxwell Tools"
+    bl_category = "Tools"
+    
+    def draw(self, context):
+        l = self.layout
+        l.operator('maxwell_render.set_multiple_object_properties')
+
+
 class Render_presets(Menu):
     '''Presets for render options.'''
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
