@@ -269,7 +269,7 @@ class CameraResetRegion(Operator):
 class CreateMaterial(Operator):
     bl_idname = "maxwell_render.create_material"
     bl_label = "Create Material"
-    bl_description = "Launches Mxed material editor"
+    bl_description = "Create new .MXM and open it in Mxed material editor"
     
     filepath = StringProperty(subtype='FILE_PATH', )
     filename_ext = ".mxm"
@@ -360,7 +360,7 @@ class CreateMaterial(Operator):
 class EditMaterial(Operator):
     bl_idname = "maxwell_render.edit_material"
     bl_label = "Edit Material"
-    bl_description = "Launches Mxed material editor"
+    bl_description = "Edit current material in Mxed material editor"
     
     backface = BoolProperty(name="", default=False, options={'HIDDEN'}, )
     
@@ -404,7 +404,7 @@ class EditMaterial(Operator):
 class EditExtensionMaterial(Operator):
     bl_idname = "maxwell_render.edit_extension_material"
     bl_label = "Edit Extension Material in Mxed"
-    bl_description = "Saves MXM if needed and launches Mxed material editor"
+    bl_description = "Create new extension .MXM and open it in Mxed material editor"
     
     filepath = StringProperty(subtype='FILE_PATH', )
     filename_ext = ".mxm"

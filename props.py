@@ -358,7 +358,7 @@ class EnvironmentProperties(PropertyGroup):
     dome_horizon = FloatVectorProperty(name="Horizon Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     dome_mid_point = FloatProperty(name="Mid Point", default=math.radians(45.000), min=math.radians(0.000), max=math.radians(90.000), precision=1, subtype='ANGLE', )
     
-    sun_lamp_priority = BoolProperty(name="Sun Lamp Priority", default=False, description="When enabled, existing sun lamp will be used for direction", )
+    sun_lamp_priority = BoolProperty(name="Sun Lamp Priority", default=False, description="When enabled, existing sun lamp will be used for direction. There should be one sun lamp in scene, otherwise one will be selected.", )
     
     sun_type = EnumProperty(name="Type", items=[('DISABLED', "Disabled", ""), ('PHYSICAL', "Physical", ""), ('CUSTOM', "Custom", "")], default='PHYSICAL', )
     sun_power = FloatProperty(name="Power", default=1.0, min=0.010, max=100.000, precision=3, )
@@ -542,7 +542,7 @@ class ObjectProperties(PropertyGroup):
     backface_material = StringProperty(name="Backface Material", default="", )
     
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
-    override_instance = BoolProperty(name="Override Instancing", default=False, )
+    override_instance = BoolProperty(name="Override Instancing", default=False, description="Enable when object is an instance, but has different modifiers then original.", )
     
     @classmethod
     def register(cls):

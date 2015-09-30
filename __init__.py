@@ -82,7 +82,7 @@ def get_selected_panels():
     l = ['DATA_PT_camera_display', 'bl_ui.properties_data_mesh', 'bl_ui.properties_particle',
          'bl_ui.properties_render_layer', 'bl_ui.properties_texture', 'bl_ui.properties_scene', ]
     e = ['RENDERLAYER_PT_layer_options', 'RENDERLAYER_PT_layer_passes', 'RENDERLAYER_UL_renderlayers',
-         'SCENE_PT_color_management', ]
+         'SCENE_PT_color_management', 'RENDERLAYER_PT_views', ]
     a = get_all_panels()
     r = []
     for p in a:
