@@ -1572,8 +1572,8 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         m = mat.maxwell_render
         
         l.template_preview(mat, show_buttons=False, )
-        l.prop(m, 'flag', toggle=True, text="Refresh Preview", )
-        l.prop(bpy.context.scene.maxwell_render_private, 'material')
+        # l.prop(m, 'flag', toggle=True, text="Refresh Preview", )
+        # l.prop(bpy.context.scene.maxwell_render_private, 'material')
 
 
 class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):

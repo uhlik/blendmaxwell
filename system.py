@@ -331,9 +331,10 @@ def python34_run_mxm_preview(mxm_path):
                                                 shlex.quote(PYMAXWELL_PATH),
                                                 shlex.quote(mxm_path), )
         
-        log("read material preview from mxm:", 1)
-        log("command:", 2)
-        log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
+        # log("read material preview from mxm:", 1)
+        # log("command:", 2)
+        # log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
+        log("read material preview from: {}".format(mxm_path), 1)
         args = shlex.split(command_line, )
         o = subprocess.call(args, )
         if(o != 0):

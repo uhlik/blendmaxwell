@@ -20,6 +20,7 @@ import os
 import re
 import time
 import datetime
+import math
 
 import bpy
 from bpy.types import RenderEngine
@@ -41,6 +42,10 @@ class MaxwellRenderExportEngine(RenderEngine):
     _t = None
     
     def render(self, scene):
+        if(self.is_preview):
+            self._material_preview(scene)
+            return
+        
         # # skip it completely..
         # s = scene.render
         # xr = int(s.resolution_x * s.resolution_percentage / 100.0)
@@ -56,7 +61,7 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     def update(self, data, scene):
         if(self.is_preview):
-            self._material_preview(scene)
+            # self._material_preview(scene)
             return
         
         self._t = time.time()
@@ -227,11 +232,9 @@ class MaxwellRenderExportEngine(RenderEngine):
             
             def get_instance_materials(ob):
                 obmats = []
-                # Grab materials attached to object instances ...
                 if hasattr(ob, 'material_slots'):
                     for ms in ob.material_slots:
                         obmats.append(ms.material)
-                # ... and to the object's mesh data
                 if hasattr(ob.data, 'materials'):
                     for m in ob.data.materials:
                         obmats.append(m)
@@ -243,17 +246,17 @@ class MaxwellRenderExportEngine(RenderEngine):
                         if object.name not in objects_materials.keys():
                             objects_materials[object] = []
                         objects_materials[object].append(mat)
-            # Find objects that are likely to be the preview objects.
+            
             preview_objects = [o for o in objects_materials.keys() if o.name.startswith('preview')]
             if len(preview_objects) < 1:
                 return
-            # Find the materials attached to the likely preview object.
-            likely_materials = objects_materials[preview_objects[0]]
-            if len(likely_materials) < 1:
+            
+            mats = objects_materials[preview_objects[0]]
+            if(len(mats) < 1):
                 return None
-            return likely_materials
+            return mats
         
-        likely_materials = get_material(scene)
+        mats = get_material(scene)
         
         def fill_black():
             xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
@@ -265,25 +268,30 @@ class MaxwellRenderExportEngine(RenderEngine):
             l.rect = b
             self.end_result(r)
         
-        if(likely_materials is not None):
-            mat = likely_materials[0]
+        if(mats is not None):
+            mat = mats[0]
             m = mat.maxwell_render
             
-            if(bpy.context.scene.maxwell_render_private.material != mat.name):
-                bpy.context.scene.maxwell_render_private.material = mat.name
-            else:
-                if(not m.flag):
-                    fill_black()
-                    return
+            # if(bpy.context.scene.maxwell_render_private.material != mat.name):
+            #     bpy.context.scene.maxwell_render_private.material = mat.name
+            # else:
+            #     if(not m.flag):
+            #         fill_black()
+            #         return
             
             w = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
             h = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-            if(w, h) == (32, 32):
-                # skip icon rendering
-                fill_black()
-                return
             
-            bpy.data.materials[mat.name].maxwell_render.flag = False
+            fill_black()
+            
+            # if(w, h) == (32, 32):
+            #     # # skip icon rendering
+            #     # fill_black()
+            #     return
+            
+            # print(w, h)
+            
+            # bpy.data.materials[mat.name].maxwell_render.flag = False
             
             p = m.mxm_file
             if(p is not ''):
@@ -304,7 +312,46 @@ class MaxwellRenderExportEngine(RenderEngine):
                     a = mxs.read_mxm_preview(p)
                 
                 if(a is not None):
+                    rw = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
+                    rh = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
                     w, h, _ = a.shape
+                    
+                    # TODO: fix material preview drawing. at least when image is bigger then view, slice centered rectangle
+                    
+                    if((rw, rh) == (32, 32)):
+                        # icon > slice to 32x32
+                        # works pretty well, unless material has 25% preview..
+                        d = int(w / 32)
+                        a = a[:32 * d:d, :32 * d:d]
+                    # elif(rw < w and rh < h):
+                    #     # wd = int(w / rw)
+                    #     # hd = int(h / rh)
+                    #     # if(wd > hd):
+                    #     #     d = wd
+                    #     # else:
+                    #     #     d = hd
+                    #     # a = a[:rw * d:d, :rh * d:d]
+                    #
+                    #     if(rw < rh):
+                    #         # wd = int(w / rw)
+                    #         # hd = int(h / rh)
+                    #         # a = a[:rw * wd:wd, :rh * hd:hd]
+                    #         pass
+                    #     else:
+                    #         # d = int(h / rh)
+                    #         d = int(w / rw)
+                    #         a = a[:rh * d:d, :rh * d:d]
+                    #
+                    # elif(rw == w and rh == h):
+                    #     pass
+                    # elif(rw > w and rh > h):
+                    #     pass
+                    elif(w > rw):
+                        # a = a[:rw:, :rw:]
+                        a = a[:rw:, :rw:]
+                    
+                    w, h, _ = a.shape
+                    # print(a.shape, rw, rh)
                     
                     # flip
                     a = numpy.flipud(a)
