@@ -1087,6 +1087,8 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         c = s.column()
         c.prop(m, 'hidden_reflections_refractions')
         c.prop(m, 'hidden_zclip_planes')
+        
+        l.operator('maxwell_render.copy_object_properties_to_selected')
 
 
 class ObjectReferencePanel(ObjectButtonsPanel, Panel):
@@ -1184,8 +1186,6 @@ class ObjectAssetReferencePanel(ObjectButtonsPanel, Panel):
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         sub.prop(m, 'axis')
         sub.prop(m, 'display')
-
-
 '''
 
 
@@ -2798,6 +2798,7 @@ class ParticlesInstancePanel(ParticleButtonsPanel, Panel):
         # sub.separator()
 
 
+'''
 class MaxwellTools(bpy.types.Panel):
     bl_label = "Maxwell Tools"
     # bl_idname = ""
@@ -2810,6 +2811,7 @@ class MaxwellTools(bpy.types.Panel):
         l = self.layout
         l.operator('maxwell_render.set_multiple_object_properties')
 
+'''
 
 class Render_presets(Menu):
     '''Presets for render options.'''

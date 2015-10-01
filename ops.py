@@ -534,6 +534,7 @@ class OpenMXS(Operator):
         return {'FINISHED'}
 
 
+'''
 class SetMultipleObjectProperties(Operator):
     bl_idname = "maxwell_render.set_multiple_object_properties"
     bl_label = "Set Multiple Object Properties"
@@ -651,6 +652,41 @@ class SetMultipleObjectProperties(Operator):
         c.prop(self, 'hidden_zclip_planes')
         if(not self.hidden_flag):
             c.enabled = False
+'''
+
+
+class CopyObjectPropertiesToSelected(Operator):
+    bl_idname = "maxwell_render.copy_object_properties_to_selected"
+    bl_label = "Copy Object Properties To Selected"
+    bl_description = "Copy object properties from active object to selected."
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        allowed = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'ARMATURE', 'LATTICE', 'EMPTY', 'LAMP', 'SPEAKER', ]
+        if(ob.type not in allowed):
+            return False
+        obs = context.selected_objects
+        return (ob and len(obs) > 0)
+    
+    def execute(self, context):
+        allowed = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'ARMATURE', 'LATTICE', 'EMPTY', 'LAMP', 'SPEAKER', ]
+        obs = context.selected_objects
+        src = context.active_object.maxwell_render
+        for o in obs:
+            if(o.type in allowed):
+                m = o.maxwell_render
+                m.opacity = src.opacity
+                m.object_id = src.object_id
+                m.backface_material = src.backface_material
+                m.hidden_camera = src.hidden_camera
+                m.hidden_camera_in_shadow_channel = src.hidden_camera_in_shadow_channel
+                m.hidden_global_illumination = src.hidden_global_illumination
+                m.hidden_reflections_refractions = src.hidden_reflections_refractions
+                m.hidden_zclip_planes = src.hidden_zclip_planes
+        
+        return {'FINISHED'}
 
 
 class Render_preset_add(AddPresetBase, Operator):
