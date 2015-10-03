@@ -655,10 +655,10 @@ class SetMultipleObjectProperties(Operator):
 '''
 
 
-class CopyObjectPropertiesToSelected(Operator):
-    bl_idname = "maxwell_render.copy_object_properties_to_selected"
-    bl_label = "Copy Object Properties To Selected"
-    bl_description = "Copy object properties from active object to selected."
+class CopyActiveObjectPropertiesToSelected(Operator):
+    bl_idname = "maxwell_render.copy_active_object_properties_to_selected"
+    bl_label = "Copy Active Object Properties To Selected"
+    bl_description = "Copy active object properties from active object to selected."
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
@@ -686,6 +686,40 @@ class CopyObjectPropertiesToSelected(Operator):
                 m.hidden_reflections_refractions = src.hidden_reflections_refractions
                 m.hidden_zclip_planes = src.hidden_zclip_planes
         
+        return {'FINISHED'}
+
+
+class SetObjectIdColor(Operator):
+    bl_idname = "maxwell_render.set_object_id_color"
+    bl_label = "Set Object ID Color"
+    bl_description = "Set Object ID to red/green/blue/white/black to all selected objects."
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    color = EnumProperty(name="Color", items=[('0', "Red", ""), ('1', "Green", ""), ('2', "Blue", ""), ('3', "White", ""), ('4', "Black", "")], default='0', description="", )
+    
+    @classmethod
+    def poll(cls, context):
+        obs = context.selected_objects
+        return (len(obs) > 0)
+    
+    def execute(self, context):
+        allowed = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'ARMATURE', 'LATTICE', 'EMPTY', 'LAMP', 'SPEAKER', ]
+        obs = context.selected_objects
+        src = context.active_object.maxwell_render
+        for o in obs:
+            if(o.type in allowed):
+                m = o.maxwell_render
+                if(self.color == '0'):
+                    c = (1.0, 0.0, 0.0, )
+                elif(self.color == '1'):
+                    c = (0.0, 1.0, 0.0, )
+                elif(self.color == '2'):
+                    c = (0.0, 0.0, 1.0, )
+                elif(self.color == '3'):
+                    c = (1.0, 1.0, 1.0, )
+                else:
+                    c = (0.0, 0.0, 0.0, )
+                m.object_id = c
         return {'FINISHED'}
 
 

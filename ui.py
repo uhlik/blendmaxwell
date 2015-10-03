@@ -1088,7 +1088,22 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'hidden_reflections_refractions')
         c.prop(m, 'hidden_zclip_planes')
         
-        l.operator('maxwell_render.copy_object_properties_to_selected')
+        l.separator()
+        
+        l.label("Set properties to multiple objects:")
+        l.operator('maxwell_render.copy_active_object_properties_to_selected')
+        l.label("Set Object ID color to multiple objects:")
+        r = l.row(align=True)
+        p = r.operator('maxwell_render.set_object_id_color', text="R", )
+        p.color = '0'
+        p = r.operator('maxwell_render.set_object_id_color', text="G", )
+        p.color = '1'
+        p = r.operator('maxwell_render.set_object_id_color', text="B", )
+        p.color = '2'
+        p = r.operator('maxwell_render.set_object_id_color', text="White", )
+        p.color = '3'
+        p = r.operator('maxwell_render.set_object_id_color', text="Black", )
+        p.color = '4'
 
 
 class ObjectReferencePanel(ObjectButtonsPanel, Panel):
