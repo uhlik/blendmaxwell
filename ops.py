@@ -723,6 +723,34 @@ class SetObjectIdColor(Operator):
         return {'FINISHED'}
 
 
+class BlockedEmitterAdd(Operator):
+    bl_idname = "maxwell_render.blocked_emitter_add"
+    bl_label = "Blocked Emitter Add"
+    bl_options = {'INTERNAL', 'UNDO'}
+    
+    name = StringProperty(name="Name", )
+    remove = BoolProperty(name="Remove", )
+    
+    def execute(self, context):
+        o = context.object
+        be = o.maxwell_render.blocked_emitters
+        es = be.emitters
+        i = be.index
+        if(self.remove):
+            try:
+                es.remove(i)
+                if(i >= len(es)):
+                    be.index = i - 1
+            except Exception as e:
+                self.report(type={'WARNING'}, message=str(e), )
+        else:
+            i = len(es)
+            e = es.add()
+            e.name = self.name
+            be.index = i
+        return {'FINISHED'}
+
+
 class Render_preset_add(AddPresetBase, Operator):
     """Add a new render preset."""
     bl_idname = 'maxwell_render.render_preset_add'

@@ -17,9 +17,10 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import platform
+import os
 
 import bpy
-from bpy.types import Panel, Menu
+from bpy.types import Panel, Menu, UIList
 from mathutils import Matrix, Vector
 
 from bl_ui.properties_data_camera import CameraButtonsPanel
@@ -33,6 +34,8 @@ from bl_ui.properties_particle import ParticleButtonsPanel
 from bl_ui.properties_data_lamp import DataButtonsPanel
 
 from .engine import MaxwellRenderExportEngine
+from . import system
+from . import mxs
 
 
 class ExportPanel(RenderButtonsPanel, Panel):
@@ -1088,9 +1091,19 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'hidden_reflections_refractions')
         c.prop(m, 'hidden_zclip_planes')
         
+        l.label("Blocked Emitters:")
+        r = l.row()
+        
+        be = m.blocked_emitters
+        r.template_list("ObjectPanelBlockedEmitters", "maxwell_render.blocked_emitters", be, "emitters", be, "index", rows=2, maxrows=3, )
+        c = r.column(align=True)
+        c.menu("ObjectPanelBlockedEmittersMenu", text="", icon='ZOOMIN', )
+        c.operator('maxwell_render.blocked_emitter_add', icon='ZOOMOUT', text="", ).remove = True
+        c.prop(context.scene.maxwell_render, 'blocked_emitters_deep_check', icon='ZOOM_ALL', text="", )
+        
         l.separator()
         
-        l.label("Set properties to multiple objects:")
+        l.label("Set object properties to multiple objects:")
         l.operator('maxwell_render.copy_active_object_properties_to_selected')
         l.label("Set Object ID color to multiple objects:")
         r = l.row(align=True)
@@ -2826,7 +2839,78 @@ class MaxwellTools(bpy.types.Panel):
         l = self.layout
         l.operator('maxwell_render.set_multiple_object_properties')
 
+
 '''
+
+
+class ObjectPanelBlockedEmitters(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        custom_icon = 'RADIO'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            layout.label(item.name, icon=custom_icon, )
+            # layout.label(item.name)
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.label("", icon=custom_icon, )
+
+
+class ObjectPanelBlockedEmittersMenu(Menu):
+    bl_label = "Blocked Emitters"
+    bl_idname = "ObjectPanelBlockedEmittersMenu"
+    
+    @classmethod
+    def poll(cls, context):
+        return context.object
+    
+    def draw(self, context):
+        l = self.layout
+        
+        # TODO: get list of objects which are going to be emitters (assigned material is emitter)
+        ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        # es = set([o.name for o in context.scene.objects if o.type in ts])
+        es = set()
+        for o in context.scene.objects:
+            # skip non-mesh objects
+            if(o.type in ts):
+                for s in o.material_slots:
+                    # skip empty material slots
+                    if(s.material is not None):
+                        m = s.material
+                        mx = m.maxwell_render
+                        mxe = m.maxwell_material_extension
+                        if(context.scene.maxwell_render.blocked_emitters_deep_check):
+                            if(mx.use == 'EMITTER'):
+                                # emitter extension material, this one should always be emitter, no need for further checks
+                                es.add(o.name)
+                            elif(mx.use == 'CUSTOM'):
+                                # now check if custom material has emitter layer
+                                p = bpy.path.abspath(mx.mxm_file)
+                                if(os.path.exists(p)):
+                                    if(system.PLATFORM == 'Darwin'):
+                                        a = system.python34_run_mxm_is_emitter(p)
+                                        if(a):
+                                            es.add(o.name)
+                                    elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+                                        mxmec = mxs.MXMEmitterCheck(p)
+                                        if(mxmec.emitter):
+                                            es.add(o.name)
+                        else:
+                            es.add(o.name)
+        
+        # remove current object
+        o = context.object
+        es.discard(o.name)
+        # remove already blocked
+        be = [e.name for e in o.maxwell_render.blocked_emitters.emitters]
+        es = es.difference(be)
+        eso = list(es)
+        eso.sort()
+        
+        for n in eso:
+            op = l.operator("maxwell_render.blocked_emitter_add", text=n, )
+            op.name = n
+            op.remove = False
+
 
 class Render_presets(Menu):
     '''Presets for render options.'''

@@ -774,6 +774,8 @@ def object_props(o, d, ):
     cc = [c / 255 for c in d['object_id']]
     c.assign(*cc)
     o.setColorID(c)
+    for n in d['blocked_emitters']:
+        ok = o.addExcludedLight(n)
 
 
 def camera(d, s, ):

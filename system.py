@@ -351,6 +351,28 @@ def python34_run_mxm_preview(mxm_path):
         raise OSError("Unknown platform: {}.".format(PLATFORM))
 
 
+def python34_run_mxm_is_emitter(mxm_path):
+    if(PLATFORM == 'Darwin'):
+        script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm_emitter.py", )
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
+                                                shlex.quote(script_path),
+                                                shlex.quote(PYMAXWELL_PATH),
+                                                shlex.quote(mxm_path), )
+        log("check material for emitters: {}".format(mxm_path), 1)
+        args = shlex.split(command_line, )
+        o = subprocess.call(args, )
+        if(o == 100):
+            return True
+        elif(o != 0):
+            log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
+            raise Exception("error in {0}".format(script_path))
+        return False
+    else:
+        raise OSError("Unknown platform: {}.".format(PLATFORM))
+
+
 def check_pymaxwell_version():
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "version.py", )

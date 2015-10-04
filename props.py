@@ -20,7 +20,7 @@ import os
 import math
 
 import bpy
-from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty, StringProperty, EnumProperty, FloatVectorProperty, IntVectorProperty
+from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty, StringProperty, EnumProperty, FloatVectorProperty, IntVectorProperty, CollectionProperty
 from bpy.types import PropertyGroup
 from mathutils import Vector
 
@@ -327,6 +327,8 @@ class SceneProperties(PropertyGroup):
     private_image = StringProperty(default="", options={'HIDDEN'}, )
     private_mxi = StringProperty(default="", options={'HIDDEN'}, )
     
+    blocked_emitters_deep_check = BoolProperty(name="Deep Check", default=False, description="Check object materials for emitter layer. Might be very slow on Mac OS X..", )
+    
     @classmethod
     def register(cls):
         bpy.types.Scene.maxwell_render = PointerProperty(type=cls)
@@ -530,6 +532,15 @@ class CameraProperties(PropertyGroup):
         del bpy.types.Camera.maxwell_render
 
 
+class ObjectBlockedEmittersItem(PropertyGroup):
+    name = StringProperty(name="Name", default="Blocked Emitter Name", )
+
+
+class ObjectBlockedEmitters(PropertyGroup):
+    emitters = CollectionProperty(name="Blocked Emitters", type=ObjectBlockedEmittersItem, )
+    index = IntProperty(name="Active", default=-1, )
+
+
 class ObjectProperties(PropertyGroup):
     opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
     hidden_camera = BoolProperty(name="Camera", default=False, )
@@ -544,7 +555,7 @@ class ObjectProperties(PropertyGroup):
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     override_instance = BoolProperty(name="Override Instancing", default=False, description="Enable when object is an instance, but has different modifiers then original.", )
     
-    # TODO: add blocked emitters
+    blocked_emitters = PointerProperty(name="Blocked Emitters", type=ObjectBlockedEmitters, )
     
     @classmethod
     def register(cls):

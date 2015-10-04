@@ -1042,6 +1042,7 @@ class MXSExport():
                      'hidden_reflections_refractions': o.m_hidden_reflections_refractions,
                      'hidden_zclip_planes': o.m_hidden_zclip_planes,
                      'object_id': o.m_object_id,
+                     'blocked_emitters': o.m_blocked_emitters,
                      
                      'num_materials': o.m_num_materials,
                      'materials': o.m_materials,
@@ -1118,7 +1119,8 @@ class MXSExport():
             
             def pack_object_props(o):
                 return (o.m_hide, o.m_opacity, o.m_object_id, o.m_hidden_camera, o.m_hidden_camera_in_shadow_channel,
-                        o.m_hidden_global_illumination, o.m_hidden_reflections_refractions, o.m_hidden_zclip_planes, )
+                        o.m_hidden_global_illumination, o.m_hidden_reflections_refractions, o.m_hidden_zclip_planes,
+                        o.m_blocked_emitters, )
             
             def pack_matrix(o):
                 return (o.m_base, o.m_pivot, o.m_location, o.m_rotation, o.m_scale, )
@@ -2012,6 +2014,15 @@ class MXSObject(Serializable):
         self.m_hidden_reflections_refractions = mx.hidden_reflections_refractions
         self.m_hidden_zclip_planes = mx.hidden_zclip_planes
         self.m_object_id = self._color_to_rgb8(mx.object_id)
+        
+        self.m_blocked_emitters = []
+        for be in mx.blocked_emitters.emitters:
+            n = be.name
+            o = bpy.data.objects[n]
+            if(not MXSDatabase.is_in_object_export_list(o)):
+                log("blocked emitter '{}', but this emitter will not be exported. skipping..".format(be.name), 3, LogStyles.WARNING, )
+            else:
+                self.m_blocked_emitters.append(MXSDatabase.object_name(o, n, ))        
     
     def _matrix_to_base_and_pivot(self, m, ):
         """Convert Matrix to Base and Pivot and Position, Rotation and Scale for Studio"""

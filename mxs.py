@@ -135,17 +135,18 @@ class MXSWriter():
         o.setRotation(Cvector(*r))
         o.setScale(Cvector(*s))
     
-    def set_object_props(self, o, hide=False, opacity=100, cid=(255, 255, 255), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, ):
+    def set_object_props(self, o, hide=False, opacity=100, cid=(255, 255, 255), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, blocked_emitters=None, ):
         """Set common object properties.
-        o           CmaxwellObject
-        hide        bool
-        opacity     float
-        cid         (int, int, int) 0-255 rgb
-        hcam        bool
-        hcamsc      bool
-        hgi         bool
-        hrr         bool
-        hzcp        bool
+        o                   CmaxwellObject
+        hide                bool
+        opacity             float
+        cid                 (int, int, int) 0-255 rgb
+        hcam                bool
+        hcamsc              bool
+        hgi                 bool
+        hrr                 bool
+        hzcp                bool
+        blocked_emitters    list of blocked emitter object names
         """
         if(hide):
             o.setHide(hide)
@@ -164,6 +165,9 @@ class MXSWriter():
             o.setHideToReflectionsRefractions(True)
         if(hzcp):
             o.excludeOfCutPlanes(True)
+        if(blocked_emitters):
+            for n in blocked_emitters:
+                ok = o.addExcludedLight(n)
     
     def texture_data_to_mxparams(self, name, data, mxparams, ):
         """Create CtextureMap, fill with parameters and put into mxparams.
@@ -2420,6 +2424,32 @@ class ExtMXMWriter():
             # should not happen because i stopped changing material names.. but i leave it here
             m = self.material_placeholder()
         return m
+
+
+class MXMEmitterCheck():
+    def __init__(self, path, ):
+        if(__name__ != "__main__"):
+            if(platform.system() == 'Darwin'):
+                raise ImportError("No pymaxwell for Mac OS X..")
+        
+        log(self.__class__.__name__, 1, LogStyles.MESSAGE, prefix="* ", )
+        
+        self.path = path
+        self.mxs = Cmaxwell(mwcallback)
+        self.emitter = False
+        
+        m = self.mxs.readMaterial(self.path)
+        for i in range(m.getNumLayers()[0]):
+            l = m.getLayer(i)
+            e = l.getEmitter()
+            if(e.isNull()):
+                # no emitter layer
+                self.emitter = False
+            if(not e.getState()[0]):
+                # there is, but is disabled
+                self.emitter = False
+            # is emitter
+            self.emitter = True
 
 
 class MXSReader():
