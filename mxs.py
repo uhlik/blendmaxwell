@@ -2445,9 +2445,11 @@ class MXMEmitterCheck():
             if(e.isNull()):
                 # no emitter layer
                 self.emitter = False
+                return
             if(not e.getState()[0]):
                 # there is, but is disabled
                 self.emitter = False
+                return
             # is emitter
             self.emitter = True
 
