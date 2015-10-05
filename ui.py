@@ -2865,7 +2865,6 @@ class ObjectPanelBlockedEmittersMenu(Menu):
     def draw(self, context):
         l = self.layout
         
-        # TODO: get list of objects which are going to be emitters (assigned material is emitter)
         ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
         # es = set([o.name for o in context.scene.objects if o.type in ts])
         es = set()
