@@ -6,7 +6,7 @@
 ### features:
 
 * Works on Mac OS X, Linux and Windows
-* Compatible with Maxwell Render 3.2 (more precisely current beta 3.1.99.10) and Blender 2.76
+* Compatible with Maxwell Render 3.2 and Blender 2.76
 * UI as close to Maxwell Studio as possible
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
@@ -54,10 +54,11 @@
 
 changelog:
 
+* 0.3.5 particle object/group instances, quick setting object properties/object id to multiple objects, blocked emitters, many fixes (reading/drawing material previews, missing cloner objects, hair uvs, ...)
 * 0.3.4 hair with children particles root uvs (requires blender 2.76), wire export faster and with smaller files, fixes here and there
 * 0.3.3 simplified installation procedure on Mac OS X, pymaxwell is now imported directly from ```/Applications/Maxwell 3```, also fixed some bugs..
 * 0.3.2 Maxwell 3.2 update, includes majority of new features: material priority, saving to psd, reflection and refraction channels, reflectance channel, scatter and grass updates. also wireframe and auto-subdivision export is restored, added basic progress reporting, hair uvs, hair extension material and many more small fixes and tweaks
-* 0.3.1 last version working with Maxwell 3.1: [ddbad692a25c6e6e72d11092d8f063f6ed1d048e](https://github.com/uhlik/blendmaxwell/tree/ddbad692a25c6e6e72d11092d8f063f6ed1d048e)
+* 0.3.1 last version working with Maxwell 3.1 (with a few bugs): [ddbad692a25c6e6e72d11092d8f063f6ed1d048e](https://github.com/uhlik/blendmaxwell/tree/ddbad692a25c6e6e72d11092d8f063f6ed1d048e)
 * 0.3.0 refactored exporter part, added: hair uvs, curves instancing, material global properties, fixed: object transformations when opened and saved in Studio
 * 0.2.4 added: automatic subdivision modifiers export to speed things up
 * 0.2.3 added: mxs export menu operator, quad export when using subdivision modifier, 2.75 compatibility
@@ -76,6 +77,6 @@ changelog:
 
 links:
 
-[blenderartist.org thread](http://blenderartists.org/forum/showthread.php?366067-Maxwell-Render-integration-for-Blender-%28different-one%29)
+[blenderartist.org forum thread](http://blenderartists.org/forum/showthread.php?366067-Maxwell-Render-integration-for-Blender-%28different-one%29)
 
-[maxwellrender.com/forum thread](http://www.maxwellrender.com/forum/viewtopic.php?f=138&t=43385)
+[maxwellrender.com forum thread](http://www.maxwellrender.com/forum/viewtopic.php?f=138&t=43385)

@@ -31,7 +31,7 @@ from . import mxs
 
 
 PLATFORM = platform.system()
-REQUIRED = (3, 1, 99, 10, )
+REQUIRED = (3, 2, 0, 0, )
 
 
 def prefs():

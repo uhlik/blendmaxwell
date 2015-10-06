@@ -1522,35 +1522,6 @@ def reference(d, s, ):
     return o
 
 
-'''
-def asset_reference(d, s, ):
-    m = CextensionManager.instance()
-    e = m.createDefaultGeometryLoaderExtension('AssetReference')
-    p = e.getExtensionData()
-    
-    p.setString('FileName', d['path'])
-    p.setUInt('Axis', d['axis'])
-    p.setUInt('Display', d['display'])
-    
-    o = s.createGeometryLoaderObject(d['name'], p)
-    
-    # FIXMENOT: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
-    if(d['material'] != ''):
-        mat = get_material(d['material'], s, )
-        o.setMaterial(mat)
-    
-    if(d['backface_material'] != ''):
-        mat = get_material(d['backface_material'], s, )
-        o.setBackfaceMaterial(mat)
-    
-    base_and_pivot(o, d)
-    object_props(o, d)
-    return o
-
-
-'''
-
-
 def volumetrics(d, s, ):
     m = CextensionManager.instance()
     e = m.createDefaultGeometryProceduralExtension('MaxwellVolumetric')
@@ -1886,36 +1857,24 @@ def main(args):
             environment(d, mxs)
         elif(d['type'] == 'PARTICLES'):
             particles(d, mxs)
-        # elif(d['type'] == 'GRASS'):
-        #     grass(d, mxs)
         elif(d['type'] == 'HAIR'):
             hair(d, mxs)
-        # elif(d['type'] == 'CLONER'):
-        #     cloner(d, mxs)
         elif(d['type'] == 'REFERENCE'):
             reference(d, mxs)
-        
-        # elif(d['type'] == 'ASSET_REFERENCE'):
-        #     asset_reference(d, mxs)
-        
         elif(d['type'] == 'VOLUMETRICS'):
             volumetrics(d, mxs)
-        
         elif(d['type'] == 'SUBDIVISION'):
             subdivision(d, mxs)
         elif(d['type'] == 'SCATTER'):
             scatter(d, mxs)
         elif(d['type'] == 'GRASS'):
-            # FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is creted without whole python crashing..
             grass(d, mxs)
         elif(d['type'] == 'CLONER'):
             cloner(d, mxs)
         elif(d['type'] == 'SEA'):
             sea(d, mxs)
-        
         elif(d['type'] == 'MATERIAL'):
             material(d, mxs)
-        
         elif(d['type'] == 'WIREFRAME_CONTAINER'):
             wire_container = empty(d, mxs)
         elif(d['type'] == 'WIREFRAME_BASE'):

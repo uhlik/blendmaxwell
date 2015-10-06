@@ -49,7 +49,6 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
-# TODO: New stereo lenses: Lat/Long and Stereo Fish Lens - postponed. seems like there is no python api now
 # TODO: restore instancer support for my personal use (python only)
 
 
@@ -307,8 +306,6 @@ class MXSExport():
                 # t = 'EMPTY'
                 if(o.maxwell_render_reference.enabled):
                     t = 'REFERENCE'
-                # elif(o.maxwell_assetref_extension.enabled):
-                #     t = 'ASSET_REFERENCE'
                 elif(o.maxwell_volumetrics_extension.enabled):
                     t = 'VOLUMETRICS'
                 else:
@@ -419,7 +416,6 @@ class MXSExport():
             walk(o)
         
         # mark to remove all redundant empties
-        # append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'ASSET_REFERENCE', 'VOLUMETRICS', ]
         append_types = ['MESH', 'BASE_INSTANCE', 'INSTANCE', 'REFERENCE', 'VOLUMETRICS', ]
         
         def check_renderables_in_tree(oo):
@@ -498,8 +494,6 @@ class MXSExport():
                     suns.append(o)
                 elif(o['export_type'] == 'REFERENCE'):
                     references.append(o)
-                # elif(o['export_type'] == 'ASSET_REFERENCE'):
-                #     asset_references.append(o)
                 elif(o['export_type'] == 'VOLUMETRICS'):
                     volumetrics.append(o)
         
@@ -1337,9 +1331,6 @@ class MXSExport():
                 wind = (o.m_ocean_wind_mod, o.m_ocean_wind_dir, o.m_ocean_wind_alignment, o.m_ocean_min_wave_length, o.m_damp_factor_against_wind, )
                 self.mxs.ext_sea(o.m_name, pack_matrix(o), pack_object_props(o), geometry, wind, o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
-            # elif(o.m_type == 'ASSET_REFERENCE'):
-            #     self.mxs.ext_asset_reference(o.m_name, o.m_path, o.m_axis, o.m_display, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
-            #     self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'WIREFRAME_CONTAINER'):
                 self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
@@ -1471,7 +1462,7 @@ class MXSDatabase():
     Also all extension which use some other object must use the final name.
     """
     
-    # TODO: use similar mechanism for materials to skip unused before actual export
+    # TODO: MXSDatabase: use similar mechanism for materials to skip unused before actual export
     
     __objects = []
     __valid_chars = "-_ {}{}".format(string.ascii_letters, string.digits)
@@ -1829,6 +1820,9 @@ class MXSEnvironment(Serializable):
 
 
 class MXSCamera(Serializable):
+    
+    # TODO: New stereo lenses: Lat/Long and Stereo Fish Lens - postponed. seems like there is no python api now
+    
     def __init__(self, o, ):
         log("'{}'".format(o['object'].name), 2)
         
@@ -2022,7 +2016,7 @@ class MXSObject(Serializable):
             if(not MXSDatabase.is_in_object_export_list(o)):
                 log("blocked emitter '{}', but this emitter will not be exported. skipping..".format(be.name), 3, LogStyles.WARNING, )
             else:
-                self.m_blocked_emitters.append(MXSDatabase.object_name(o, n, ))        
+                self.m_blocked_emitters.append(MXSDatabase.object_name(o, n, ))
     
     def _matrix_to_base_and_pivot(self, m, ):
         """Convert Matrix to Base and Pivot and Position, Rotation and Scale for Studio"""
@@ -2396,52 +2390,6 @@ class MXSReference(MXSObject):
                 self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
             except:
                 log("material '{}' does not exist.".format(self.ref.backface_material, ), 3, LogStyles.WARNING, )
-
-
-'''
-class MXSAssetReference(MXSObject):
-    def __init__(self, o, ):
-        log("'{}' > '{}'".format(o['object'].name, bpy.path.abspath(o['object'].maxwell_assetref_extension.path), ), 2)
-        
-        super().__init__(o)
-        self.m_type = 'ASSET_REFERENCE'
-        
-        ob = self.b_object
-        mx = ob.maxwell_assetref_extension
-        
-        self.ref = mx
-        
-        if(not os.path.exists(bpy.path.abspath(mx.path))):
-            log("asset file: '{}' does not exist, skipping..".format(bpy.path.abspath(mx.path)), 3, LogStyles.WARNING)
-            self.skip = True
-        
-        self.m_path = bpy.path.abspath(bpy.path.abspath(mx.path))
-        self.m_axis = int(mx.axis)
-        self.m_display = int(mx.display)
-        
-        self._materials()
-        
-        # repeat transformation with new data
-        mw = self.b_matrix_world.copy() * ROTATE_X_MINUS_90
-        self.b_matrix_world = mw
-        self._transformation()
-    
-    def _materials(self):
-        self.m_material = ''
-        self.m_backface_material = ''
-        if(self.ref.material != ''):
-            try:
-                self.m_material = bpy.data.materials[self.ref.material].name
-            except:
-                log("material '{}' does not exist.".format(self.ref.material, ), 3, LogStyles.WARNING, )
-        if(self.ref.backface_material != ''):
-            try:
-                self.m_backface_material = bpy.data.materials[self.ref.backface_material].name
-            except:
-                log("material '{}' does not exist.".format(self.ref.backface_material, ), 3, LogStyles.WARNING, )
-
-
-'''
 
 
 class MXSParticles(MXSObject):
@@ -2981,6 +2929,9 @@ class MXSModifier(Serializable):
 
 
 class MXSGrass(MXSModifier):
+    
+    # FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
+    
     def __init__(self, o, ):
         log("'{}' ({})".format(o['object'].name, 'GRASS', ), 2)
         

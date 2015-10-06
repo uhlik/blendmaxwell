@@ -1181,42 +1181,6 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'flag_override_hide_to_gi')
 
 
-'''
-class ObjectAssetReferencePanel(ObjectButtonsPanel, Panel):
-    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Asset Reference Object"
-    bl_options = {'DEFAULT_CLOSED'}
-    
-    @classmethod
-    def poll(cls, context):
-        e = context.scene.render.engine
-        o = context.active_object
-        ts = ['EMPTY']
-        vol = context.object.maxwell_volumetrics_extension.enabled
-        ref = context.object.maxwell_render_reference.enabled
-        if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
-            if(vol or ref):
-                return False
-            return True
-        return False
-    
-    def draw_header(self, context):
-        m = context.object.maxwell_assetref_extension
-        self.layout.prop(m, 'enabled', text="")
-    
-    def draw(self, context):
-        l = self.layout
-        sub = l.column()
-        m = context.object.maxwell_assetref_extension
-        
-        sub.prop(m, 'path')
-        sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
-        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
-        sub.prop(m, 'axis')
-        sub.prop(m, 'display')
-'''
-
-
 class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Volumetrics"
@@ -2824,23 +2788,6 @@ class ParticlesInstancePanel(ParticleButtonsPanel, Panel):
         # c.prop(m, 'hidden_reflections_refractions')
         # c.prop(m, 'hidden_zclip_planes')
         # sub.separator()
-
-
-'''
-class MaxwellTools(bpy.types.Panel):
-    bl_label = "Maxwell Tools"
-    # bl_idname = ""
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    # bl_category = "Maxwell Tools"
-    bl_category = "Tools"
-    
-    def draw(self, context):
-        l = self.layout
-        l.operator('maxwell_render.set_multiple_object_properties')
-
-
-'''
 
 
 class ObjectPanelBlockedEmitters(UIList):

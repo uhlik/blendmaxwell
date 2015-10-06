@@ -1659,47 +1659,6 @@ class MXSWriter():
         
         return o
     
-    '''
-    def ext_asset_reference(self, name, path, axis, display, matrix, object_props=None, material=None, backface_material=None, ):
-        """Create Asset Reference object.
-        name                string
-        path                string (path)
-        axis                int
-        display             int
-        base                ((3 float), (3 float), (3 float), (3 float))
-        pivot               ((3 float), (3 float), (3 float), (3 float))
-        object_props        (bool hide, float opacity, tuple cid=(int, int, int), bool hcam, bool hcamsc, bool hgi, bool hrr, bool hzcp, ) or None
-        material            string or None
-        backface_material   string or None
-        """
-        s = self.mxs
-        e = self.mgr.createDefaultGeometryLoaderExtension('AssetReference')
-        p = e.getExtensionData()
-        
-        p.setString('FileName', path)
-        p.setUInt('Axis', axis)
-        p.setUInt('Display', display)
-        
-        o = s.createGeometryLoaderObject(d['name'], p)
-        
-        self.set_base_and_pivot(o, matrix, )
-        
-        if(object_props is not None):
-            self.set_object_props(o, *object_props)
-        
-        # FIXMENOT: asset reference: setting material does not work, material is set, but renders as default material. when set manually, works
-        if(material is not None):
-            if(material != ''):
-                mat = self.get_material(material)
-                o.setMaterial(mat)
-        if(backface_material is not None):
-            if(backface_material != ''):
-                mat = self.get_material(backface_material)
-                o.setBackfaceMaterial(mat)
-        
-        return o
-    
-    '''
     def mod_grass(self, object_name, properties, material=None, backface_material=None, ):
         """Create grass object modifier extension.
         object_name         string
