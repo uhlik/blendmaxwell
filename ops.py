@@ -283,6 +283,7 @@ class CreateMaterial(Operator):
     backface = BoolProperty(name="", default=False, options={'HIDDEN'}, )
     
     force_preview = BoolProperty(name="Force Preview", default=True, )
+    force_preview_scene = StringProperty(name="Force Preview Scene", default="", )
     
     @classmethod
     def poll(cls, context):
@@ -298,6 +299,9 @@ class CreateMaterial(Operator):
         else:
             self.filepath = os.path.join(context.scene.maxwell_render.materials_directory, "{}.mxm".format(n))
         self.force_preview = context.material.maxwell_render.force_preview
+        self.force_preview_scene = context.material.maxwell_render.force_preview_scene
+        if(self.force_preview_scene == ' '):
+            self.force_preview_scene = ''
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
     
@@ -348,7 +352,7 @@ class CreateMaterial(Operator):
             self.report({'ERROR'}, "Directory is not writeable")
             return {'CANCELLED'}
         
-        system.mxed_create_material_helper(p, self.force_preview, )
+        system.mxed_create_material_helper(p, self.force_preview, self.force_preview_scene, )
         
         if(self.backface):
             context.object.maxwell_render.backface_material_file = bpy.path.relpath(self.filepath)
@@ -396,7 +400,10 @@ class EditMaterial(Operator):
             return {'CANCELLED'}
         
         f = context.material.maxwell_render.force_preview
-        system.mxed_edit_material_helper(p, f, )
+        fs = context.material.maxwell_render.force_preview_scene
+        if(fs == ' '):
+            fs = ''
+        system.mxed_edit_material_helper(p, f, fs, )
         
         return {'FINISHED'}
 
@@ -418,6 +425,7 @@ class EditExtensionMaterial(Operator):
     backface = BoolProperty(name="", default=False, options={'HIDDEN'}, )
     
     force_preview = BoolProperty(name="Force Preview", default=True, )
+    force_preview_scene = StringProperty(name="Force Preview Scene", default="", )
     
     @classmethod
     def poll(cls, context):
@@ -433,6 +441,9 @@ class EditExtensionMaterial(Operator):
         else:
             self.filepath = os.path.join(context.scene.maxwell_render.materials_directory, "{}.mxm".format(n))
         self.force_preview = context.material.maxwell_render.force_preview
+        self.force_preview_scene = context.material.maxwell_render.force_preview_scene
+        if(self.force_preview_scene == ' '):
+            force_preview_scene = ''
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
     
@@ -486,7 +497,7 @@ class EditExtensionMaterial(Operator):
         mat = export.MXSMaterialExtension(context.material.name)
         d = mat._repr()
         
-        path = system.mxed_create_and_edit_ext_material_helper(p, d, self.force_preview, )
+        path = system.mxed_create_and_edit_ext_material_helper(p, d, self.force_preview, self.force_preview_scene, )
         
         m = context.material.maxwell_render
         m.use = 'CUSTOM'

@@ -144,6 +144,12 @@ def _get_custom_alphas(self, context):
     return r
 
 
+def _get_material_preview_scenes(self, context):
+    from . import system
+    l = system.mxed_get_preview_scenes()
+    return l
+
+
 class _overrides():
     sun_skip = False
     output_image = False
@@ -608,6 +614,7 @@ class MaterialProperties(PropertyGroup):
     # flag = BoolProperty(name="Flag", default=False, description="True - redraw preview, False - skip", options={'HIDDEN'}, )
     
     force_preview = BoolProperty(name="Force Preview", default=True, description="Force preview rendering when opened in Mxed", )
+    force_preview_scene = EnumProperty(name="Force Preview Scene", items=_get_material_preview_scenes, description="Force preview Mxed scene", )
     
     @classmethod
     def register(cls):

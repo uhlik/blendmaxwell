@@ -65,7 +65,7 @@ def open_file_in_default_application(path):
         os.system("start {}".format(shlex.quote(path)))
 
 
-def mxed_create_material_helper(path, force_preview=False, ):
+def mxed_create_material_helper(path, force_preview=False, force_preview_scene="", ):
     mp = bpy.path.abspath(prefs().maxwell_path)
     if(PLATFORM == 'Darwin'):
         app = os.path.abspath(os.path.join(mp, 'Mxed.app', 'Contents', 'MacOS', 'Mxed', ))
@@ -76,14 +76,20 @@ def mxed_create_material_helper(path, force_preview=False, ):
     f = ""
     if(force_preview):
         f = " -force"
-    command_line = '{}{} -new:{}'.format(shlex.quote(app), f, shlex.quote(path))
+    fs = ""
+    if(force_preview_scene != '' and force_preview):
+        fs = " -mxsprv:{}".format(shlex.quote(force_preview_scene))
+    command_line = '{}{}{} -new:{}'.format(shlex.quote(app), f, fs, shlex.quote(path))
     if(PLATFORM == 'Linux'):
         command_line = 'nohup {}'.format(command_line)
+    
+    log("command: {0}".format(command_line), 0, LogStyles.MESSAGE, )
+    
     args = shlex.split(command_line, )
     p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
 
 
-def mxed_edit_material_helper(path, force_preview=False, ):
+def mxed_edit_material_helper(path, force_preview=False, force_preview_scene="", ):
     mp = bpy.path.abspath(prefs().maxwell_path)
     if(PLATFORM == 'Darwin'):
         app = os.path.abspath(os.path.join(mp, 'Mxed.app', 'Contents', 'MacOS', 'Mxed', ))
@@ -94,14 +100,20 @@ def mxed_edit_material_helper(path, force_preview=False, ):
     f = ""
     if(force_preview):
         f = " -force"
-    command_line = '{}{} -mxm:{}'.format(shlex.quote(app), f, shlex.quote(path))
+    fs = ""
+    if(force_preview_scene != '' and force_preview):
+        fs = " -mxsprv:{}".format(shlex.quote(force_preview_scene))
+    command_line = '{}{}{} -mxm:{}'.format(shlex.quote(app), f, fs, shlex.quote(path))
     if(PLATFORM == 'Linux'):
         command_line = 'nohup {}'.format(command_line)
+    
+    log("command: {0}".format(command_line), 0, LogStyles.MESSAGE, )
+    
     args = shlex.split(command_line, )
     p = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, )
 
 
-def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=False, ):
+def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=False, force_preview_scene="", ):
     log("Extension Material to MXM: {} > {}".format(material_data['name'], path), 1)
     log(material_data, 2)
     
@@ -170,15 +182,15 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=
         else:
             log("cleanup: {0} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
         
-        mxed_edit_material_helper(path, force_preview, )
+        mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
     elif(PLATFORM == 'Linux'):
         w = mxs.ExtMXMWriter(path, material_data)
-        mxed_edit_material_helper(path, force_preview, )
+        mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
     elif(PLATFORM == 'Windows'):
         w = mxs.ExtMXMWriter(path, material_data)
-        mxed_edit_material_helper(path, force_preview, )
+        mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
 
 
@@ -411,3 +423,21 @@ def check_pymaxwell_version():
         raise OSError("Unknown platform: {}.".format(PLATFORM))
     
     return True
+
+
+def mxed_get_preview_scenes():
+    if(PLATFORM == 'Darwin'):
+        mp = bpy.path.abspath(prefs().maxwell_path)
+    elif(PLATFORM == 'Linux' or PLATFORM == 'Windows'):
+        mp = os.environ.get("MAXWELL3_ROOT")
+    d = os.path.abspath(os.path.join(mp, 'preview', ))
+    l = os.listdir(d)
+    r = []
+    for f in l:
+        n, e = os.path.splitext(f)
+        if(e == '.mxs'):
+            # r.append((os.path.join(d, f), n.replace ("_", " ").capitalize(), ''))
+            r.append((os.path.join(d, f), n, ''))
+    r.sort()
+    r.insert(0, (' ', '(none)', ''))
+    return r

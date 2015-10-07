@@ -1987,19 +1987,35 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(m, 'embed')
             r = sub.row(align=True)
             if(m.mxm_file == ''):
+                s = sub.split(percentage=0.7, align=True)
+                r = s.row(align=True)
                 r.operator('maxwell_render.create_material').backface = False
+                r = s.row(align=True)
+                r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
                 r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
+                if(not m.force_preview):
+                    r.active = False
             else:
+                s = sub.split(percentage=0.7, align=True)
+                r = s.row(align=True)
                 r.operator('maxwell_render.edit_material').backface = False
+                r = s.row(align=True)
+                r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
                 r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
+                if(not m.force_preview):
+                    r.active = False
         
         if(m.use != 'CUSTOM'):
             sub.separator()
-            r = sub.row(align=True)
+            
+            s = sub.split(percentage=0.7, align=True)
+            r = s.row(align=True)
             r.operator('maxwell_render.edit_extension_material')
-            # r.prop(m, 'force_preview', toggle=True, text="", icon='MATERIAL', )
-            # r.prop(m, 'force_preview', toggle=True, text="", icon='IMAGE_DATA', )
+            r = s.row(align=True)
+            r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
             r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
+            if(not m.force_preview):
+                r.active = False
 
 
 class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
