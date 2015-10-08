@@ -65,7 +65,8 @@ class RFBinWriter():
         self.extension = ".bin"
         self.path = os.path.join(self.directory, "{0}-{1}{2}".format(self.name, str(self.frame).zfill(5), self.extension))
         
-        if(all(len(v) == 11 for v in particles) is False):
+        particle_length = 11 + 3
+        if(all(len(v) == particle_length for v in particles) is False):
             raise ValueError("{}: bad particle data.".format(cn))
         self.particles = particles
         
@@ -133,8 +134,12 @@ class RFBinWriter():
             fw(p("=ffffff", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
             # 3 normal
             fw(p("=3f", *v[4:7]))
-            # neighbors, 3 texture, infobits, age, isolationtime, viscosity, density, pressure, mass, temperature
-            fw(p("=ifffhfffffff", 0, 0.0, 0.0, 1.0, 7, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
+            # neighbors
+            fw(p("=i", 0, ))
+            # 3 texture
+            fw(p("=fff", *v[11:14]))
+            # infobits, age, isolationtime, viscosity, density, pressure, mass, temperature
+            fw(p("=hfffffff", 7, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
             # id
             fw(p("=i", v[0]))
     

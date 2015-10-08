@@ -2501,6 +2501,7 @@ class MXSParticles(MXSObject):
                         # vels[i] = Vector(v * ROTATE_X_90 * mry90).to_tuple()
                         vels[i] = Vector(v * rfm).to_tuple()
             
+            has_uvs = False
             # particle uv
             if(mxex.uv_layer is not ""):
                 if(not mxex.embed):
@@ -2544,17 +2545,25 @@ class MXSParticles(MXSObject):
                         ex = int(nc1 / nc0)
                     for i in range(ex):
                         uv_locs += uv_locs
+                has_uvs = True
             else:
                 uv_locs = [0.0] * (len(ps.particles) * 3)
                 log("emitter has no UVs or no UV is selected to be used.. root UVs will be exported all roots will be set to (0.0, 0.0)".format(self.mxex.material, ), 3, LogStyles.WARNING, )
             
+            flip_xy = Matrix(((-1.0, 0.0, 0.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+            fv = Vector((-1.0, -1.0, 0.0))
             particles = []
             for i, ploc in enumerate(locs):
                 # normal from velocity
                 pnor = Vector(vels[i])
                 pnor.normalize()
                 # particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ) + uv_locs[i * 3:(i * 3) + 3], )
-                particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
+                # particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
+                # TODO: fix this mess, was too lazy to think for a while..
+                uv = uv_locs[i * 3:(i * 3) + 3]
+                uvv = Vector(uv).reflect(fv) * flip_xy
+                uvt = (uvv.z, uvv.x, uvv.y, )
+                particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ) + uvt, )
             
             if(mxex.embed):
                 plocs = [v for v in locs]
@@ -2646,6 +2655,9 @@ class MXSParticles(MXSObject):
         self.m_bin_load_normal = int(mxex.bin_load_normal)
         self.m_bin_load_neighbors_num = int(mxex.bin_load_neighbors_num)
         self.m_bin_load_uv = int(mxex.bin_load_uv)
+        if(has_uvs and mxex.embed is False):
+            # set this the hard way
+            self.m_bin_load_uv = True
         self.m_bin_load_age = int(mxex.bin_load_age)
         self.m_bin_load_isolation_time = int(mxex.bin_load_isolation_time)
         self.m_bin_load_viscosity = int(mxex.bin_load_viscosity)
@@ -3137,7 +3149,7 @@ class MXSCloner(MXSModifier):
                 # normal from velocity
                 pnor = Vector(vels[i])
                 pnor.normalize()
-                particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
+                particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ) + (0.0, 0.0, 0.0, ))
             
             if(mxex.embed):
                 plocs = [v for v in locs]
