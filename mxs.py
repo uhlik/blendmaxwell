@@ -1385,6 +1385,7 @@ class MXSWriter():
             p.setFloatArray('PARTICLE_RADII', list(d['pdata']['PARTICLE_RADII']), c)
             p.setIntArray('PARTICLE_IDS', list(d['pdata']['PARTICLE_IDS']))
             p.setFloatArray('PARTICLE_NORMALS', list(d['pdata']['PARTICLE_NORMALS']), c)
+            p.setFloatArray('PARTICLE_UVW', list(d['pdata']['PARTICLE_UVW']), c)
         else:
             p.setString('FileName', d['filename'])
         
@@ -1435,6 +1436,9 @@ class MXSWriter():
         p.setFloat('Max Velocity', d['max_velocity'])
         
         o = s.createGeometryProceduralObject(name, p)
+        
+        a, _ = o.addChannelUVW()
+        o.generateCustomUVW(0, a)
         
         self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):
