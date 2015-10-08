@@ -2569,6 +2569,15 @@ class ExtParticlesPanel(ParticleButtonsPanel, Panel):
         sub.prop(m, 'bin_fps')
         sub.separator()
         
+        # sub.separator()
+        r = sub.row()
+        if(len(o.data.uv_textures) == 0):
+            r.label("No UV Maps", icon='ERROR', )
+        else:
+            r.prop_search(m, "uv_layer", o.data, "uv_textures", )
+        if(not m.embed):
+            r.enabled = False
+        
         sub.prop(m, 'bin_advanced')
         
         if(m.bin_advanced):

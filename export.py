@@ -2501,11 +2501,59 @@ class MXSParticles(MXSObject):
                         # vels[i] = Vector(v * ROTATE_X_90 * mry90).to_tuple()
                         vels[i] = Vector(v * rfm).to_tuple()
             
+            # particle uv
+            if(mxex.uv_layer is not ""):
+                if(not mxex.embed):
+                    log("particles uvs are supported only for embedded particles", 3, LogStyles.WARNING, )
+                
+                o = self.b_object
+                
+                uv_no = 0
+                for i, uv in enumerate(o.data.uv_textures):
+                    if(mxex.uv_layer == uv.name):
+                        uv_no = i
+                        break
+                
+                uv_locs = tuple()
+                
+                if(len(ps.child_particles) > 0):
+                    log("child particles uvs are not supported yet..", 3, LogStyles.WARNING, )
+                else:
+                    # no child particles, use 'uv_on_emitter'
+                    nc0 = len(ps.particles)
+                    nc1 = len(ps.child_particles) - nc0
+                    uv_no = 0
+                    for i, uv in enumerate(o.data.uv_textures):
+                        if(mxex.uv_layer == uv.name):
+                            uv_no = i
+                            break
+                    mod = None
+                    for m in o.modifiers:
+                        if(m.type == 'PARTICLE_SYSTEM'):
+                            if(m.particle_system == ps):
+                                mod = m
+                                break
+                    uv_locs = tuple()
+                    for i, p in enumerate(ps.particles):
+                        co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
+                        # (x, y, 0.0, )
+                        t = co.to_tuple() + (0.0, )
+                        # uv_locs += (t[0], t[1] * -1.0, t[2], )
+                        uv_locs += (t[0], 1.0 - t[1], t[2], )
+                    if(nc1 != 0):
+                        ex = int(nc1 / nc0)
+                    for i in range(ex):
+                        uv_locs += uv_locs
+            else:
+                uv_locs = [0.0] * (len(ps.particles) * 3)
+                log("emitter has no UVs or no UV is selected to be used.. root UVs will be exported all roots will be set to (0.0, 0.0)".format(self.mxex.material, ), 3, LogStyles.WARNING, )
+            
             particles = []
             for i, ploc in enumerate(locs):
                 # normal from velocity
                 pnor = Vector(vels[i])
                 pnor.normalize()
+                # particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ) + uv_locs[i * 3:(i * 3) + 3], )
                 particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
             
             if(mxex.embed):
@@ -2524,7 +2572,9 @@ class MXSParticles(MXSObject):
                          'PARTICLE_NORMALS': [v for l in pnors for v in l],
                          # 'PARTICLE_FLAG_COLORS', [0], 0, 0, '8 BYTEARRAY', 1, 1, True)
                          # 'PARTICLE_COLORS', [0.0], 0.0, 0.0, '6 FLOATARRAY', 4, 1, True)
+                         'PARTICLE_UVW': uv_locs,
                          }
+                
             else:
                 if(os.path.exists(bpy.path.abspath(mxex.bin_directory)) and not mxex.bin_overwrite):
                     raise OSError("file: {} exists".format(bpy.path.abspath(mxex.bin_directory)))
@@ -3098,11 +3148,15 @@ class MXSCloner(MXSModifier):
                     n.normalize()
                     pnors.append(n)
                 
+                uv_locs = [0.0] * (len(ps.particles) * 3)
+                
                 pdata = {'PARTICLE_POSITIONS': [v for l in plocs for v in l],
                          'PARTICLE_SPEEDS': [v for l in pvels for v in l],
                          'PARTICLE_RADII': [v for v in sizes],
                          'PARTICLE_IDS': [i for i in range(len(locs))],
-                         'PARTICLE_NORMALS': [v for l in pnors for v in l], }
+                         'PARTICLE_NORMALS': [v for l in pnors for v in l],
+                         'PARTICLE_UVW': uv_locs,
+                         }
             else:
                 if(os.path.exists(bpy.path.abspath(mxex.directory)) and not mxex.overwrite):
                     raise OSError("file: {} exists".format(bpy.path.abspath(mxex.directory)))

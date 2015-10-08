@@ -42,6 +42,7 @@ if "bpy" in locals():
     imp.reload(ui)
     imp.reload(export)
     imp.reload(import_mxs)
+    imp.reload(tmpio)
 else:
     from . import log
     from . import system
@@ -55,6 +56,7 @@ else:
     from . import ui
     from . import export
     from . import import_mxs
+    from . import tmpio
 
 
 import os

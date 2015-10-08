@@ -278,6 +278,10 @@ class MXSBinParticlesWriter():
             n = len(d['PARTICLE_IDS'])
             fw(p(o + "i", n))
             fw(p(o + "{}i".format(n), *d['PARTICLE_IDS']))
+            # 'PARTICLE_UVW'
+            n = len(d['PARTICLE_UVW'])
+            fw(p(o + "i", n))
+            fw(p(o + "{}d".format(n), *d['PARTICLE_UVW']))
             # end
             fw(p(o + "?", False))
         if(os.path.exists(path)):
@@ -335,6 +339,9 @@ class MXSBinParticlesReader():
         # 'PARTICLE_IDS'
         n = r(o + "i")[0]
         self.PARTICLE_IDS = r(o + "{}i".format(n))
+        # 'PARTICLE_UVW'
+        n = r(o + "i")[0]
+        self.PARTICLE_UVW = r(o + "{}d".format(n))
         # eof
         e = r(o + "?")
         if(self.offset != len(self.bindata)):

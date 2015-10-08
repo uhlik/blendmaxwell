@@ -974,6 +974,8 @@ class ExtParticlesProperties(PropertyGroup):
     bin_min_velocity = FloatProperty(name="Min Velocity Modulus", default=0.0, min=0.0, max=1000000.0, step=3, )
     bin_max_velocity = FloatProperty(name="Max Velocity Modulus", default=1.0, min=0.0, max=1000000.0, step=3, )
     
+    uv_layer = StringProperty(name="UV Layer", default="", )
+    
     @classmethod
     def register(cls):
         bpy.types.ParticleSettings.maxwell_particles_extension = PointerProperty(type=cls)
