@@ -2432,6 +2432,7 @@ class MXSParticles(MXSObject):
         # FIXME: somehow, in test scene with 10 particles, number of rendere is 9, have a look into it
         # FIXME: the same problem is with cloner..
         
+        has_uvs = False
         pdata = {}
         if(mxex.source == 'BLENDER_PARTICLES'):
             def check(ps):
@@ -2501,7 +2502,6 @@ class MXSParticles(MXSObject):
                         # vels[i] = Vector(v * ROTATE_X_90 * mry90).to_tuple()
                         vels[i] = Vector(v * rfm).to_tuple()
             
-            has_uvs = False
             # particle uv
             if(mxex.uv_layer is not ""):
                 if(not mxex.embed):
@@ -2599,6 +2599,8 @@ class MXSParticles(MXSObject):
                 rfbw = rfbin.RFBinWriter(**prms)
                 mxex.bin_filename = rfbw.path
         else:
+            mxex.embed = False
+            
             # external particles
             if(mxex.bin_type == 'SEQUENCE'):
                 # sequence
