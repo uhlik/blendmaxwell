@@ -1409,7 +1409,8 @@ def cloner(d, s, ):
     p.setUInt('Display Max. Particles', d['display_max'])
     
     if(not d['render_emitter']):
-        o = s.getObject(d['object'])
+        # o = s.getObject(d['object'])
+        o = s.getObject(d['parent'])
         o.setHide(True)
     
     # o = s.getObject(d['object'])

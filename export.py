@@ -50,6 +50,9 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
 # TODO: restore instancer support for my personal use (python only)
+# FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
+# FIXME: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
+# TODO: particles/cloner: check if size setting is correct, i think it sometimes is different from what it should be..
 
 
 class MXSExport():
@@ -2429,9 +2432,6 @@ class MXSParticles(MXSObject):
         mxex = self.mxex
         ps = self.ps
         
-        # FIXME: somehow, in test scene with 10 particles, number of rendere is 9, have a look into it
-        # FIXME: the same problem is with cloner..
-        
         has_uvs = False
         pdata = {}
         if(mxex.source == 'BLENDER_PARTICLES'):
@@ -2993,9 +2993,6 @@ class MXSModifier(Serializable):
 
 
 class MXSGrass(MXSModifier):
-    
-    # FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
-    
     def __init__(self, o, ):
         log("'{}' ({})".format(o['object'].name, 'GRASS', ), 2)
         
@@ -3066,6 +3063,10 @@ class MXSCloner(MXSModifier):
         self.ps = self.o['object']
         self.mxex = self.ps.settings.maxwell_cloner_extension
         
+        # parent is object with particle system (emitter) even when cloned object is not child of it.
+        # cloner is excluded from hierarchy and parent property is only used when use_render_emitter is False
+        self.m_parent = MXSDatabase.object_name(self.b_object, self.b_object.name)
+        
         # # cloner is not an object, it is modifier, so no name is required and no need to check for duplicate,
         # # for compatibility, default name ( from MXSModifier.__init__) is enough..
         # self.m_parent = MXSDatabase.object_name(self.b_object, self.b_object.name)
@@ -3093,21 +3094,9 @@ class MXSCloner(MXSModifier):
             
             check(ps)
             
-            # FIXME: i am still getting strange particle locations, some mysterious one particle appears out of nowhere far away and possible one is missing (verify that) maybe it is bug in maxwell, exported bin is ok, creating cloner manually with the same bin - one particle is still in wron position. using the same bin in particles is ok. also cloner is broken in 3.1.99.9. maybe i can just disable cloner completelly.. who needs it anyway. there are other ways to do the same thing..
-            # FIXME: also here i have 10 particles, but only 8 clones is rendered in place and one clone is far away, reimporting bin show all 10 particles are where they should be
-            # FIXME: update, when based-cloned-with-modifier object is in scene root (not child of anything) the missing particle is back, but this works only for externally linked bin files, not for embedded particles..
-            
-            # FIXME: also would be nice to have predictable results, link more with particles in blender to get better result in viewport - actual render, would be nice to calculate size automatically etc. like checkbox use blender size or not.
-            
-            # i get particle locations in global coordinates, so need to fix that
-            # mat = bpy.data.objects[self.m_parent].matrix_world.copy()
-            # mat.invert()
-            
             locs = []
             vels = []
             sizes = []
-            
-            # mat = ps.settings.dupli_object.matrix_world.copy().inverted()
             
             for part in ps.particles:
                 if(part.alive_state == "ALIVE"):
