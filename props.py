@@ -130,6 +130,72 @@ def _update_gpu_dof(self, context):
     cam = context.camera
     dof_options = cam.gpu_dof
     dof_options.fstop = self.fstop
+    
+    _lock_exposure_update_fstop(self, context)
+
+
+def _lock_exposure_update_shutter(self, context):
+    # fstop = 11
+    # time = 250
+    # t = 1 / 250
+    # ev = math.log2((fstop ** 2) / t)
+    # fstop = math.sqrt((2 ** ev) * t)
+    # time = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
+    if(self.lock):
+        return
+    
+    self.lock = True
+    
+    fstop = self.fstop
+    shutter = self.shutter
+    t = 1 / shutter
+    
+    if(self.lock_exposure):
+        ev = self.ev
+        fstop = math.sqrt((2 ** ev) * t)
+        self.fstop = fstop
+    else:
+        ev = math.log2((fstop ** 2) / t)
+        self.ev = ev
+    
+    self.lock = False
+
+
+def _lock_exposure_update_fstop(self, context):
+    if(self.lock):
+        return
+    
+    self.lock = True
+    
+    fstop = self.fstop
+    shutter = self.shutter
+    t = 1 / shutter
+    
+    if(self.lock_exposure):
+        ev = self.ev
+        shutter = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
+        self.shutter = shutter
+    else:
+        ev = math.log2((fstop ** 2) / t)
+        self.ev = ev
+    
+    self.lock = False
+
+
+def _lock_exposure_update_ev(self, context):
+    if(self.lock):
+        return
+    
+    self.lock = True
+    
+    fstop = self.fstop
+    shutter = self.shutter
+    t = 1 / shutter
+    ev = self.ev
+    shutter = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
+    self.shutter = shutter
+    
+    self.lock = False
 
 
 def _get_custom_alphas(self, context):
@@ -451,8 +517,14 @@ class CameraProperties(PropertyGroup):
                                             ('TYPE_FISHEYE_3', "Fish Eye", ""),
                                             ('TYPE_SPHERICAL_4', "Spherical", ""),
                                             ('TYPE_CYLINDRICAL_5', "Cylindical", ""), ], default='TYPE_THIN_LENS_0', )
-    shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", )
+    
+    shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", update=_lock_exposure_update_shutter, )
     fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_update_gpu_dof, )
+    ev = FloatProperty(name="EV Number", default=14.885, min=1.0, max=100000.0, precision=3, update=_lock_exposure_update_ev, )
+    lock_exposure = BoolProperty(name="Lock Exposure", default=False, )
+    
+    lock = BoolProperty(default=False, )
+    
     fov = FloatProperty(name="FOV", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     azimuth = FloatProperty(name="Azimuth", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     angle = FloatProperty(name="Angle", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )

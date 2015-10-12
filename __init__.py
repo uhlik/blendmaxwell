@@ -117,6 +117,7 @@ def get_default_presets():
             'defines': [
                 "import bpy",
                 "m = bpy.context.camera.maxwell_render",
+                "m.lock_exposure = False",
             ],
             'presets': {
                 'dark_interior': {'shutter': 10.0, 'fstop': 5.6, },

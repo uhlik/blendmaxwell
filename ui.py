@@ -838,8 +838,11 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
         
         sub.menu("Exposure_presets", text=bpy.types.Exposure_presets.bl_label)
         
+        sub.prop(m, 'lock_exposure')
         sub.prop(m, 'shutter')
         sub.prop(m, 'fstop')
+        sub.prop(m, 'ev')
+        
         if(m.lens == 'TYPE_FISHEYE_3'):
             sub.prop(m, 'fov')
         if(m.lens == 'TYPE_SPHERICAL_4'):
