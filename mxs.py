@@ -1515,12 +1515,18 @@ class MXSWriter():
         
         o = s.createGeometryProceduralObject(name, p)
         
-        a, _ = o.addChannelUVW()
-        o.generateCustomUVW(0, a)
-        b, _ = o.addChannelUVW()
-        o.generateCustomUVW(1, b)
-        c, _ = o.addChannelUVW()
-        o.generateCustomUVW(2, c)
+        if(extension == 'MaxwellHair'):
+            a, _ = o.addChannelUVW()
+            o.generateCustomUVW(0, a)
+            b, _ = o.addChannelUVW()
+            o.generateCustomUVW(1, b)
+            c, _ = o.addChannelUVW()
+            o.generateCustomUVW(2, c)
+        if(extension == 'MGrassP'):
+            a, _ = o.addChannelUVW()
+            o.generateCustomUVW(0, a)
+            b, _ = o.addChannelUVW()
+            o.generateCustomUVW(1, b)
         
         self.set_base_and_pivot(o, matrix, )
         if(object_props is not None):

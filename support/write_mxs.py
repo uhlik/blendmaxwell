@@ -1488,12 +1488,19 @@ def hair(d, s, ):
         p.setDouble('Tip Radius', d['grass_tip_width'])
     
     o = s.createGeometryProceduralObject(d['name'], p)
-    a, _ = o.addChannelUVW()
-    o.generateCustomUVW(0, a)
-    b, _ = o.addChannelUVW()
-    o.generateCustomUVW(1, b)
-    c, _ = o.addChannelUVW()
-    o.generateCustomUVW(2, c)
+    
+    if(d['extension'] == 'MaxwellHair'):
+        a, _ = o.addChannelUVW()
+        o.generateCustomUVW(0, a)
+        b, _ = o.addChannelUVW()
+        o.generateCustomUVW(1, b)
+        c, _ = o.addChannelUVW()
+        o.generateCustomUVW(2, c)
+    if(d['extension'] == 'MGrassP'):
+        a, _ = o.addChannelUVW()
+        o.generateCustomUVW(0, a)
+        b, _ = o.addChannelUVW()
+        o.generateCustomUVW(1, b)
     
     if(d['material'] != ''):
         mat = get_material(d['material'], s, )
