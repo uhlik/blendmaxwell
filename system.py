@@ -441,3 +441,25 @@ def mxed_get_preview_scenes():
     r.sort()
     r.insert(0, (' ', '(none)', ''))
     return r
+
+
+def mxed_browse_material_helper():
+    mp = bpy.path.abspath(prefs().maxwell_path)
+    if(PLATFORM == 'Darwin'):
+        app = os.path.abspath(os.path.join(mp, 'Mxed.app', 'Contents', 'MacOS', 'Mxed', ))
+    elif(PLATFORM == 'Linux'):
+        app = os.path.abspath(os.path.join(mp, 'mxed', ))
+    elif(PLATFORM == 'Windows'):
+        app = os.path.abspath(os.path.join(mp, 'mxed.exe', ))
+    
+    command_line = '{} -brwclose'.format(shlex.quote(app))
+    log("command: {0}".format(command_line), 0, LogStyles.MESSAGE, )
+    
+    args = shlex.split(command_line, )
+    p = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, )
+    o, e = p.communicate()
+    
+    mp = o.decode("utf-8")[4:-1]
+    if(mp == ''):
+        return None
+    return mp

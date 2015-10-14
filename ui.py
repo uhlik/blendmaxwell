@@ -2019,6 +2019,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
             if(not m.force_preview):
                 r.active = False
+        
+        sub.separator()
+        sub.operator('maxwell_render.browse_material')
 
 
 class MaterialBackfacePanel(MaterialButtonsPanel, Panel):

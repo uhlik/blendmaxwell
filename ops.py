@@ -361,6 +361,47 @@ class CreateMaterial(Operator):
         return {'FINISHED'}
 
 
+class BrowseMaterial(Operator):
+    bl_idname = "maxwell_render.browse_material"
+    bl_label = "Browse With Mxed"
+    bl_description = "Open Mxed in browser mode to select material"
+    
+    @classmethod
+    def poll(cls, context):
+        return (context.material or context.object)
+    
+    def execute(self, context):
+        p = system.mxed_browse_material_helper()
+        m = context.material
+        mx = m.maxwell_render
+        
+        if(p is not None):
+            ok = False
+            if(os.path.exists(p)):
+                h, t = os.path.split(p)
+                n, e = os.path.splitext(t)
+                if(e.lower() == '.mxm'):
+                    ok = True
+                else:
+                    self.report({'ERROR'}, "Not a .MXM file: '{}'".format(p))
+            else:
+                self.report({'ERROR'}, "File does not exist: '{}'".format(p))
+            
+            if(not ok):
+                return {'CANCELLED'}
+            
+            mx.use = 'CUSTOM'
+            mx.mxm_file = bpy.path.relpath(p)
+            
+            # change something to force preview redraw
+            m.preview_render_type = 'FLAT'
+            m.preview_render_type = 'SPHERE'
+            
+            return {'FINISHED'}
+        else:
+            return {'CANCELLED'}
+
+
 class EditMaterial(Operator):
     bl_idname = "maxwell_render.edit_material"
     bl_label = "Edit Material"
