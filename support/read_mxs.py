@@ -88,15 +88,29 @@ def get_objects_names(scene):
     return l
 
 
-def base_and_pivot(o):
-    b, p, _ = o.getBaseAndPivot()
+def base_and_pivot(obj):
+    b, p, _ = obj.getBaseAndPivot()
     o = b.origin
     x = b.xAxis
     y = b.yAxis
     z = b.zAxis
     rb = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
-    rp = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
-    return rb, rp
+    # rp = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+    
+    o = p.origin
+    x = p.xAxis
+    y = p.yAxis
+    z = p.zAxis
+    rp = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
+    
+    l, _ = obj.getPosition()
+    rl = (l.x(), l.y(), l.z())
+    r, _ = obj.getRotation()
+    rr = (r.x(), r.y(), r.z())
+    s, _ = obj.getScale()
+    rs = (s.x(), s.y(), s.z())
+    
+    return rb, rp, rl, rr, rs
 
 
 def uncorrect_focal_length(step):
@@ -176,10 +190,13 @@ def object(o):
     if(is_instance == 1):
         io = o.getInstanced()
         ion = io.getName()[0]
-        b, p = base_and_pivot(o)
+        b, p, loc, rot, sca = base_and_pivot(o)
         r = {'name': o.getName()[0],
              'base': b,
              'pivot': p,
+             'location': loc,
+             'rotation': rot,
+             'scale': sca,
              'parent': None,
              'type': 'INSTANCE',
              'instanced': ion, }
@@ -279,9 +296,12 @@ def object(o):
             # float u1, float v1, float w1, float u2, float v2, float w2, float u3, float v3, float w3
             r['trianglesUVW'][cuv].append(t)
     # base and pivot to matrix
-    b, p = base_and_pivot(o)
+    b, p, loc, rot, sca = base_and_pivot(o)
     r['base'] = b
     r['pivot'] = p
+    r['location'] = loc
+    r['rotation'] = rot
+    r['scale'] = sca
     # parent
     p, _ = o.getParent()
     if(not p.isNull()):

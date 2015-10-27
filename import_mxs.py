@@ -107,10 +107,12 @@ class MXSImportMacOSX():
             else:
                 log("unknown type: {0}".format(t), 1, LogStyles.WARNING)
         
-        log("setting object hierarchy..", 1, LogStyles.MESSAGE)
-        self._hierarchy(data)
+        # log("setting object hierarchy..", 1, LogStyles.MESSAGE)
+        # self._hierarchy(data)
         log("setting object transformations..", 1, LogStyles.MESSAGE)
         self._transformations(data)
+        log("setting object hierarchy..", 1, LogStyles.MESSAGE)
+        self._hierarchy(data)
         log("finalizing..", 1, LogStyles.MESSAGE)
         self._finalize()
     
@@ -277,16 +279,17 @@ class MXSImportMacOSX():
         """Apply transformation to all objects."""
         types = ['MESH', 'INSTANCE', 'EMPTY']
         mrx90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
+        mrxneg90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
         for d in data:
             t = d['type']
             if(t in types):
-                # o = self._get_object_by_name(d['name'])
                 o = d['created']
-                m = self._base_and_pivot_to_matrix(d)
                 if(o.type == 'MESH'):
                     if(d['type'] != 'INSTANCE'):
                         o.data.transform(mrx90)
-                o.matrix_local = m
+                
+                m = self._base_and_pivot_to_matrix(d)
+                o.matrix_local = m * mrxneg90
     
     def _distance(self, a, b):
         ax, ay, az = a
@@ -294,13 +297,39 @@ class MXSImportMacOSX():
         return ((ax - bx) ** 2 + (ay - by) ** 2 + (az - bz) ** 2) ** 0.5
     
     def _base_and_pivot_to_matrix(self, d):
+        '''
+        am = io_utils.axis_conversion(from_forward='-Z', from_up='Y', to_forward='Y', to_up='Z', ).to_4x4()
         b = d['base']
+        o = b[0]
+        x = b[1]
+        y = b[2]
+        z = b[3]
+        bm = Matrix([(x[0], y[0], z[0], o[0]), (x[1], y[1], z[1], o[1]), (x[2], y[2], z[2], o[2]), (0.0, 0.0, 0.0, 1.0)])
         p = d['pivot']
-        o, x, y, z = b
-        m = Matrix(((x[0], z[0] * -1, y[0], o[0]),
-                    (x[2] * -1, z[2], y[2] * -1, o[2] * -1),
-                    (x[1], z[1] * -1, y[1], o[1]),
-                    (0.0, 0.0, 0.0, 1.0), ))
+        o = p[0]
+        x = p[1]
+        y = p[2]
+        z = p[3]
+        pm = Matrix([(x[0], y[0], z[0], o[0]), (x[1], y[1], z[1], o[1]), (x[2], y[2], z[2], o[2]), (0.0, 0.0, 0.0, 1.0)])
+        mat = am * bm * pm
+        obj.matrix_world = mat
+        '''
+        am = io_utils.axis_conversion(from_forward='-Z', from_up='Y', to_forward='Y', to_up='Z', ).to_4x4()
+        
+        def cbase_to_matrix4(cbase):
+            o = cbase[0]
+            x = cbase[1]
+            y = cbase[2]
+            z = cbase[3]
+            m = Matrix([(x[0], y[0], z[0], o[0]),
+                        (x[1], y[1], z[1], o[1]),
+                        (x[2], y[2], z[2], o[2]),
+                        (0.0, 0.0, 0.0, 1.0)])
+            return m
+        
+        bm = cbase_to_matrix4(d['base'])
+        pm = cbase_to_matrix4(d['pivot'])
+        m = am * bm * pm
         return m
     
     def _matrix_look_at(self, eye, target, up):
