@@ -44,7 +44,7 @@
 
 ### addon installation - Linux:
 
-* append this ```export LD_LIBRARY_PATH=$MAXWELL3_ROOT:$LD_LIBRARY_PATH``` to your .bashrc AFTER generated stuff from Maxwell installation, after MAXWELL3_ROOT is exported
+* append this ```export LD_LIBRARY_PATH=$MAXWELL3_ROOT:$LD_LIBRARY_PATH``` to your .bashrc after generated stuff from Maxwell installation, i.e. after ```MAXWELL3_ROOT``` is exported
 * to fix complains of some extensions, install ```libtbb-dev```, but this step might be optional, it is used by extension not supported in addon
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/.config/blender/2.76/scripts/addons/```
 * Start Blender from terminal, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
@@ -54,6 +54,7 @@
 
 changelog:
 
+* 0.3.6 added: export particle uvs, camera lock exposure, choosing external materials with mxed in browser mode, choose scene for auto preview in mxed, fixed: import mxs: object transformation
 * 0.3.5 particle object/group instances, quick setting object properties/object id to multiple objects, blocked emitters, many fixes (reading/drawing material previews, missing cloner objects, hair uvs, ...)
 * 0.3.4 hair with children particles root uvs (requires blender 2.76), wire export faster and with smaller files, fixes here and there
 * 0.3.3 simplified installation procedure on Mac OS X, pymaxwell is now imported directly from ```/Applications/Maxwell 3```, also fixed some bugs..
