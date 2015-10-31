@@ -447,19 +447,19 @@ def material(d, s, ):
                 ep.luminance = d['emitter_luminance_output']
                 e.setPair(ep)
                 
+                if(d['emitter_luminance'] == 0):
+                    u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
+                elif(d['emitter_luminance'] == 1):
+                    u = EMISSION_UNITS_LUMINOUS_POWER
+                elif(d['emitter_luminance'] == 2):
+                    u = EMISSION_UNITS_ILLUMINANCE
+                elif(d['emitter_luminance'] == 3):
+                    u = EMISSION_UNITS_LUMINOUS_INTENSITY
+                elif(d['emitter_luminance'] == 4):
+                    u = EMISSION_UNITS_LUMINANCE
                 if(d['emitter_color_black_body_enabled']):
-                    e.setActivePair(EMISSION_COLOR_TEMPERATURE)
+                    e.setActivePair(EMISSION_COLOR_TEMPERATURE, u)
                 else:
-                    if(d['emitter_luminance'] == 0):
-                        u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
-                    elif(d['emitter_luminance'] == 1):
-                        u = EMISSION_UNITS_LUMINOUS_POWER
-                    elif(d['emitter_luminance'] == 2):
-                        u = EMISSION_UNITS_ILLUMINANCE
-                    elif(d['emitter_luminance'] == 3):
-                        u = EMISSION_UNITS_LUMINOUS_INTENSITY
-                    elif(d['emitter_luminance'] == 4):
-                        u = EMISSION_UNITS_LUMINANCE
                     e.setActivePair(EMISSION_RGB, u)
             
             elif(d['emitter_emission'] == 1):
