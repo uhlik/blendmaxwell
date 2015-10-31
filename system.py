@@ -459,7 +459,8 @@ def mxed_browse_material_helper():
     p = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, )
     o, e = p.communicate()
     
-    mp = o.decode("utf-8")[4:-1]
+    # mp = o.decode("utf-8")[4:-1]
+    mp = o.decode("utf-8").strip()[4:]
     if(mp == ''):
         return None
     return mp
