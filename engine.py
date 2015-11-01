@@ -32,6 +32,7 @@ from . import export
 from . import ops
 from . import system
 from . import mxs
+from . import maths
 
 
 class MaxwellRenderExportEngine(RenderEngine):
@@ -268,6 +269,62 @@ class MaxwellRenderExportEngine(RenderEngine):
             l.rect = b
             self.end_result(r)
         
+        def fill_grid():
+            xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
+            yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
+            c = xr * yr
+            
+            '''
+            current_theme = bpy.context.user_preferences.themes.items()[0][0]
+            theme_bg_col = bpy.context.user_preferences.themes[current_theme].image_editor.space.back
+            
+            def g(c):
+                r = []
+                for i, v in enumerate(c):
+                    if(v <= 0.03928):
+                        r.append(v / 12.92)
+                    else:
+                        r.append(math.pow((v + 0.055) / 1.055, 2.4))
+                return r
+            
+            bg_col = g(theme_bg_col) + [1.0, ]
+            
+            a = 1.0 * maths.remap(8, 0, 100, 0.0, 1.0)
+            grid_col = [bg_col[0] + a, bg_col[1] + a, bg_col[2] + a, 1.0]
+            
+            a = 1.0 * maths.remap(6, 0, 100, 0.0, 1.0)
+            grid_col2 = [bg_col[0] + a, bg_col[1] + a, bg_col[2] + a, 1.0]
+            '''
+            
+            bg_col = (48 / 256, 48 / 256, 48 / 256, 1.0)
+            grid_col = (64 / 256, 64 / 256, 64 / 256, 1.0)
+            
+            pixels = numpy.array([bg_col] * c)
+            pixels = numpy.reshape(pixels, (yr, xr, 4))
+            for i in range(0, xr, 8):
+                pixels[:, i] = grid_col
+            for i in range(0, yr, 8):
+                pixels[i] = grid_col
+            
+            def g(c):
+                r = []
+                for i, v in enumerate(c):
+                    if(v <= 0.03928):
+                        r.append(v / 12.92)
+                    else:
+                        r.append(math.pow((v + 0.055) / 1.055, 2.4))
+                return r
+            
+            a1 = numpy.reshape(pixels, (-1, 4))
+            a2 = []
+            for c in a1:
+                a2.append(g(c[:3]) + [1.0, ])
+            
+            r = self.begin_result(0, 0, xr, yr)
+            l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
+            l.rect = a2
+            self.end_result(r)
+        
         if(mats is not None):
             mat = mats[0]
             m = mat.maxwell_render
@@ -376,16 +433,18 @@ class MaxwellRenderExportEngine(RenderEngine):
                     l.rect = a.tolist()
                     self.end_result(r)
                 else:
-                    xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-                    yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-                    c = xr * yr
-                    b = [[0.0, 0.0, 0.0, 1.0]] * c
-                    r = self.begin_result(0, 0, xr, yr)
-                    l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
-                    l.rect = b
-                    self.end_result(r)
+                    # xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
+                    # yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
+                    # c = xr * yr
+                    # b = [[0.0, 0.0, 0.0, 1.0]] * c
+                    # r = self.begin_result(0, 0, xr, yr)
+                    # l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
+                    # l.rect = b
+                    # self.end_result(r)
+                    fill_grid()
             else:
-                fill_black()
+                # fill_black()
+                fill_grid()
     
     def _render_scene(self, scene):
         m = scene.maxwell_render
