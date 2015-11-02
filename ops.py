@@ -354,10 +354,14 @@ class CreateMaterial(Operator):
         
         system.mxed_create_material_helper(p, self.force_preview, self.force_preview_scene, )
         
+        rp = bpy.path.relpath(self.filepath)
+        if(system.PLATFORM == 'Windows'):
+            rp = os.path.abspath(self.filepath)
+        
         if(self.backface):
-            context.object.maxwell_render.backface_material_file = bpy.path.relpath(self.filepath)
+            context.object.maxwell_render.backface_material_file = rp
         else:
-            context.material.maxwell_render.mxm_file = bpy.path.relpath(self.filepath)
+            context.material.maxwell_render.mxm_file = rp
         return {'FINISHED'}
 
 
@@ -391,7 +395,12 @@ class BrowseMaterial(Operator):
                 return {'CANCELLED'}
             
             mx.use = 'CUSTOM'
-            mx.mxm_file = bpy.path.relpath(p)
+            
+            rp = bpy.path.relpath(p)
+            if(system.PLATFORM == 'Windows'):
+                rp = os.path.abspath(p)
+            
+            mx.mxm_file = rp
             
             # change something to force preview redraw
             m.preview_render_type = 'FLAT'
