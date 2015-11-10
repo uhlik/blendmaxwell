@@ -53,6 +53,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
 # FIXME: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
 # TODO: particles/cloner: check if size setting is correct, i think it sometimes is different from what it should be..
+# TODO: do something with sharp edges, auto smooth and custom normals..
 
 
 class MXSExport():
