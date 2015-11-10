@@ -668,8 +668,9 @@ class MaterialProperties(PropertyGroup):
     embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )
     
-    use = EnumProperty(name="Type", items=[('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""),
-                                           ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ('HAIR', "Hair", ""), ], default='CUSTOM', )
+    use = EnumProperty(name="Type", items=[('REFERENCE', "Reference", ""), ('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""),
+                                           ('TRANSPARENT', "Transparent", ""), ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""),
+                                           ('HAIR', "Hair", ""), ], default='REFERENCE', )
     
     override_global_properties = BoolProperty(name="Override Global Properties In MXM", default=False, )
     
@@ -1404,3 +1405,130 @@ class ExtMaterialProperties(PropertyGroup):
     @classmethod
     def unregiser(cls):
         del bpy.types.Material.maxwell_material_extension
+
+
+class MaterialLayerProperties(PropertyGroup):
+    opacity = FloatProperty(name="Opacity/Mask", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    opacity_map_enabled = BoolProperty(name="Opacity/Mask Map Enabled", default=False, )
+    opacity_map = StringProperty(name="Opacity/Mask Map", default="", )
+    blending = EnumProperty(name="Layer Blending", items=[('0', "Normal", ""), ('1', "Additive", ""), ], default='0', )
+
+
+class MaterialBSDFProperties(PropertyGroup):
+    weight = FloatProperty(name="Weight", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    weight_map_enabled = BoolProperty(name="Weight Map Enabled", default=False, )
+    weight_map = StringProperty(name="Weight Map", default="", )
+    
+    ior = EnumProperty(name="IOR", items=[('0', "Custom", ""), ('1', "Measured Data", ""), ], default='0', )
+    complex_ior = StringProperty(name="Complex IOR", default="", subtype='FILE_PATH', )
+    
+    reflectance_0 = FloatVectorProperty(name="Reflectance 0", default=(0.6, 0.6, 0.6), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    reflectance_0_map_enabled = BoolProperty(name="Reflectance 0 Map Enabled", default=False, )
+    reflectance_0_map = StringProperty(name="Reflectance 0 Map", default="", )
+    reflectance_90 = FloatVectorProperty(name="Reflectance 90", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    reflectance_90_map_enabled = BoolProperty(name="Reflectance 90 Map Enabled", default=False, )
+    reflectance_90_map = StringProperty(name="Reflectance 90 Map", default="", )
+    transmittance = FloatVectorProperty(name="Transmittance", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    transmittance_map_enabled = BoolProperty(name="Transmittance Map Enabled", default=False, )
+    transmittance_map = StringProperty(name="Transmittance Map", default="", )
+    
+    attenuation = FloatProperty(name="Attenuation", default=1.0, min=0.0, max=999.0, precision=1, )
+    attenuation_units = EnumProperty(name="Attenuation Units", items=[('0', "nm", ""), ('1', "um", ""), ('2', "mm", ""), ('3', "cm", ""), ('4', "dm", ""), ('5', "m", ""), ], default='0', )
+    
+    nd = FloatProperty(name="Nd", default=3.0, min=0.01, max=1000.0, precision=3, )
+    force_fresnel = BoolProperty(name="Force Fresnel", default=False, )
+    
+    k = FloatProperty(name="K", default=0.0, min=0.0, max=1000.0, precision=3, )
+    abbe = FloatProperty(name="Abbe", default=0.0, min=1.0, max=2000.0, precision=3, )
+    r2_enabled = BoolProperty(name="R2 Enabled", default=False, )
+    r2_falloff_angle = FloatProperty(name="R2 Falloff Angle", default=math.radians(75.0), min=math.radians(0.0), max=math.radians(90.0), precision=2, subtype='ANGLE', )
+    r2_influence = FloatProperty(name="R2 Influence", default=0.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
+    
+    roughness = FloatProperty(name="Roughness", default=100.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
+    roughness_map_enabled = BoolProperty(name="Roughness Map Enabled", default=False, )
+    roughness_map = StringProperty(name="Roughness Map", default="", )
+    
+    bump = FloatProperty(name="Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, )
+    bump_map_enabled = BoolProperty(name="Bump Map Enabled", default=False, )
+    bump_map = StringProperty(name="Bump Map", default="", )
+    bump_map_use_normal = BoolProperty(name="Bump Map Use Normal", default=False, )
+    
+    anisotrophy = FloatProperty(name="Anisotrophy", default=0.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
+    anisotrophy_map_enabled = BoolProperty(name="Anisotrophy Map Enabled", default=False, )
+    anisotrophy_map = StringProperty(name="Anisotrophy Map", default="", )
+    
+    anisotrophy_angle = FloatProperty(name="Anisotrophy Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=2, subtype='ANGLE', )
+    anisotrophy_map_enabled = BoolProperty(name="Anisotrophy Angle Map Enabled", default=False, )
+    anisotrophy_map = StringProperty(name="Anisotrophy Angle Map", default="", )
+    
+    scattering = FloatVectorProperty(name="Scattering", default=(0.5, 0.5, 0.5), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    coef = FloatProperty(name="Coef", default=0.0, min=0.0, max=99999.0, precision=2, )
+    asymmetry = FloatProperty(name="Asymmetry", default=0.0, min=-1.0, max=1.0, precision=3, )
+    sigle_sided = BoolProperty(name="Single Sided", default=False, )
+
+
+class MaterialCoatingProperties(PropertyGroup):
+    thickness = FloatProperty(name="Thickness (nm)", default=500.0, min=1.0, max=1000000.0, precision=3, )
+    thickness_map_enabled = BoolProperty(name="Thickness Map Enabled", default=False, )
+    thickness_map = StringProperty(name="Thickness Map", default="", )
+    thickness_map_min = FloatProperty(name="Thickness Map Min", default=100.0, min=1.0, max=1000000.0, precision=3, )
+    thickness_map_max = FloatProperty(name="Thickness Map Max", default=1000.0, min=1.0, max=1000000.0, precision=3, )
+    
+    ior = EnumProperty(name="IOR", items=[('0', "Custom", ""), ('1', "Measured Data", ""), ], default='0', )
+    complex_ior = StringProperty(name="Complex IOR", default="", subtype='FILE_PATH', )
+    
+    reflectance_0 = FloatVectorProperty(name="Reflectance 0", default=(0.6, 0.6, 0.6), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    reflectance_0_map_enabled = BoolProperty(name="Reflectance 0 Map Enabled", default=False, )
+    reflectance_0_map = StringProperty(name="Reflectance 0 Map", default="", )
+    reflectance_90 = FloatVectorProperty(name="Reflectance 90", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    reflectance_90_map_enabled = BoolProperty(name="Reflectance 90 Map Enabled", default=False, )
+    reflectance_90_map = StringProperty(name="Reflectance 90 Map", default="", )
+    
+    nd = FloatProperty(name="Nd", default=3.0, min=0.01, max=1000.0, precision=3, )
+    force_fresnel = BoolProperty(name="Force Fresnel", default=False, )
+    k = FloatProperty(name="K", default=0.0, min=0.0, max=1000.0, precision=3, )
+    r2_enabled = BoolProperty(name="R2 Enabled", default=False, )
+    r2_falloff_angle = FloatProperty(name="R2 Falloff Angle", default=math.radians(75.0), min=math.radians(0.0), max=math.radians(90.0), precision=2, subtype='ANGLE', )
+
+
+class MaterialDisplacementProperties(PropertyGroup):
+    map = StringProperty(name="Map", default="", )
+    type = EnumProperty(name="Type", items=[('0', "On The Fly", ""), ('1', "Pretessellated", ""), ('2', "Vector", ""), ], default='1', )
+    subdivision = IntProperty(name="Subdivision", default=5, min=0, max=10000, )
+    adaptive = BoolProperty(name="Adaptive", default=False, )
+    subdivision_method = EnumProperty(name="Subdivision Method", items=[('0', "Flat", ""), ('1', "Catmull/Loop", ""), ], default='0', )
+    offset = FloatProperty(name="Offset", default=0.5, min=0.0, max=1.0, precision=1, subtype='PERCENTAGE', )
+    smoothing = BoolProperty(name="Smoothing", default=True, )
+    uv_interpolation = EnumProperty(name="UV Interpolation", items=[('0', "None", ""), ('1', "Edges", ""), ('2', "Edges And Corners", ""), ('3', "Sharp", ""), ], default='2', )
+    
+    height = FloatProperty(name="Height", default=2.0, min=-1000.0, max=1000.0, precision=1, )
+    heigh_units = EnumProperty(name="Height Units", items=[('0', "%", ""), ('1', "cm", ""), ], default='0', )
+    
+    v3d_preset = EnumProperty(name="Preset", items=[('0', "Custom", ""), ('1', "Zbrush Tangent", ""), ('2', "Zbrush World", ""), ('3', "Mudbox Absolute Tangent", ""), ('4', "Mudbox Object", ""), ('5', "Mudbox World", ""), ('6', "Realflow", ""), ('7', "Modo", ""), ], default='0', )
+    v3d_transform = EnumProperty(name="Transform", items=[('0', "Tangent", ""), ('1', "Object", ""), ('2', "World", ""), ], default='0', )
+    v3d_rgb_mapping = EnumProperty(name="RGB Mapping", items=[('0', "XYZ", ""), ('1', "XZY", ""), ('2', "YZX", ""), ('3', "YXZ", ""), ('4', "ZXY", ""), ('5', "ZYX", ""), ], default='0', )
+    v3d_scale = FloatVectorProperty(name="Scale", default=(1.0, 1.0, 1.0), min=-100000.0, max=100000.0, precision=2, subtype='XYZ', )
+    
+
+class MaterialEmitterProperties(PropertyGroup):
+    type = EnumProperty(name="Type", items=[('0', "Area", ""), ('1', "IES", ""), ('2', "Spot", ""), ], default='0', )
+    ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
+    ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )
+    spot_map_enabled = BoolProperty(name="Spot Map Enabled", default=False, )
+    spot_map = StringProperty(name="Spot Map", default="", )
+    spot_cone_angle = FloatProperty(name="Cone Angle", default=math.radians(45.0), min=math.radians(0.01), max=math.radians(179.99), precision=2, subtype='ANGLE', )
+    spot_falloff_angle = FloatProperty(name="FallOff Angle", default=math.radians(10.0), min=math.radians(0.0), max=math.radians(89.99), precision=2, subtype='ANGLE', )
+    spot_falloff_type = EnumProperty(name="FallOff Type", items=[('0', "Linear", ""), ('1', "Square Root", ""), ('2', "Sinusoidal", ""), ('3', "Squared Sinusoidal", ""),
+                                                                 ('4', "Quadratic", ""), ('5', "Cubic", ""), ], default='0', )
+    spot_blur = FloatProperty(name="Blur", default=1.0, min=0.01, max=1000.00, precision=2, )
+    emission = EnumProperty(name="Emission", items=[('0', "Color", ""), ('1', "Temperature", ""), ('2', "HDR Image", ""), ], default='0', )
+    color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    color_black_body_enabled = BoolProperty(name="Temperature Enabled", default=False, )
+    color_black_body = FloatProperty(name="Temperature (K)", default=6500.0, min=273.0, max=100000.0, precision=1, )
+    luminance = EnumProperty(name="Luminance", items=[('0', "Power & Efficacy", ""), ('1', "Lumen", ""), ('2', "Lux", ""), ('3', "Candela", ""), ('4', "Luminance", ""), ], default='0', )
+    luminance_power = FloatProperty(name="Power (W)", default=40.0, min=0.0, max=1000000000.0, precision=1, )
+    luminance_efficacy = FloatProperty(name="Efficacy (lm/W)", default=17.6, min=0.0, max=683.0, precision=1, )
+    luminance_output = FloatProperty(name="Output (lm, lm, lm/m, cd, cd/m)", default=100.0, min=0.0, max=1000000000.0, precision=1, )
+    temperature_value = FloatProperty(name="Value (K)", default=6500.0, min=273.0, max=100000.0, precision=3, )
+    hdr_map = StringProperty(name="Image", default="", )
+    hdr_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=1000000.0, precision=1, )
