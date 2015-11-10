@@ -394,7 +394,7 @@ class BrowseMaterial(Operator):
             if(not ok):
                 return {'CANCELLED'}
             
-            mx.use = 'CUSTOM'
+            mx.use = 'REFERENCE'
             
             rp = bpy.path.relpath(p)
             if(system.PLATFORM == 'Windows'):
@@ -550,7 +550,7 @@ class EditExtensionMaterial(Operator):
         path = system.mxed_create_and_edit_ext_material_helper(p, d, self.force_preview, self.force_preview_scene, )
         
         m = context.material.maxwell_render
-        m.use = 'CUSTOM'
+        m.use = 'REFERENCE'
         m.mxm_file = path
         
         return {'FINISHED'}

@@ -1589,11 +1589,11 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         sub.prop(m, 'use', text="Material Type", )
         sub.separator()
         
-        if(m.use == 'CUSTOM'):
+        if(m.use == 'REFERENCE'):
             r = sub.row()
             r.prop(m, 'override_global_properties')
         
-        if(m.use == 'CUSTOM' and not m.override_global_properties):
+        if(m.use == 'REFERENCE' and not m.override_global_properties):
             sub = sub.column()
             sub.enabled = False
         
@@ -1984,8 +1984,11 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r = sub.row()
             r.prop(mx, 'hair_secondary_highlight_tint')
         
+        elif(m.use == 'CUSTOM'):
+            # TODO: custom material creation
+            pass
         else:
-            # 'CUSTOM'
+            # 'REFERENCE'
             sub.prop(m, 'mxm_file')
             sub.prop(m, 'embed')
             r = sub.row(align=True)
@@ -2008,7 +2011,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 if(not m.force_preview):
                     r.active = False
         
-        if(m.use != 'CUSTOM'):
+        if(m.use != 'REFERENCE'):
             sub.separator()
             
             s = sub.split(percentage=0.7, align=True)
@@ -2862,8 +2865,8 @@ class ObjectPanelBlockedEmittersMenu(Menu):
                             if(mx.use == 'EMITTER'):
                                 # emitter extension material, this one should always be emitter, no need for further checks
                                 es.add(o.name)
-                            elif(mx.use == 'CUSTOM'):
-                                # now check if custom material has emitter layer
+                            elif(mx.use == 'REFERENCE'):
+                                # now check if referenced material has emitter layer
                                 p = bpy.path.abspath(mx.mxm_file)
                                 if(os.path.exists(p)):
                                     if(system.PLATFORM == 'Darwin'):
@@ -2874,6 +2877,9 @@ class ObjectPanelBlockedEmittersMenu(Menu):
                                         mxmec = mxs.MXMEmitterCheck(p)
                                         if(mxmec.emitter):
                                             es.add(o.name)
+                            elif(mx.use == 'CUSTOM'):
+                                # TODO: now check if custom material has emitter layer
+                                pass
                         else:
                             es.add(o.name)
         

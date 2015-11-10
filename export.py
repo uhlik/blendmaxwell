@@ -798,9 +798,12 @@ class MXSExport():
             if(mat.use_fake_user):
                 u -= 1
             if(u > 0):
-                if(mx.use == 'CUSTOM' and mat.users > 0):
+                if(mx.use == 'REFERENCE' and mat.users > 0):
                     mxm = MXSMaterialMXM(mat.name, path=mx.mxm_file, embed=mx.embed, )
                     self._write(mxm)
+                elif(mx.use == 'CUSTOM' and mat.users > 0):
+                    # TODO: custom material creation
+                    pass
                 else:
                     exmat = MXSMaterialExtension(mat.name)
                     self._write(exmat)
