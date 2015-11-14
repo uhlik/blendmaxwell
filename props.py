@@ -664,40 +664,6 @@ class ReferenceProperties(PropertyGroup):
         del bpy.types.Object.maxwell_render_reference
 
 
-class MaterialProperties(PropertyGroup):
-    embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
-    mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )
-    
-    use = EnumProperty(name="Type", items=[('REFERENCE', "Reference", ""), ('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""),
-                                           ('TRANSPARENT', "Transparent", ""), ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""),
-                                           ('HAIR', "Hair", ""), ], default='REFERENCE', )
-    
-    override_global_properties = BoolProperty(name="Override Global Properties In MXM", default=False, )
-    
-    global_override_map = StringProperty(name="Override Map", default="", )
-    global_bump = BoolProperty(name="Global Bump", default=False, )
-    global_bump_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=1, )
-    global_bump_map = StringProperty(name="Global Bump Map", default="", )
-    global_dispersion = BoolProperty(name="Dispersion", default=False, )
-    global_shadow = BoolProperty(name="Shadow", default=False, )
-    global_matte = BoolProperty(name="Matte", default=False, )
-    global_priority = IntProperty(name="Nested Priority", default=0, min=0, max=1000, )
-    global_id = FloatVectorProperty(name="Material Id", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    
-    # flag = BoolProperty(name="Flag", default=False, description="True - redraw preview, False - skip", options={'HIDDEN'}, )
-    
-    force_preview = BoolProperty(name="Force Preview", default=True, description="Force preview rendering when opened in Mxed", )
-    force_preview_scene = EnumProperty(name="Force Preview Scene", items=_get_material_preview_scenes, description="Force preview Mxed scene", )
-    
-    @classmethod
-    def register(cls):
-        bpy.types.Material.maxwell_render = PointerProperty(type=cls)
-    
-    @classmethod
-    def unregiser(cls):
-        del bpy.types.Material.maxwell_render
-
-
 class TextureProperties(PropertyGroup):
     path = StringProperty(name="Path", default="", subtype='FILE_PATH', description="", )
     use_global_map = BoolProperty(name="Use Override Map", default=False, )
@@ -1407,14 +1373,13 @@ class ExtMaterialProperties(PropertyGroup):
         del bpy.types.Material.maxwell_material_extension
 
 
-class MaterialLayerProperties(PropertyGroup):
-    opacity = FloatProperty(name="Opacity/Mask", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    opacity_map_enabled = BoolProperty(name="Opacity/Mask Map Enabled", default=False, )
-    opacity_map = StringProperty(name="Opacity/Mask Map", default="", )
-    blending = EnumProperty(name="Layer Blending", items=[('0', "Normal", ""), ('1', "Additive", ""), ], default='0', )
-
-
 class MaterialBSDFProperties(PropertyGroup):
+    expanded_ior = BoolProperty(name="Expanded", default=True, )
+    expanded_surface = BoolProperty(name="Expanded", default=True, )
+    expanded_subsurface = BoolProperty(name="Expanded", default=False, )
+    
+    visible = BoolProperty(name="Visible", default=True, )
+    
     weight = FloatProperty(name="Weight", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     weight_map_enabled = BoolProperty(name="Weight Map Enabled", default=False, )
     weight_map = StringProperty(name="Weight Map", default="", )
@@ -1458,8 +1423,8 @@ class MaterialBSDFProperties(PropertyGroup):
     anisotrophy_map = StringProperty(name="Anisotrophy Map", default="", )
     
     anisotrophy_angle = FloatProperty(name="Anisotrophy Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=2, subtype='ANGLE', )
-    anisotrophy_map_enabled = BoolProperty(name="Anisotrophy Angle Map Enabled", default=False, )
-    anisotrophy_map = StringProperty(name="Anisotrophy Angle Map", default="", )
+    anisotrophy_angle_map_enabled = BoolProperty(name="Anisotrophy Angle Map Enabled", default=False, )
+    anisotrophy_angle_map = StringProperty(name="Anisotrophy Angle Map", default="", )
     
     scattering = FloatVectorProperty(name="Scattering", default=(0.5, 0.5, 0.5), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     coef = FloatProperty(name="Coef", default=0.0, min=0.0, max=99999.0, precision=2, )
@@ -1468,6 +1433,10 @@ class MaterialBSDFProperties(PropertyGroup):
 
 
 class MaterialCoatingProperties(PropertyGroup):
+    expanded = BoolProperty(name="Expanded", default=False, )
+    enabled = BoolProperty(name="Enabled", default=False, )
+    # visible = BoolProperty(name="Visible", default=True, )
+    
     thickness = FloatProperty(name="Thickness (nm)", default=500.0, min=1.0, max=1000000.0, precision=3, )
     thickness_map_enabled = BoolProperty(name="Thickness Map Enabled", default=False, )
     thickness_map = StringProperty(name="Thickness Map", default="", )
@@ -1492,6 +1461,10 @@ class MaterialCoatingProperties(PropertyGroup):
 
 
 class MaterialDisplacementProperties(PropertyGroup):
+    expanded = BoolProperty(name="Expanded", default=False, )
+    enabled = BoolProperty(name="Enabled", default=False, )
+    # visible = BoolProperty(name="Visible", default=True, )
+    
     map = StringProperty(name="Map", default="", )
     type = EnumProperty(name="Type", items=[('0', "On The Fly", ""), ('1', "Pretessellated", ""), ('2', "Vector", ""), ], default='1', )
     subdivision = IntProperty(name="Subdivision", default=5, min=0, max=10000, )
@@ -1502,7 +1475,7 @@ class MaterialDisplacementProperties(PropertyGroup):
     uv_interpolation = EnumProperty(name="UV Interpolation", items=[('0', "None", ""), ('1', "Edges", ""), ('2', "Edges And Corners", ""), ('3', "Sharp", ""), ], default='2', )
     
     height = FloatProperty(name="Height", default=2.0, min=-1000.0, max=1000.0, precision=1, )
-    heigh_units = EnumProperty(name="Height Units", items=[('0', "%", ""), ('1', "cm", ""), ], default='0', )
+    height_units = EnumProperty(name="Height Units", items=[('0', "%", ""), ('1', "cm", ""), ], default='0', )
     
     v3d_preset = EnumProperty(name="Preset", items=[('0', "Custom", ""), ('1', "Zbrush Tangent", ""), ('2', "Zbrush World", ""), ('3', "Mudbox Absolute Tangent", ""), ('4', "Mudbox Object", ""), ('5', "Mudbox World", ""), ('6', "Realflow", ""), ('7', "Modo", ""), ], default='0', )
     v3d_transform = EnumProperty(name="Transform", items=[('0', "Tangent", ""), ('1', "Object", ""), ('2', "World", ""), ], default='0', )
@@ -1511,6 +1484,10 @@ class MaterialDisplacementProperties(PropertyGroup):
     
 
 class MaterialEmitterProperties(PropertyGroup):
+    expanded = BoolProperty(name="Expanded", default=False, )
+    enabled = BoolProperty(name="Enabled", default=False, )
+    # visible = BoolProperty(name="Visible", default=True, )
+    
     type = EnumProperty(name="Type", items=[('0', "Area", ""), ('1', "IES", ""), ('2', "Spot", ""), ], default='0', )
     ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
     ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )
@@ -1532,3 +1509,75 @@ class MaterialEmitterProperties(PropertyGroup):
     temperature_value = FloatProperty(name="Value (K)", default=6500.0, min=273.0, max=100000.0, precision=3, )
     hdr_map = StringProperty(name="Image", default="", )
     hdr_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=1000000.0, precision=1, )
+
+
+class MaterialCustomLayerBSDFsItem(PropertyGroup):
+    name = StringProperty(name="Name", default="Layer", )
+    bsdf = PointerProperty(name="BSDF", type=MaterialBSDFProperties, )
+    coating = PointerProperty(name="Emitter", type=MaterialCoatingProperties, )
+
+
+class MaterialCustomLayerBSDFs(PropertyGroup):
+    bsdfs = CollectionProperty(name="Material Layers", type=MaterialCustomLayerBSDFsItem, )
+    index = IntProperty(name="Active", default=-1, )
+
+
+class MaterialLayerProperties(PropertyGroup):
+    expanded = BoolProperty(name="Expanded", default=True, )
+    
+    visible = BoolProperty(name="Visible", default=True, )
+    
+    opacity = FloatProperty(name="Opacity/Mask", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    opacity_map_enabled = BoolProperty(name="Opacity/Mask Map Enabled", default=False, )
+    opacity_map = StringProperty(name="Opacity/Mask Map", default="", )
+    blending = EnumProperty(name="Layer Blending", items=[('0', "N", ""), ('1', "A", ""), ], default='0', )
+    
+    bsdfs = PointerProperty(name="BSDFs", type=MaterialCustomLayerBSDFs, )
+    emitter = PointerProperty(name="Emitter", type=MaterialEmitterProperties, )
+
+
+class MaterialCustomLayersItem(PropertyGroup):
+    name = StringProperty(name="Name", default="Layer", )
+    layer = PointerProperty(name="Layer", type=MaterialLayerProperties, )
+
+
+class MaterialCustomLayers(PropertyGroup):
+    layers = CollectionProperty(name="Material Layers", type=MaterialCustomLayersItem, )
+    index = IntProperty(name="Active", default=-1, )
+
+
+class MaterialProperties(PropertyGroup):
+    embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
+    mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )
+    
+    use = EnumProperty(name="Type", items=[('REFERENCE', "Reference", ""), ('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""),
+                                           ('TRANSPARENT', "Transparent", ""), ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""),
+                                           ('HAIR', "Hair", ""), ], default='REFERENCE', )
+    
+    override_global_properties = BoolProperty(name="Override Global Properties In MXM", default=False, )
+    
+    global_override_map = StringProperty(name="Override Map", default="", )
+    global_bump = BoolProperty(name="Global Bump", default=False, )
+    global_bump_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=1, )
+    global_bump_map = StringProperty(name="Global Bump Map", default="", )
+    global_dispersion = BoolProperty(name="Dispersion", default=False, )
+    global_shadow = BoolProperty(name="Shadow", default=False, )
+    global_matte = BoolProperty(name="Matte", default=False, )
+    global_priority = IntProperty(name="Nested Priority", default=0, min=0, max=1000, )
+    global_id = FloatVectorProperty(name="Material Id", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    
+    # flag = BoolProperty(name="Flag", default=False, description="True - redraw preview, False - skip", options={'HIDDEN'}, )
+    
+    force_preview = BoolProperty(name="Force Preview", default=True, description="Force preview rendering when opened in Mxed", )
+    force_preview_scene = EnumProperty(name="Force Preview Scene", items=_get_material_preview_scenes, description="Force preview Mxed scene", )
+    
+    custom_layers = PointerProperty(name="Custom Layers", type=MaterialCustomLayers, )
+    custom_displacement = PointerProperty(name="Displacement", type=MaterialDisplacementProperties, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Material.maxwell_render = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Material.maxwell_render

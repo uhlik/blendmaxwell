@@ -691,6 +691,96 @@ class BlockedEmitterAdd(Operator):
         return {'FINISHED'}
 
 
+class MaterialPanelCustomEditorLayersActions(bpy.types.Operator):
+    bl_idname = "maxwell_render.material_panel_custom_editor_layers_actions"
+    bl_label = "Action"
+    action = bpy.props.EnumProperty(items=(('UP', "Up", ""),
+                                           ('DOWN', "Down", ""),
+                                           ('REMOVE', "Remove", ""),
+                                           ('ADD', "Add", ""), ))
+    
+    def invoke(self, context, event):
+        mx = context.material.maxwell_render
+        cl = mx.custom_layers
+        ls = cl.layers
+        idx = cl.index
+        try:
+            item = ls[idx]
+        except IndexError:
+            pass
+        else:
+            if(self.action == 'DOWN' and idx < len(ls) - 1):
+                mv = idx + 1
+                ls.move(idx, mv, )
+                cl.index = mv
+            elif(self.action == 'UP' and idx >= 1):
+                mv = idx - 1
+                ls.move(mv, idx, )
+                cl.index = mv
+            elif(self.action == 'REMOVE'):
+                cl.index -= 1
+                ls.remove(idx)
+                if(idx == 0):
+                    cl.index = idx
+                if(len(ls) == 0):
+                    cl.index = -1
+        if(self.action == 'ADD'):
+            item = ls.add()
+            item.id = len(ls)
+            item.name = 'Layer {}'.format(len(ls))
+            cl.index = (len(ls) - 1)
+            
+            b = item.layer.bsdfs.bsdfs.add()
+            b.id = len(ls)
+            b.name = 'BSDF'
+            item.layer.bsdfs.index = 0
+            
+        return {"FINISHED"}
+
+
+class MaterialPanelCustomEditorBSDFsActions(bpy.types.Operator):
+    bl_idname = "maxwell_render.material_panel_custom_editor_bsdfs_actions"
+    bl_label = "Action"
+    action = bpy.props.EnumProperty(items=(('UP', "Up", ""),
+                                           ('DOWN', "Down", ""),
+                                           ('REMOVE', "Remove", ""),
+                                           ('ADD', "Add", ""), ))
+    
+    def invoke(self, context, event):
+        mx = context.material.maxwell_render
+        l = mx.custom_layers.layers[mx.custom_layers.index]
+        cl = l.layer.bsdfs
+        ls = l.layer.bsdfs.bsdfs
+        idx = l.layer.bsdfs.index
+        
+        try:
+            item = ls[idx]
+        except IndexError:
+            pass
+        else:
+            if(self.action == 'DOWN' and idx < len(ls) - 1):
+                mv = idx + 1
+                ls.move(idx, mv, )
+                cl.index = mv
+            elif(self.action == 'UP' and idx >= 1):
+                mv = idx - 1
+                ls.move(mv, idx, )
+                cl.index = mv
+            elif(self.action == 'REMOVE'):
+                cl.index -= 1
+                ls.remove(idx)
+                if(idx == 0):
+                    cl.index = idx
+                if(len(ls) == 0):
+                    cl.index = -1
+        if(self.action == 'ADD'):
+            item = ls.add()
+            item.id = len(ls)
+            item.name = 'BSDF'
+            cl.index = (len(ls) - 1)
+        return {"FINISHED"}
+
+
 class Render_preset_add(AddPresetBase, Operator):
     """Add a new render preset."""
     bl_idname = 'maxwell_render.render_preset_add'

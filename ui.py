@@ -1985,7 +1985,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r.prop(mx, 'hair_secondary_highlight_tint')
         
         elif(m.use == 'CUSTOM'):
-            # TODO: custom material creation
             pass
         else:
             # 'REFERENCE'
@@ -2011,7 +2010,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 if(not m.force_preview):
                     r.active = False
         
-        if(m.use != 'REFERENCE'):
+        if(m.use != 'REFERENCE' and m.use != 'CUSTOM'):
             sub.separator()
             
             s = sub.split(percentage=0.7, align=True)
@@ -2023,8 +2022,571 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             if(not m.force_preview):
                 r.active = False
         
-        sub.separator()
-        sub.operator('maxwell_render.browse_material')
+        if(m.use == 'REFERENCE'):
+            # sub.separator()
+            sub.operator('maxwell_render.browse_material')
+        
+        if(m.use == 'CUSTOM'):
+            # sometimes little details cause big problems..
+            l = sub
+            
+            cd = m.custom_displacement
+            b = l.box()
+            r = b.row()
+            r.prop(cd, 'expanded', icon='TRIA_DOWN' if cd.expanded else 'TRIA_RIGHT', icon_only=True, emboss=False, )
+            r.prop(cd, 'enabled', text="", )
+            r.label(text="Displacement", )
+            ll = l
+            if(cd.expanded):
+                l = b.column()
+                if(not cd.enabled):
+                    l.enabled = False
+                
+                l.label("Global Properties:")
+                l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
+                l.prop(cd, 'type')
+                
+                # r = l.row()
+                # r.prop(cd, 'subdivision')
+                # r.prop(cd, 'adaptive')
+                
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Subdivision:")
+                c = s.column()
+                r = c.row()
+                r.prop(cd, 'subdivision', text="", )
+                r.prop(cd, 'adaptive', )
+                
+                l.prop(cd, 'subdivision_method')
+                l.prop(cd, 'offset')
+                l.prop(cd, 'smoothing')
+                l.prop(cd, 'uv_interpolation')
+                
+                l.separator()
+                l.label("HeightMap Properties:")
+                
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Height:")
+                c = s.column()
+                r = c.row()
+                r.prop(cd, 'height', text="", )
+                r.prop(cd, 'height_units', text="", )
+                
+                l.separator()
+                l.label("Vector 3D Properties:")
+                # l.prop(cd, 'v3d_preset')
+                l.prop(cd, 'v3d_transform')
+                l.prop(cd, 'v3d_rgb_mapping')
+                r = l.row()
+                r.prop(cd, 'v3d_scale')
+            
+            l = ll
+            
+            l.label("Layers:")
+            
+            r = l.row()
+            cl = m.custom_layers
+            r.template_list("MaterialPanelCustomEditor", "", cl, "layers", cl, "index", rows=3, maxrows=5, )
+            c = r.column(align=True)
+            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='ZOOMIN', text="").action = 'ADD'
+            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='ZOOMOUT', text="").action = 'REMOVE'
+            c.separator()
+            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='TRIA_UP', text="").action = 'UP'
+            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='TRIA_DOWN', text="").action = 'DOWN'
+            
+            if(cl.index >= 0):
+                l.separator()
+                
+                layer = cl.layers[cl.index].layer
+                
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Layer Opacity:")
+                c = s.column()
+                r = c.row()
+                r.prop(layer, 'opacity', text="", )
+                r.prop(layer, 'opacity_map_enabled', text="", )
+                r.prop_search(layer, 'opacity_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                
+                l.separator()
+                em = layer.emitter
+                b = l.box()
+                r = b.row()
+                r.prop(em, 'expanded', icon='TRIA_DOWN' if em.expanded else 'TRIA_RIGHT', icon_only=True, emboss=False, )
+                r.prop(em, 'enabled', text="", )
+                r.label(text="Emitter", )
+                ll = l
+                if(em.expanded):
+                    l = b.column()
+                    if(not em.enabled):
+                        l.enabled = False
+                    sub = l
+                    
+                    sub.prop(mx, 'emitter_type')
+                    sub.separator()
+                    if(mx.emitter_type == '0'):
+                        # Area
+                        pass
+                    elif(mx.emitter_type == '1'):
+                        # IES
+                        sub.prop(mx, 'emitter_ies_data')
+                        sub.separator()
+                        sub.prop(mx, 'emitter_ies_intensity')
+                        sub.separator()
+                    elif(mx.emitter_type == '2'):
+                        # Spot
+                        r = sub.row()
+                        s = r.split(percentage=0.2)
+                        c = s.column()
+                        c.label("Spot Map:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(mx, 'emitter_spot_map_enabled', text="", )
+                        r.prop_search(mx, 'emitter_spot_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        sub.prop(mx, 'emitter_spot_cone_angle')
+                        sub.prop(mx, 'emitter_spot_falloff_angle')
+                        sub.prop(mx, 'emitter_spot_falloff_type')
+                        sub.prop(mx, 'emitter_spot_blur')
+                        sub.separator()
+                    
+                    if(mx.emitter_type == '1'):
+                        # IES
+                        r = sub.row()
+                        s = r.split(percentage=0.2)
+                        c = s.column()
+                        c.label("Color:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(mx, 'emitter_color', text="", )
+                        r.prop(mx, 'emitter_color_black_body_enabled', text="", )
+                        r.prop(mx, 'emitter_color_black_body')
+                    elif(mx.emitter_type == '2'):
+                        # Spot
+                        r = sub.row()
+                        s = r.split(percentage=0.2)
+                        c = s.column()
+                        c.label("Color:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(mx, 'emitter_color', text="", )
+                        r.prop(mx, 'emitter_color_black_body_enabled', text="", )
+                        r.prop(mx, 'emitter_color_black_body')
+                        sub.separator()
+                        sub.prop(mx, 'emitter_luminance')
+                        if(mx.emitter_luminance == '0'):
+                            # Power & Efficacy
+                            sub.prop(mx, 'emitter_luminance_power')
+                            sub.prop(mx, 'emitter_luminance_efficacy')
+                            # r = sub.row()
+                            # r.prop(mx, 'emitter_luminance_output', text="Output (lm)")
+                            # r.enabled = False
+                        elif(mx.emitter_luminance == '1'):
+                            # Lumen
+                            sub.prop(mx, 'emitter_luminance_output', text="Output (lm)")
+                        elif(mx.emitter_luminance == '2'):
+                            # Lux
+                            sub.prop(mx, 'emitter_luminance_output', text="Output (lm/m)")
+                        elif(mx.emitter_luminance == '3'):
+                            # Candela
+                            sub.prop(mx, 'emitter_luminance_output', text="Output (cd)")
+                        elif(mx.emitter_luminance == '4'):
+                            # Luminance
+                            sub.prop(mx, 'emitter_luminance_output', text="Output (cd/m)")
+                    else:
+                        sub.prop(mx, 'emitter_emission')
+                        sub.separator()
+                        
+                        if(mx.emitter_emission == '0'):
+                            sub.menu("Emitter_presets", text=bpy.types.Emitter_presets.bl_label)
+                            sub.separator()
+                            # Color
+                            r = sub.row()
+                            s = r.split(percentage=0.2)
+                            c = s.column()
+                            c.label("Color:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(mx, 'emitter_color', text="", )
+                            r.prop(mx, 'emitter_color_black_body_enabled', text="", )
+                            r.prop(mx, 'emitter_color_black_body')
+                            sub.separator()
+                            sub.prop(mx, 'emitter_luminance')
+                            if(mx.emitter_luminance == '0'):
+                                # Power & Efficacy
+                                c = sub.column(align=True)
+                                c.prop(mx, 'emitter_luminance_power')
+                                c.prop(mx, 'emitter_luminance_efficacy')
+                                sub.label("Output: {} lm".format(round(mx.emitter_luminance_power * mx.emitter_luminance_efficacy, 1)))
+                            elif(mx.emitter_luminance == '1'):
+                                # Lumen
+                                sub.prop(mx, 'emitter_luminance_output', text="Output (lm)")
+                            elif(mx.emitter_luminance == '2'):
+                                # Lux
+                                sub.prop(mx, 'emitter_luminance_output', text="Output (lm/m)")
+                            elif(mx.emitter_luminance == '3'):
+                                # Candela
+                                sub.prop(mx, 'emitter_luminance_output', text="Output (cd)")
+                            elif(mx.emitter_luminance == '4'):
+                                # Luminance
+                                sub.prop(mx, 'emitter_luminance_output', text="Output (cd/m)")
+                        elif(mx.emitter_emission == '1'):
+                            # Temperature
+                            sub.prop(mx, 'emitter_temperature_value')
+                        elif(mx.emitter_emission == '2'):
+                            # HDR Image
+                            sub.prop_search(mx, 'emitter_hdr_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            sub.separator()
+                            sub.prop(mx, 'emitter_hdr_intensity')
+                    
+                l = ll
+                
+                l.separator()
+                l.label("'{}' BSDFs:".format(cl.layers[cl.index].name))
+                
+                clbs = cl.layers[cl.index].layer.bsdfs
+                r = l.row()
+                r.template_list("MaterialPanelCustomEditorLayerBSDFs", "", clbs, "bsdfs", clbs, "index", rows=3, maxrows=5, )
+                c = r.column(align=True)
+                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='ZOOMIN', text="").action = 'ADD'
+                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='ZOOMOUT', text="").action = 'REMOVE'
+                c.separator()
+                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='TRIA_UP', text="").action = 'UP'
+                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='TRIA_DOWN', text="").action = 'DOWN'
+                
+                if(clbs.index >= 0):
+                    l.separator()
+                    
+                    try:
+                        bsdf = clbs.bsdfs[clbs.index].bsdf
+                    except IndexError:
+                        # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
+                        return
+                    
+                    r = l.row()
+                    s = r.split(percentage=0.333)
+                    c = s.column()
+                    c.label("Weight:")
+                    c = s.column()
+                    r = c.row()
+                    r.prop(bsdf, 'weight', text="", )
+                    r.prop(bsdf, 'weight_map_enabled', text="", )
+                    r.prop_search(bsdf, 'weight_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                    
+                    l.separator()
+                    
+                    b = l.box()
+                    r = b.row()
+                    r.prop(bsdf, "expanded_ior", icon="TRIA_DOWN" if bsdf.expanded_ior else "TRIA_RIGHT", icon_only=True, emboss=False, )
+                    r.label(text="BSDF", icon='MATERIAL', )
+                    ll = l
+                    if(bsdf.expanded_ior):
+                        l = b.column()
+                        l.prop(bsdf, 'ior')
+                        
+                        if(bsdf.ior == '1'):
+                            l.prop(bsdf, 'complex_ior')
+                        else:
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Reflectance 0:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'reflectance_0', text="", )
+                            r.prop(bsdf, 'reflectance_0_map_enabled', text="", )
+                            r.prop_search(bsdf, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Reflectance 90:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'reflectance_90', text="", )
+                            r.prop(bsdf, 'reflectance_90_map_enabled', text="", )
+                            r.prop_search(bsdf, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Transmittance:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'transmittance', text="", )
+                            r.prop(bsdf, 'transmittance_map_enabled', text="", )
+                            r.prop_search(bsdf, 'transmittance_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Attenuation:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'attenuation', text="", )
+                            r.prop(bsdf, 'attenuation_units', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Nd:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'nd', text="", )
+                            c = r.column()
+                            c.prop(bsdf, 'force_fresnel')
+                            if(bsdf.roughness == 100.0):
+                                c.enabled = False
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.5)
+                            c = s.column()
+                            c.prop(bsdf, 'k')
+                            if(bsdf.roughness == 100.0):
+                                c.enabled = False
+                            c = s.column()
+                            c.prop(bsdf, 'abbe')
+                            if(not m.global_dispersion):
+                                c.enabled = False
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.prop(bsdf, 'r2_enabled', text="R2", )
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'r2_falloff_angle', text="", )
+                            r.prop(bsdf, 'r2_influence', text="", )
+                            if(not bsdf.r2_enabled):
+                                r.enabled = False
+                    
+                    l = ll
+                    
+                    b = l.box()
+                    r = b.row()
+                    r.prop(bsdf, "expanded_surface", icon="TRIA_DOWN" if bsdf.expanded_surface else "TRIA_RIGHT", icon_only=True, emboss=False, )
+                    r.label(text="Surface", icon='SOLID', )
+                    ll = l
+                    if(bsdf.expanded_surface):
+                        l = b.column()
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Roughness:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(bsdf, 'roughness', text="", )
+                        r.prop(bsdf, 'roughness_map_enabled', text="", )
+                        r.prop_search(bsdf, 'roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Bump:")
+                        c = s.column()
+                        r = c.row()
+                        c = r.column()
+                        c.prop(bsdf, 'bump', text="", )
+                        
+                        if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
+                            c.enabled = False
+                        r.prop(bsdf, 'bump_map_enabled', text="", )
+                        r.prop_search(bsdf, 'bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c = s.column()
+                        r = c.row()
+                        r.prop(bsdf, 'bump_map_use_normal', text="Normal Mapping", )
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Anisotrophy:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(bsdf, 'anisotrophy', text="", )
+                        r.prop(bsdf, 'anisotrophy_map_enabled', text="", )
+                        r.prop_search(bsdf, 'anisotrophy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Angle:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(bsdf, 'anisotrophy_angle', text="", )
+                        r.prop(bsdf, 'anisotrophy_angle_map_enabled', text="", )
+                        r.prop_search(bsdf, 'anisotrophy_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                    
+                    l = ll
+                    
+                    b = l.box()
+                    r = b.row()
+                    r.prop(bsdf, "expanded_subsurface", icon="TRIA_DOWN" if bsdf.expanded_subsurface else "TRIA_RIGHT", icon_only=True, emboss=False, )
+                    r.label(text="Subsurface", icon='SMOOTH', )
+                    ll = l
+                    if(bsdf.expanded_subsurface):
+                        l = b.column()
+                        
+                        r = l.row()
+                        r.prop(bsdf, 'scattering')
+                        
+                        r = l.row()
+                        r.prop(bsdf, 'coef')
+                        r.prop(bsdf, 'asymmetry')
+                        
+                        l.prop(bsdf, 'sigle_sided')
+                    
+                    l = ll
+                    
+                    coat = clbs.bsdfs[clbs.index].coating
+                    b = l.box()
+                    r = b.row()
+                    r.prop(coat, "expanded", icon="TRIA_DOWN" if coat.expanded else "TRIA_RIGHT", icon_only=True, emboss=False, )
+                    r.prop(coat, 'enabled', text='', )
+                    r.label(text="Coating", icon='TEXTURE_SHADED', )
+                    ll = l
+                    if(coat.expanded):
+                        l = b.column()
+                        if(not coat.enabled):
+                            l.enabled = False
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Thickness:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(coat, 'thickness', text="", )
+                        r.prop(coat, 'thickness_map_enabled', text="", )
+                        r.prop_search(coat, 'thickness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        r = l.row(align=True)
+                        r.prop(coat, 'thickness_map_min', text="Min", )
+                        r.prop(coat, 'thickness_map_max', text="Max", )
+                        
+                        l.prop(coat, 'ior')
+                        if(coat.ior == '1'):
+                            l.prop(coat, 'complex_ior')
+                        else:
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Reflectance 0:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(coat, 'reflectance_0', text="", )
+                            r.prop(coat, 'reflectance_0_map_enabled', text="", )
+                            r.prop_search(coat, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Reflectance 90:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(coat, 'reflectance_90', text="", )
+                            r.prop(coat, 'reflectance_90_map_enabled', text="", )
+                            r.prop_search(coat, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Nd:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(coat, 'nd', text="", )
+                            r.prop(coat, 'force_fresnel')
+                            
+                            l.prop(coat, 'k')
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.prop(coat, 'r2_enabled', text="R2", )
+                            c = s.column()
+                            r = c.row()
+                            r.prop(coat, 'r2_falloff_angle', text="", )
+                            if(not coat.r2_enabled):
+                                r.enabled = False
+                    
+                    l = ll
+
+
+class MaterialPanelCustomEditor(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        icon = 'FILE_FOLDER'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            l = item.layer
+            
+            s = layout.split(percentage=0.4, )
+            c = s.column()
+            c.prop(item, "name", text="", emboss=False, icon=icon, )
+            c = s.column()
+            r = c.row()
+            
+            s = r.split(percentage=0.333, )
+            c = s.column()
+            r = c.row()
+            # r.prop(l, 'opacity', text="", )
+            r.prop(l, 'blending', expand=True, )
+            
+            c = s.column()
+            r = c.row()
+            if(l.opacity_map_enabled):
+                r.label('T')
+            else:
+                r.prop(l, 'opacity', text="", )
+            r.prop(l, 'visible', text="", )
+            
+            if(not l.visible):
+                layout.active = False
+        
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+
+
+class MaterialPanelCustomEditorLayerBSDFs(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        icon = 'FCURVE'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            # layout.prop(item, "name", text="", emboss=False, icon=icon, )
+            l = item.bsdf
+            
+            s = layout.split(percentage=0.4, )
+            c = s.column()
+            c.prop(item, "name", text="", emboss=False, icon=icon, )
+            c = s.column()
+            r = c.row()
+            
+            s = r.split(percentage=0.333, )
+            c = s.column()
+            r = c.row()
+            # r.prop(l, 'weight', text="", )
+            c = s.column()
+            r = c.row()
+            if(l.weight_map_enabled):
+                r.label('T')
+            else:
+                r.prop(l, 'weight', text="", )
+            # r.prop(l, 'blending', expand=True, )
+            r.prop(l, 'visible', text="", )
+            
+            if(not l.visible):
+                layout.active = False
+        
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
 
 
 class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
