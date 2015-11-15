@@ -2090,13 +2090,14 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             
             r = l.row()
             cl = m.custom_layers
-            r.template_list("MaterialPanelCustomEditor", "", cl, "layers", cl, "index", rows=3, maxrows=5, )
+            r.template_list("MaterialPanelCustomEditorLayers", "", cl, "layers", cl, "index", rows=4, maxrows=5, )
             c = r.column(align=True)
             c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='ZOOMIN', text="").action = 'ADD'
             c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='ZOOMOUT', text="").action = 'REMOVE'
             c.separator()
             c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='TRIA_UP', text="").action = 'UP'
             c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='TRIA_DOWN', text="").action = 'DOWN'
+            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='GHOST', text="").action = 'CLONE'
             
             if(cl.index >= 0):
                 l.separator()
@@ -2251,13 +2252,14 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 
                 clbs = cl.layers[cl.index].layer.bsdfs
                 r = l.row()
-                r.template_list("MaterialPanelCustomEditorLayerBSDFs", "", clbs, "bsdfs", clbs, "index", rows=3, maxrows=5, )
+                r.template_list("MaterialPanelCustomEditorLayerBSDFs", "", clbs, "bsdfs", clbs, "index", rows=4, maxrows=5, )
                 c = r.column(align=True)
                 c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='ZOOMIN', text="").action = 'ADD'
                 c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='ZOOMOUT', text="").action = 'REMOVE'
                 c.separator()
                 c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='TRIA_UP', text="").action = 'UP'
                 c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='TRIA_DOWN', text="").action = 'DOWN'
+                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='GHOST', text="").action = 'CLONE'
                 
                 if(clbs.index >= 0):
                     l.separator()
@@ -2283,7 +2285,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     b = l.box()
                     r = b.row()
                     r.prop(bsdf, "expanded_ior", icon="TRIA_DOWN" if bsdf.expanded_ior else "TRIA_RIGHT", icon_only=True, emboss=False, )
-                    r.label(text="BSDF", icon='MATERIAL', )
+                    # r.label(text="BSDF", icon='MATERIAL', )
+                    r.label(text="BSDF")
                     ll = l
                     if(bsdf.expanded_ior):
                         l = b.column()
@@ -2370,7 +2373,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     b = l.box()
                     r = b.row()
                     r.prop(bsdf, "expanded_surface", icon="TRIA_DOWN" if bsdf.expanded_surface else "TRIA_RIGHT", icon_only=True, emboss=False, )
-                    r.label(text="Surface", icon='SOLID', )
+                    # r.label(text="Surface", icon='SOLID', )
+                    r.label(text="Surface")
                     ll = l
                     if(bsdf.expanded_surface):
                         l = b.column()
@@ -2431,7 +2435,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     b = l.box()
                     r = b.row()
                     r.prop(bsdf, "expanded_subsurface", icon="TRIA_DOWN" if bsdf.expanded_subsurface else "TRIA_RIGHT", icon_only=True, emboss=False, )
-                    r.label(text="Subsurface", icon='SMOOTH', )
+                    # r.label(text="Subsurface", icon='SMOOTH', )
+                    r.label(text="Subsurface")
                     ll = l
                     if(bsdf.expanded_subsurface):
                         l = b.column()
@@ -2452,7 +2457,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     r = b.row()
                     r.prop(coat, "expanded", icon="TRIA_DOWN" if coat.expanded else "TRIA_RIGHT", icon_only=True, emboss=False, )
                     r.prop(coat, 'enabled', text='', )
-                    r.label(text="Coating", icon='TEXTURE_SHADED', )
+                    # r.label(text="Coating", icon='TEXTURE_SHADED', )
+                    r.label(text="Coating")
                     ll = l
                     if(coat.expanded):
                         l = b.column()
@@ -2521,7 +2527,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     l = ll
 
 
-class MaterialPanelCustomEditor(UIList):
+class MaterialPanelCustomEditorLayers(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         icon = 'FILE_FOLDER'
         if(self.layout_type in {'DEFAULT', 'COMPACT'}):
@@ -2545,7 +2551,8 @@ class MaterialPanelCustomEditor(UIList):
                 r.label('T')
             else:
                 r.prop(l, 'opacity', text="", )
-            r.prop(l, 'visible', text="", )
+            # r.prop(l, 'visible', text="", )
+            r.prop(l, 'visible', text="", icon='RESTRICT_VIEW_OFF' if l.visible else 'RESTRICT_VIEW_ON', emboss=False, )
             
             if(not l.visible):
                 layout.active = False
@@ -2579,7 +2586,8 @@ class MaterialPanelCustomEditorLayerBSDFs(UIList):
             else:
                 r.prop(l, 'weight', text="", )
             # r.prop(l, 'blending', expand=True, )
-            r.prop(l, 'visible', text="", )
+            # r.prop(l, 'visible', text="", )
+            r.prop(l, 'visible', text="", icon='RESTRICT_VIEW_OFF' if l.visible else 'RESTRICT_VIEW_ON', emboss=False, )
             
             if(not l.visible):
                 layout.active = False

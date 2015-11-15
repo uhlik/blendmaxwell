@@ -691,13 +691,14 @@ class BlockedEmitterAdd(Operator):
         return {'FINISHED'}
 
 
-class MaterialPanelCustomEditorLayersActions(bpy.types.Operator):
+class MaterialPanelCustomEditorLayersActions(Operator):
     bl_idname = "maxwell_render.material_panel_custom_editor_layers_actions"
     bl_label = "Action"
     action = bpy.props.EnumProperty(items=(('UP', "Up", ""),
                                            ('DOWN', "Down", ""),
                                            ('REMOVE', "Remove", ""),
-                                           ('ADD', "Add", ""), ))
+                                           ('ADD', "Add", ""),
+                                           ('CLONE', "Clone", ""), ))
     
     def invoke(self, context, event):
         mx = context.material.maxwell_render
@@ -729,22 +730,27 @@ class MaterialPanelCustomEditorLayersActions(bpy.types.Operator):
             item.id = len(ls)
             item.name = 'Layer {}'.format(len(ls))
             cl.index = (len(ls) - 1)
-            
             b = item.layer.bsdfs.bsdfs.add()
             b.id = len(ls)
             b.name = 'BSDF'
             item.layer.bsdfs.index = 0
-            
+        if(self.action == 'CLONE'):
+            d = cl['layers'][cl.index].to_dict()
+            bpy.ops.maxwell_render.material_panel_custom_editor_layers_actions('INVOKE_DEFAULT', action='ADD', )
+            cl['layers'][cl.index].update(d)
+            n = cl['layers'][cl.index]['name']
+            cl['layers'][cl.index]['name'] = 'Clone of {}'.format(n)
         return {"FINISHED"}
 
 
-class MaterialPanelCustomEditorBSDFsActions(bpy.types.Operator):
+class MaterialPanelCustomEditorBSDFsActions(Operator):
     bl_idname = "maxwell_render.material_panel_custom_editor_bsdfs_actions"
     bl_label = "Action"
     action = bpy.props.EnumProperty(items=(('UP', "Up", ""),
                                            ('DOWN', "Down", ""),
                                            ('REMOVE', "Remove", ""),
-                                           ('ADD', "Add", ""), ))
+                                           ('ADD', "Add", ""),
+                                           ('CLONE', "Clone", ""), ))
     
     def invoke(self, context, event):
         mx = context.material.maxwell_render
@@ -752,7 +758,6 @@ class MaterialPanelCustomEditorBSDFsActions(bpy.types.Operator):
         cl = l.layer.bsdfs
         ls = l.layer.bsdfs.bsdfs
         idx = l.layer.bsdfs.index
-        
         try:
             item = ls[idx]
         except IndexError:
@@ -778,6 +783,12 @@ class MaterialPanelCustomEditorBSDFsActions(bpy.types.Operator):
             item.id = len(ls)
             item.name = 'BSDF'
             cl.index = (len(ls) - 1)
+        if(self.action == 'CLONE'):
+            d = l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index].to_dict()
+            bpy.ops.maxwell_render.material_panel_custom_editor_bsdfs_actions('INVOKE_DEFAULT', action='ADD', )
+            l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index].update(d)
+            n = l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index]['name']
+            l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index]['name'] = 'Clone of {}'.format(n)
         return {"FINISHED"}
 
 
