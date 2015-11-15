@@ -1984,10 +1984,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r = sub.row()
             r.prop(mx, 'hair_secondary_highlight_tint')
         
-        elif(m.use == 'CUSTOM'):
-            pass
-        else:
-            # 'REFERENCE'
+        elif(m.use == 'REFERENCE'):
             sub.prop(m, 'mxm_file')
             sub.prop(m, 'embed')
             r = sub.row(align=True)
@@ -2009,6 +2006,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
                 if(not m.force_preview):
                     r.active = False
+        else:
+            # 'CUSTOM'
+            pass
         
         if(m.use != 'REFERENCE' and m.use != 'CUSTOM'):
             sub.separator()
@@ -2090,14 +2090,14 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             
             r = l.row()
             cl = m.custom_layers
-            r.template_list("MaterialPanelCustomEditorLayers", "", cl, "layers", cl, "index", rows=4, maxrows=5, )
+            r.template_list("MaterialPanelCustomEditorLayers", "", cl, "layers", cl, "index", rows=4, maxrows=6, )
             c = r.column(align=True)
-            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='ZOOMIN', text="").action = 'ADD'
-            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='ZOOMOUT', text="").action = 'REMOVE'
+            c.operator("maxwell_render.material_editor_add_layer", icon='ZOOMIN', text="", )
+            c.operator("maxwell_render.material_editor_remove_layer", icon='ZOOMOUT', text="", )
             c.separator()
-            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='TRIA_UP', text="").action = 'UP'
-            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='TRIA_DOWN', text="").action = 'DOWN'
-            c.operator("maxwell_render.material_panel_custom_editor_layers_actions", icon='GHOST', text="").action = 'CLONE'
+            c.operator("maxwell_render.material_editor_move_layer_up", icon='TRIA_UP', text="", )
+            c.operator("maxwell_render.material_editor_move_layer_down", icon='TRIA_DOWN', text="", )
+            c.operator("maxwell_render.material_editor_clone_layer", icon='GHOST', text="", )
             
             if(cl.index >= 0):
                 l.separator()
@@ -2252,14 +2252,14 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 
                 clbs = cl.layers[cl.index].layer.bsdfs
                 r = l.row()
-                r.template_list("MaterialPanelCustomEditorLayerBSDFs", "", clbs, "bsdfs", clbs, "index", rows=4, maxrows=5, )
+                r.template_list("MaterialPanelCustomEditorLayerBSDFs", "", clbs, "bsdfs", clbs, "index", rows=4, maxrows=6, )
                 c = r.column(align=True)
-                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='ZOOMIN', text="").action = 'ADD'
-                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='ZOOMOUT', text="").action = 'REMOVE'
+                c.operator("maxwell_render.material_editor_add_bsdf", icon='ZOOMIN', text="", )
+                c.operator("maxwell_render.material_editor_remove_bsdf", icon='ZOOMOUT', text="", )
                 c.separator()
-                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='TRIA_UP', text="").action = 'UP'
-                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='TRIA_DOWN', text="").action = 'DOWN'
-                c.operator("maxwell_render.material_panel_custom_editor_bsdfs_actions", icon='GHOST', text="").action = 'CLONE'
+                c.operator("maxwell_render.material_editor_move_bsdf_up", icon='TRIA_UP', text="", )
+                c.operator("maxwell_render.material_editor_move_bsdf_down", icon='TRIA_DOWN', text="", )
+                c.operator("maxwell_render.material_editor_clone_bsdf", icon='GHOST', text="", )
                 
                 if(clbs.index >= 0):
                     l.separator()
@@ -2525,6 +2525,18 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                                 r.enabled = False
                     
                     l = ll
+            
+            l.separator()
+            sub = l
+            s = sub.split(percentage=0.7, align=True)
+            r = s.row(align=True)
+            r.operator('maxwell_render.save_material_as_mxm')
+            r = s.row(align=True)
+            r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
+            r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
+            if(not m.force_preview):
+                r.active = False
+            sub.operator('maxwell_render.load_material_from_mxm')
 
 
 class MaterialPanelCustomEditorLayers(UIList):

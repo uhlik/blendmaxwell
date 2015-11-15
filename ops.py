@@ -691,16 +691,37 @@ class BlockedEmitterAdd(Operator):
         return {'FINISHED'}
 
 
-class MaterialPanelCustomEditorLayersActions(Operator):
-    bl_idname = "maxwell_render.material_panel_custom_editor_layers_actions"
-    bl_label = "Action"
-    action = bpy.props.EnumProperty(items=(('UP', "Up", ""),
-                                           ('DOWN', "Down", ""),
-                                           ('REMOVE', "Remove", ""),
-                                           ('ADD', "Add", ""),
-                                           ('CLONE', "Clone", ""), ))
+class MaterialEditorAddLayer(Operator):
+    bl_idname = "maxwell_render.material_editor_add_layer"
+    bl_label = "Add New Layer"
+    bl_description = "Add new layer"
+    bl_options = {'REGISTER', 'UNDO'}
     
-    def invoke(self, context, event):
+    def execute(self, context):
+        mx = context.material.maxwell_render
+        cl = mx.custom_layers
+        ls = cl.layers
+        idx = cl.index
+        
+        item = ls.add()
+        item.id = len(ls)
+        item.name = 'Layer {}'.format(len(ls))
+        cl.index = (len(ls) - 1)
+        b = item.layer.bsdfs.bsdfs.add()
+        b.id = len(ls)
+        b.name = 'BSDF'
+        item.layer.bsdfs.index = 0
+        
+        return {'FINISHED'}
+
+
+class MaterialEditorRemoveLayer(Operator):
+    bl_idname = "maxwell_render.material_editor_remove_layer"
+    bl_label = "Remove Selected Layer"
+    bl_description = "Remove selected layer"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
         mx = context.material.maxwell_render
         cl = mx.custom_layers
         ls = cl.layers
@@ -708,51 +729,121 @@ class MaterialPanelCustomEditorLayersActions(Operator):
         try:
             item = ls[idx]
         except IndexError:
-            pass
-        else:
-            if(self.action == 'DOWN' and idx < len(ls) - 1):
-                mv = idx + 1
-                ls.move(idx, mv, )
-                cl.index = mv
-            elif(self.action == 'UP' and idx >= 1):
-                mv = idx - 1
-                ls.move(mv, idx, )
-                cl.index = mv
-            elif(self.action == 'REMOVE'):
-                cl.index -= 1
-                ls.remove(idx)
-                if(idx == 0):
-                    cl.index = idx
-                if(len(ls) == 0):
-                    cl.index = -1
-        if(self.action == 'ADD'):
-            item = ls.add()
-            item.id = len(ls)
-            item.name = 'Layer {}'.format(len(ls))
-            cl.index = (len(ls) - 1)
-            b = item.layer.bsdfs.bsdfs.add()
-            b.id = len(ls)
-            b.name = 'BSDF'
-            item.layer.bsdfs.index = 0
-        if(self.action == 'CLONE'):
-            d = cl['layers'][cl.index].to_dict()
-            bpy.ops.maxwell_render.material_panel_custom_editor_layers_actions('INVOKE_DEFAULT', action='ADD', )
-            cl['layers'][cl.index].update(d)
-            n = cl['layers'][cl.index]['name']
-            cl['layers'][cl.index]['name'] = 'Clone of {}'.format(n)
-        return {"FINISHED"}
+            return {'CANCELLED'}
+        
+        cl.index -= 1
+        ls.remove(idx)
+        if(idx == 0):
+            cl.index = idx
+        if(len(ls) == 0):
+            cl.index = -1
+        
+        return {'FINISHED'}
 
 
-class MaterialPanelCustomEditorBSDFsActions(Operator):
-    bl_idname = "maxwell_render.material_panel_custom_editor_bsdfs_actions"
-    bl_label = "Action"
-    action = bpy.props.EnumProperty(items=(('UP', "Up", ""),
-                                           ('DOWN', "Down", ""),
-                                           ('REMOVE', "Remove", ""),
-                                           ('ADD', "Add", ""),
-                                           ('CLONE', "Clone", ""), ))
+class MaterialEditorMoveLayerUp(Operator):
+    bl_idname = "maxwell_render.material_editor_move_layer_up"
+    bl_label = "Move Selected Layer Up"
+    bl_description = "Move selected layer up"
+    bl_options = {'REGISTER', 'UNDO'}
     
-    def invoke(self, context, event):
+    def execute(self, context):
+        mx = context.material.maxwell_render
+        cl = mx.custom_layers
+        ls = cl.layers
+        idx = cl.index
+        try:
+            item = ls[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        if(idx >= 1):
+            mv = idx - 1
+            ls.move(mv, idx, )
+            cl.index = mv
+            return {'FINISHED'}
+        
+        return {'PASS_THROUGH'}
+
+
+class MaterialEditorMoveLayerDown(Operator):
+    bl_idname = "maxwell_render.material_editor_move_layer_down"
+    bl_label = "Move Selected Layer Down"
+    bl_description = "Move selected layer down"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.material.maxwell_render
+        cl = mx.custom_layers
+        ls = cl.layers
+        idx = cl.index
+        try:
+            item = ls[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        if(idx < len(ls) - 1):
+            mv = idx + 1
+            ls.move(idx, mv, )
+            cl.index = mv
+            return {'FINISHED'}
+        
+        return {'PASS_THROUGH'}
+
+
+class MaterialEditorCloneLayer(Operator):
+    bl_idname = "maxwell_render.material_editor_clone_layer"
+    bl_label = "Clone Selected Layer"
+    bl_description = "Clone selected layer"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.material.maxwell_render
+        cl = mx.custom_layers
+        ls = cl.layers
+        idx = cl.index
+        try:
+            item = ls[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        d = cl['layers'][cl.index].to_dict()
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        cl['layers'][cl.index].update(d)
+        n = cl['layers'][cl.index]['name']
+        cl['layers'][cl.index]['name'] = 'Clone of {}'.format(n)
+        
+        return {'FINISHED'}
+
+
+class MaterialEditorAddBSDF(Operator):
+    bl_idname = "maxwell_render.material_editor_add_bsdf"
+    bl_label = "Add New BSDF"
+    bl_description = "Add new BSDF"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.material.maxwell_render
+        l = mx.custom_layers.layers[mx.custom_layers.index]
+        cl = l.layer.bsdfs
+        ls = l.layer.bsdfs.bsdfs
+        idx = l.layer.bsdfs.index
+        
+        item = ls.add()
+        item.id = len(ls)
+        item.name = 'BSDF'
+        cl.index = (len(ls) - 1)
+        
+        return {'FINISHED'}
+
+
+class MaterialEditorRemoveBSDF(Operator):
+    bl_idname = "maxwell_render.material_editor_remove_bsdf"
+    bl_label = "Remove Selected BSDF"
+    bl_description = "Remove selected BSDF"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
         mx = context.material.maxwell_render
         l = mx.custom_layers.layers[mx.custom_layers.index]
         cl = l.layer.bsdfs
@@ -761,35 +852,146 @@ class MaterialPanelCustomEditorBSDFsActions(Operator):
         try:
             item = ls[idx]
         except IndexError:
-            pass
-        else:
-            if(self.action == 'DOWN' and idx < len(ls) - 1):
-                mv = idx + 1
-                ls.move(idx, mv, )
-                cl.index = mv
-            elif(self.action == 'UP' and idx >= 1):
-                mv = idx - 1
-                ls.move(mv, idx, )
-                cl.index = mv
-            elif(self.action == 'REMOVE'):
-                cl.index -= 1
-                ls.remove(idx)
-                if(idx == 0):
-                    cl.index = idx
-                if(len(ls) == 0):
-                    cl.index = -1
-        if(self.action == 'ADD'):
-            item = ls.add()
-            item.id = len(ls)
-            item.name = 'BSDF'
-            cl.index = (len(ls) - 1)
-        if(self.action == 'CLONE'):
-            d = l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index].to_dict()
-            bpy.ops.maxwell_render.material_panel_custom_editor_bsdfs_actions('INVOKE_DEFAULT', action='ADD', )
-            l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index].update(d)
-            n = l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index]['name']
-            l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index]['name'] = 'Clone of {}'.format(n)
-        return {"FINISHED"}
+            return {'CANCELLED'}
+        
+        cl.index -= 1
+        ls.remove(idx)
+        if(idx == 0):
+            cl.index = idx
+        if(len(ls) == 0):
+            cl.index = -1
+        
+        return {'FINISHED'}
+
+
+class MaterialEditorMoveBSDFUp(Operator):
+    bl_idname = "maxwell_render.material_editor_move_bsdf_up"
+    bl_label = "Move Selected BSDF Up"
+    bl_description = "Move selected BSDF up"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.material.maxwell_render
+        l = mx.custom_layers.layers[mx.custom_layers.index]
+        cl = l.layer.bsdfs
+        ls = l.layer.bsdfs.bsdfs
+        idx = l.layer.bsdfs.index
+        try:
+            item = ls[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        if(idx >= 1):
+            mv = idx - 1
+            ls.move(mv, idx, )
+            cl.index = mv
+            return {'FINISHED'}
+        
+        return {'PASS_THROUGH'}
+
+
+class MaterialEditorMoveBSDFDown(Operator):
+    bl_idname = "maxwell_render.material_editor_move_bsdf_down"
+    bl_label = "Move Selected BSDF Down"
+    bl_description = "Move selected BSDF down"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.material.maxwell_render
+        l = mx.custom_layers.layers[mx.custom_layers.index]
+        cl = l.layer.bsdfs
+        ls = l.layer.bsdfs.bsdfs
+        idx = l.layer.bsdfs.index
+        try:
+            item = ls[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        if(idx < len(ls) - 1):
+            mv = idx + 1
+            ls.move(idx, mv, )
+            cl.index = mv
+            return {'FINISHED'}
+        
+        return {'PASS_THROUGH'}
+
+
+class MaterialEditorCloneBSDF(Operator):
+    bl_idname = "maxwell_render.material_editor_clone_bsdf"
+    bl_label = "Clone Selected BSDF"
+    bl_description = "Clone selected BSDF"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.material.maxwell_render
+        l = mx.custom_layers.layers[mx.custom_layers.index]
+        cl = l.layer.bsdfs
+        ls = l.layer.bsdfs.bsdfs
+        idx = l.layer.bsdfs.index
+        try:
+            item = ls[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        d = l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index].to_dict()
+        bpy.ops.maxwell_render.material_editor_add_bsdf()
+        l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index].update(d)
+        n = l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index]['name']
+        l.layer.bsdfs['bsdfs'][l.layer.bsdfs.index]['name'] = 'Clone of {}'.format(n)
+        
+        return {'FINISHED'}
+
+
+class SaveMaterialAsMXM(Operator):
+    bl_idname = "maxwell_render.save_material_as_mxm"
+    bl_label = "Save Material As MXM"
+    bl_description = "Save material as .MXM and open it in Mxed material editor"
+    
+    filepath = StringProperty(subtype='FILE_PATH', )
+    filename_ext = ".mxm"
+    check_extension = True
+    check_existing = BoolProperty(name="", default=True, options={'HIDDEN'}, )
+    remove_dots = True
+    
+    filter_folder = BoolProperty(name="Filter folders", default=True, options={'HIDDEN'}, )
+    filter_glob = StringProperty(default="*.mxm", options={'HIDDEN'}, )
+    
+    force_preview = BoolProperty(name="Force Preview", default=True, )
+    force_preview_scene = StringProperty(name="Force Preview Scene", default="", )
+    
+    @classmethod
+    def poll(cls, context):
+        # not implemented yet
+        return False
+    
+    def execute(self, context):
+        return 'PASS_THROUGH'
+
+
+class LoadMaterialFromMXM(Operator):
+    bl_idname = "maxwell_render.load_material_from_mxm"
+    bl_label = "Load Material From MXM"
+    bl_description = "Load material from existing .MXM"
+    
+    filepath = StringProperty(subtype='FILE_PATH', )
+    filename_ext = ".mxm"
+    check_extension = True
+    # check_existing = BoolProperty(name="", default=True, options={'HIDDEN'}, )
+    # remove_dots = True
+    
+    filter_folder = BoolProperty(name="Filter folders", default=True, options={'HIDDEN'}, )
+    filter_glob = StringProperty(default="*.mxm", options={'HIDDEN'}, )
+    
+    # force_preview = BoolProperty(name="Force Preview", default=True, )
+    # force_preview_scene = StringProperty(name="Force Preview Scene", default="", )
+    
+    @classmethod
+    def poll(cls, context):
+        # not implemented yet
+        return False
+    
+    def execute(self, context):
+        return 'PASS_THROUGH'
 
 
 class Render_preset_add(AddPresetBase, Operator):
