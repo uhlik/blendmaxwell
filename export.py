@@ -802,8 +802,8 @@ class MXSExport():
                     mxm = MXSMaterialMXM(mat.name, path=mx.mxm_file, embed=mx.embed, )
                     self._write(mxm)
                 elif(mx.use == 'CUSTOM' and mat.users > 0):
-                    # TODO: custom material creation
-                    pass
+                    cmat = MXSMaterialCustom(mat.name)
+                    self._write(cmat)
                 else:
                     exmat = MXSMaterialExtension(mat.name)
                     self._write(exmat)
@@ -3687,6 +3687,206 @@ class MXSTexture(Serializable):
         for k, v in d.items():
             a[k[2:]] = v
         return a
+
+
+class MXSMaterialCustom(MXSMaterial):
+    def __init__(self, name, ):
+        log("'{}' > '{}'".format(name, 'CUSTOM', ), 2)
+        super().__init__(name)
+        self.m_subtype = 'CUSTOM'
+        
+        mat = bpy.data.materials[name]
+        m = mat.maxwell_render
+        
+        bsdfd = {'visible': True, 'weight': 100.0, 'weight_map_enabled': False, 'weight_map': "", 'ior': 0, 'complex_ior': "",
+                 'reflectance_0': (0.6, 0.6, 0.6, ), 'reflectance_0_map_enabled': False, 'reflectance_0_map': "",
+                 'reflectance_90': (1.0, 1.0, 1.0, ), 'reflectance_90_map_enabled': False, 'reflectance_90_map': "",
+                 'transmittance': (0.0, 0.0, 0.0), 'transmittance_map_enabled': False, 'transmittance_map': "",
+                 'attenuation': 1.0, 'attenuation_units': 0, 'nd': 3.0, 'force_fresnel': False, 'k': 0.0, 'abbe': 1.0,
+                 'r2_enabled': False, 'r2_falloff_angle': math.radians(75.0), 'r2_influence': 0.0,
+                 'roughness': 100.0, 'roughness_map_enabled': False, 'roughness_map': "",
+                 'bump': 30.0, 'bump_map_enabled': False, 'bump_map': "", 'bump_map_use_normal': False,
+                 'anisotrophy': 0.0, 'anisotrophy_map_enabled': False, 'anisotrophy_map': "",
+                 'anisotrophy_angle': math.radians(0.0), 'anisotrophy_angle_map_enabled': False, 'anisotrophy_angle_map': "",
+                 'scattering': (0.5, 0.5, 0.5, ), 'coef': 0.0, 'asymmetry': 0.0, 'sigle_sided': False, }
+        coatingd = {'enabled': False,
+                    'thickness': 500.0, 'thickness_map_enabled': False, 'thickness_map': "", 'thickness_map_min': 100.0, 'thickness_map_max': 1000.0,
+                    'ior': 0, 'complex_ior': "",
+                    'reflectance_0': (0.6, 0.6, 0.6, ), 'reflectance_0_map_enabled': False, 'reflectance_0_map': "",
+                    'reflectance_90': (1.0, 1.0, 1.0, ), 'reflectance_90_map_enabled': False, 'reflectance_90_map': "",
+                    'nd': 3.0, 'force_fresnel': False, 'k': 0.0, 'r2_enabled': False, 'r2_falloff_angle': math.radians(75.0), }
+        displacementd = {'enabled': False, 'map': "", 'type': 1, 'subdivision': 5, 'adaptive': False, 'subdivision_method': 0,
+                         'offset': 0.5, 'smoothing': True, 'uv_interpolation': 2, 'height': 2.0, 'height_units': 0,
+                         'v3d_preset': 0, 'v3d_transform': 0, 'v3d_rgb_mapping': 0, 'v3d_scale': (1.0, 1.0, 1.0), }
+        emitterd = {'enabled': False, 'type': 0, 'ies_data': "", 'ies_intensity': 1.0,
+                    'spot_map_enabled': False, 'spot_map': "", 'spot_cone_angle': math.radians(45.0), 'spot_falloff_angle': math.radians(10.0), 'spot_falloff_type': 0, 'spot_blur': 1.0,
+                    'emission': 0, 'color': (1.0, 1.0, 1.0, ), 'color_black_body_enabled': False, 'color_black_body': 6500.0,
+                    'luminance': 0, 'luminance_power': 40.0, 'luminance_efficacy': 17.6, 'luminance_output': 100.0, 'temperature_value': 6500.0,
+                    'hdr_map': "", 'hdr_intensity': 1.0, }
+        layerd = {'visible': True, 'opacity': 100.0, 'opacity_map_enabled': False, 'opacity_map': "", 'blending': 0, }
+        
+        structure = []
+        for i, l in enumerate(m.custom_layers.layers):
+            lb = []
+            for j, b in enumerate(l.layer.bsdfs.bsdfs):
+                lb.append([b['name'], l.layer.bsdfs.bsdfs[j]])
+            structure.append([l['name'], m.custom_layers.layers[i], lb, ])
+        
+        # import pprint
+        # pp = pprint.PrettyPrinter(indent=4)
+        # pp.pprint(structure)
+        
+        layers = []
+        for i, sl in enumerate(structure):
+            lpd = sl[1]['layer'].to_dict()
+            del lpd['bsdfs']
+            # del lpd['emitter']
+            for k, v in layerd.items():
+                if(k not in lpd):
+                    lpd[k] = v
+            
+            # converting..
+            cmap = ['opacity_map', ]
+            cenum = ['blending', ]
+            for k, v in lpd.items():
+                if(k in cmap):
+                    lpd[k] = self._texture_to_data(v)
+                if(k in cenum):
+                    lpd[k] = int(v)
+            
+            # epd = sl[1]['layer']['emitter'].to_dict()
+            epd = sl[1]['emitter'].to_dict()
+            for k, v in emitterd.items():
+                if(k not in epd):
+                    epd[k] = v
+            
+            # converting..
+            ccolor = ['color', ]
+            cmap = ['spot_map', 'hdr_map', ]
+            cangle = ['spot_cone_angle', 'spot_falloff_angle', ]
+            cenum = ['type', 'spot_falloff_type', 'emission', 'luminance', ]
+            cpath = ['ies_data', ]
+            for k, v in epd.items():
+                if(k in ccolor):
+                    epd[k] = self._color_to_rgb8(v)
+                if(k in cmap):
+                    epd[k] = self._texture_to_data(v)
+                if(k in cangle):
+                    epd[k] = math.degrees(v)
+                if(k in cenum):
+                    epd[k] = int(v)
+                if(k in cpath):
+                    epd[k] = os.path.realpath(bpy.path.abspath(v))
+            
+            bsdfs = []
+            for j, bl in enumerate(sl[2]):
+                bpd = bl[1]['bsdf'].to_dict()
+                for k, v in bsdfd.items():
+                    if(k not in bpd):
+                        bpd[k] = v
+                
+                # converting..
+                ccolor = ['reflectance_0', 'reflectance_90', 'transmittance', ]
+                cmap = ['weight_map', 'reflectance_0_map', 'reflectance_90_map', 'transmittance_map', 'roughness_map', 'bump_map', 'anisotrophy_map', 'anisotrophy_angle_map', ]
+                cangle = ['r2_falloff_angle', 'anisotrophy_angle', ]
+                cenum = ['ior', 'attenuation_units', ]
+                cpath = ['complex_ior', ]
+                for k, v in bpd.items():
+                    if(k in ccolor):
+                        bpd[k] = self._color_to_rgb8(v)
+                    if(k in cmap):
+                        bpd[k] = self._texture_to_data(v)
+                    if(k in cangle):
+                        bpd[k] = math.degrees(v)
+                    if(k in cenum):
+                        bpd[k] = int(v)
+                    if(k in cpath):
+                        bpd[k] = os.path.realpath(bpy.path.abspath(v))
+                
+                cpd = bl[1]['coating'].to_dict()
+                for k, v in coatingd.items():
+                    if(k not in cpd):
+                        cpd[k] = v
+                
+                # converting..
+                ccolor = ['reflectance_0', 'reflectance_90', ]
+                cmap = ['thickness_map', 'reflectance_0_map', 'reflectance_90_map', ]
+                cangle = ['r2_falloff_angle', ]
+                cenum = ['ior', ]
+                cpath = ['complex_ior', ]
+                for k, v in cpd.items():
+                    if(k in ccolor):
+                        cpd[k] = self._color_to_rgb8(v)
+                    if(k in cmap):
+                        cpd[k] = self._texture_to_data(v)
+                    if(k in cangle):
+                        cpd[k] = math.degrees(v)
+                    if(k in cenum):
+                        cpd[k] = int(v)
+                    if(k in cpath):
+                        cpd[k] = os.path.realpath(bpy.path.abspath(v))
+                
+                bsdf = {'name': bl[0],
+                        'bsdf_props': bpd,
+                        'coating': cpd, }
+                bsdfs.append(bsdf)
+            
+            layer = {'name': sl[0],
+                     'layer_props': lpd,
+                     'bsdfs': bsdfs,
+                     'emitter': epd, }
+            layers.append(layer)
+        
+        displacement = m['custom_displacement'].to_dict()
+        for k, v in displacementd.items():
+            if(k not in displacement):
+                displacement[k] = v
+        
+        # converting..
+        cmap = ['map', ]
+        cenum = ['type', 'subdivision_method', 'uv_interpolation', 'height_units', 'v3d_preset', 'v3d_transform', 'v3d_rgb_mapping', ]
+        for k, v in displacement.items():
+            if(k in cmap):
+                displacement[k] = self._texture_to_data(v)
+            if(k in cenum):
+                displacement[k] = int(v)
+        
+        global_props = {'override_map': self._texture_to_data(m.global_override_map),
+                        'bump': m.global_bump,
+                        'bump_value': m.global_bump_value,
+                        'bump_map': self._texture_to_data(m.global_bump_map),
+                        'dispersion': m.global_dispersion,
+                        'shadow': m.global_shadow,
+                        'matte': m.global_matte,
+                        'priority': m.global_priority,
+                        'id': self._color_to_rgb8(m.global_id), }
+        
+        data = {'global_props': global_props,
+                'displacement': displacement,
+                'layers': layers, }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        import pprint
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(data)
+        
+        raise Exception()
+                
+        
+        
+        
+        
 
 
 class MXSWireframeBase(MXSMesh):
