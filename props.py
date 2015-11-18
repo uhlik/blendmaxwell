@@ -1404,7 +1404,7 @@ class MaterialBSDFProperties(PropertyGroup):
     force_fresnel = BoolProperty(name="Force Fresnel", default=False, )
     
     k = FloatProperty(name="K", default=0.0, min=0.0, max=1000.0, precision=3, )
-    abbe = FloatProperty(name="Abbe", default=0.0, min=1.0, max=2000.0, precision=3, )
+    abbe = FloatProperty(name="Abbe", default=1.0, min=1.0, max=2000.0, precision=3, )
     r2_enabled = BoolProperty(name="R2 Enabled", default=False, )
     r2_falloff_angle = FloatProperty(name="R2 Falloff Angle", default=math.radians(75.0), min=math.radians(0.0), max=math.radians(90.0), precision=2, subtype='ANGLE', )
     r2_influence = FloatProperty(name="R2 Influence", default=0.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
@@ -1533,12 +1533,12 @@ class MaterialLayerProperties(PropertyGroup):
     blending = EnumProperty(name="Layer Blending", items=[('0', "N", ""), ('1', "A", ""), ], default='0', )
     
     bsdfs = PointerProperty(name="BSDFs", type=MaterialCustomLayerBSDFs, )
-    emitter = PointerProperty(name="Emitter", type=MaterialEmitterProperties, )
 
 
 class MaterialCustomLayersItem(PropertyGroup):
     name = StringProperty(name="Name", default="Layer", )
     layer = PointerProperty(name="Layer", type=MaterialLayerProperties, )
+    emitter = PointerProperty(type=MaterialEmitterProperties, )
 
 
 class MaterialCustomLayers(PropertyGroup):

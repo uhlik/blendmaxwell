@@ -2115,7 +2115,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 r.prop_search(layer, 'opacity_map', mat, 'texture_slots', icon='TEXTURE', text="", )
                 
                 l.separator()
-                em = layer.emitter
+                em = cl.layers[cl.index].emitter
                 b = l.box()
                 r = b.row()
                 r.prop(em, 'expanded', icon='TRIA_DOWN' if em.expanded else 'TRIA_RIGHT', icon_only=True, emboss=False, )
@@ -2128,18 +2128,18 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         l.enabled = False
                     sub = l
                     
-                    sub.prop(mx, 'emitter_type')
+                    sub.prop(em, 'type')
                     sub.separator()
-                    if(mx.emitter_type == '0'):
+                    if(em.type == '0'):
                         # Area
                         pass
-                    elif(mx.emitter_type == '1'):
+                    elif(em.type == '1'):
                         # IES
-                        sub.prop(mx, 'emitter_ies_data')
+                        sub.prop(em, 'ies_data')
                         sub.separator()
-                        sub.prop(mx, 'emitter_ies_intensity')
+                        sub.prop(em, 'ies_intensity')
                         sub.separator()
-                    elif(mx.emitter_type == '2'):
+                    elif(em.type == '2'):
                         # Spot
                         r = sub.row()
                         s = r.split(percentage=0.2)
@@ -2147,16 +2147,16 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         c.label("Spot Map:")
                         c = s.column()
                         r = c.row()
-                        r.prop(mx, 'emitter_spot_map_enabled', text="", )
-                        r.prop_search(mx, 'emitter_spot_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        r.prop(em, 'spot_map_enabled', text="", )
+                        r.prop_search(em, 'spot_map', mat, 'texture_slots', icon='TEXTURE', text="", )
                         
-                        sub.prop(mx, 'emitter_spot_cone_angle')
-                        sub.prop(mx, 'emitter_spot_falloff_angle')
-                        sub.prop(mx, 'emitter_spot_falloff_type')
-                        sub.prop(mx, 'emitter_spot_blur')
+                        sub.prop(em, 'spot_cone_angle')
+                        sub.prop(em, 'spot_falloff_angle')
+                        sub.prop(em, 'spot_falloff_type')
+                        sub.prop(em, 'spot_blur')
                         sub.separator()
                     
-                    if(mx.emitter_type == '1'):
+                    if(em.type == '1'):
                         # IES
                         r = sub.row()
                         s = r.split(percentage=0.2)
@@ -2164,10 +2164,10 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         c.label("Color:")
                         c = s.column()
                         r = c.row()
-                        r.prop(mx, 'emitter_color', text="", )
-                        r.prop(mx, 'emitter_color_black_body_enabled', text="", )
-                        r.prop(mx, 'emitter_color_black_body')
-                    elif(mx.emitter_type == '2'):
+                        r.prop(em, 'color', text="", )
+                        r.prop(em, 'color_black_body_enabled', text="", )
+                        r.prop(em, 'color_black_body')
+                    elif(em.type == '2'):
                         # Spot
                         r = sub.row()
                         s = r.split(percentage=0.2)
@@ -2175,35 +2175,35 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         c.label("Color:")
                         c = s.column()
                         r = c.row()
-                        r.prop(mx, 'emitter_color', text="", )
-                        r.prop(mx, 'emitter_color_black_body_enabled', text="", )
-                        r.prop(mx, 'emitter_color_black_body')
+                        r.prop(em, 'color', text="", )
+                        r.prop(em, 'color_black_body_enabled', text="", )
+                        r.prop(em, 'color_black_body')
                         sub.separator()
-                        sub.prop(mx, 'emitter_luminance')
-                        if(mx.emitter_luminance == '0'):
+                        sub.prop(em, 'luminance')
+                        if(em.luminance == '0'):
                             # Power & Efficacy
-                            sub.prop(mx, 'emitter_luminance_power')
-                            sub.prop(mx, 'emitter_luminance_efficacy')
+                            sub.prop(em, 'luminance_power')
+                            sub.prop(em, 'luminance_efficacy')
                             # r = sub.row()
-                            # r.prop(mx, 'emitter_luminance_output', text="Output (lm)")
+                            # r.prop(em, 'luminance_output', text="Output (lm)")
                             # r.enabled = False
-                        elif(mx.emitter_luminance == '1'):
+                        elif(em.luminance == '1'):
                             # Lumen
-                            sub.prop(mx, 'emitter_luminance_output', text="Output (lm)")
-                        elif(mx.emitter_luminance == '2'):
+                            sub.prop(em, 'luminance_output', text="Output (lm)")
+                        elif(em.luminance == '2'):
                             # Lux
-                            sub.prop(mx, 'emitter_luminance_output', text="Output (lm/m)")
-                        elif(mx.emitter_luminance == '3'):
+                            sub.prop(em, 'luminance_output', text="Output (lm/m)")
+                        elif(em.luminance == '3'):
                             # Candela
-                            sub.prop(mx, 'emitter_luminance_output', text="Output (cd)")
-                        elif(mx.emitter_luminance == '4'):
+                            sub.prop(em, 'luminance_output', text="Output (cd)")
+                        elif(em.luminance == '4'):
                             # Luminance
-                            sub.prop(mx, 'emitter_luminance_output', text="Output (cd/m)")
+                            sub.prop(em, 'luminance_output', text="Output (cd/m)")
                     else:
-                        sub.prop(mx, 'emitter_emission')
+                        sub.prop(em, 'emission')
                         sub.separator()
                         
-                        if(mx.emitter_emission == '0'):
+                        if(em.emission == '0'):
                             sub.menu("Emitter_presets", text=bpy.types.Emitter_presets.bl_label)
                             sub.separator()
                             # Color
@@ -2213,38 +2213,38 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                             c.label("Color:")
                             c = s.column()
                             r = c.row()
-                            r.prop(mx, 'emitter_color', text="", )
-                            r.prop(mx, 'emitter_color_black_body_enabled', text="", )
-                            r.prop(mx, 'emitter_color_black_body')
+                            r.prop(em, 'color', text="", )
+                            r.prop(em, 'color_black_body_enabled', text="", )
+                            r.prop(em, 'color_black_body')
                             sub.separator()
-                            sub.prop(mx, 'emitter_luminance')
-                            if(mx.emitter_luminance == '0'):
+                            sub.prop(em, 'luminance')
+                            if(em.luminance == '0'):
                                 # Power & Efficacy
                                 c = sub.column(align=True)
-                                c.prop(mx, 'emitter_luminance_power')
-                                c.prop(mx, 'emitter_luminance_efficacy')
-                                sub.label("Output: {} lm".format(round(mx.emitter_luminance_power * mx.emitter_luminance_efficacy, 1)))
-                            elif(mx.emitter_luminance == '1'):
+                                c.prop(em, 'luminance_power')
+                                c.prop(em, 'luminance_efficacy')
+                                sub.label("Output: {} lm".format(round(em.luminance_power * em.luminance_efficacy, 1)))
+                            elif(em.luminance == '1'):
                                 # Lumen
-                                sub.prop(mx, 'emitter_luminance_output', text="Output (lm)")
-                            elif(mx.emitter_luminance == '2'):
+                                sub.prop(em, 'luminance_output', text="Output (lm)")
+                            elif(em.luminance == '2'):
                                 # Lux
-                                sub.prop(mx, 'emitter_luminance_output', text="Output (lm/m)")
-                            elif(mx.emitter_luminance == '3'):
+                                sub.prop(em, 'luminance_output', text="Output (lm/m)")
+                            elif(em.luminance == '3'):
                                 # Candela
-                                sub.prop(mx, 'emitter_luminance_output', text="Output (cd)")
-                            elif(mx.emitter_luminance == '4'):
+                                sub.prop(em, 'luminance_output', text="Output (cd)")
+                            elif(em.luminance == '4'):
                                 # Luminance
-                                sub.prop(mx, 'emitter_luminance_output', text="Output (cd/m)")
-                        elif(mx.emitter_emission == '1'):
+                                sub.prop(em, 'luminance_output', text="Output (cd/m)")
+                        elif(em.emission == '1'):
                             # Temperature
-                            sub.prop(mx, 'emitter_temperature_value')
-                        elif(mx.emitter_emission == '2'):
+                            sub.prop(em, 'temperature_value')
+                        elif(em.emission == '2'):
                             # HDR Image
-                            sub.prop_search(mx, 'emitter_hdr_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            sub.prop_search(em, 'hdr_map', mat, 'texture_slots', icon='TEXTURE', text="", )
                             sub.separator()
-                            sub.prop(mx, 'emitter_hdr_intensity')
-                    
+                            sub.prop(em, 'hdr_intensity')
+                
                 l = ll
                 
                 l.separator()
