@@ -958,19 +958,91 @@ class SaveMaterialAsMXM(Operator):
     
     force_preview = BoolProperty(name="Force Preview", default=True, )
     force_preview_scene = StringProperty(name="Force Preview Scene", default="", )
+    open_in_mxed = BoolProperty(name="Open In Mxed", default=True, )
     
     @classmethod
     def poll(cls, context):
-        # not implemented yet
-        return False
+        return (context.material or context.object)
+    
+    def invoke(self, context, event):
+        n = context.material.name
+        if(self.remove_dots):
+            # remove dots, Maxwell doesn't like it - material name is messed up..
+            n = n.replace(".", "_")
+        self.filepath = os.path.join(context.scene.maxwell_render.materials_directory, "{}.mxm".format(n))
+        self.force_preview = context.material.maxwell_render.force_preview
+        self.force_preview_scene = context.material.maxwell_render.force_preview_scene
+        self.open_in_mxed = context.material.maxwell_render.custom_open_in_mxed_after_save
+        if(self.force_preview_scene == ' '):
+            self.force_preview_scene = ''
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
+    def check(self, context):
+        change_ext = False
+        check_extension = self.check_extension
+        
+        if(check_extension is not None):
+            filepath = self.filepath
+            
+            if(self.remove_dots):
+                h, t = os.path.split(filepath)
+                n, e = os.path.splitext(t)
+                n = n.replace(".", "_")
+                filepath = os.path.join(h, "{}{}".format(n, e))
+            
+            if(os.path.basename(filepath)):
+                filepath = bpy.path.ensure_ext(filepath,
+                                               self.filename_ext
+                                               if check_extension
+                                               else "")
+                if(filepath != self.filepath):
+                    self.filepath = filepath
+                    change_ext = True
+        return change_ext
     
     def execute(self, context):
-        return 'PASS_THROUGH'
+        p = os.path.abspath(bpy.path.abspath(self.filepath))
+        
+        if(p == ""):
+            self.report({'ERROR'}, "Filepath is empty")
+            return {'CANCELLED'}
+        if(os.path.isdir(p)):
+            self.report({'ERROR'}, "Filepath is directory")
+            return {'CANCELLED'}
+        
+        h, t = os.path.split(p)
+        n, e = os.path.splitext(t)
+        if(e.lower() != ".mxm"):
+            self.report({'ERROR'}, "Extension is not .mxm")
+            return {'CANCELLED'}
+        
+        if(not os.path.exists(os.path.dirname(p))):
+            self.report({'ERROR'}, "Directory does not exist")
+            return {'CANCELLED'}
+        
+        if(not os.access(os.path.dirname(p), os.W_OK)):
+            self.report({'ERROR'}, "Directory is not writeable")
+            return {'CANCELLED'}
+        
+        mat = export.MXSMaterialCustom(context.material.name)
+        d = mat._repr()
+        
+        system.mxed_create_and_edit_custom_material_helper(p, d, self.force_preview, self.force_preview_scene, self.open_in_mxed, )
+        
+        rp = bpy.path.relpath(self.filepath)
+        if(system.PLATFORM == 'Windows'):
+            rp = os.path.abspath(self.filepath)
+        
+        context.material.maxwell_render.use = 'REFERENCE'
+        context.material.maxwell_render.mxm_file = rp
+        
+        return {'FINISHED'}
 
 
 class LoadMaterialFromMXM(Operator):
     bl_idname = "maxwell_render.load_material_from_mxm"
-    bl_label = "Load Material From MXM"
+    bl_label = "Load Material From MXM (unimplemented yet)"
     bl_description = "Load material from existing .MXM"
     
     filepath = StringProperty(subtype='FILE_PATH', )

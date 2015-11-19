@@ -2506,7 +2506,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         r.prop(bsdf, 'coef')
                         r.prop(bsdf, 'asymmetry')
                         
-                        l.prop(bsdf, 'single_sided')
+                        # l.prop(bsdf, 'single_sided')
                         if(bsdf.single_sided):
                             r = l.row()
                             s = r.split(percentage=0.333)
@@ -2602,10 +2602,14 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             
             l.separator()
             sub = l
-            s = sub.split(percentage=0.7, align=True)
+            # s = sub.split(percentage=0.7, align=True)
+            s = sub.split(percentage=0.6, align=True)
             r = s.row(align=True)
             r.operator('maxwell_render.save_material_as_mxm')
             r = s.row(align=True)
+            # r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="", icon='FILE_PARENT', )
+            r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="", icon='LIBRARY_DATA_DIRECT', )
+            # r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="Mxed", )
             r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
             r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
             if(not m.force_preview):
