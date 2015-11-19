@@ -1618,6 +1618,9 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         
         r = sub.row()
         r.prop(m, 'global_id')
+        
+        if(m.use == 'CUSTOM'):
+            sub.prop_search(m, 'custom_active_display_map', mat, 'texture_slots', icon='TEXTURE', )
 
 
 class MaterialPanel(MaterialButtonsPanel, Panel):
@@ -1625,6 +1628,36 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
     bl_label = "Maxwell Material"
     
     def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
         l = self.layout
         sub = l.column()
         m = context.material.maxwell_render
@@ -2046,10 +2079,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
                 l.prop(cd, 'type')
                 
-                # r = l.row()
-                # r.prop(cd, 'subdivision')
-                # r.prop(cd, 'adaptive')
-                
                 r = l.row()
                 s = r.split(percentage=0.333)
                 c = s.column()
@@ -2060,25 +2089,48 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 r.prop(cd, 'adaptive', )
                 
                 l.prop(cd, 'subdivision_method')
-                l.prop(cd, 'offset')
-                l.prop(cd, 'smoothing')
+                # l.prop(cd, 'offset')
+                # l.prop(cd, 'smoothing')
+                
+                # r = l.row()
+                # s = r.split(percentage=0.333)
+                # c = s.column()
+                # c.label("Offset:")
+                # c = s.column()
+                # r = c.row()
+                # r.prop(cd, 'offset', text="", )
+                
+                tab_single(l, "Offset:", cd, 'offset')
+                
+                # r = l.row()
+                # s = r.split(percentage=0.333)
+                # c = s.column()
+                # c.label("Smoothing:")
+                # c = s.column()
+                # r = c.row()
+                # r.prop(cd, 'smoothing', text="", )
+                
+                tab_single(l, "Smoothing:", cd, 'smoothing')
+                
                 l.prop(cd, 'uv_interpolation')
                 
                 l.separator()
                 l.label("HeightMap Properties:")
                 
-                r = l.row()
-                s = r.split(percentage=0.333)
-                c = s.column()
-                c.label("Height:")
-                c = s.column()
-                r = c.row()
-                r.prop(cd, 'height', text="", )
-                r.prop(cd, 'height_units', text="", )
+                # r = l.row()
+                # s = r.split(percentage=0.333)
+                # c = s.column()
+                # c.label("Height:")
+                # c = s.column()
+                # r = c.row()
+                # r.prop(cd, 'height', text="", )
+                # r.prop(cd, 'height_units', text="", )
+                
+                tab_double(l, "Height:", cd, 'height', 'height_units', )
                 
                 l.separator()
                 l.label("Vector 3D Properties:")
-                # l.prop(cd, 'v3d_preset')
+                l.prop(cd, 'v3d_preset')
                 l.prop(cd, 'v3d_transform')
                 l.prop(cd, 'v3d_rgb_mapping')
                 r = l.row()
@@ -2295,35 +2347,41 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         if(bsdf.ior == '1'):
                             l.prop(bsdf, 'complex_ior')
                         else:
-                            r = l.row()
-                            s = r.split(percentage=0.333)
-                            c = s.column()
-                            c.label("Reflectance 0:")
-                            c = s.column()
-                            r = c.row()
-                            r.prop(bsdf, 'reflectance_0', text="", )
-                            r.prop(bsdf, 'reflectance_0_map_enabled', text="", )
-                            r.prop_search(bsdf, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            # r = l.row()
+                            # s = r.split(percentage=0.333)
+                            # c = s.column()
+                            # c.label("Reflectance 0:")
+                            # c = s.column()
+                            # r = c.row()
+                            # r.prop(bsdf, 'reflectance_0', text="", )
+                            # r.prop(bsdf, 'reflectance_0_map_enabled', text="", )
+                            # r.prop_search(bsdf, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
                             
-                            r = l.row()
-                            s = r.split(percentage=0.333)
-                            c = s.column()
-                            c.label("Reflectance 90:")
-                            c = s.column()
-                            r = c.row()
-                            r.prop(bsdf, 'reflectance_90', text="", )
-                            r.prop(bsdf, 'reflectance_90_map_enabled', text="", )
-                            r.prop_search(bsdf, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            tab_color_and_map(l, "Reflectance 0:", bsdf, 'reflectance_0', 'reflectance_0_map_enabled', 'reflectance_0_map', )
                             
-                            r = l.row()
-                            s = r.split(percentage=0.333)
-                            c = s.column()
-                            c.label("Transmittance:")
-                            c = s.column()
-                            r = c.row()
-                            r.prop(bsdf, 'transmittance', text="", )
-                            r.prop(bsdf, 'transmittance_map_enabled', text="", )
-                            r.prop_search(bsdf, 'transmittance_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            # r = l.row()
+                            # s = r.split(percentage=0.333)
+                            # c = s.column()
+                            # c.label("Reflectance 90:")
+                            # c = s.column()
+                            # r = c.row()
+                            # r.prop(bsdf, 'reflectance_90', text="", )
+                            # r.prop(bsdf, 'reflectance_90_map_enabled', text="", )
+                            # r.prop_search(bsdf, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            tab_color_and_map(l, "Reflectance 90:", bsdf, 'reflectance_90', 'reflectance_90_map_enabled', 'reflectance_90_map', )
+                            
+                            # r = l.row()
+                            # s = r.split(percentage=0.333)
+                            # c = s.column()
+                            # c.label("Transmittance:")
+                            # c = s.column()
+                            # r = c.row()
+                            # r.prop(bsdf, 'transmittance', text="", )
+                            # r.prop(bsdf, 'transmittance_map_enabled', text="", )
+                            # r.prop_search(bsdf, 'transmittance_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            tab_color_and_map(l, "Transmittance:", bsdf, 'transmittance', 'transmittance_map_enabled', 'transmittance_map', )
                             
                             r = l.row()
                             s = r.split(percentage=0.333)
@@ -2448,7 +2506,23 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         r.prop(bsdf, 'coef')
                         r.prop(bsdf, 'asymmetry')
                         
-                        l.prop(bsdf, 'sigle_sided')
+                        l.prop(bsdf, 'single_sided')
+                        if(bsdf.single_sided):
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            # c.label("Single Sided:")
+                            c.prop(bsdf, 'single_sided')
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'single_sided_value', text="", )
+                            r.prop(bsdf, 'single_sided_map_enabled', text="", )
+                            r.prop_search(bsdf, 'single_sided_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            r = l.row(align=True)
+                            r.prop(bsdf, 'single_sided_min', )
+                            r.prop(bsdf, 'single_sided_max', )
+                        else:
+                            l.prop(bsdf, 'single_sided')
                     
                     l = ll
                     
@@ -2468,7 +2542,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         r = l.row()
                         s = r.split(percentage=0.333)
                         c = s.column()
-                        c.label("Thickness:")
+                        c.label("Thickness (nm):")
                         c = s.column()
                         r = c.row()
                         r.prop(coat, 'thickness', text="", )

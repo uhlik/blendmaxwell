@@ -1429,7 +1429,12 @@ class MaterialBSDFProperties(PropertyGroup):
     scattering = FloatVectorProperty(name="Scattering", default=(0.5, 0.5, 0.5), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     coef = FloatProperty(name="Coef", default=0.0, min=0.0, max=99999.0, precision=2, )
     asymmetry = FloatProperty(name="Asymmetry", default=0.0, min=-1.0, max=1.0, precision=3, )
-    sigle_sided = BoolProperty(name="Single Sided", default=False, )
+    single_sided = BoolProperty(name="Single Sided", default=False, )
+    single_sided_value = FloatProperty(name="Value (mm)", default=1.0, min=0.001, max=1000.0, precision=3, )
+    single_sided_map_enabled = BoolProperty(name="Single Sided Map Enabled", default=False, )
+    single_sided_map = StringProperty(name="Single Sided Map", default="", )
+    single_sided_min = FloatProperty(name="Min", default=0.001, min=0.001, max=1000.0, precision=3, )
+    single_sided_max = FloatProperty(name="Max", default=10.0, min=0.001, max=1000.0, precision=3, )
 
 
 class MaterialCoatingProperties(PropertyGroup):
@@ -1573,6 +1578,7 @@ class MaterialProperties(PropertyGroup):
     
     custom_layers = PointerProperty(name="Custom Layers", type=MaterialCustomLayers, )
     custom_displacement = PointerProperty(name="Displacement", type=MaterialDisplacementProperties, )
+    custom_active_display_map = StringProperty(name="Active Display Map", description="Set texture displayed in Studio viewport", default="", )
     
     @classmethod
     def register(cls):

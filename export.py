@@ -54,6 +54,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # FIXME: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
 # TODO: particles/cloner: check if size setting is correct, i think it sometimes is different from what it should be..
 # TODO: do something with sharp edges, auto smooth and custom normals..
+# TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions
 
 
 class MXSExport():
@@ -3424,6 +3425,12 @@ class MXSMaterial(Serializable):
         t = MXSTexture(name)
         a = t._repr()
         return a
+    
+    def _gamma_uncorrect(self, c, ):
+        g = 1 / 2.2
+        # c = [(v / 255) ** g for v in c]
+        c = [v ** g for v in c]
+        return c
 
 
 class MXSMaterialMXM(MXSMaterial):
@@ -3708,7 +3715,8 @@ class MXSMaterialCustom(MXSMaterial):
                  'bump': 30.0, 'bump_map_enabled': False, 'bump_map': "", 'bump_map_use_normal': False,
                  'anisotrophy': 0.0, 'anisotrophy_map_enabled': False, 'anisotrophy_map': "",
                  'anisotrophy_angle': math.radians(0.0), 'anisotrophy_angle_map_enabled': False, 'anisotrophy_angle_map': "",
-                 'scattering': (0.5, 0.5, 0.5, ), 'coef': 0.0, 'asymmetry': 0.0, 'sigle_sided': False, }
+                 'scattering': (0.5, 0.5, 0.5, ), 'coef': 0.0, 'asymmetry': 0.0,
+                 'single_sided': False, 'single_sided_value': 1.0, 'single_sided_map_enabled': False, 'single_sided_map': "", 'single_sided_min': 0.001, 'single_sided_max': 10.0, }
         coatingd = {'enabled': False,
                     'thickness': 500.0, 'thickness_map_enabled': False, 'thickness_map': "", 'thickness_map_min': 100.0, 'thickness_map_max': 1000.0,
                     'ior': 0, 'complex_ior': "",
@@ -3731,10 +3739,6 @@ class MXSMaterialCustom(MXSMaterial):
             for j, b in enumerate(l.layer.bsdfs.bsdfs):
                 lb.append([b['name'], l.layer.bsdfs.bsdfs[j]])
             structure.append([l['name'], m.custom_layers.layers[i], lb, ])
-        
-        # import pprint
-        # pp = pprint.PrettyPrinter(indent=4)
-        # pp.pprint(structure)
         
         layers = []
         for i, sl in enumerate(structure):
@@ -3761,11 +3765,13 @@ class MXSMaterialCustom(MXSMaterial):
                     epd[k] = v
             
             # converting..
-            ccolor = ['color', ]
+            # ccolor = ['color', ]
+            ccolor = []
             cmap = ['spot_map', 'hdr_map', ]
             cangle = ['spot_cone_angle', 'spot_falloff_angle', ]
             cenum = ['type', 'spot_falloff_type', 'emission', 'luminance', ]
             cpath = ['ies_data', ]
+            cgamma = ['color', ]
             for k, v in epd.items():
                 if(k in ccolor):
                     epd[k] = self._color_to_rgb8(v)
@@ -3776,7 +3782,12 @@ class MXSMaterialCustom(MXSMaterial):
                 if(k in cenum):
                     epd[k] = int(v)
                 if(k in cpath):
-                    epd[k] = os.path.realpath(bpy.path.abspath(v))
+                    if(v == ""):
+                        epd[k] == ""
+                    else:
+                        epd[k] = os.path.realpath(bpy.path.abspath(v))
+                if(k in cgamma):
+                    epd[k] = self._gamma_uncorrect(v)
             
             bsdfs = []
             for j, bl in enumerate(sl[2]):
@@ -3786,11 +3797,14 @@ class MXSMaterialCustom(MXSMaterial):
                         bpd[k] = v
                 
                 # converting..
-                ccolor = ['reflectance_0', 'reflectance_90', 'transmittance', ]
-                cmap = ['weight_map', 'reflectance_0_map', 'reflectance_90_map', 'transmittance_map', 'roughness_map', 'bump_map', 'anisotrophy_map', 'anisotrophy_angle_map', ]
+                # ccolor = ['reflectance_0', 'reflectance_90', 'transmittance', 'scattering', ]
+                ccolor = []
+                cmap = ['weight_map', 'reflectance_0_map', 'reflectance_90_map', 'transmittance_map', 'roughness_map', 'bump_map', 'anisotrophy_map', 'anisotrophy_angle_map', 'single_sided_map', ]
                 cangle = ['r2_falloff_angle', 'anisotrophy_angle', ]
                 cenum = ['ior', 'attenuation_units', ]
                 cpath = ['complex_ior', ]
+                cmm = ['single_sided_value', 'single_sided_min', 'single_sided_max', ]
+                cgamma = ['reflectance_0', 'reflectance_90', 'transmittance', 'scattering', ]
                 for k, v in bpd.items():
                     if(k in ccolor):
                         bpd[k] = self._color_to_rgb8(v)
@@ -3801,7 +3815,14 @@ class MXSMaterialCustom(MXSMaterial):
                     if(k in cenum):
                         bpd[k] = int(v)
                     if(k in cpath):
-                        bpd[k] = os.path.realpath(bpy.path.abspath(v))
+                        if(v == ""):
+                            bpd[k] == ""
+                        else:
+                            bpd[k] = os.path.realpath(bpy.path.abspath(v))
+                    if(k in cmm):
+                        bpd[k] = v / 1000
+                    if(k in cgamma):
+                        bpd[k] = self._gamma_uncorrect(v)
                 
                 cpd = bl[1]['coating'].to_dict()
                 for k, v in coatingd.items():
@@ -3809,11 +3830,14 @@ class MXSMaterialCustom(MXSMaterial):
                         cpd[k] = v
                 
                 # converting..
-                ccolor = ['reflectance_0', 'reflectance_90', ]
+                # ccolor = ['reflectance_0', 'reflectance_90', ]
+                ccolor = []
                 cmap = ['thickness_map', 'reflectance_0_map', 'reflectance_90_map', ]
                 cangle = ['r2_falloff_angle', ]
                 cenum = ['ior', ]
                 cpath = ['complex_ior', ]
+                cnm = ['thickness', 'thickness_map_min', 'thickness_map_max', ]
+                cgamma = ['reflectance_0', 'reflectance_90', ]
                 for k, v in cpd.items():
                     if(k in ccolor):
                         cpd[k] = self._color_to_rgb8(v)
@@ -3824,7 +3848,14 @@ class MXSMaterialCustom(MXSMaterial):
                     if(k in cenum):
                         cpd[k] = int(v)
                     if(k in cpath):
-                        cpd[k] = os.path.realpath(bpy.path.abspath(v))
+                        if(v == ""):
+                            cpd[k] == ""
+                        else:
+                            cpd[k] = os.path.realpath(bpy.path.abspath(v))
+                    if(k in cnm):
+                        cpd[k] = v / 1000000000
+                    if(k in cgamma):
+                        cpd[k] = self._gamma_uncorrect(v)
                 
                 bsdf = {'name': bl[0],
                         'bsdf_props': bpd,
@@ -3851,6 +3882,9 @@ class MXSMaterialCustom(MXSMaterial):
             if(k in cenum):
                 displacement[k] = int(v)
         
+        if(displacement['height_units'] == 1):
+            displacement['height'] = displacement['height'] / 100
+        
         global_props = {'override_map': self._texture_to_data(m.global_override_map),
                         'bump': m.global_bump,
                         'bump_value': m.global_bump_value,
@@ -3859,34 +3893,17 @@ class MXSMaterialCustom(MXSMaterial):
                         'shadow': m.global_shadow,
                         'matte': m.global_matte,
                         'priority': m.global_priority,
-                        'id': self._color_to_rgb8(m.global_id), }
+                        'id': self._color_to_rgb8(m.global_id),
+                        # 'id': self._color_to_rgb8(self._gamma_uncorrect(m.global_id)),
+                        'active_display_map': self._texture_to_data(m.custom_active_display_map), }
         
-        data = {'global_props': global_props,
-                'displacement': displacement,
-                'layers': layers, }
+        self.m_data = {'global_props': global_props,
+                       'displacement': displacement,
+                       'layers': layers, }
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        import pprint
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(data)
-        
-        raise Exception()
-                
-        
-        
-        
-        
+        # import pprint
+        # pp = pprint.PrettyPrinter(indent=4)
+        # pp.pprint(self.m_data)
 
 
 class MXSWireframeBase(MXSMesh):
