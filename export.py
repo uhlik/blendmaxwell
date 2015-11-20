@@ -1261,8 +1261,8 @@ class MXSExport():
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'HAIR'):
                 if(o.m_extension == 'MGrassP'):
-                    rr = o.m_grass_root_radius
-                    tr = o.m_grass_tip_radius
+                    rr = o.m_grass_root_width
+                    tr = o.m_grass_tip_width
                     dm = o.m_display_max_blades
                 else:
                     rr = o.m_hair_root_radius
@@ -1329,7 +1329,7 @@ class MXSExport():
                               'display_percent': o.m_display_percent, }
                 self.mxs.mod_grass(o.m_object, properties, o.m_material, o.m_backface_material, )
             elif(o.m_type == 'CLONER'):
-                self.mxs.mod_cloner(o.m_object, o.m_cloned_object, o.m_render_emitter, o.m_pdata, o.m_radius, o.m_mb_factor,
+                self.mxs.mod_cloner(o.m_parent, o.m_cloned_object, o.m_render_emitter, o.m_pdata, o.m_radius, o.m_mb_factor,
                                     o.m_load_percent, o.m_start_offset, o.m_extra_npp, o.m_extra_p_dispersion, o.m_extra_p_deformation,
                                     o.m_align_to_velocity, o.m_scale_with_radius, o.m_inherit_obj_id, o.m_frame, o.m_fps,
                                     o.m_display_percent, o.m_display_max, )

@@ -267,12 +267,10 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
             mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
     elif(PLATFORM == 'Linux'):
-        raise Exception("Unimplemented!")
         w = mxs.MXMWriter(path, material_data)
         mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
     elif(PLATFORM == 'Windows'):
-        raise Exception("Unimplemented!")
         w = mxs.MXMWriter(path, material_data)
         mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path

@@ -330,14 +330,14 @@ class MXSWriter():
         def global_props(d, m):
             # global properties
             if(d['override_map']):
-                t = texture(d['override_map'], s, )
+                t = self.texture(d['override_map'])
                 if(t is not None):
                     m.setGlobalMap(t)
             
             if(d['bump']):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(d['bump_map'], s, )
+                t = self.texture(d['bump_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = d['bump_value']
@@ -354,7 +354,7 @@ class MXSWriter():
             m.setColorID(c)
             
             if(d['active_display_map']):
-                t = texture(d['active_display_map'], s, )
+                t = self.texture(d['active_display_map'])
                 m.setActiveDisplayMap(t)
         
         def displacement(d, m):
@@ -363,7 +363,7 @@ class MXSWriter():
             
             m.enableDisplacement(True)
             if(d['map'] is not None):
-                t = texture(d['map'], s)
+                t = self.texture(d['map'])
                 m.setDisplacementMap(t)
             m.setDisplacementCommonParameters(d['type'], d['subdivision'], int(d['smoothing']), d['offset'], d['subdivision_method'], d['uv_interpolation'], )
             m.setHeightMapDisplacementParameters(d['height'], d['height_units'], d['adaptive'], )
@@ -377,12 +377,12 @@ class MXSWriter():
             bp = d['bsdf_props']
             # weight
             if(bp['weight_map_enabled']):
-                # t = texture(bp['weight_map'], s, )
+                # t = self.texture(bp['weight_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['weight_map'], s, )
+                t = self.texture(bp['weight_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['weight']
@@ -402,12 +402,12 @@ class MXSWriter():
                 r.setComplexIor(bp['complex_ior'])
             else:
                 if(bp['reflectance_0_map_enabled']):
-                    # t = texture(bp['reflectance_0_map'], s, )
+                    # t = self.texture(bp['reflectance_0_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(bp['reflectance_0_map'], s, )
+                    t = self.texture(bp['reflectance_0_map'])
                     if(t is not None):
                         a.textureMap = t
                     # a.value = bp['weight']
@@ -419,13 +419,13 @@ class MXSWriter():
                 r.setAttribute('color', a)
                 
                 if(bp['reflectance_90_map_enabled']):
-                    # # a = texture(bp['reflectance_90_map'], s, )
-                    # t = texture(bp['reflectance_90_map'], s, )
+                    # # a = self.texture(bp['reflectance_90_map'])
+                    # t = self.texture(bp['reflectance_90_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(bp['reflectance_90_map'], s, )
+                    t = self.texture(bp['reflectance_90_map'])
                     if(t is not None):
                         a.textureMap = t
                     # a.value = bp['weight']
@@ -437,13 +437,13 @@ class MXSWriter():
                 r.setAttribute('color.tangential', a)
                 
                 if(bp['transmittance_map_enabled']):
-                    # # a = texture(bp['transmittance_map'], s, )
-                    # t = texture(bp['transmittance_map'], s, )
+                    # # a = self.texture(bp['transmittance_map'])
+                    # t = self.texture(bp['transmittance_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(bp['transmittance_map'], s, )
+                    t = self.texture(bp['transmittance_map'])
                     if(t is not None):
                         a.textureMap = t
                     # a.value = bp['weight']
@@ -463,13 +463,13 @@ class MXSWriter():
                     r.setFresnelCustom(bp['r2_falloff_angle'], bp['r2_influence'], True, )
             # surface
             if(bp['roughness_map_enabled']):
-                # # a = texture(bp['roughness_map'], s, )
-                # t = texture(bp['roughness_map'], s, )
+                # # a = self.texture(bp['roughness_map'])
+                # t = self.texture(bp['roughness_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['roughness_map'], s, )
+                t = self.texture(bp['roughness_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['roughness']
@@ -481,13 +481,13 @@ class MXSWriter():
             b.setAttribute('roughness', a)
             
             if(bp['bump_map_enabled']):
-                # # a = texture(bp['bump_map'], s, )
-                # t = texture(bp['bump_map'], s, )
+                # # a = self.texture(bp['bump_map'])
+                # t = self.texture(bp['bump_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['bump_map'], s, )
+                t = self.texture(bp['bump_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['bump']
@@ -500,13 +500,13 @@ class MXSWriter():
             b.setNormalMapState(bp['bump_map_use_normal'])
             
             if(bp['anisotrophy_map_enabled']):
-                # # a = texture(bp['anisotrophy_map'], s, )
-                # t = texture(bp['anisotrophy_map'], s, )
+                # # a = self.texture(bp['anisotrophy_map'])
+                # t = self.texture(bp['anisotrophy_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['anisotrophy_map'], s, )
+                t = self.texture(bp['anisotrophy_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['anisotrophy']
@@ -518,13 +518,13 @@ class MXSWriter():
             b.setAttribute('anisotrophy', a)
             
             if(bp['anisotrophy_angle_map_enabled']):
-                # # a = texture(bp['anisotrophy_angle_map'], s, )
-                # t = texture(bp['anisotrophy_angle_map'], s, )
+                # # a = self.texture(bp['anisotrophy_angle_map'])
+                # t = self.texture(bp['anisotrophy_angle_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['anisotrophy_angle_map'], s, )
+                t = self.texture(bp['anisotrophy_angle_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['anisotrophy_angle']
@@ -543,13 +543,13 @@ class MXSWriter():
             r.setScatteringParameters(bp['coef'], bp['asymmetry'], bp['single_sided'])
             if(bp['single_sided']):
                 if(bp['single_sided_map_enabled']):
-                    # # a = texture(bp['single_sided_map'], s, )
-                    # t = texture(bp['single_sided_map'], s, )
+                    # # a = self.texture(bp['single_sided_map'])
+                    # t = self.texture(bp['single_sided_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(bp['single_sided_map'], s, )
+                    t = self.texture(bp['single_sided_map'])
                     if(t is not None):
                         a.textureMap = t
                     a.value = bp['single_sided_value']
@@ -567,13 +567,13 @@ class MXSWriter():
                 c = b.addCoating()
                 
                 if(cp['thickness_map_enabled']):
-                    # # a = texture(cp['thickness_map'], s, )
-                    # t = texture(cp['thickness_map'], s, )
+                    # # a = self.texture(cp['thickness_map'])
+                    # t = self.texture(cp['thickness_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(cp['thickness_map'], s, )
+                    t = self.texture(cp['thickness_map'])
                     if(t is not None):
                         a.textureMap = t
                     a.value = cp['thickness']
@@ -592,13 +592,13 @@ class MXSWriter():
                     r.setComplexIor(cp['complex_ior'])
                 else:
                     if(cp['reflectance_0_map_enabled']):
-                        # # a = texture(cp['reflectance_0_map'], s, )
-                        # t = texture(cp['reflectance_0_map'], s, )
+                        # # a = self.texture(cp['reflectance_0_map'])
+                        # t = self.texture(cp['reflectance_0_map'])
                         # a = Cattribute()
                         # a.textureMap = t
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        t = texture(cp['reflectance_0_map'], s, )
+                        t = self.texture(cp['reflectance_0_map'])
                         if(t is not None):
                             a.textureMap = t
                         # a.value = bp['thickness']
@@ -610,13 +610,13 @@ class MXSWriter():
                     r.setAttribute('color', a)
                     
                     if(cp['reflectance_90_map_enabled']):
-                        # # a = texture(cp['reflectance_90_map'], s, )
-                        # t = texture(cp['reflectance_90_map'], s, )
+                        # # a = self.texture(cp['reflectance_90_map'])
+                        # t = self.texture(cp['reflectance_90_map'])
                         # a = Cattribute()
                         # a.textureMap = t
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        t = texture(cp['reflectance_90_map'], s, )
+                        t = self.texture(cp['reflectance_90_map'])
                         if(t is not None):
                             a.textureMap = t
                         # a.value = bp['thickness']
@@ -645,7 +645,7 @@ class MXSWriter():
             elif(d['type'] == 2):
                 e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
                 if(d['spot_map'] is not None):
-                    t = texture(d['spot_map'], s)
+                    t = self.texture(d['spot_map'])
                     if(t is not None):
                         e.setLobeImageProjectedMap(d['spot_map_enabled'], t)
                 e.setSpotConeAngle(d['spot_cone_angle'])
@@ -691,7 +691,7 @@ class MXSWriter():
                 e.setActiveEmissionType(EMISSION_TYPE_MXI)
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(d['hdr_map'], s)
+                t = self.texture(d['hdr_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = d['hdr_intensity']
@@ -709,10 +709,10 @@ class MXSWriter():
             if(lpd['blending'] == 1):
                 l.setStackedBlendingMode(1)
             if(lpd['opacity_map_enabled']):
-                # a = texture(lpd['opacity_map'], s, )
+                # a = self.texture(lpd['opacity_map'])
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(lpd['opacity_map'], s, )
+                t = self.texture(lpd['opacity_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = lpd['opacity']
@@ -2539,14 +2539,14 @@ class MXMWriter():
         def global_props(d, m):
             # global properties
             if(d['override_map']):
-                t = texture(d['override_map'], s, )
+                t = self.texture(d['override_map'])
                 if(t is not None):
                     m.setGlobalMap(t)
             
             if(d['bump']):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(d['bump_map'], s, )
+                t = self.texture(d['bump_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = d['bump_value']
@@ -2563,7 +2563,7 @@ class MXMWriter():
             m.setColorID(c)
             
             if(d['active_display_map']):
-                t = texture(d['active_display_map'], s, )
+                t = self.texture(d['active_display_map'])
                 m.setActiveDisplayMap(t)
         
         def displacement(d, m):
@@ -2572,7 +2572,7 @@ class MXMWriter():
             
             m.enableDisplacement(True)
             if(d['map'] is not None):
-                t = texture(d['map'], s)
+                t = self.texture(d['map'])
                 m.setDisplacementMap(t)
             m.setDisplacementCommonParameters(d['type'], d['subdivision'], int(d['smoothing']), d['offset'], d['subdivision_method'], d['uv_interpolation'], )
             m.setHeightMapDisplacementParameters(d['height'], d['height_units'], d['adaptive'], )
@@ -2586,12 +2586,12 @@ class MXMWriter():
             bp = d['bsdf_props']
             # weight
             if(bp['weight_map_enabled']):
-                # t = texture(bp['weight_map'], s, )
+                # t = self.texture(bp['weight_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['weight_map'], s, )
+                t = self.texture(bp['weight_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['weight']
@@ -2611,12 +2611,12 @@ class MXMWriter():
                 r.setComplexIor(bp['complex_ior'])
             else:
                 if(bp['reflectance_0_map_enabled']):
-                    # t = texture(bp['reflectance_0_map'], s, )
+                    # t = self.texture(bp['reflectance_0_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(bp['reflectance_0_map'], s, )
+                    t = self.texture(bp['reflectance_0_map'])
                     if(t is not None):
                         a.textureMap = t
                     # a.value = bp['weight']
@@ -2628,13 +2628,13 @@ class MXMWriter():
                 r.setAttribute('color', a)
                 
                 if(bp['reflectance_90_map_enabled']):
-                    # # a = texture(bp['reflectance_90_map'], s, )
-                    # t = texture(bp['reflectance_90_map'], s, )
+                    # # a = self.texture(bp['reflectance_90_map'])
+                    # t = self.texture(bp['reflectance_90_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(bp['reflectance_90_map'], s, )
+                    t = self.texture(bp['reflectance_90_map'])
                     if(t is not None):
                         a.textureMap = t
                     # a.value = bp['weight']
@@ -2646,13 +2646,13 @@ class MXMWriter():
                 r.setAttribute('color.tangential', a)
                 
                 if(bp['transmittance_map_enabled']):
-                    # # a = texture(bp['transmittance_map'], s, )
-                    # t = texture(bp['transmittance_map'], s, )
+                    # # a = self.texture(bp['transmittance_map'])
+                    # t = self.texture(bp['transmittance_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(bp['transmittance_map'], s, )
+                    t = self.texture(bp['transmittance_map'])
                     if(t is not None):
                         a.textureMap = t
                     # a.value = bp['weight']
@@ -2672,13 +2672,13 @@ class MXMWriter():
                     r.setFresnelCustom(bp['r2_falloff_angle'], bp['r2_influence'], True, )
             # surface
             if(bp['roughness_map_enabled']):
-                # # a = texture(bp['roughness_map'], s, )
-                # t = texture(bp['roughness_map'], s, )
+                # # a = self.texture(bp['roughness_map'])
+                # t = self.texture(bp['roughness_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['roughness_map'], s, )
+                t = self.texture(bp['roughness_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['roughness']
@@ -2690,13 +2690,13 @@ class MXMWriter():
             b.setAttribute('roughness', a)
             
             if(bp['bump_map_enabled']):
-                # # a = texture(bp['bump_map'], s, )
-                # t = texture(bp['bump_map'], s, )
+                # # a = self.texture(bp['bump_map'])
+                # t = self.texture(bp['bump_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['bump_map'], s, )
+                t = self.texture(bp['bump_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['bump']
@@ -2709,13 +2709,13 @@ class MXMWriter():
             b.setNormalMapState(bp['bump_map_use_normal'])
             
             if(bp['anisotrophy_map_enabled']):
-                # # a = texture(bp['anisotrophy_map'], s, )
-                # t = texture(bp['anisotrophy_map'], s, )
+                # # a = self.texture(bp['anisotrophy_map'])
+                # t = self.texture(bp['anisotrophy_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['anisotrophy_map'], s, )
+                t = self.texture(bp['anisotrophy_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['anisotrophy']
@@ -2727,13 +2727,13 @@ class MXMWriter():
             b.setAttribute('anisotrophy', a)
             
             if(bp['anisotrophy_angle_map_enabled']):
-                # # a = texture(bp['anisotrophy_angle_map'], s, )
-                # t = texture(bp['anisotrophy_angle_map'], s, )
+                # # a = self.texture(bp['anisotrophy_angle_map'])
+                # t = self.texture(bp['anisotrophy_angle_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(bp['anisotrophy_angle_map'], s, )
+                t = self.texture(bp['anisotrophy_angle_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['anisotrophy_angle']
@@ -2752,13 +2752,13 @@ class MXMWriter():
             r.setScatteringParameters(bp['coef'], bp['asymmetry'], bp['single_sided'])
             if(bp['single_sided']):
                 if(bp['single_sided_map_enabled']):
-                    # # a = texture(bp['single_sided_map'], s, )
-                    # t = texture(bp['single_sided_map'], s, )
+                    # # a = self.texture(bp['single_sided_map'])
+                    # t = self.texture(bp['single_sided_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(bp['single_sided_map'], s, )
+                    t = self.texture(bp['single_sided_map'])
                     if(t is not None):
                         a.textureMap = t
                     a.value = bp['single_sided_value']
@@ -2776,13 +2776,13 @@ class MXMWriter():
                 c = b.addCoating()
                 
                 if(cp['thickness_map_enabled']):
-                    # # a = texture(cp['thickness_map'], s, )
-                    # t = texture(cp['thickness_map'], s, )
+                    # # a = self.texture(cp['thickness_map'])
+                    # t = self.texture(cp['thickness_map'])
                     # a = Cattribute()
                     # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(cp['thickness_map'], s, )
+                    t = self.texture(cp['thickness_map'])
                     if(t is not None):
                         a.textureMap = t
                     a.value = cp['thickness']
@@ -2801,13 +2801,13 @@ class MXMWriter():
                     r.setComplexIor(cp['complex_ior'])
                 else:
                     if(cp['reflectance_0_map_enabled']):
-                        # # a = texture(cp['reflectance_0_map'], s, )
-                        # t = texture(cp['reflectance_0_map'], s, )
+                        # # a = self.texture(cp['reflectance_0_map'])
+                        # t = self.texture(cp['reflectance_0_map'])
                         # a = Cattribute()
                         # a.textureMap = t
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        t = texture(cp['reflectance_0_map'], s, )
+                        t = self.texture(cp['reflectance_0_map'])
                         if(t is not None):
                             a.textureMap = t
                         # a.value = bp['thickness']
@@ -2819,13 +2819,13 @@ class MXMWriter():
                     r.setAttribute('color', a)
                     
                     if(cp['reflectance_90_map_enabled']):
-                        # # a = texture(cp['reflectance_90_map'], s, )
-                        # t = texture(cp['reflectance_90_map'], s, )
+                        # # a = self.texture(cp['reflectance_90_map'])
+                        # t = self.texture(cp['reflectance_90_map'])
                         # a = Cattribute()
                         # a.textureMap = t
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        t = texture(cp['reflectance_90_map'], s, )
+                        t = self.texture(cp['reflectance_90_map'])
                         if(t is not None):
                             a.textureMap = t
                         # a.value = bp['thickness']
@@ -2854,7 +2854,7 @@ class MXMWriter():
             elif(d['type'] == 2):
                 e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
                 if(d['spot_map'] is not None):
-                    t = texture(d['spot_map'], s)
+                    t = self.texture(d['spot_map'])
                     if(t is not None):
                         e.setLobeImageProjectedMap(d['spot_map_enabled'], t)
                 e.setSpotConeAngle(d['spot_cone_angle'])
@@ -2900,7 +2900,7 @@ class MXMWriter():
                 e.setActiveEmissionType(EMISSION_TYPE_MXI)
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(d['hdr_map'], s)
+                t = self.texture(d['hdr_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = d['hdr_intensity']
@@ -2918,10 +2918,10 @@ class MXMWriter():
             if(lpd['blending'] == 1):
                 l.setStackedBlendingMode(1)
             if(lpd['opacity_map_enabled']):
-                # a = texture(lpd['opacity_map'], s, )
+                # a = self.texture(lpd['opacity_map'])
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(lpd['opacity_map'], s, )
+                t = self.texture(lpd['opacity_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = lpd['opacity']
