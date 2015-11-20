@@ -321,6 +321,421 @@ class MXSWriter():
             m.setReference(1, p)
         return m
     
+    def material_custom(self, d, ):
+        s = self.mxs
+        
+        m = s.createMaterial(d['name'])
+        d = d['data']
+        
+        def global_props(d, m):
+            # global properties
+            if(d['override_map']):
+                t = texture(d['override_map'], s, )
+                if(t is not None):
+                    m.setGlobalMap(t)
+            
+            if(d['bump']):
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(d['bump_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = d['bump_value']
+                m.setAttribute('bump', a)
+            
+            m.setDispersion(d['dispersion'])
+            m.setMatteShadow(d['shadow'])
+            m.setMatte(d['matte'])
+            m.setNestedPriority(d['priority'])
+            
+            c = Crgb()
+            cc = [c / 255 for c in d['id']]
+            c.assign(*cc)
+            m.setColorID(c)
+            
+            if(d['active_display_map']):
+                t = texture(d['active_display_map'], s, )
+                m.setActiveDisplayMap(t)
+        
+        def displacement(d, m):
+            if(not d['enabled']):
+                return
+            
+            m.enableDisplacement(True)
+            if(d['map'] is not None):
+                t = texture(d['map'], s)
+                m.setDisplacementMap(t)
+            m.setDisplacementCommonParameters(d['type'], d['subdivision'], int(d['smoothing']), d['offset'], d['subdivision_method'], d['uv_interpolation'], )
+            m.setHeightMapDisplacementParameters(d['height'], d['height_units'], d['adaptive'], )
+            v = Cvector(*d['v3d_scale'])
+            m.setVectorDisplacementParameters(v, d['v3d_transform'], d['v3d_rgb_mapping'], d['v3d_preset'], )
+        
+        def add_bsdf(d, l):
+            b = l.addBSDF()
+            b.setName(d['name'])
+            
+            bp = d['bsdf_props']
+            # weight
+            if(bp['weight_map_enabled']):
+                # t = texture(bp['weight_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['weight_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['weight']
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['weight']
+            b.setWeight(a)
+            # enabled
+            if(not bp['visible']):
+                b.setState(False)
+            # ior
+            r = b.getReflectance()
+            if(bp['ior'] == 1):
+                # measured data
+                r.setActiveIorMode(1)
+                r.setComplexIor(bp['complex_ior'])
+            else:
+                if(bp['reflectance_0_map_enabled']):
+                    # t = texture(bp['reflectance_0_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(bp['reflectance_0_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    # a.value = bp['weight']
+                    a.rgb.assign(*bp['reflectance_0'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_RGB
+                    a.rgb.assign(*bp['reflectance_0'])
+                r.setAttribute('color', a)
+                
+                if(bp['reflectance_90_map_enabled']):
+                    # # a = texture(bp['reflectance_90_map'], s, )
+                    # t = texture(bp['reflectance_90_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(bp['reflectance_90_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    # a.value = bp['weight']
+                    a.rgb.assign(*bp['reflectance_90'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_RGB
+                    a.rgb.assign(*bp['reflectance_90'])
+                r.setAttribute('color.tangential', a)
+                
+                if(bp['transmittance_map_enabled']):
+                    # # a = texture(bp['transmittance_map'], s, )
+                    # t = texture(bp['transmittance_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(bp['transmittance_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    # a.value = bp['weight']
+                    a.rgb.assign(*bp['transmittance'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_RGB
+                    a.rgb.assign(*bp['transmittance'])
+                r.setAttribute('transmittance.color', a)
+                
+                r.setAbsorptionDistance(bp['attenuation_units'], bp['attenuation'])
+                r.setIOR(bp['nd'], bp['abbe'])
+                if(bp['force_fresnel']):
+                    r.enableForceFresnel(True)
+                r.setConductor(bp['k'])
+                if(bp['r2_enabled']):
+                    r.setFresnelCustom(bp['r2_falloff_angle'], bp['r2_influence'], True, )
+            # surface
+            if(bp['roughness_map_enabled']):
+                # # a = texture(bp['roughness_map'], s, )
+                # t = texture(bp['roughness_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['roughness_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['roughness']
+                # a.rgb.assign(*bp['transmittance'])
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['roughness']
+            b.setAttribute('roughness', a)
+            
+            if(bp['bump_map_enabled']):
+                # # a = texture(bp['bump_map'], s, )
+                # t = texture(bp['bump_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['bump_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['bump']
+                # a.rgb.assign(*bp['transmittance'])
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['bump']
+            b.setAttribute('bump', a)
+            b.setNormalMapState(bp['bump_map_use_normal'])
+            
+            if(bp['anisotrophy_map_enabled']):
+                # # a = texture(bp['anisotrophy_map'], s, )
+                # t = texture(bp['anisotrophy_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['anisotrophy_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['anisotrophy']
+                # a.rgb.assign(*bp['transmittance'])
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['anisotrophy']
+            b.setAttribute('anisotrophy', a)
+            
+            if(bp['anisotrophy_angle_map_enabled']):
+                # # a = texture(bp['anisotrophy_angle_map'], s, )
+                # t = texture(bp['anisotrophy_angle_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['anisotrophy_angle_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['anisotrophy_angle']
+                # a.rgb.assign(*bp['transmittance'])
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['anisotrophy_angle']
+            b.setAttribute('angle', a)
+            
+            # subsurface
+            a = Cattribute()
+            a.activeType = MAP_TYPE_RGB
+            a.rgb.assign(*bp['scattering'])
+            r.setAttribute('scattering', a)
+            r.setScatteringParameters(bp['coef'], bp['asymmetry'], bp['single_sided'])
+            if(bp['single_sided']):
+                if(bp['single_sided_map_enabled']):
+                    # # a = texture(bp['single_sided_map'], s, )
+                    # t = texture(bp['single_sided_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(bp['single_sided_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    a.value = bp['single_sided_value']
+                    # a.rgb.assign(*bp['transmittance'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_VALUE
+                    a.value = bp['single_sided_value']
+                r.setScatteringThickness(a)
+                r.setScatteringThicknessRange(bp['single_sided_min'], bp['single_sided_max'])
+            
+            # coating
+            cp = d['coating']
+            if(cp['enabled']):
+                c = b.addCoating()
+                
+                if(cp['thickness_map_enabled']):
+                    # # a = texture(cp['thickness_map'], s, )
+                    # t = texture(cp['thickness_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(cp['thickness_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    a.value = cp['thickness']
+                    # a.rgb.assign(*bp['transmittance'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_VALUE
+                    a.value = cp['thickness']
+                c.setThickness(a)
+                c.setThicknessRange(cp['thickness_map_min'], cp['thickness_map_max'])
+                
+                r = c.getReflectance()
+                if(cp['ior'] == 1):
+                    # measured data
+                    r.setActiveIorMode(1)
+                    r.setComplexIor(cp['complex_ior'])
+                else:
+                    if(cp['reflectance_0_map_enabled']):
+                        # # a = texture(cp['reflectance_0_map'], s, )
+                        # t = texture(cp['reflectance_0_map'], s, )
+                        # a = Cattribute()
+                        # a.textureMap = t
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_BITMAP
+                        t = texture(cp['reflectance_0_map'], s, )
+                        if(t is not None):
+                            a.textureMap = t
+                        # a.value = bp['thickness']
+                        a.rgb.assign(*cp['reflectance_0'])
+                    else:
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_RGB
+                        a.rgb.assign(*cp['reflectance_0'])
+                    r.setAttribute('color', a)
+                    
+                    if(cp['reflectance_90_map_enabled']):
+                        # # a = texture(cp['reflectance_90_map'], s, )
+                        # t = texture(cp['reflectance_90_map'], s, )
+                        # a = Cattribute()
+                        # a.textureMap = t
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_BITMAP
+                        t = texture(cp['reflectance_90_map'], s, )
+                        if(t is not None):
+                            a.textureMap = t
+                        # a.value = bp['thickness']
+                        a.rgb.assign(*cp['reflectance_90'])
+                    else:
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_RGB
+                        a.rgb.assign(*cp['reflectance_90'])
+                    r.setAttribute('color.tangential', a)
+                    r.setIOR(cp['nd'], 1.0, )
+                    if(cp['force_fresnel']):
+                        r.enableForceFresnel(True)
+                    r.setConductor(cp['k'])
+                    if(cp['r2_enabled']):
+                        r.setFresnelCustom(cp['r2_falloff_angle'], 0.0, True, )
+        
+        def add_emitter(d, l):
+            e = l.createEmitter()
+            
+            if(d['type'] == 0):
+                e.setLobeType(EMISSION_LOBE_DEFAULT)
+            elif(d['type'] == 1):
+                e.setLobeType(EMISSION_LOBE_IES)
+                e.setLobeIES(d['ies_data'])
+                e.setIESLobeIntensity(d['ies_intensity'])
+            elif(d['type'] == 2):
+                e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
+                if(d['spot_map'] is not None):
+                    t = texture(d['spot_map'], s)
+                    if(t is not None):
+                        e.setLobeImageProjectedMap(d['spot_map_enabled'], t)
+                e.setSpotConeAngle(d['spot_cone_angle'])
+                e.setSpotFallOffAngle(d['spot_falloff_angle'])
+                e.setSpotFallOffType(d['spot_falloff_type'])
+                e.setSpotBlur(d['spot_blur'])
+            if(d['emission'] == 0):
+                e.setActiveEmissionType(EMISSION_TYPE_PAIR)
+                ep = CemitterPair()
+                # c = Crgb8()
+                c = Crgb()
+                c.assign(*d['color'])
+                # ep.rgb.assign(c.toRGB())
+                ep.rgb.assign(c)
+                ep.temperature = d['color_black_body']
+                ep.watts = d['luminance_power']
+                ep.luminousEfficacy = d['luminance_efficacy']
+                ep.luminousPower = d['luminance_output']
+                ep.illuminance = d['luminance_output']
+                ep.luminousIntensity = d['luminance_output']
+                ep.luminance = d['luminance_output']
+                e.setPair(ep)
+                
+                if(d['luminance'] == 0):
+                    u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
+                elif(d['luminance'] == 1):
+                    u = EMISSION_UNITS_LUMINOUS_POWER
+                elif(d['luminance'] == 2):
+                    u = EMISSION_UNITS_ILLUMINANCE
+                elif(d['luminance'] == 3):
+                    u = EMISSION_UNITS_LUMINOUS_INTENSITY
+                elif(d['luminance'] == 4):
+                    u = EMISSION_UNITS_LUMINANCE
+                if(d['color_black_body_enabled']):
+                    e.setActivePair(EMISSION_COLOR_TEMPERATURE, u)
+                else:
+                    e.setActivePair(EMISSION_RGB, u)
+            
+            elif(d['emission'] == 1):
+                e.setActiveEmissionType(EMISSION_TYPE_TEMPERATURE)
+                e.setTemperature(d['temperature_value'])
+            elif(d['emission'] == 2):
+                e.setActiveEmissionType(EMISSION_TYPE_MXI)
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(d['hdr_map'], s)
+                if(t is not None):
+                    a.textureMap = t
+                a.value = d['hdr_intensity']
+                e.setMXI(a)
+            
+            e.setState(True)
+        
+        def add_layer(d, m):
+            l = m.addLayer()
+            l.setName(d['name'])
+            
+            lpd = d['layer_props']
+            if(not lpd['visible']):
+                l.setEnabled(False)
+            if(lpd['blending'] == 1):
+                l.setStackedBlendingMode(1)
+            if(lpd['opacity_map_enabled']):
+                # a = texture(lpd['opacity_map'], s, )
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(lpd['opacity_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = lpd['opacity']
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = lpd['opacity']
+            l.setAttribute('weight', a)
+            
+            epd = d['emitter']
+            if(epd['enabled']):
+                add_emitter(epd, l)
+        
+            for b in d['bsdfs']:
+                add_bsdf(b, l)
+        
+        global_props(d['global_props'], m)
+        displacement(d['displacement'], m)
+        for layer in d['layers']:
+            add_layer(layer, m)
+        
+        return m
+    
     def material(self, d, ):
         s = self.mxs
         if(d['subtype'] == 'EXTERNAL'):
@@ -606,6 +1021,8 @@ class MXSWriter():
                 cc = [c / 255 for c in d['id']]
                 c.assign(*cc)
                 m.setColorID(c)
+        elif(d['subtype'] == 'CUSTOM'):
+            m = self.material_custom(d)
         else:
             raise TypeError("Material '{}' {} is unknown type".format(d['name'], d['subtype']))
     
@@ -1937,7 +2354,7 @@ class MXSWriter():
         o.setScale(Cvector(0, 0, 0))
 
 
-class ExtMXMWriter():
+class MXMWriter():
     def __init__(self, path, data, ):
         """Create Extension MXM.
         path    string (path)
@@ -2111,6 +2528,421 @@ class ExtMXMWriter():
         m = s.addMaterial(t)
         if(not d['embed']):
             m.setReference(1, p)
+        return m
+    
+    def material_custom(self, d, ):
+        s = self.mxs
+        
+        m = s.createMaterial(d['name'])
+        d = d['data']
+        
+        def global_props(d, m):
+            # global properties
+            if(d['override_map']):
+                t = texture(d['override_map'], s, )
+                if(t is not None):
+                    m.setGlobalMap(t)
+            
+            if(d['bump']):
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(d['bump_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = d['bump_value']
+                m.setAttribute('bump', a)
+            
+            m.setDispersion(d['dispersion'])
+            m.setMatteShadow(d['shadow'])
+            m.setMatte(d['matte'])
+            m.setNestedPriority(d['priority'])
+            
+            c = Crgb()
+            cc = [c / 255 for c in d['id']]
+            c.assign(*cc)
+            m.setColorID(c)
+            
+            if(d['active_display_map']):
+                t = texture(d['active_display_map'], s, )
+                m.setActiveDisplayMap(t)
+        
+        def displacement(d, m):
+            if(not d['enabled']):
+                return
+            
+            m.enableDisplacement(True)
+            if(d['map'] is not None):
+                t = texture(d['map'], s)
+                m.setDisplacementMap(t)
+            m.setDisplacementCommonParameters(d['type'], d['subdivision'], int(d['smoothing']), d['offset'], d['subdivision_method'], d['uv_interpolation'], )
+            m.setHeightMapDisplacementParameters(d['height'], d['height_units'], d['adaptive'], )
+            v = Cvector(*d['v3d_scale'])
+            m.setVectorDisplacementParameters(v, d['v3d_transform'], d['v3d_rgb_mapping'], d['v3d_preset'], )
+        
+        def add_bsdf(d, l):
+            b = l.addBSDF()
+            b.setName(d['name'])
+            
+            bp = d['bsdf_props']
+            # weight
+            if(bp['weight_map_enabled']):
+                # t = texture(bp['weight_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['weight_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['weight']
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['weight']
+            b.setWeight(a)
+            # enabled
+            if(not bp['visible']):
+                b.setState(False)
+            # ior
+            r = b.getReflectance()
+            if(bp['ior'] == 1):
+                # measured data
+                r.setActiveIorMode(1)
+                r.setComplexIor(bp['complex_ior'])
+            else:
+                if(bp['reflectance_0_map_enabled']):
+                    # t = texture(bp['reflectance_0_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(bp['reflectance_0_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    # a.value = bp['weight']
+                    a.rgb.assign(*bp['reflectance_0'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_RGB
+                    a.rgb.assign(*bp['reflectance_0'])
+                r.setAttribute('color', a)
+                
+                if(bp['reflectance_90_map_enabled']):
+                    # # a = texture(bp['reflectance_90_map'], s, )
+                    # t = texture(bp['reflectance_90_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(bp['reflectance_90_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    # a.value = bp['weight']
+                    a.rgb.assign(*bp['reflectance_90'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_RGB
+                    a.rgb.assign(*bp['reflectance_90'])
+                r.setAttribute('color.tangential', a)
+                
+                if(bp['transmittance_map_enabled']):
+                    # # a = texture(bp['transmittance_map'], s, )
+                    # t = texture(bp['transmittance_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(bp['transmittance_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    # a.value = bp['weight']
+                    a.rgb.assign(*bp['transmittance'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_RGB
+                    a.rgb.assign(*bp['transmittance'])
+                r.setAttribute('transmittance.color', a)
+                
+                r.setAbsorptionDistance(bp['attenuation_units'], bp['attenuation'])
+                r.setIOR(bp['nd'], bp['abbe'])
+                if(bp['force_fresnel']):
+                    r.enableForceFresnel(True)
+                r.setConductor(bp['k'])
+                if(bp['r2_enabled']):
+                    r.setFresnelCustom(bp['r2_falloff_angle'], bp['r2_influence'], True, )
+            # surface
+            if(bp['roughness_map_enabled']):
+                # # a = texture(bp['roughness_map'], s, )
+                # t = texture(bp['roughness_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['roughness_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['roughness']
+                # a.rgb.assign(*bp['transmittance'])
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['roughness']
+            b.setAttribute('roughness', a)
+            
+            if(bp['bump_map_enabled']):
+                # # a = texture(bp['bump_map'], s, )
+                # t = texture(bp['bump_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['bump_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['bump']
+                # a.rgb.assign(*bp['transmittance'])
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['bump']
+            b.setAttribute('bump', a)
+            b.setNormalMapState(bp['bump_map_use_normal'])
+            
+            if(bp['anisotrophy_map_enabled']):
+                # # a = texture(bp['anisotrophy_map'], s, )
+                # t = texture(bp['anisotrophy_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['anisotrophy_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['anisotrophy']
+                # a.rgb.assign(*bp['transmittance'])
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['anisotrophy']
+            b.setAttribute('anisotrophy', a)
+            
+            if(bp['anisotrophy_angle_map_enabled']):
+                # # a = texture(bp['anisotrophy_angle_map'], s, )
+                # t = texture(bp['anisotrophy_angle_map'], s, )
+                # a = Cattribute()
+                # a.textureMap = t
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(bp['anisotrophy_angle_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = bp['anisotrophy_angle']
+                # a.rgb.assign(*bp['transmittance'])
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = bp['anisotrophy_angle']
+            b.setAttribute('angle', a)
+            
+            # subsurface
+            a = Cattribute()
+            a.activeType = MAP_TYPE_RGB
+            a.rgb.assign(*bp['scattering'])
+            r.setAttribute('scattering', a)
+            r.setScatteringParameters(bp['coef'], bp['asymmetry'], bp['single_sided'])
+            if(bp['single_sided']):
+                if(bp['single_sided_map_enabled']):
+                    # # a = texture(bp['single_sided_map'], s, )
+                    # t = texture(bp['single_sided_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(bp['single_sided_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    a.value = bp['single_sided_value']
+                    # a.rgb.assign(*bp['transmittance'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_VALUE
+                    a.value = bp['single_sided_value']
+                r.setScatteringThickness(a)
+                r.setScatteringThicknessRange(bp['single_sided_min'], bp['single_sided_max'])
+            
+            # coating
+            cp = d['coating']
+            if(cp['enabled']):
+                c = b.addCoating()
+                
+                if(cp['thickness_map_enabled']):
+                    # # a = texture(cp['thickness_map'], s, )
+                    # t = texture(cp['thickness_map'], s, )
+                    # a = Cattribute()
+                    # a.textureMap = t
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(cp['thickness_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    a.value = cp['thickness']
+                    # a.rgb.assign(*bp['transmittance'])
+                else:
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_VALUE
+                    a.value = cp['thickness']
+                c.setThickness(a)
+                c.setThicknessRange(cp['thickness_map_min'], cp['thickness_map_max'])
+                
+                r = c.getReflectance()
+                if(cp['ior'] == 1):
+                    # measured data
+                    r.setActiveIorMode(1)
+                    r.setComplexIor(cp['complex_ior'])
+                else:
+                    if(cp['reflectance_0_map_enabled']):
+                        # # a = texture(cp['reflectance_0_map'], s, )
+                        # t = texture(cp['reflectance_0_map'], s, )
+                        # a = Cattribute()
+                        # a.textureMap = t
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_BITMAP
+                        t = texture(cp['reflectance_0_map'], s, )
+                        if(t is not None):
+                            a.textureMap = t
+                        # a.value = bp['thickness']
+                        a.rgb.assign(*cp['reflectance_0'])
+                    else:
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_RGB
+                        a.rgb.assign(*cp['reflectance_0'])
+                    r.setAttribute('color', a)
+                    
+                    if(cp['reflectance_90_map_enabled']):
+                        # # a = texture(cp['reflectance_90_map'], s, )
+                        # t = texture(cp['reflectance_90_map'], s, )
+                        # a = Cattribute()
+                        # a.textureMap = t
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_BITMAP
+                        t = texture(cp['reflectance_90_map'], s, )
+                        if(t is not None):
+                            a.textureMap = t
+                        # a.value = bp['thickness']
+                        a.rgb.assign(*cp['reflectance_90'])
+                    else:
+                        a = Cattribute()
+                        a.activeType = MAP_TYPE_RGB
+                        a.rgb.assign(*cp['reflectance_90'])
+                    r.setAttribute('color.tangential', a)
+                    r.setIOR(cp['nd'], 1.0, )
+                    if(cp['force_fresnel']):
+                        r.enableForceFresnel(True)
+                    r.setConductor(cp['k'])
+                    if(cp['r2_enabled']):
+                        r.setFresnelCustom(cp['r2_falloff_angle'], 0.0, True, )
+        
+        def add_emitter(d, l):
+            e = l.createEmitter()
+            
+            if(d['type'] == 0):
+                e.setLobeType(EMISSION_LOBE_DEFAULT)
+            elif(d['type'] == 1):
+                e.setLobeType(EMISSION_LOBE_IES)
+                e.setLobeIES(d['ies_data'])
+                e.setIESLobeIntensity(d['ies_intensity'])
+            elif(d['type'] == 2):
+                e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
+                if(d['spot_map'] is not None):
+                    t = texture(d['spot_map'], s)
+                    if(t is not None):
+                        e.setLobeImageProjectedMap(d['spot_map_enabled'], t)
+                e.setSpotConeAngle(d['spot_cone_angle'])
+                e.setSpotFallOffAngle(d['spot_falloff_angle'])
+                e.setSpotFallOffType(d['spot_falloff_type'])
+                e.setSpotBlur(d['spot_blur'])
+            if(d['emission'] == 0):
+                e.setActiveEmissionType(EMISSION_TYPE_PAIR)
+                ep = CemitterPair()
+                # c = Crgb8()
+                c = Crgb()
+                c.assign(*d['color'])
+                # ep.rgb.assign(c.toRGB())
+                ep.rgb.assign(c)
+                ep.temperature = d['color_black_body']
+                ep.watts = d['luminance_power']
+                ep.luminousEfficacy = d['luminance_efficacy']
+                ep.luminousPower = d['luminance_output']
+                ep.illuminance = d['luminance_output']
+                ep.luminousIntensity = d['luminance_output']
+                ep.luminance = d['luminance_output']
+                e.setPair(ep)
+                
+                if(d['luminance'] == 0):
+                    u = EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY
+                elif(d['luminance'] == 1):
+                    u = EMISSION_UNITS_LUMINOUS_POWER
+                elif(d['luminance'] == 2):
+                    u = EMISSION_UNITS_ILLUMINANCE
+                elif(d['luminance'] == 3):
+                    u = EMISSION_UNITS_LUMINOUS_INTENSITY
+                elif(d['luminance'] == 4):
+                    u = EMISSION_UNITS_LUMINANCE
+                if(d['color_black_body_enabled']):
+                    e.setActivePair(EMISSION_COLOR_TEMPERATURE, u)
+                else:
+                    e.setActivePair(EMISSION_RGB, u)
+            
+            elif(d['emission'] == 1):
+                e.setActiveEmissionType(EMISSION_TYPE_TEMPERATURE)
+                e.setTemperature(d['temperature_value'])
+            elif(d['emission'] == 2):
+                e.setActiveEmissionType(EMISSION_TYPE_MXI)
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(d['hdr_map'], s)
+                if(t is not None):
+                    a.textureMap = t
+                a.value = d['hdr_intensity']
+                e.setMXI(a)
+            
+            e.setState(True)
+        
+        def add_layer(d, m):
+            l = m.addLayer()
+            l.setName(d['name'])
+            
+            lpd = d['layer_props']
+            if(not lpd['visible']):
+                l.setEnabled(False)
+            if(lpd['blending'] == 1):
+                l.setStackedBlendingMode(1)
+            if(lpd['opacity_map_enabled']):
+                # a = texture(lpd['opacity_map'], s, )
+                a = Cattribute()
+                a.activeType = MAP_TYPE_BITMAP
+                t = texture(lpd['opacity_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = lpd['opacity']
+            else:
+                a = Cattribute()
+                a.activeType = MAP_TYPE_VALUE
+                a.value = lpd['opacity']
+            l.setAttribute('weight', a)
+            
+            epd = d['emitter']
+            if(epd['enabled']):
+                add_emitter(epd, l)
+        
+            for b in d['bsdfs']:
+                add_bsdf(b, l)
+        
+        global_props(d['global_props'], m)
+        displacement(d['displacement'], m)
+        for layer in d['layers']:
+            add_layer(layer, m)
+        
         return m
     
     def material(self, d, ):
@@ -2369,8 +3201,11 @@ class ExtMXMWriter():
                 cc = [c / 255 for c in d['id']]
                 c.assign(*cc)
                 m.setColorID(c)
+        elif(d['subtype'] == 'CUSTOM'):
+            m = self.material_custom(d)
         else:
             raise TypeError("Material '{}' {} is unknown type".format(d['name'], d['subtype']))
+        return m
     
     def get_material(self, n, ):
         """get material by name from scene, if material is missing, create and return placeholder"""

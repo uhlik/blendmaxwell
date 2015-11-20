@@ -185,11 +185,11 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=
         mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
     elif(PLATFORM == 'Linux'):
-        w = mxs.ExtMXMWriter(path, material_data)
+        w = mxs.MXMWriter(path, material_data)
         mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
     elif(PLATFORM == 'Windows'):
-        w = mxs.ExtMXMWriter(path, material_data)
+        w = mxs.MXMWriter(path, material_data)
         mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
 
@@ -268,12 +268,12 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
         return path
     elif(PLATFORM == 'Linux'):
         raise Exception("Unimplemented!")
-        w = mxs.ExtMXMWriter(path, material_data)
+        w = mxs.MXMWriter(path, material_data)
         mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
     elif(PLATFORM == 'Windows'):
         raise Exception("Unimplemented!")
-        w = mxs.ExtMXMWriter(path, material_data)
+        w = mxs.MXMWriter(path, material_data)
         mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
 
