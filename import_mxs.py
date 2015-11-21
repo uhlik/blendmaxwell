@@ -726,3 +726,83 @@ class MXSImportWinLin():
                     bpy.ops.object.mode_set(mode='EDIT')
                     bpy.ops.object.mode_set(mode='OBJECT')
                     cycled_meshes.append(o.data)
+
+
+class MXMImportMacOSX():
+    def __init__(self, mxm_path, ):
+        self.TEMPLATE = system.check_for_import_mxm_template()
+        self.mxm_path = os.path.realpath(mxm_path)
+        self._import()
+    
+    def _import(self):
+        log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
+        
+        self.uuid = uuid.uuid1()
+        h, t = os.path.split(self.mxm_path)
+        n, e = os.path.splitext(t)
+        self.tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, self.uuid))
+        if(os.path.exists(self.tmp_dir) is False):
+            os.makedirs(self.tmp_dir)
+        
+        self.data_name = "{0}-{1}.json".format(n, self.uuid)
+        self.script_name = "{0}-{1}.py".format(n, self.uuid)
+        self.data_path = os.path.join(self.tmp_dir, self.data_name)
+        
+        log("executing script..", 1, LogStyles.MESSAGE)
+        self._pymaxwell()
+        log("processing objects..", 1, LogStyles.MESSAGE)
+        self._process()
+        log("cleanup..", 1, LogStyles.MESSAGE)
+        self._cleanup()
+        log("done.", 1, LogStyles.MESSAGE)
+    
+    def _pymaxwell(self):
+        # generate script
+        self.script_path = os.path.join(self.tmp_dir, self.script_name)
+        with open(self.script_path, mode='w', encoding='utf-8') as f:
+            # read template
+            with open(self.TEMPLATE, encoding='utf-8') as t:
+                code = "".join(t.readlines())
+            # write template to a new file
+            f.write(code)
+        
+        if(system.PLATFORM == 'Darwin'):
+            system.python34_run_script_helper_import_mxm(self.script_path, self.mxm_path, self.data_path, )
+        elif(system.PLATFORM == 'Linux'):
+            pass
+        elif(system.PLATFORM == 'Windows'):
+            pass
+        else:
+            pass
+    
+    def _process(self):
+        data = None
+        
+        if(not os.path.exists(self.data_path)):
+            raise RuntimeError("Protected MXS?")
+        
+        with open(self.data_path, 'r') as f:
+            data = json.load(f)
+        
+        # TODO: finish material import
+        print(data)
+    
+    def _cleanup(self):
+        def rm(p):
+            if(os.path.exists(p)):
+                os.remove(p)
+            else:
+                log("_cleanup(): {} does not exist?".format(p), 1, LogStyles.WARNING, )
+        
+        rm(self.script_path)
+        rm(self.data_path)
+        
+        if(os.path.exists(self.tmp_dir)):
+            os.rmdir(self.tmp_dir)
+        else:
+            log("_cleanup(): {} does not exist?".format(self.tmp_dir), 1, LogStyles.WARNING, )
+
+
+class MXMImportWinLin():
+    def __init__(self, mxm_path, ):
+        raise Exception('Unimplemented!')

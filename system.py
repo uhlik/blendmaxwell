@@ -48,8 +48,24 @@ def check_for_template():
     return TEMPLATE
 
 
+def check_for_import_mxm_template():
+    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_custom_mxm.py")
+    if(not os.path.exists(TEMPLATE)):
+        log("support directory is missing..", 1, LogStyles.ERROR, )
+        raise OSError("support directory is missing..")
+    return TEMPLATE
+
+
 def check_for_import_template():
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxs.py")
+    if(not os.path.exists(TEMPLATE)):
+        log("support directory is missing..", 1, LogStyles.ERROR, )
+        raise OSError("support directory is missing..")
+    return TEMPLATE
+
+
+def check_for_import_mxm_template():
+    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm.py")
     if(not os.path.exists(TEMPLATE)):
         log("support directory is missing..", 1, LogStyles.ERROR, )
         raise OSError("support directory is missing..")
@@ -199,7 +215,8 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
     # log(material_data, 2)
     
     if(PLATFORM == 'Darwin'):
-        TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_custom_mxm.py")
+        # TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_custom_mxm.py")
+        TEMPLATE = check_for_import_mxm_template()
         
         uid = uuid.uuid1()
         h, t = os.path.split(path)
@@ -465,6 +482,32 @@ def python34_run_mxm_is_emitter(mxm_path):
         return False
     else:
         raise OSError("Unknown platform: {}.".format(PLATFORM))
+
+
+def python34_run_script_helper_import_mxm(script_path, mxm_path, data_path, ):
+    if(PLATFORM == 'Darwin'):
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        if(PY == ""):
+            raise Exception("huh?")
+        
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        
+        # execute the script
+        command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
+                                                        shlex.quote(script_path),
+                                                        shlex.quote(PYMAXWELL_PATH),
+                                                        shlex.quote(LOG_FILE_PATH),
+                                                        shlex.quote(mxm_path),
+                                                        shlex.quote(data_path), )
+        log("command:", 2)
+        log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
+        args = shlex.split(command_line, )
+        
+        o = subprocess.call(args, )
+        if(o != 0):
+            log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
+    else:
+        raise Exception("This is meant to be called on Mac OS X")
 
 
 def check_pymaxwell_version():

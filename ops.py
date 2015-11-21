@@ -964,6 +964,11 @@ class SaveMaterialAsMXM(Operator):
     def poll(cls, context):
         return (context.material or context.object)
     
+    def draw(self, context):
+        l = self.layout
+        l.prop(self, 'open_in_mxed')
+        l.prop(self, 'force_preview')
+    
     def invoke(self, context, event):
         n = context.material.name
         if(self.remove_dots):
@@ -1040,30 +1045,37 @@ class SaveMaterialAsMXM(Operator):
         return {'FINISHED'}
 
 
-class LoadMaterialFromMXM(Operator):
+class LoadMaterialFromMXM(Operator, ImportHelper):
     bl_idname = "maxwell_render.load_material_from_mxm"
-    bl_label = "Load Material From MXM (unimplemented yet)"
+    bl_label = "Load Material From MXM"
     bl_description = "Load material from existing .MXM"
     
-    filepath = StringProperty(subtype='FILE_PATH', )
     filename_ext = ".mxm"
     check_extension = True
-    # check_existing = BoolProperty(name="", default=True, options={'HIDDEN'}, )
-    # remove_dots = True
-    
+    filepath = StringProperty(subtype='FILE_PATH', )
     filter_folder = BoolProperty(name="Filter folders", default=True, options={'HIDDEN'}, )
     filter_glob = StringProperty(default="*.mxm", options={'HIDDEN'}, )
     
-    # force_preview = BoolProperty(name="Force Preview", default=True, )
-    # force_preview_scene = StringProperty(name="Force Preview Scene", default="", )
-    
     @classmethod
     def poll(cls, context):
-        # not implemented yet
+        # return (context.material or context.object)
+        
+        # TODO: finish material import
         return False
     
+    def draw(self, context):
+        l = self.layout
+    
     def execute(self, context):
-        return 'PASS_THROUGH'
+        d = {'mxm_path': os.path.realpath(bpy.path.abspath(self.filepath)), }
+        if(system.PLATFORM == 'Darwin'):
+            im = import_mxs.MXMImportMacOSX(**d)
+        elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+            im = import_mxs.MXMImportWinLin(**d)
+        else:
+            pass
+        
+        return {'FINISHED'}
 
 
 class Render_preset_add(AddPresetBase, Operator):
