@@ -1047,7 +1047,8 @@ class SaveMaterialAsMXM(Operator):
 
 class LoadMaterialFromMXM(Operator, ImportHelper):
     bl_idname = "maxwell_render.load_material_from_mxm"
-    bl_label = "Load Material From MXM"
+    # bl_label = "Load Material From MXM"
+    bl_label = "Load Material From MXM (not implemented yet)"
     bl_description = "Load material from existing .MXM"
     
     filename_ext = ".mxm"
@@ -1058,10 +1059,10 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
     
     @classmethod
     def poll(cls, context):
-        # return (context.material or context.object)
-        
         # TODO: finish material import
         return False
+        
+        return (context.material or context.object)
     
     def draw(self, context):
         l = self.layout
