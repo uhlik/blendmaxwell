@@ -2832,6 +2832,7 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
         r = l.row()
         r.prop(cd, 'v3d_scale')
 
+
 class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Emitter"
