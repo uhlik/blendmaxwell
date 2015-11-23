@@ -48,7 +48,7 @@ def check_for_template():
     return TEMPLATE
 
 
-def check_for_import_mxm_template():
+def check_for_export_mxm_template():
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_custom_mxm.py")
     if(not os.path.exists(TEMPLATE)):
         log("support directory is missing..", 1, LogStyles.ERROR, )
@@ -216,7 +216,7 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
     
     if(PLATFORM == 'Darwin'):
         # TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_custom_mxm.py")
-        TEMPLATE = check_for_import_mxm_template()
+        TEMPLATE = check_for_export_mxm_template()
         
         uid = uuid.uuid1()
         h, t = os.path.split(path)
