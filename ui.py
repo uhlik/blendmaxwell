@@ -2480,12 +2480,12 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         r = l.row()
                         s = r.split(percentage=0.333)
                         c = s.column()
-                        c.label("Anisotrophy:")
+                        c.label("Anisotropy:")
                         c = s.column()
                         r = c.row()
-                        r.prop(bsdf, 'anisotrophy', text="", )
-                        r.prop(bsdf, 'anisotrophy_map_enabled', text="", )
-                        r.prop_search(bsdf, 'anisotrophy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        r.prop(bsdf, 'anisotropy', text="", )
+                        r.prop(bsdf, 'anisotropy_map_enabled', text="", )
+                        r.prop_search(bsdf, 'anisotropy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
                         
                         r = l.row()
                         s = r.split(percentage=0.333)
@@ -2493,9 +2493,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         c.label("Angle:")
                         c = s.column()
                         r = c.row()
-                        r.prop(bsdf, 'anisotrophy_angle', text="", )
-                        r.prop(bsdf, 'anisotrophy_angle_map_enabled', text="", )
-                        r.prop_search(bsdf, 'anisotrophy_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        r.prop(bsdf, 'anisotropy_angle', text="", )
+                        r.prop(bsdf, 'anisotropy_angle_map_enabled', text="", )
+                        r.prop_search(bsdf, 'anisotropy_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
                     
                     l = ll
                     
@@ -3329,12 +3329,12 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             r = l.row()
             s = r.split(percentage=0.333)
             c = s.column()
-            c.label("Anisotrophy:")
+            c.label("Anisotropy:")
             c = s.column()
             r = c.row()
-            r.prop(bsdf, 'anisotrophy', text="", )
-            r.prop(bsdf, 'anisotrophy_map_enabled', text="", )
-            r.prop_search(bsdf, 'anisotrophy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            r.prop(bsdf, 'anisotropy', text="", )
+            r.prop(bsdf, 'anisotropy_map_enabled', text="", )
+            r.prop_search(bsdf, 'anisotropy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
         
             r = l.row()
             s = r.split(percentage=0.333)
@@ -3342,9 +3342,9 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             c.label("Angle:")
             c = s.column()
             r = c.row()
-            r.prop(bsdf, 'anisotrophy_angle', text="", )
-            r.prop(bsdf, 'anisotrophy_angle_map_enabled', text="", )
-            r.prop_search(bsdf, 'anisotrophy_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            r.prop(bsdf, 'anisotropy_angle', text="", )
+            r.prop(bsdf, 'anisotropy_angle_map_enabled', text="", )
+            r.prop_search(bsdf, 'anisotropy_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
 
 
 class CustomMaterialSubsurface(MaterialButtonsPanel, Panel):
@@ -3519,8 +3519,8 @@ class CustomMaterialCoating(MaterialButtonsPanel, Panel):
             r.prop_search(coat, 'thickness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
             
             r = l.row(align=True)
-            r.prop(coat, 'thickness_map_min', text="Min", )
-            r.prop(coat, 'thickness_map_max', text="Max", )
+            r.prop(coat, 'thickness_map_min', text="Min (nm)", )
+            r.prop(coat, 'thickness_map_max', text="Max (nm)", )
             
             l.prop(coat, 'ior')
             if(coat.ior == '1'):
@@ -3571,7 +3571,6 @@ class CustomMaterialCoating(MaterialButtonsPanel, Panel):
 class CustomMaterialUtilities(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Utilities"
-    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
@@ -4452,8 +4451,9 @@ class ObjectPanelBlockedEmittersMenu(Menu):
                                         if(mxmec.emitter):
                                             es.add(o.name)
                             elif(mx.use == 'CUSTOM'):
-                                # TODO: now check if custom material has emitter layer
-                                pass
+                                for ilayer, layer in enumerate(mx.custom_layers.layers):
+                                    if(layer.emitter.enabled):
+                                        es.add(o.name)
                         else:
                             es.add(o.name)
         

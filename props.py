@@ -1418,13 +1418,13 @@ class MaterialBSDFProperties(PropertyGroup):
     bump_map = StringProperty(name="Bump Map", default="", )
     bump_map_use_normal = BoolProperty(name="Bump Map Use Normal", default=False, )
     
-    anisotrophy = FloatProperty(name="Anisotrophy", default=0.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
-    anisotrophy_map_enabled = BoolProperty(name="Anisotrophy Map Enabled", default=False, )
-    anisotrophy_map = StringProperty(name="Anisotrophy Map", default="", )
+    anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
+    anisotropy_map_enabled = BoolProperty(name="Anisotropy Map Enabled", default=False, )
+    anisotropy_map = StringProperty(name="Anisotropy Map", default="", )
     
-    anisotrophy_angle = FloatProperty(name="Anisotrophy Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=2, subtype='ANGLE', )
-    anisotrophy_angle_map_enabled = BoolProperty(name="Anisotrophy Angle Map Enabled", default=False, )
-    anisotrophy_angle_map = StringProperty(name="Anisotrophy Angle Map", default="", )
+    anisotropy_angle = FloatProperty(name="Anisotropy Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=2, subtype='ANGLE', )
+    anisotropy_angle_map_enabled = BoolProperty(name="Anisotropy Angle Map Enabled", default=False, )
+    anisotropy_angle_map = StringProperty(name="Anisotropy Angle Map", default="", )
     
     scattering = FloatVectorProperty(name="Scattering", default=(0.5, 0.5, 0.5), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     coef = FloatProperty(name="Coef", default=0.0, min=0.0, max=99999.0, precision=2, )

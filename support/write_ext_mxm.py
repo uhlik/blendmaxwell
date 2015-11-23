@@ -375,7 +375,7 @@ def texture(d, s, ):
     t.saturation = d['saturation'] / 100
     t.hue = d['hue'] / 180
     
-    t.useGlobalMap = d['use_override_map']
+    t.useGlobalMap = d['use_global_map']
     t.useAbsoluteUnits = d['tile_method_units']
     
     t.uIsTiled = d['tile_method_type'][0]
@@ -448,7 +448,7 @@ def texture_data_to_mxparams(d, mp, name, ):
     t.clampMin = d['rgb_clamp'][0] / 255
     t.clampMax = d['rgb_clamp'][1] / 255
     
-    t.useGlobalMap = d['use_override_map']
+    t.useGlobalMap = d['use_global_map']
     # t.cosA = 1.000000
     # t.sinA = 0.000000
     ok = mp.setTextureMap(name, t)

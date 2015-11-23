@@ -175,7 +175,7 @@ class MXSWriter():
         data        dict {'type':               string,
                           'path':               string,
                           'channel':            int,
-                          'use_override_map':   bool,
+                          'use_global_map':   bool,
                           'tile_method_type':   [bool, bool],
                           'tile_method_units':  int,
                           'repeat':             [float, float],
@@ -225,7 +225,7 @@ class MXSWriter():
         t.hue = d['hue'] / 180
         t.clampMin = d['rgb_clamp'][0] / 255
         t.clampMax = d['rgb_clamp'][1] / 255
-        t.useGlobalMap = d['use_override_map']
+        t.useGlobalMap = d['use_global_map']
         # t.cosA = 1.000000
         # t.sinA = 0.000000
         ok = mxparams.setTextureMap(name, t)
@@ -250,7 +250,7 @@ class MXSWriter():
         t.saturation = d['saturation'] / 100
         t.hue = d['hue'] / 180
         
-        t.useGlobalMap = d['use_override_map']
+        t.useGlobalMap = d['use_global_map']
         t.useAbsoluteUnits = d['tile_method_units']
         
         t.uIsTiled = d['tile_method_type'][0]
@@ -499,40 +499,40 @@ class MXSWriter():
             b.setAttribute('bump', a)
             b.setNormalMapState(bp['bump_map_use_normal'])
             
-            if(bp['anisotrophy_map_enabled']):
-                # # a = self.texture(bp['anisotrophy_map'])
-                # t = self.texture(bp['anisotrophy_map'])
+            if(bp['anisotropy_map_enabled']):
+                # # a = self.texture(bp['anisotropy_map'])
+                # t = self.texture(bp['anisotropy_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = self.texture(bp['anisotrophy_map'])
+                t = self.texture(bp['anisotropy_map'])
                 if(t is not None):
                     a.textureMap = t
-                a.value = bp['anisotrophy']
+                a.value = bp['anisotropy']
                 # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
-                a.value = bp['anisotrophy']
-            b.setAttribute('anisotrophy', a)
+                a.value = bp['anisotropy']
+            b.setAttribute('anisotropy', a)
             
-            if(bp['anisotrophy_angle_map_enabled']):
-                # # a = self.texture(bp['anisotrophy_angle_map'])
-                # t = self.texture(bp['anisotrophy_angle_map'])
+            if(bp['anisotropy_angle_map_enabled']):
+                # # a = self.texture(bp['anisotropy_angle_map'])
+                # t = self.texture(bp['anisotropy_angle_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = self.texture(bp['anisotrophy_angle_map'])
+                t = self.texture(bp['anisotropy_angle_map'])
                 if(t is not None):
                     a.textureMap = t
-                a.value = bp['anisotrophy_angle']
+                a.value = bp['anisotropy_angle']
                 # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
-                a.value = bp['anisotrophy_angle']
+                a.value = bp['anisotropy_angle']
             b.setAttribute('angle', a)
             
             # subsurface
@@ -2387,7 +2387,7 @@ class MXMWriter():
         data        dict {'type':               string,
                           'path':               string,
                           'channel':            int,
-                          'use_override_map':   bool,
+                          'use_global_map':   bool,
                           'tile_method_type':   [bool, bool],
                           'tile_method_units':  int,
                           'repeat':             [float, float],
@@ -2437,7 +2437,7 @@ class MXMWriter():
         t.hue = d['hue'] / 180
         t.clampMin = d['rgb_clamp'][0] / 255
         t.clampMax = d['rgb_clamp'][1] / 255
-        t.useGlobalMap = d['use_override_map']
+        t.useGlobalMap = d['use_global_map']
         # t.cosA = 1.000000
         # t.sinA = 0.000000
         ok = mxparams.setTextureMap(name, t)
@@ -2459,7 +2459,7 @@ class MXMWriter():
         t.saturation = d['saturation'] / 100
         t.hue = d['hue'] / 180
         
-        t.useGlobalMap = d['use_override_map']
+        t.useGlobalMap = d['use_global_map']
         t.useAbsoluteUnits = d['tile_method_units']
         
         t.uIsTiled = d['tile_method_type'][0]
@@ -2708,40 +2708,40 @@ class MXMWriter():
             b.setAttribute('bump', a)
             b.setNormalMapState(bp['bump_map_use_normal'])
             
-            if(bp['anisotrophy_map_enabled']):
-                # # a = self.texture(bp['anisotrophy_map'])
-                # t = self.texture(bp['anisotrophy_map'])
+            if(bp['anisotropy_map_enabled']):
+                # # a = self.texture(bp['anisotropy_map'])
+                # t = self.texture(bp['anisotropy_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = self.texture(bp['anisotrophy_map'])
+                t = self.texture(bp['anisotropy_map'])
                 if(t is not None):
                     a.textureMap = t
-                a.value = bp['anisotrophy']
+                a.value = bp['anisotropy']
                 # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
-                a.value = bp['anisotrophy']
-            b.setAttribute('anisotrophy', a)
+                a.value = bp['anisotropy']
+            b.setAttribute('anisotropy', a)
             
-            if(bp['anisotrophy_angle_map_enabled']):
-                # # a = self.texture(bp['anisotrophy_angle_map'])
-                # t = self.texture(bp['anisotrophy_angle_map'])
+            if(bp['anisotropy_angle_map_enabled']):
+                # # a = self.texture(bp['anisotropy_angle_map'])
+                # t = self.texture(bp['anisotropy_angle_map'])
                 # a = Cattribute()
                 # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = self.texture(bp['anisotrophy_angle_map'])
+                t = self.texture(bp['anisotropy_angle_map'])
                 if(t is not None):
                     a.textureMap = t
-                a.value = bp['anisotrophy_angle']
+                a.value = bp['anisotropy_angle']
                 # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
-                a.value = bp['anisotrophy_angle']
+                a.value = bp['anisotropy_angle']
             b.setAttribute('angle', a)
             
             # subsurface

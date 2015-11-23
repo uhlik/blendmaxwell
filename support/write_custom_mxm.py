@@ -257,40 +257,40 @@ def material_custom(d, s, ):
         b.setAttribute('bump', a)
         b.setNormalMapState(bp['bump_map_use_normal'])
         
-        if(bp['anisotrophy_map_enabled']):
-            # # a = texture(bp['anisotrophy_map'], s, )
-            # t = texture(bp['anisotrophy_map'], s, )
+        if(bp['anisotropy_map_enabled']):
+            # # a = texture(bp['anisotropy_map'], s, )
+            # t = texture(bp['anisotropy_map'], s, )
             # a = Cattribute()
             # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
-            t = texture(bp['anisotrophy_map'], s, )
+            t = texture(bp['anisotropy_map'], s, )
             if(t is not None):
                 a.textureMap = t
-            a.value = bp['anisotrophy']
+            a.value = bp['anisotropy']
             # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
-            a.value = bp['anisotrophy']
-        b.setAttribute('anisotrophy', a)
+            a.value = bp['anisotropy']
+        b.setAttribute('anisotropy', a)
         
-        if(bp['anisotrophy_angle_map_enabled']):
-            # # a = texture(bp['anisotrophy_angle_map'], s, )
-            # t = texture(bp['anisotrophy_angle_map'], s, )
+        if(bp['anisotropy_angle_map_enabled']):
+            # # a = texture(bp['anisotropy_angle_map'], s, )
+            # t = texture(bp['anisotropy_angle_map'], s, )
             # a = Cattribute()
             # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
-            t = texture(bp['anisotrophy_angle_map'], s, )
+            t = texture(bp['anisotropy_angle_map'], s, )
             if(t is not None):
                 a.textureMap = t
-            a.value = bp['anisotrophy_angle']
+            a.value = bp['anisotropy_angle']
             # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
-            a.value = bp['anisotrophy_angle']
+            a.value = bp['anisotropy_angle']
         b.setAttribute('angle', a)
         
         # subsurface
@@ -801,7 +801,7 @@ def texture(d, s, ):
     t.saturation = d['saturation'] / 100
     t.hue = d['hue'] / 180
     
-    t.useGlobalMap = d['use_override_map']
+    t.useGlobalMap = d['use_global_map']
     t.useAbsoluteUnits = d['tile_method_units']
     
     t.uIsTiled = d['tile_method_type'][0]
@@ -874,7 +874,7 @@ def texture_data_to_mxparams(d, mp, name, ):
     t.clampMin = d['rgb_clamp'][0] / 255
     t.clampMax = d['rgb_clamp'][1] / 255
     
-    t.useGlobalMap = d['use_override_map']
+    t.useGlobalMap = d['use_global_map']
     # t.cosA = 1.000000
     # t.sinA = 0.000000
     ok = mp.setTextureMap(name, t)

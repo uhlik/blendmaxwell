@@ -3659,7 +3659,7 @@ class MXSTexture(Serializable):
             log("image file '{}' does not exist..".format(self.m_path), 4, LogStyles.WARNING, )
             self.invalid = True
         
-        self.m_use_override_map = m.use_global_map
+        self.m_use_global_map = m.use_global_map
         self.m_channel = m.channel
         self.m_tile_method_units = int(m.tiling_units[-1:])
         self.m_repeat = (m.repeat[0], m.repeat[1], )
@@ -3713,8 +3713,8 @@ class MXSMaterialCustom(MXSMaterial):
                  'r2_enabled': False, 'r2_falloff_angle': math.radians(75.0), 'r2_influence': 0.0,
                  'roughness': 100.0, 'roughness_map_enabled': False, 'roughness_map': "",
                  'bump': 30.0, 'bump_map_enabled': False, 'bump_map': "", 'bump_map_use_normal': False,
-                 'anisotrophy': 0.0, 'anisotrophy_map_enabled': False, 'anisotrophy_map': "",
-                 'anisotrophy_angle': math.radians(0.0), 'anisotrophy_angle_map_enabled': False, 'anisotrophy_angle_map': "",
+                 'anisotropy': 0.0, 'anisotropy_map_enabled': False, 'anisotropy_map': "",
+                 'anisotropy_angle': math.radians(0.0), 'anisotropy_angle_map_enabled': False, 'anisotropy_angle_map': "",
                  'scattering': (0.5, 0.5, 0.5, ), 'coef': 0.0, 'asymmetry': 0.0,
                  'single_sided': False, 'single_sided_value': 1.0, 'single_sided_map_enabled': False, 'single_sided_map': "", 'single_sided_min': 0.001, 'single_sided_max': 10.0, }
         coatingd = {'enabled': False,
@@ -3799,8 +3799,8 @@ class MXSMaterialCustom(MXSMaterial):
                 # converting..
                 # ccolor = ['reflectance_0', 'reflectance_90', 'transmittance', 'scattering', ]
                 ccolor = []
-                cmap = ['weight_map', 'reflectance_0_map', 'reflectance_90_map', 'transmittance_map', 'roughness_map', 'bump_map', 'anisotrophy_map', 'anisotrophy_angle_map', 'single_sided_map', ]
-                cangle = ['r2_falloff_angle', 'anisotrophy_angle', ]
+                cmap = ['weight_map', 'reflectance_0_map', 'reflectance_90_map', 'transmittance_map', 'roughness_map', 'bump_map', 'anisotropy_map', 'anisotropy_angle_map', 'single_sided_map', ]
+                cangle = ['r2_falloff_angle', 'anisotropy_angle', ]
                 cenum = ['ior', 'attenuation_units', ]
                 cpath = ['complex_ior', ]
                 cmm = ['single_sided_value', 'single_sided_min', 'single_sided_max', ]
@@ -3862,28 +3862,37 @@ class MXSMaterialCustom(MXSMaterial):
                         'coating': cpd, }
                 bsdfs.append(bsdf)
             
+            if(len(bsdfs) == 0):
+                log("material has no bsdfs in layer '{}'".format(sl[0]), 3, LogStyles.WARNING, )
+            
             layer = {'name': sl[0],
                      'layer_props': lpd,
                      'bsdfs': bsdfs,
                      'emitter': epd, }
             layers.append(layer)
         
-        displacement = m['custom_displacement'].to_dict()
-        for k, v in displacementd.items():
-            if(k not in displacement):
-                displacement[k] = v
-        
-        # converting..
-        cmap = ['map', ]
-        cenum = ['type', 'subdivision_method', 'uv_interpolation', 'height_units', 'v3d_preset', 'v3d_transform', 'v3d_rgb_mapping', ]
-        for k, v in displacement.items():
-            if(k in cmap):
-                displacement[k] = self._texture_to_data(v)
-            if(k in cenum):
-                displacement[k] = int(v)
-        
-        if(displacement['height_units'] == 1):
-            displacement['height'] = displacement['height'] / 100
+        if(len(layers) == 0):
+            # material has no layers and therefore no displacement..
+            displacement = displacementd.copy()
+            log("material has no layers..", 3, LogStyles.WARNING, )
+            
+        else:
+            displacement = m['custom_displacement'].to_dict()
+            for k, v in displacementd.items():
+                if(k not in displacement):
+                    displacement[k] = v
+            
+            # converting..
+            cmap = ['map', ]
+            cenum = ['type', 'subdivision_method', 'uv_interpolation', 'height_units', 'v3d_preset', 'v3d_transform', 'v3d_rgb_mapping', ]
+            for k, v in displacement.items():
+                if(k in cmap):
+                    displacement[k] = self._texture_to_data(v)
+                if(k in cenum):
+                    displacement[k] = int(v)
+            
+            if(displacement['height_units'] == 1):
+                displacement['height'] = displacement['height'] / 100
         
         global_props = {'override_map': self._texture_to_data(m.global_override_map),
                         'bump': m.global_bump,

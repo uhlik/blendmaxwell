@@ -19,6 +19,7 @@
 import os
 import shlex
 import subprocess
+import math
 
 import bpy
 from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty, StringProperty, EnumProperty, FloatVectorProperty, IntVectorProperty
@@ -697,7 +698,9 @@ class MaterialEditorAddLayer(Operator):
     bl_description = "Add new layer"
     bl_options = {'REGISTER', 'UNDO'}
     
-    def execute(self, context):
+    auto_bsdf = BoolProperty(name="auto_bsdf", default=True, options={'HIDDEN'}, )
+    
+    def execute(self, context, ):
         mx = context.material.maxwell_render
         cl = mx.custom_layers
         ls = cl.layers
@@ -707,10 +710,11 @@ class MaterialEditorAddLayer(Operator):
         item.id = len(ls)
         item.name = 'Layer {}'.format(len(ls))
         cl.index = (len(ls) - 1)
-        b = item.layer.bsdfs.bsdfs.add()
-        b.id = len(ls)
-        b.name = 'BSDF'
-        item.layer.bsdfs.index = 0
+        if(self.auto_bsdf):
+            b = item.layer.bsdfs.bsdfs.add()
+            b.id = len(ls)
+            b.name = 'BSDF'
+            item.layer.bsdfs.index = 0
         
         return {'FINISHED'}
 
@@ -1047,8 +1051,7 @@ class SaveMaterialAsMXM(Operator):
 
 class LoadMaterialFromMXM(Operator, ImportHelper):
     bl_idname = "maxwell_render.load_material_from_mxm"
-    # bl_label = "Load Material From MXM"
-    bl_label = "Load Material From MXM (not implemented yet)"
+    bl_label = "Load Material From MXM"
     bl_description = "Load material from existing .MXM"
     
     filename_ext = ".mxm"
@@ -1059,9 +1062,6 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
     
     @classmethod
     def poll(cls, context):
-        # TODO: finish material import
-        return False
-        
         return (context.material or context.object)
     
     def draw(self, context):
@@ -1076,7 +1076,305 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         else:
             pass
         
+        self.make(context.material, context.material_slot, im.data)
+        
         return {'FINISHED'}
+    
+    def make(self, material, slot, data):
+        def gamma_correct(c):
+            g = 2.2
+            c = [v ** g for v in c]
+            return c
+        
+        material = bpy.data.materials.new(material.name)
+        slot.material = material
+        
+        d = data
+        mx = material.maxwell_render
+        mx.use = 'CUSTOM'
+        
+        def texture(mat, d, n, ):
+            ts = mat.texture_slots
+            slot = ts.add()
+            tex = bpy.data.textures.new(n, 'IMAGE')
+            slot.texture = tex
+            image = bpy.data.images.load(d['path'])
+            tex.image = image
+            tm = tex.maxwell_render
+            
+            mx.path = d['path']
+            mx.use_global_map = d['use_global_map']
+            mx.channel = d['channel']
+            
+            mx.tiling_method = EnumProperty(name="Tiling Method", items=[('TILE_XY', "Tile XY", ""), ('TILE_X', "Tile X", ""), ('TILE_Y', "Tile Y", ""), ('NO_TILING', "No Tiling", ""), ], default='TILE_XY', )
+            
+            tm = d['tiling_method']
+            if(not tm[0] and not tm[1]):
+                mx.tiling_method = 'NO_TILING'
+            elif(tm[0] and not tm[1]):
+                mx.tiling_method = 'TILE_X'
+            elif(not tm[0] and tm[1]):
+                mx.tiling_method = 'TILE_Y'
+            else:
+                mx.tiling_method = 'TILE_XY'
+            
+            mx.tiling_units = str(d['tiling_units'])
+            mx.repeat = d['repeat']
+            mx.mirror_x = d['mirror'][0]
+            mx.mirror_y = d['mirror'][1]
+            mx.offset = d['offset']
+            mx.rotation = math.radians(d['rotation'])
+            mx.invert = d['invert']
+            mx.use_alpha = d['use_alpha']
+            mx.interpolation = bool(d['interpolation'])
+            mx.brightness = d['brightness']
+            mx.contrast = d['contrast']
+            mx.saturation = d['saturation']
+            mx.hue = d['hue']
+            mx.clamp = d['clamp']
+            
+            return tex.name
+        
+        # globals
+        gp = d['global_props']
+        if(gp['override_map'] is not None):
+            mx.global_override_map = texture(material, gp['override_map'], 'override map')
+        if(gp['bump_map'] is not None):
+            mx.global_bump = True
+            mx.global_bump_value = gp['bump_value']
+            mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
+        else:
+            mx.global_bump = False
+            mx.global_bump_value = gp['bump_value']
+            mx.global_bump_map = ''
+        mx.global_dispersion = gp['dispersion']
+        mx.global_shadow = gp['shadow']
+        mx.global_matte = gp['matte']
+        mx.global_priority = gp['priority']
+        mx.global_id = [v / 255 for v in gp['id']]
+        # displacement
+        dp = d['displacement']
+        cd = mx.custom_displacement
+        if(dp['enabled']):
+            cd.enabled = True
+            if(dp['map'] is not None):
+                cd.map = texture(material, dp['map'], 'displacement map')
+            cd.type = str(dp['type'])
+            cd.subdivision = dp['subdivision']
+            cd.adaptive = dp['adaptive']
+            cd.subdivision_method = str(dp['subdivision_method'])
+            cd.offset = dp['offset']
+            cd.smoothing = dp['smoothing']
+            cd.uv_interpolation = str(dp['uv_interpolation'])
+            cd.height = dp['height'] * 100
+            cd.height_units = str(int(dp['height_units']))
+            cd.v3d_preset = str(dp['v3d_preset'])
+            cd.v3d_transform = str(dp['v3d_transform'])
+            cd.v3d_rgb_mapping = str(dp['v3d_rgb_mapping'])
+            cd.v3d_scale = dp['v3d_scale']
+        # layers
+        for i, ld in enumerate(d['layers']):
+            # layer props
+            lp = ld['layer_props']
+            
+            override_context = bpy.context.copy()
+            override_context['material'] =  material
+            bpy.ops.maxwell_render.material_editor_add_layer(override_context, auto_bsdf=False, )
+            layer = mx.custom_layers.layers[len(mx.custom_layers.layers) - 1]
+            
+            layer.name = ld['name']
+            l = layer.layer
+            
+            
+            l.visible = lp['visible']
+            l.opacity = lp['opacity']
+            if(lp['opacity_map'] is not None):
+                l.opacity_map_enabled = True
+                l.opacity_map = texture(material, lp['opacity_map'], 'opacity map')
+            else:
+                l.opacity_map_enabled = False
+                l.opacity_map = ""
+            l.blending = str(lp['blending'])
+            
+            # emitter
+            ep = ld['emitter']
+            if(ep['enabled']):
+                ex = layer.emitter
+                ex.enabled = ep['enabled']
+                ex.type = str(ep['type'])
+                ex.ies_data = ep['ies_data']
+                ex.ies_intensity = ep['ies_intensity']
+                ex.spot_map_enabled = ep['spot_map_enabled']
+                if(ep['spot_map'] is not None):
+                    ex.spot_map = texture(material, ep['spot_map'], 'spot map')
+                ex.spot_cone_angle = math.radians(ep['spot_cone_angle'])
+                ex.spot_falloff_angle = math.radians(ep['spot_falloff_angle'])
+                ex.spot_falloff_type = str(ep['spot_falloff_type'])
+                ex.spot_blur = ep['spot_blur']
+                ex.emission = str(ep['emission'])
+                ex.color = gamma_correct(ep['color'])
+                ex.color_black_body_enabled = ep['color_black_body_enabled']
+                ex.color_black_body = ep['color_black_body']
+                ex.luminance = str(ep['luminance'])
+                ex.luminance_power = ep['luminance_power']
+                ex.luminance_efficacy = ep['luminance_efficacy']
+                ex.luminance_output = ep['luminance_output']
+                ex.temperature_value = ep['temperature_value']
+                if(ep['hdr_map'] is not None):
+                    ex.hdr_map = texture(material, ep['hdr_map'], 'hdr map')
+                ex.hdr_intensity = ep['hdr_intensity']
+            
+            # bsdfs
+            for j, bdp in enumerate(ld['bsdfs']):
+                override_context = bpy.context.copy()
+                override_context['material'] =  material
+                bpy.ops.maxwell_render.material_editor_add_bsdf(override_context, )
+                # and now, some ugly line..
+                b = mx.custom_layers.layers[len(mx.custom_layers.layers) - 1].layer.bsdfs.bsdfs[len(mx.custom_layers.layers[len(mx.custom_layers.layers) - 1].layer.bsdfs.bsdfs) - 1].bsdf
+                
+                bd = bdp['bsdf_props']
+                b.visible = bd['visible']
+                b.weight = bd['weight']
+                
+                if(bd['weight_map'] is not None):
+                    b.weight_map_enabled = True
+                    b.weight_map = texture(material, bd['weight_map'], 'weight map')
+                else:
+                    b.weight_map_enabled = False
+                    b.weight_map = ""
+                
+                b.ior = str(bd['ior'])
+                b.complex_ior = bd['complex_ior']
+                b.reflectance_0 = gamma_correct(bd['reflectance_0'])
+                
+                if(bd['reflectance_0_map'] is not None):
+                    b.reflectance_0_map_enabled = True
+                    b.reflectance_0_map = texture(material, bd['reflectance_0_map'], 'reflectance 0 map')
+                else:
+                    b.reflectance_0_map_enabled = False
+                    b.reflectance_0_map = ""
+                
+                b.reflectance_90 = gamma_correct(bd['reflectance_90'])
+                
+                if(bd['reflectance_90_map'] is not None):
+                    b.reflectance_90_map_enabled = True
+                    b.reflectance_90_map = texture(material, bd['reflectance_90_map'], 'reflectance 90 map')
+                else:
+                    b.reflectance_90_map_enabled = False
+                    b.reflectance_90_map = ""
+                
+                b.transmittance = gamma_correct(bd['transmittance'])
+                
+                if(bd['transmittance_map'] is not None):
+                    b.transmittance_map_enabled = True
+                    b.transmittance_map = texture(material, bd['transmittance_map'], 'transmittance map')
+                else:
+                    b.transmittance_map_enabled = False
+                    b.transmittance_map = ""
+                
+                b.attenuation = bd['attenuation']
+                b.attenuation_units = str(bd['attenuation_units'])
+                b.nd = bd['nd']
+                b.force_fresnel = bd['force_fresnel']
+                b.k = bd['k']
+                b.abbe = bd['abbe']
+                b.r2_enabled = bd['r2_enabled']
+                b.r2_falloff_angle = math.radians(bd['r2_falloff_angle'])
+                b.r2_influence = bd['r2_influence']
+                b.roughness = bd['roughness']
+                
+                if(bd['roughness_map'] is not None):
+                    b.roughness_map_enabled = True
+                    b.roughness_map = texture(material, bd['roughness_map'], 'roughness map')
+                else:
+                    b.roughness_map_enabled = False
+                    b.roughness_map = ""
+                
+                b.bump = bd['bump']
+                
+                if(bd['bump_map'] is not None):
+                    b.bump_map_enabled = True
+                    b.bump_map = texture(material, bd['bump_map'], 'bump map')
+                else:
+                    b.bump_map_enabled = False
+                    b.bump_map = ""
+                
+                b.bump_map_use_normal = bd['bump_map_use_normal']
+                b.anisotropy = bd['anisotropy']
+                
+                if(bd['anisotropy_map'] is not None):
+                    b.anisotropy_map_enabled = True
+                    b.anisotropy_map = texture(material, bd['anisotropy_map'], 'anisotropy map')
+                else:
+                    b.anisotropy_map_enabled = False
+                    b.anisotropy_map = ""
+                
+                b.anisotropy_angle = math.radians(bd['anisotropy_angle'])
+                
+                if(bd['anisotropy_angle_map'] is not None):
+                    b.anisotropy_angle_map_enabled = True
+                    b.anisotropy_angle_map = texture(material, bd['anisotropy_angle_map'], 'anisotropy angle map')
+                else:
+                    b.anisotropy_angle_map_enabled = False
+                    b.anisotropy_angle_map = ""
+                
+                b.scattering = gamma_correct(bd['scattering'])
+                b.coef = bd['coef']
+                b.asymmetry = bd['asymmetry']
+                b.single_sided = bd['single_sided']
+                b.single_sided_value = bd['single_sided_value'] * 1000
+                
+                if(bd['single_sided_map'] is not None):
+                    b.single_sided_map_enabled = True
+                    b.single_sided_map = texture(material, bd['single_sided_map'], 'single sided map')
+                else:
+                    b.single_sided_map_enabled = False
+                    b.single_sided_map = ""
+                
+                b.single_sided_min = bd['single_sided_min'] * 1000
+                b.single_sided_max = bd['single_sided_max'] * 1000
+                
+                # coating
+                c = mx.custom_layers.layers[len(mx.custom_layers.layers) - 1].layer.bsdfs.bsdfs[len(mx.custom_layers.layers[len(mx.custom_layers.layers) - 1].layer.bsdfs.bsdfs) - 1].coating
+                cd = bdp['coating']
+                
+                c.enabled = cd['enabled']
+                c.thickness = cd['thickness'] * 1000000000
+                
+                if(cd['thickness_map'] is not None):
+                    c.thickness_map_enabled = True
+                    c.thickness_map = texture(material, cd['thickness_map'], 'coating thickness map')
+                else:
+                    c.thickness_map_enabled = False
+                    c.thickness_map = ""
+                
+                c.thickness_map_min = cd['thickness_map_min'] * 1000000000
+                c.thickness_map_max = cd['thickness_map_max'] * 1000000000
+                c.ior = str(cd['ior'])
+                c.complex_ior = cd['complex_ior']
+                c.reflectance_0 = gamma_correct(cd['reflectance_0'])
+                
+                if(cd['reflectance_0_map'] is not None):
+                    c.reflectance_0_map_enabled = True
+                    c.reflectance_0_map = texture(material, cd['reflectance_0_map'], 'coating reflectance 0 map')
+                else:
+                    c.reflectance_0_map_enabled = False
+                    c.reflectance_0_map = ""
+                
+                c.reflectance_90 = gamma_correct(cd['reflectance_90'])
+                
+                if(cd['reflectance_90_map'] is not None):
+                    c.reflectance_90_map_enabled = True
+                    c.reflectance_90_map = texture(material, cd['reflectance_90_map'], 'coating reflectance 90 map')
+                else:
+                    c.reflectance_90_map_enabled = False
+                    c.reflectance_90_map = ""
+                
+                c.nd = cd['nd']
+                c.force_fresnel = cd['force_fresnel']
+                c.k = cd['k']
+                c.r2_enabled = cd['r2_enabled']
+                c.r2_falloff_angle = math.radians(cd['r2_falloff_angle'])
 
 
 class Render_preset_add(AddPresetBase, Operator):
