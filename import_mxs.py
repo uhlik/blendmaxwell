@@ -1126,7 +1126,6 @@ class MXMImportWinLin():
             
             return data
         
-        
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         log("path: {}".format(mxm_path), 1, LogStyles.MESSAGE)
         s = Cmaxwell(mwcallback)

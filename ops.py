@@ -1178,13 +1178,12 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             lp = ld['layer_props']
             
             override_context = bpy.context.copy()
-            override_context['material'] =  material
+            override_context['material'] = material
             bpy.ops.maxwell_render.material_editor_add_layer(override_context, auto_bsdf=False, )
             layer = mx.custom_layers.layers[len(mx.custom_layers.layers) - 1]
             
             layer.name = ld['name']
             l = layer.layer
-            
             
             l.visible = lp['visible']
             l.opacity = lp['opacity']
@@ -1227,7 +1226,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             # bsdfs
             for j, bdp in enumerate(ld['bsdfs']):
                 override_context = bpy.context.copy()
-                override_context['material'] =  material
+                override_context['material'] = material
                 bpy.ops.maxwell_render.material_editor_add_bsdf(override_context, )
                 # and now, some ugly line..
                 b = mx.custom_layers.layers[len(mx.custom_layers.layers) - 1].layer.bsdfs.bsdfs[len(mx.custom_layers.layers[len(mx.custom_layers.layers) - 1].layer.bsdfs.bsdfs) - 1].bsdf
