@@ -726,3 +726,411 @@ class MXSImportWinLin():
                     bpy.ops.object.mode_set(mode='EDIT')
                     bpy.ops.object.mode_set(mode='OBJECT')
                     cycled_meshes.append(o.data)
+
+
+class MXMImportMacOSX():
+    def __init__(self, mxm_path, ):
+        self.TEMPLATE = system.check_for_import_mxm_template()
+        self.mxm_path = os.path.realpath(mxm_path)
+        self._import()
+    
+    def _import(self):
+        log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
+        
+        self.uuid = uuid.uuid1()
+        h, t = os.path.split(self.mxm_path)
+        n, e = os.path.splitext(t)
+        self.tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, self.uuid))
+        if(os.path.exists(self.tmp_dir) is False):
+            os.makedirs(self.tmp_dir)
+        
+        self.data_name = "{0}-{1}.json".format(n, self.uuid)
+        self.script_name = "{0}-{1}.py".format(n, self.uuid)
+        self.data_path = os.path.join(self.tmp_dir, self.data_name)
+        
+        log("executing script..", 1, LogStyles.MESSAGE)
+        self._pymaxwell()
+        log("processing objects..", 1, LogStyles.MESSAGE)
+        self._process()
+        log("cleanup..", 1, LogStyles.MESSAGE)
+        self._cleanup()
+        log("done.", 1, LogStyles.MESSAGE)
+    
+    def _pymaxwell(self):
+        # generate script
+        self.script_path = os.path.join(self.tmp_dir, self.script_name)
+        with open(self.script_path, mode='w', encoding='utf-8') as f:
+            # read template
+            with open(self.TEMPLATE, encoding='utf-8') as t:
+                code = "".join(t.readlines())
+            # write template to a new file
+            f.write(code)
+        
+        if(system.PLATFORM == 'Darwin'):
+            system.python34_run_script_helper_import_mxm(self.script_path, self.mxm_path, self.data_path, )
+        elif(system.PLATFORM == 'Linux'):
+            pass
+        elif(system.PLATFORM == 'Windows'):
+            pass
+        else:
+            pass
+    
+    def _process(self):
+        data = None
+        
+        if(not os.path.exists(self.data_path)):
+            raise RuntimeError("Protected MXS?")
+        
+        with open(self.data_path, 'r') as f:
+            data = json.load(f)
+        
+        self.data = data
+    
+    def _cleanup(self):
+        def rm(p):
+            if(os.path.exists(p)):
+                os.remove(p)
+            else:
+                log("_cleanup(): {} does not exist?".format(p), 1, LogStyles.WARNING, )
+        
+        rm(self.script_path)
+        rm(self.data_path)
+        
+        if(os.path.exists(self.tmp_dir)):
+            os.rmdir(self.tmp_dir)
+        else:
+            log("_cleanup(): {} does not exist?".format(self.tmp_dir), 1, LogStyles.WARNING, )
+
+
+class MXMImportWinLin():
+    def __init__(self, mxm_path, ):
+        def texture(t):
+            if(t is None):
+                return None
+            if(t.isEmpty()):
+                return None
+            
+            d = {'path': t.getPath(),
+                 'use_global_map': t.useGlobalMap,
+                 'channel': t.uvwChannelID,
+                 'brightness': t.brightness * 100,
+                 'contrast': t.contrast * 100,
+                 'saturation': t.saturation * 100,
+                 'hue': t.hue * 180,
+                 'rotation': t.rotation,
+                 'invert': t.invert,
+                 'interpolation': t.typeInterpolation,
+                 'use_alpha': t.useAlpha,
+                 'repeat': [t.scale.x(), t.scale.y()],
+                 'mirror': [t.uIsMirrored, t.vIsMirrored],
+                 'offset': [t.offset.x(), t.offset.y()],
+                 'clamp': [int(t.clampMin * 255), int(t.clampMax * 255)],
+                 'tiling_units': t.useAbsoluteUnits,
+                 'tiling_method': [t.uIsTiled, t.vIsTiled], }
+            
+            # t.cosA
+            # t.doGammaCorrection
+            # t.normalMappingFlipGreen
+            # t.normalMappingFlipRed
+            # t.normalMappingFullRangeBlue
+            # t.sinA
+            # t.theTextureExtensions
+            
+            return d
+        
+        def material(s, m):
+            data = {}
+            if(m.isNull()):
+                return data
+            
+            # defaults
+            bsdfd = {'visible': True, 'weight': 100.0, 'weight_map_enabled': False, 'weight_map': None, 'ior': 0, 'complex_ior': "",
+                     'reflectance_0': (0.6, 0.6, 0.6, ), 'reflectance_0_map_enabled': False, 'reflectance_0_map': None,
+                     'reflectance_90': (1.0, 1.0, 1.0, ), 'reflectance_90_map_enabled': False, 'reflectance_90_map': None,
+                     'transmittance': (0.0, 0.0, 0.0), 'transmittance_map_enabled': False, 'transmittance_map': None,
+                     'attenuation': 1.0, 'attenuation_units': 0, 'nd': 3.0, 'force_fresnel': False, 'k': 0.0, 'abbe': 1.0,
+                     'r2_enabled': False, 'r2_falloff_angle': 75.0, 'r2_influence': 0.0,
+                     'roughness': 100.0, 'roughness_map_enabled': False, 'roughness_map': None,
+                     'bump': 30.0, 'bump_map_enabled': False, 'bump_map': None, 'bump_map_use_normal': False,
+                     'anisotropy': 0.0, 'anisotropy_map_enabled': False, 'anisotropy_map': None,
+                     'anisotropy_angle': 0.0, 'anisotropy_angle_map_enabled': False, 'anisotropy_angle_map': None,
+                     'scattering': (0.5, 0.5, 0.5, ), 'coef': 0.0, 'asymmetry': 0.0,
+                     'single_sided': False, 'single_sided_value': 1.0, 'single_sided_map_enabled': False, 'single_sided_map': None, 'single_sided_min': 0.001, 'single_sided_max': 10.0, }
+            coatingd = {'enabled': False,
+                        'thickness': 500.0, 'thickness_map_enabled': False, 'thickness_map': None, 'thickness_map_min': 100.0, 'thickness_map_max': 1000.0,
+                        'ior': 0, 'complex_ior': "",
+                        'reflectance_0': (0.6, 0.6, 0.6, ), 'reflectance_0_map_enabled': False, 'reflectance_0_map': None,
+                        'reflectance_90': (1.0, 1.0, 1.0, ), 'reflectance_90_map_enabled': False, 'reflectance_90_map': None,
+                        'nd': 3.0, 'force_fresnel': False, 'k': 0.0, 'r2_enabled': False, 'r2_falloff_angle': 75.0, }
+            displacementd = {'enabled': False, 'map': None, 'type': 1, 'subdivision': 5, 'adaptive': False, 'subdivision_method': 0,
+                             'offset': 0.5, 'smoothing': True, 'uv_interpolation': 2, 'height': 2.0, 'height_units': 0,
+                             'v3d_preset': 0, 'v3d_transform': 0, 'v3d_rgb_mapping': 0, 'v3d_scale': (1.0, 1.0, 1.0), }
+            emitterd = {'enabled': False, 'type': 0, 'ies_data': "", 'ies_intensity': 1.0,
+                        'spot_map_enabled': False, 'spot_map': "", 'spot_cone_angle': 45.0, 'spot_falloff_angle': 10.0, 'spot_falloff_type': 0, 'spot_blur': 1.0,
+                        'emission': 0, 'color': (1.0, 1.0, 1.0, ), 'color_black_body_enabled': False, 'color_black_body': 6500.0,
+                        'luminance': 0, 'luminance_power': 40.0, 'luminance_efficacy': 17.6, 'luminance_output': 100.0, 'temperature_value': 6500.0,
+                        'hdr_map': None, 'hdr_intensity': 1.0, }
+            layerd = {'visible': True, 'opacity': 100.0, 'opacity_map_enabled': False, 'opacity_map': None, 'blending': 0, }
+            globald = {'override_map': None, 'bump': False, 'bump_value': 30.0, 'bump_map': None, 'dispersion': False, 'shadow': False,
+                       'matte': False, 'priority': 0, 'id': (255, 255, 255), 'active_display_map': None, }
+            
+            # structure
+            structure = []
+            nl, _ = m.getNumLayers()
+            for i in range(nl):
+                l = m.getLayer(i)
+                ln, _ = l.getName()
+                nb, _ = l.getNumBSDFs()
+                bs = []
+                for j in range(nb):
+                    b = l.getBSDF(j)
+                    bn = b.getName()
+                    bs.append([bn, b])
+                ls = [ln, l, bs]
+                structure.append(ls)
+            
+            # default data
+            data['global_props'] = globald.copy()
+            data['displacement'] = displacementd.copy()
+            data['layers'] = []
+            for i, sl in enumerate(structure):
+                bsdfs = []
+                for j, sb in enumerate(sl[2]):
+                    bsdfs.append({'name': sb[0],
+                                  'bsdf_props': bsdfd.copy(),
+                                  'coating': coatingd.copy(), })
+                layer = {'name': sl[0],
+                         'layer_props': layerd.copy(),
+                         'bsdfs': bsdfs,
+                         'emitter': emitterd.copy(), }
+                data['layers'].append(layer)
+            
+            # custom data
+            def global_props(m, d):
+                t, _ = m.getGlobalMap()
+                d['override_map'] = texture(t)
+                a, _ = m.getAttribute('bump')
+                if(a.activeType == MAP_TYPE_BITMAP):
+                    d['bump'] = True
+                    d['bump_value'] = a.value
+                    d['bump_map'] = texture(a.textureMap)
+                else:
+                    d['bump'] = False
+                    d['bump_value'] = a.value
+                    d['bump_map'] = None
+                
+                d['dispersion'] = m.getDispersion()[0]
+                d['shadow'] = m.getMatteShadow()[0]
+                d['matte'] = m.getMatte()[0]
+                d['priority'] = m.getNestedPriority()[0]
+                
+                c, _ = m.getColorID()
+                d['id'] = [c.r() * 255, c.g() * 255, c.b() * 255]
+                return d
+            
+            data['global_props'] = global_props(m, data['global_props'])
+            
+            def displacement(m, d):
+                if(not m.isDisplacementEnabled()[0]):
+                    return d
+                d['enabled'] = True
+                t, _ = m.getDisplacementMap()
+                d['map'] = texture(t)
+                
+                displacementType, subdivisionLevel, smoothness, offset, subdivisionType, interpolationUvType, minLOD, maxLOD, _ = m.getDisplacementCommonParameters()
+                height, absoluteHeight, adaptive, _ = m.getHeightMapDisplacementParameters()
+                scale, transformType, mapping, preset, _ = m.getVectorDisplacementParameters()
+                
+                d['type'] = displacementType
+                d['subdivision'] = subdivisionLevel
+                d['adaptive'] = adaptive
+                d['subdivision_method'] = subdivisionType
+                d['offset'] = offset
+                d['smoothing'] = bool(smoothness)
+                d['uv_interpolation'] = interpolationUvType
+                d['height'] = height
+                d['height_units'] = absoluteHeight
+                d['v3d_preset'] = preset
+                d['v3d_transform'] = transformType
+                d['v3d_rgb_mapping'] = mapping
+                d['v3d_scale'] = (scale.x(), scale.y(), scale.z(), )
+                
+                return d
+            
+            data['displacement'] = displacement(m, data['displacement'])
+            
+            def cattribute_rgb(a):
+                if(a.activeType == MAP_TYPE_BITMAP):
+                    c = (a.rgb.r(), a.rgb.g(), a.rgb.b())
+                    e = True
+                    m = texture(a.textureMap)
+                else:
+                    c = (a.rgb.r(), a.rgb.g(), a.rgb.b())
+                    e = False
+                    m = None
+                return c, e, m
+            
+            def cattribute_value(a):
+                if(a.activeType == MAP_TYPE_BITMAP):
+                    v = a.value
+                    e = True
+                    m = texture(a.textureMap)
+                else:
+                    v = a.value
+                    e = False
+                    m = None
+                return v, e, m
+            
+            def layer_props(l, d):
+                d['visible'] = l.getEnabled()[0]
+                d['blending'] = l.getStackedBlendingMode()[0]
+                a, _ = l.getAttribute('weight')
+                if(a.activeType == MAP_TYPE_BITMAP):
+                    d['opacity'] = a.value
+                    d['opacity_map_enabled'] = True
+                    d['opacity_map'] = texture(a.textureMap)
+                else:
+                    d['opacity'] = a.value
+                    d['opacity_map_enabled'] = False
+                    d['opacity_map'] = None
+                return d
+            
+            def emitter(l, d):
+                e = l.getEmitter()
+                if(e.isNull()):
+                    d['enabled'] = False
+                    return d
+                
+                d['enabled'] = True
+                d['type'] = e.getLobeType()[0]
+                
+                d['ies_data'] = e.getLobeIES()
+                d['ies_intensity'] = e.getIESLobeIntensity()[0]
+                
+                t, _ = e.getLobeImageProjectedMap()
+                d['spot_map_enabled'] = (not t.isEmpty())
+                
+                d['spot_map'] = texture(t)
+                d['spot_cone_angle'] = e.getSpotConeAngle()[0]
+                d['spot_falloff_angle'] = e.getSpotFallOffAngle()[0]
+                d['spot_falloff_type'] = e.getSpotFallOffType()[0]
+                d['spot_blur'] = e.getSpotBlur()[0]
+                
+                d['emission'] = e.getActiveEmissionType()[0]
+                ep, _ = e.getPair()
+                colorType, units, _ = e.getActivePair()
+                
+                d['color'] = (ep.rgb.r(), ep.rgb.g(), ep.rgb.b(), )
+                d['color_black_body'] = ep.temperature
+                
+                d['luminance'] = units
+                if(units == EMISSION_UNITS_WATTS_AND_LUMINOUS_EFFICACY):
+                    d['luminance_power'] = ep.watts
+                    d['luminance_efficacy'] = ep.luminousEfficacy
+                elif(units == EMISSION_UNITS_LUMINOUS_POWER):
+                    d['luminance_output'] = ep.luminousPower
+                elif(units == EMISSION_UNITS_ILLUMINANCE):
+                    d['luminance_output'] = ep.illuminance
+                elif(units == EMISSION_UNITS_LUMINOUS_INTENSITY):
+                    d['luminance_output'] = ep.luminousIntensity
+                elif(units == EMISSION_UNITS_LUMINANCE):
+                    d['luminance_output'] = ep.luminance
+                if(colorType == EMISSION_COLOR_TEMPERATURE):
+                    d['color_black_body_enabled'] = True
+                
+                d['temperature_value'] = e.getTemperature()[0]
+                a, _ = e.getMXI()
+                if(a.activeType == MAP_TYPE_BITMAP):
+                    d['hdr_map'] = texture(a.textureMap)
+                    d['hdr_intensity'] = a.value
+                else:
+                    d['hdr_map'] = None
+                    d['hdr_intensity'] = a.value
+                
+                return d
+            
+            def bsdf_props(b, d):
+                d['visible'] = b.getState()[0]
+                
+                a, _ = b.getWeight()
+                if(a.activeType == MAP_TYPE_BITMAP):
+                    d['weight_map_enabled'] = True
+                    d['weight'] = a.value
+                    d['weight_map'] = texture(a.textureMap)
+                else:
+                    d['weight_map_enabled'] = False
+                    d['weight'] = a.value
+                    d['weight_map'] = None
+                
+                r = b.getReflectance()
+                d['ior'] = r.getActiveIorMode()[0]
+                d['complex_ior'] = r.getComplexIor()
+                
+                d['reflectance_0'], d['reflectance_0_map_enabled'], d['reflectance_0_map'] = cattribute_rgb(r.getAttribute('color')[0])
+                d['reflectance_90'], d['reflectance_90_map_enabled'], d['reflectance_90_map'] = cattribute_rgb(r.getAttribute('color.tangential')[0])
+                d['transmittance'], d['transmittance_map_enabled'], d['transmittance_map'] = cattribute_rgb(r.getAttribute('transmittance.color')[0])
+                d['attenuation_units'], d['attenuation'] = r.getAbsorptionDistance()
+                d['nd'], d['abbe'], _ = r.getIOR()
+                d['force_fresnel'], _ = r.getForceFresnel()
+                d['k'], _ = r.getConductor()
+                d['r2_falloff_angle'], d['r2_influence'], d['r2_enabled'], _ = r.getFresnelCustom()
+                
+                d['roughness'], d['roughness_map_enabled'], d['roughness_map'] = cattribute_value(b.getAttribute('roughness')[0])
+                d['bump'], d['bump_map_enabled'], d['bump_map'] = cattribute_value(b.getAttribute('bump')[0])
+                d['bump_map_use_normal'] = b.getNormalMapState()[0]
+                d['anisotropy'], d['anisotropy_map_enabled'], d['anisotropy_map'] = cattribute_value(b.getAttribute('anisotropy')[0])
+                d['anisotropy_angle'], d['anisotropy_angle_map_enabled'], d['anisotropy_angle_map'] = cattribute_value(b.getAttribute('angle')[0])
+                
+                a, _ = r.getAttribute('scattering')
+                d['scattering'] = (a.rgb.r(), a.rgb.g(), a.rgb.b(), )
+                d['coef'], d['asymmetry'], d['single_sided'], _ = r.getScatteringParameters()
+                d['single_sided_value'], d['single_sided_map_enabled'], d['single_sided_map'] = cattribute_value(r.getScatteringThickness()[0])
+                d['single_sided_min'], d['single_sided_max'], _ = r.getScatteringThicknessRange()
+                
+                return d
+            
+            def coating(b, d):
+                nc, _ = b.getNumCoatings()
+                if(nc > 0):
+                    c = b.getCoating(0)
+                else:
+                    d['enabled'] = False
+                    return d
+                
+                d['enabled'] = True
+                d['thickness'], d['thickness_map_enabled'], d['thickness_map'] = cattribute_value(c.getThickness()[0])
+                d['thickness_map_min'], d['thickness_map_max'], _ = c.getThicknessRange()
+                
+                r = c.getReflectance()
+                d['ior'] = r.getActiveIorMode()[0]
+                d['complex_ior'] = r.getComplexIor()
+                
+                d['reflectance_0'], d['reflectance_0_map_enabled'], d['reflectance_0_map'] = cattribute_rgb(r.getAttribute('color')[0])
+                d['reflectance_90'], d['reflectance_90_map_enabled'], d['reflectance_90_map'] = cattribute_rgb(r.getAttribute('color.tangential')[0])
+                
+                d['nd'], _, _ = r.getIOR()
+                d['force_fresnel'], _ = r.getForceFresnel()
+                d['k'], _ = r.getConductor()
+                d['r2_falloff_angle'], _, d['r2_enabled'], _ = r.getFresnelCustom()
+                
+                return d
+            
+            for i, sl in enumerate(structure):
+                l = sl[1]
+                data['layers'][i]['layer_props'] = layer_props(l, data['layers'][i]['layer_props'])
+                data['layers'][i]['emitter'] = emitter(l, data['layers'][i]['emitter'])
+                for j, bs in enumerate(sl[2]):
+                    b = bs[1]
+                    data['layers'][i]['bsdfs'][j]['bsdf_props'] = bsdf_props(b, data['layers'][i]['bsdfs'][j]['bsdf_props'])
+                    data['layers'][i]['bsdfs'][j]['coating'] = coating(b, data['layers'][i]['bsdfs'][j]['coating'])
+            
+            return data
+        
+        log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
+        log("path: {}".format(mxm_path), 1, LogStyles.MESSAGE)
+        s = Cmaxwell(mwcallback)
+        m = s.readMaterial(p)
+        if(m.hasMaterialModifier()):
+            # TODO: import extension materials
+            pass
+        self.data = material(s, m)

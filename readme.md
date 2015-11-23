@@ -14,9 +14,10 @@
 * MXS references
 * Dupli verts, faces and group
 * Multiple UV channels
+* Custom Material creation and editing with inside Blender or with Mxed
+* Save/Load custom materials from/into Blender material editor (extension materials support will be added)
 * Material assignment (including backface materials) and multiple materials per object
 * Extension Materials creation and editing inside Blender
-* Custom Material creation and editing with Mxed
 * Cameras
 * Render parameters
 * All render channels including Custom Alphas
@@ -36,11 +37,13 @@
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/Library/Application Support/Blender/2.76/scripts/addons/```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 * if you are updating from version before 0.3.3, please remove ```_pymaxwell.so``` and ```pymaxwell.py``` from ```/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages``` it is no longer necessary and it might cause conflicts
+* in case of problem with presets (emitters, extension materials, ..., ), remove ```~/Library/Application Support/Blender/2.76/scripts/presets/maxwell_render``` and restart Blender. default presets will be recreated automatically
 
 ### addon installation - Windows:
 
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.76\scripts\addons\```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
+* in case of problem with presets (emitters, extension materials, ..., ), remove ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.76\scripts\presets\maxwell_render``` and restart Blender. default presets will be recreated automatically
 
 ### addon installation - Linux:
 
@@ -49,11 +52,16 @@
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/.config/blender/2.76/scripts/addons/```
 * Start Blender from terminal, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
+#### installation notes:
+
+* in case of problem with presets (emitters, extension materials, ..., ), remove on **Mac OS X**: ```~/Library/Application Support/Blender/2.76/scripts/presets/maxwell_render```, on **Windows**: ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.76\scripts\presets\maxwell_render```, or on **Linux**: ```~/.config/blender/2.76/scripts/presets/maxwell_render``` and restart Blender. default presets will be recreated automatically.
+
 
 ***
 
-changelog:
+**changelog:**
 
+* 0.3.7 custom material editor, custom material import/export
 * 0.3.6 added: export particle uvs, camera lock exposure, choosing external materials with mxed in browser mode, choose scene for auto preview in mxed, fixed: import mxs: object transformation
 * 0.3.5 particle object/group instances, quick setting object properties/object id to multiple objects, blocked emitters, many fixes (reading/drawing material previews, missing cloner objects, hair uvs, ...)
 * 0.3.4 hair with children particles root uvs (requires blender 2.76), wire export faster and with smaller files, fixes here and there
@@ -76,7 +84,7 @@ changelog:
 
 ***
 
-links:
+**links:**
 
 [blenderartist.org forum thread](http://blenderartists.org/forum/showthread.php?366067-Maxwell-Render-integration-for-Blender-%28different-one%29)
 

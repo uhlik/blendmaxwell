@@ -1573,7 +1573,7 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
 
 class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Material Global Properties"
+    bl_label = "Global Properties"
     
     def draw(self, context):
         l = self.layout
@@ -1589,11 +1589,11 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         sub.prop(m, 'use', text="Material Type", )
         sub.separator()
         
-        if(m.use == 'CUSTOM'):
+        if(m.use == 'REFERENCE'):
             r = sub.row()
             r.prop(m, 'override_global_properties')
         
-        if(m.use == 'CUSTOM' and not m.override_global_properties):
+        if(m.use == 'REFERENCE' and not m.override_global_properties):
             sub = sub.column()
             sub.enabled = False
         
@@ -1618,13 +1618,55 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         
         r = sub.row()
         r.prop(m, 'global_id')
+        
+        if(m.use == 'CUSTOM'):
+            sub.prop_search(m, 'custom_active_display_map', mat, 'texture_slots', icon='TEXTURE', )
 
 
 class MaterialPanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Material"
+    bl_label = "Material"
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (m.maxwell_render.use != 'CUSTOM')
     
     def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
         l = self.layout
         sub = l.column()
         m = context.material.maxwell_render
@@ -1984,8 +2026,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r = sub.row()
             r.prop(mx, 'hair_secondary_highlight_tint')
         
-        else:
-            # 'CUSTOM'
+        elif(m.use == 'REFERENCE'):
             sub.prop(m, 'mxm_file')
             sub.prop(m, 'embed')
             r = sub.row(align=True)
@@ -2007,8 +2048,11 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
                 if(not m.force_preview):
                     r.active = False
+        else:
+            # 'CUSTOM'
+            pass
         
-        if(m.use != 'CUSTOM'):
+        if(m.use != 'REFERENCE' and m.use != 'CUSTOM'):
             sub.separator()
             
             s = sub.split(percentage=0.7, align=True)
@@ -2020,8 +2064,1540 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             if(not m.force_preview):
                 r.active = False
         
+        if(m.use == 'REFERENCE'):
+            # sub.separator()
+            sub.operator('maxwell_render.browse_material')
+        
+        if(m.use == 'CUSTOM'):
+            # sometimes little details cause big problems..
+            l = sub
+            
+            cd = m.custom_displacement
+            b = l.box()
+            r = b.row()
+            r.prop(cd, 'expanded', icon='TRIA_DOWN' if cd.expanded else 'TRIA_RIGHT', icon_only=True, emboss=False, )
+            r.prop(cd, 'enabled', text="", )
+            r.label(text="Displacement", )
+            ll = l
+            if(cd.expanded):
+                l = b.column()
+                if(not cd.enabled):
+                    l.enabled = False
+                
+                l.label("Global Properties:")
+                l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
+                l.prop(cd, 'type')
+                
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Subdivision:")
+                c = s.column()
+                r = c.row()
+                r.prop(cd, 'subdivision', text="", )
+                r.prop(cd, 'adaptive', )
+                
+                l.prop(cd, 'subdivision_method')
+                # l.prop(cd, 'offset')
+                # l.prop(cd, 'smoothing')
+                
+                # r = l.row()
+                # s = r.split(percentage=0.333)
+                # c = s.column()
+                # c.label("Offset:")
+                # c = s.column()
+                # r = c.row()
+                # r.prop(cd, 'offset', text="", )
+                
+                tab_single(l, "Offset:", cd, 'offset')
+                
+                # r = l.row()
+                # s = r.split(percentage=0.333)
+                # c = s.column()
+                # c.label("Smoothing:")
+                # c = s.column()
+                # r = c.row()
+                # r.prop(cd, 'smoothing', text="", )
+                
+                tab_single(l, "Smoothing:", cd, 'smoothing')
+                
+                l.prop(cd, 'uv_interpolation')
+                
+                l.separator()
+                l.label("HeightMap Properties:")
+                
+                # r = l.row()
+                # s = r.split(percentage=0.333)
+                # c = s.column()
+                # c.label("Height:")
+                # c = s.column()
+                # r = c.row()
+                # r.prop(cd, 'height', text="", )
+                # r.prop(cd, 'height_units', text="", )
+                
+                tab_double(l, "Height:", cd, 'height', 'height_units', )
+                
+                l.separator()
+                l.label("Vector 3D Properties:")
+                l.prop(cd, 'v3d_preset')
+                l.prop(cd, 'v3d_transform')
+                l.prop(cd, 'v3d_rgb_mapping')
+                r = l.row()
+                r.prop(cd, 'v3d_scale')
+            
+            l = ll
+            
+            l.label("Layers:")
+            
+            r = l.row()
+            cl = m.custom_layers
+            r.template_list("MaterialPanelCustomEditorLayers", "", cl, "layers", cl, "index", rows=4, maxrows=6, )
+            c = r.column(align=True)
+            c.operator("maxwell_render.material_editor_add_layer", icon='ZOOMIN', text="", )
+            c.operator("maxwell_render.material_editor_remove_layer", icon='ZOOMOUT', text="", )
+            c.separator()
+            c.operator("maxwell_render.material_editor_move_layer_up", icon='TRIA_UP', text="", )
+            c.operator("maxwell_render.material_editor_move_layer_down", icon='TRIA_DOWN', text="", )
+            c.operator("maxwell_render.material_editor_clone_layer", icon='GHOST', text="", )
+            
+            if(cl.index >= 0):
+                l.separator()
+                
+                layer = cl.layers[cl.index].layer
+                
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Layer Opacity:")
+                c = s.column()
+                r = c.row()
+                r.prop(layer, 'opacity', text="", )
+                r.prop(layer, 'opacity_map_enabled', text="", )
+                r.prop_search(layer, 'opacity_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                
+                l.separator()
+                em = cl.layers[cl.index].emitter
+                b = l.box()
+                r = b.row()
+                r.prop(em, 'expanded', icon='TRIA_DOWN' if em.expanded else 'TRIA_RIGHT', icon_only=True, emboss=False, )
+                r.prop(em, 'enabled', text="", )
+                r.label(text="Emitter", )
+                ll = l
+                if(em.expanded):
+                    l = b.column()
+                    if(not em.enabled):
+                        l.enabled = False
+                    sub = l
+                    
+                    sub.prop(em, 'type')
+                    sub.separator()
+                    if(em.type == '0'):
+                        # Area
+                        pass
+                    elif(em.type == '1'):
+                        # IES
+                        sub.prop(em, 'ies_data')
+                        sub.separator()
+                        sub.prop(em, 'ies_intensity')
+                        sub.separator()
+                    elif(em.type == '2'):
+                        # Spot
+                        r = sub.row()
+                        s = r.split(percentage=0.2)
+                        c = s.column()
+                        c.label("Spot Map:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(em, 'spot_map_enabled', text="", )
+                        r.prop_search(em, 'spot_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        sub.prop(em, 'spot_cone_angle')
+                        sub.prop(em, 'spot_falloff_angle')
+                        sub.prop(em, 'spot_falloff_type')
+                        sub.prop(em, 'spot_blur')
+                        sub.separator()
+                    
+                    if(em.type == '1'):
+                        # IES
+                        r = sub.row()
+                        s = r.split(percentage=0.2)
+                        c = s.column()
+                        c.label("Color:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(em, 'color', text="", )
+                        r.prop(em, 'color_black_body_enabled', text="", )
+                        r.prop(em, 'color_black_body')
+                    elif(em.type == '2'):
+                        # Spot
+                        r = sub.row()
+                        s = r.split(percentage=0.2)
+                        c = s.column()
+                        c.label("Color:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(em, 'color', text="", )
+                        r.prop(em, 'color_black_body_enabled', text="", )
+                        r.prop(em, 'color_black_body')
+                        sub.separator()
+                        sub.prop(em, 'luminance')
+                        if(em.luminance == '0'):
+                            # Power & Efficacy
+                            sub.prop(em, 'luminance_power')
+                            sub.prop(em, 'luminance_efficacy')
+                            # r = sub.row()
+                            # r.prop(em, 'luminance_output', text="Output (lm)")
+                            # r.enabled = False
+                        elif(em.luminance == '1'):
+                            # Lumen
+                            sub.prop(em, 'luminance_output', text="Output (lm)")
+                        elif(em.luminance == '2'):
+                            # Lux
+                            sub.prop(em, 'luminance_output', text="Output (lm/m)")
+                        elif(em.luminance == '3'):
+                            # Candela
+                            sub.prop(em, 'luminance_output', text="Output (cd)")
+                        elif(em.luminance == '4'):
+                            # Luminance
+                            sub.prop(em, 'luminance_output', text="Output (cd/m)")
+                    else:
+                        sub.prop(em, 'emission')
+                        sub.separator()
+                        
+                        if(em.emission == '0'):
+                            sub.menu("Emitter_presets", text=bpy.types.Emitter_presets.bl_label)
+                            sub.separator()
+                            # Color
+                            r = sub.row()
+                            s = r.split(percentage=0.2)
+                            c = s.column()
+                            c.label("Color:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(em, 'color', text="", )
+                            r.prop(em, 'color_black_body_enabled', text="", )
+                            r.prop(em, 'color_black_body')
+                            sub.separator()
+                            sub.prop(em, 'luminance')
+                            if(em.luminance == '0'):
+                                # Power & Efficacy
+                                c = sub.column(align=True)
+                                c.prop(em, 'luminance_power')
+                                c.prop(em, 'luminance_efficacy')
+                                sub.label("Output: {} lm".format(round(em.luminance_power * em.luminance_efficacy, 1)))
+                            elif(em.luminance == '1'):
+                                # Lumen
+                                sub.prop(em, 'luminance_output', text="Output (lm)")
+                            elif(em.luminance == '2'):
+                                # Lux
+                                sub.prop(em, 'luminance_output', text="Output (lm/m)")
+                            elif(em.luminance == '3'):
+                                # Candela
+                                sub.prop(em, 'luminance_output', text="Output (cd)")
+                            elif(em.luminance == '4'):
+                                # Luminance
+                                sub.prop(em, 'luminance_output', text="Output (cd/m)")
+                        elif(em.emission == '1'):
+                            # Temperature
+                            sub.prop(em, 'temperature_value')
+                        elif(em.emission == '2'):
+                            # HDR Image
+                            sub.prop_search(em, 'hdr_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            sub.separator()
+                            sub.prop(em, 'hdr_intensity')
+                
+                l = ll
+                
+                l.separator()
+                l.label("'{}' BSDFs:".format(cl.layers[cl.index].name))
+                
+                clbs = cl.layers[cl.index].layer.bsdfs
+                r = l.row()
+                r.template_list("MaterialPanelCustomEditorLayerBSDFs", "", clbs, "bsdfs", clbs, "index", rows=4, maxrows=6, )
+                c = r.column(align=True)
+                c.operator("maxwell_render.material_editor_add_bsdf", icon='ZOOMIN', text="", )
+                c.operator("maxwell_render.material_editor_remove_bsdf", icon='ZOOMOUT', text="", )
+                c.separator()
+                c.operator("maxwell_render.material_editor_move_bsdf_up", icon='TRIA_UP', text="", )
+                c.operator("maxwell_render.material_editor_move_bsdf_down", icon='TRIA_DOWN', text="", )
+                c.operator("maxwell_render.material_editor_clone_bsdf", icon='GHOST', text="", )
+                
+                if(clbs.index >= 0):
+                    l.separator()
+                    
+                    try:
+                        bsdf = clbs.bsdfs[clbs.index].bsdf
+                    except IndexError:
+                        # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
+                        return
+                    
+                    r = l.row()
+                    s = r.split(percentage=0.333)
+                    c = s.column()
+                    c.label("Weight:")
+                    c = s.column()
+                    r = c.row()
+                    r.prop(bsdf, 'weight', text="", )
+                    r.prop(bsdf, 'weight_map_enabled', text="", )
+                    r.prop_search(bsdf, 'weight_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                    
+                    l.separator()
+                    
+                    b = l.box()
+                    r = b.row()
+                    r.prop(bsdf, "expanded_ior", icon="TRIA_DOWN" if bsdf.expanded_ior else "TRIA_RIGHT", icon_only=True, emboss=False, )
+                    # r.label(text="BSDF", icon='MATERIAL', )
+                    r.label(text="BSDF")
+                    ll = l
+                    if(bsdf.expanded_ior):
+                        l = b.column()
+                        l.prop(bsdf, 'ior')
+                        
+                        if(bsdf.ior == '1'):
+                            l.prop(bsdf, 'complex_ior')
+                        else:
+                            # r = l.row()
+                            # s = r.split(percentage=0.333)
+                            # c = s.column()
+                            # c.label("Reflectance 0:")
+                            # c = s.column()
+                            # r = c.row()
+                            # r.prop(bsdf, 'reflectance_0', text="", )
+                            # r.prop(bsdf, 'reflectance_0_map_enabled', text="", )
+                            # r.prop_search(bsdf, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            tab_color_and_map(l, "Reflectance 0:", bsdf, 'reflectance_0', 'reflectance_0_map_enabled', 'reflectance_0_map', )
+                            
+                            # r = l.row()
+                            # s = r.split(percentage=0.333)
+                            # c = s.column()
+                            # c.label("Reflectance 90:")
+                            # c = s.column()
+                            # r = c.row()
+                            # r.prop(bsdf, 'reflectance_90', text="", )
+                            # r.prop(bsdf, 'reflectance_90_map_enabled', text="", )
+                            # r.prop_search(bsdf, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            tab_color_and_map(l, "Reflectance 90:", bsdf, 'reflectance_90', 'reflectance_90_map_enabled', 'reflectance_90_map', )
+                            
+                            # r = l.row()
+                            # s = r.split(percentage=0.333)
+                            # c = s.column()
+                            # c.label("Transmittance:")
+                            # c = s.column()
+                            # r = c.row()
+                            # r.prop(bsdf, 'transmittance', text="", )
+                            # r.prop(bsdf, 'transmittance_map_enabled', text="", )
+                            # r.prop_search(bsdf, 'transmittance_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            tab_color_and_map(l, "Transmittance:", bsdf, 'transmittance', 'transmittance_map_enabled', 'transmittance_map', )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Attenuation:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'attenuation', text="", )
+                            r.prop(bsdf, 'attenuation_units', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Nd:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'nd', text="", )
+                            c = r.column()
+                            c.prop(bsdf, 'force_fresnel')
+                            if(bsdf.roughness == 100.0):
+                                c.enabled = False
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.5)
+                            c = s.column()
+                            c.prop(bsdf, 'k')
+                            if(bsdf.roughness == 100.0):
+                                c.enabled = False
+                            c = s.column()
+                            c.prop(bsdf, 'abbe')
+                            if(not m.global_dispersion):
+                                c.enabled = False
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.prop(bsdf, 'r2_enabled', text="R2", )
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'r2_falloff_angle', text="", )
+                            r.prop(bsdf, 'r2_influence', text="", )
+                            if(not bsdf.r2_enabled):
+                                r.enabled = False
+                    
+                    l = ll
+                    
+                    b = l.box()
+                    r = b.row()
+                    r.prop(bsdf, "expanded_surface", icon="TRIA_DOWN" if bsdf.expanded_surface else "TRIA_RIGHT", icon_only=True, emboss=False, )
+                    # r.label(text="Surface", icon='SOLID', )
+                    r.label(text="Surface")
+                    ll = l
+                    if(bsdf.expanded_surface):
+                        l = b.column()
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Roughness:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(bsdf, 'roughness', text="", )
+                        r.prop(bsdf, 'roughness_map_enabled', text="", )
+                        r.prop_search(bsdf, 'roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Bump:")
+                        c = s.column()
+                        r = c.row()
+                        c = r.column()
+                        c.prop(bsdf, 'bump', text="", )
+                        
+                        if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
+                            c.enabled = False
+                        r.prop(bsdf, 'bump_map_enabled', text="", )
+                        r.prop_search(bsdf, 'bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c = s.column()
+                        r = c.row()
+                        r.prop(bsdf, 'bump_map_use_normal', text="Normal Mapping", )
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Anisotropy:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(bsdf, 'anisotropy', text="", )
+                        r.prop(bsdf, 'anisotropy_map_enabled', text="", )
+                        r.prop_search(bsdf, 'anisotropy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Angle:")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(bsdf, 'anisotropy_angle', text="", )
+                        r.prop(bsdf, 'anisotropy_angle_map_enabled', text="", )
+                        r.prop_search(bsdf, 'anisotropy_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                    
+                    l = ll
+                    
+                    b = l.box()
+                    r = b.row()
+                    r.prop(bsdf, "expanded_subsurface", icon="TRIA_DOWN" if bsdf.expanded_subsurface else "TRIA_RIGHT", icon_only=True, emboss=False, )
+                    # r.label(text="Subsurface", icon='SMOOTH', )
+                    r.label(text="Subsurface")
+                    ll = l
+                    if(bsdf.expanded_subsurface):
+                        l = b.column()
+                        
+                        r = l.row()
+                        r.prop(bsdf, 'scattering')
+                        
+                        r = l.row()
+                        r.prop(bsdf, 'coef')
+                        r.prop(bsdf, 'asymmetry')
+                        
+                        # l.prop(bsdf, 'single_sided')
+                        if(bsdf.single_sided):
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            # c.label("Single Sided:")
+                            c.prop(bsdf, 'single_sided')
+                            c = s.column()
+                            r = c.row()
+                            r.prop(bsdf, 'single_sided_value', text="", )
+                            r.prop(bsdf, 'single_sided_map_enabled', text="", )
+                            r.prop_search(bsdf, 'single_sided_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            r = l.row(align=True)
+                            r.prop(bsdf, 'single_sided_min', )
+                            r.prop(bsdf, 'single_sided_max', )
+                        else:
+                            l.prop(bsdf, 'single_sided')
+                    
+                    l = ll
+                    
+                    coat = clbs.bsdfs[clbs.index].coating
+                    b = l.box()
+                    r = b.row()
+                    r.prop(coat, "expanded", icon="TRIA_DOWN" if coat.expanded else "TRIA_RIGHT", icon_only=True, emboss=False, )
+                    r.prop(coat, 'enabled', text='', )
+                    # r.label(text="Coating", icon='TEXTURE_SHADED', )
+                    r.label(text="Coating")
+                    ll = l
+                    if(coat.expanded):
+                        l = b.column()
+                        if(not coat.enabled):
+                            l.enabled = False
+                        
+                        r = l.row()
+                        s = r.split(percentage=0.333)
+                        c = s.column()
+                        c.label("Thickness (nm):")
+                        c = s.column()
+                        r = c.row()
+                        r.prop(coat, 'thickness', text="", )
+                        r.prop(coat, 'thickness_map_enabled', text="", )
+                        r.prop_search(coat, 'thickness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                        
+                        r = l.row(align=True)
+                        r.prop(coat, 'thickness_map_min', text="Min", )
+                        r.prop(coat, 'thickness_map_max', text="Max", )
+                        
+                        l.prop(coat, 'ior')
+                        if(coat.ior == '1'):
+                            l.prop(coat, 'complex_ior')
+                        else:
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Reflectance 0:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(coat, 'reflectance_0', text="", )
+                            r.prop(coat, 'reflectance_0_map_enabled', text="", )
+                            r.prop_search(coat, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Reflectance 90:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(coat, 'reflectance_90', text="", )
+                            r.prop(coat, 'reflectance_90_map_enabled', text="", )
+                            r.prop_search(coat, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.label("Nd:")
+                            c = s.column()
+                            r = c.row()
+                            r.prop(coat, 'nd', text="", )
+                            r.prop(coat, 'force_fresnel')
+                            
+                            l.prop(coat, 'k')
+                            
+                            r = l.row()
+                            s = r.split(percentage=0.333)
+                            c = s.column()
+                            c.prop(coat, 'r2_enabled', text="R2", )
+                            c = s.column()
+                            r = c.row()
+                            r.prop(coat, 'r2_falloff_angle', text="", )
+                            if(not coat.r2_enabled):
+                                r.enabled = False
+                    
+                    l = ll
+            
+            l.separator()
+            sub = l
+            # s = sub.split(percentage=0.7, align=True)
+            s = sub.split(percentage=0.6, align=True)
+            r = s.row(align=True)
+            r.operator('maxwell_render.save_material_as_mxm')
+            r = s.row(align=True)
+            # r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="", icon='FILE_PARENT', )
+            r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="", icon='LIBRARY_DATA_DIRECT', )
+            # r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="Mxed", )
+            r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
+            r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
+            if(not m.force_preview):
+                r.active = False
+            sub.operator('maxwell_render.load_material_from_mxm')
+
+
+class MaterialPanelCustomEditorLayers(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        icon = 'FILE_FOLDER'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            l = item.layer
+            
+            s = layout.split(percentage=0.4, )
+            c = s.column()
+            c.prop(item, "name", text="", emboss=False, icon=icon, )
+            c = s.column()
+            r = c.row()
+            
+            s = r.split(percentage=0.333, )
+            c = s.column()
+            r = c.row()
+            # r.prop(l, 'opacity', text="", )
+            r.prop(l, 'blending', expand=True, )
+            
+            c = s.column()
+            r = c.row()
+            if(l.opacity_map_enabled):
+                r.label('T')
+            else:
+                r.prop(l, 'opacity', text="", )
+            # r.prop(l, 'visible', text="", )
+            r.prop(l, 'visible', text="", icon='RESTRICT_VIEW_OFF' if l.visible else 'RESTRICT_VIEW_ON', emboss=False, )
+            
+            if(not l.visible):
+                layout.active = False
+        
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+
+
+class MaterialPanelCustomEditorLayerBSDFs(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        icon = 'FCURVE'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            # layout.prop(item, "name", text="", emboss=False, icon=icon, )
+            l = item.bsdf
+            
+            s = layout.split(percentage=0.4, )
+            c = s.column()
+            c.prop(item, "name", text="", emboss=False, icon=icon, )
+            c = s.column()
+            r = c.row()
+            
+            s = r.split(percentage=0.333, )
+            c = s.column()
+            r = c.row()
+            # r.prop(l, 'weight', text="", )
+            c = s.column()
+            r = c.row()
+            if(l.weight_map_enabled):
+                r.label('T')
+            else:
+                r.prop(l, 'weight', text="", )
+            # r.prop(l, 'blending', expand=True, )
+            # r.prop(l, 'visible', text="", )
+            r.prop(l, 'visible', text="", icon='RESTRICT_VIEW_OFF' if l.visible else 'RESTRICT_VIEW_ON', emboss=False, )
+            
+            if(not l.visible):
+                layout.active = False
+        
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+
+
+class CustomMaterialLayers(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Layers"
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (m.maxwell_render.use == 'CUSTOM')
+    
+    def draw(self, context):
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        
+        l = self.layout.column()
+        
+        r = l.row()
+        cl = m.custom_layers
+        r.template_list("MaterialPanelCustomEditorLayers", "", cl, "layers", cl, "index", rows=4, maxrows=6, )
+        c = r.column(align=True)
+        c.operator("maxwell_render.material_editor_add_layer", icon='ZOOMIN', text="", )
+        c.operator("maxwell_render.material_editor_remove_layer", icon='ZOOMOUT', text="", )
+        c.separator()
+        c.operator("maxwell_render.material_editor_move_layer_up", icon='TRIA_UP', text="", )
+        c.operator("maxwell_render.material_editor_move_layer_down", icon='TRIA_DOWN', text="", )
+        c.operator("maxwell_render.material_editor_clone_layer", icon='GHOST', text="", )
+        
+        if(cl.index >= 0):
+            l.separator()
+            
+            layer = cl.layers[cl.index].layer
+            
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label("Layer Opacity:")
+            c = s.column()
+            r = c.row()
+            r.prop(layer, 'opacity', text="", )
+            r.prop(layer, 'opacity_map_enabled', text="", )
+            r.prop_search(layer, 'opacity_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+
+
+class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Displacement"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw_header(self, context):
+        d = context.material.maxwell_render.custom_displacement
+        self.layout.prop(d, "enabled", text="", )
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        ls = mx.custom_layers.layers
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0)
+    
+    def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        cd = m.custom_displacement
+        
+        if(not cd.enabled):
+            l.enabled = False
+        
+        l.label("Global Properties:")
+        l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
+        l.prop(cd, 'type')
+        
+        r = l.row()
+        s = r.split(percentage=0.333)
+        c = s.column()
+        c.label("Subdivision:")
+        c = s.column()
+        r = c.row()
+        r.prop(cd, 'subdivision', text="", )
+        r.prop(cd, 'adaptive', )
+        l.prop(cd, 'subdivision_method')
+        tab_single(l, "Offset:", cd, 'offset')
+        tab_single(l, "Smoothing:", cd, 'smoothing')
+        l.prop(cd, 'uv_interpolation')
+        
+        l.separator()
+        l.label("HeightMap Properties:")
+        tab_double(l, "Height:", cd, 'height', 'height_units', )
+        
+        l.separator()
+        l.label("Vector 3D Properties:")
+        l.prop(cd, 'v3d_preset')
+        l.prop(cd, 'v3d_transform')
+        l.prop(cd, 'v3d_rgb_mapping')
+        r = l.row()
+        r.prop(cd, 'v3d_scale')
+
+
+class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Emitter"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw_header(self, context):
+        mx = context.material.maxwell_render
+        e = mx.custom_layers.layers[mx.custom_layers.index].emitter
+        self.layout.prop(e, "enabled", text="", )
+        
+        cl = context.material.maxwell_render.custom_layers
+        self.bl_label = "'{}' Emitter".format(cl.layers[cl.index].name)
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        ls = mx.custom_layers.layers
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0)
+    
+    def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        cl = m.custom_layers
+        em = cl.layers[cl.index].emitter
+        
+        if(not em.enabled):
+            l.enabled = False
+        sub = l
+        
+        sub.prop(em, 'type')
         sub.separator()
-        sub.operator('maxwell_render.browse_material')
+        if(em.type == '0'):
+            # Area
+            pass
+        elif(em.type == '1'):
+            # IES
+            sub.prop(em, 'ies_data')
+            sub.separator()
+            sub.prop(em, 'ies_intensity')
+            sub.separator()
+        elif(em.type == '2'):
+            # Spot
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Spot Map:")
+            c = s.column()
+            r = c.row()
+            r.prop(em, 'spot_map_enabled', text="", )
+            r.prop_search(em, 'spot_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            sub.prop(em, 'spot_cone_angle')
+            sub.prop(em, 'spot_falloff_angle')
+            sub.prop(em, 'spot_falloff_type')
+            sub.prop(em, 'spot_blur')
+            sub.separator()
+        if(em.type == '1'):
+            # IES
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            r = c.row()
+            r.prop(em, 'color', text="", )
+            r.prop(em, 'color_black_body_enabled', text="", )
+            r.prop(em, 'color_black_body')
+        elif(em.type == '2'):
+            # Spot
+            r = sub.row()
+            s = r.split(percentage=0.2)
+            c = s.column()
+            c.label("Color:")
+            c = s.column()
+            r = c.row()
+            r.prop(em, 'color', text="", )
+            r.prop(em, 'color_black_body_enabled', text="", )
+            r.prop(em, 'color_black_body')
+            sub.separator()
+            sub.prop(em, 'luminance')
+            if(em.luminance == '0'):
+                # Power & Efficacy
+                sub.prop(em, 'luminance_power')
+                sub.prop(em, 'luminance_efficacy')
+            elif(em.luminance == '1'):
+                # Lumen
+                sub.prop(em, 'luminance_output', text="Output (lm)")
+            elif(em.luminance == '2'):
+                # Lux
+                sub.prop(em, 'luminance_output', text="Output (lm/m)")
+            elif(em.luminance == '3'):
+                # Candela
+                sub.prop(em, 'luminance_output', text="Output (cd)")
+            elif(em.luminance == '4'):
+                # Luminance
+                sub.prop(em, 'luminance_output', text="Output (cd/m)")
+        else:
+            sub.prop(em, 'emission')
+            sub.separator()
+            if(em.emission == '0'):
+                sub.menu("Emitter_presets", text=bpy.types.Emitter_presets.bl_label)
+                sub.separator()
+                # Color
+                r = sub.row()
+                s = r.split(percentage=0.2)
+                c = s.column()
+                c.label("Color:")
+                c = s.column()
+                r = c.row()
+                r.prop(em, 'color', text="", )
+                r.prop(em, 'color_black_body_enabled', text="", )
+                r.prop(em, 'color_black_body')
+                sub.separator()
+                sub.prop(em, 'luminance')
+                if(em.luminance == '0'):
+                    # Power & Efficacy
+                    c = sub.column(align=True)
+                    c.prop(em, 'luminance_power')
+                    c.prop(em, 'luminance_efficacy')
+                    sub.label("Output: {} lm".format(round(em.luminance_power * em.luminance_efficacy, 1)))
+                elif(em.luminance == '1'):
+                    # Lumen
+                    sub.prop(em, 'luminance_output', text="Output (lm)")
+                elif(em.luminance == '2'):
+                    # Lux
+                    sub.prop(em, 'luminance_output', text="Output (lm/m)")
+                elif(em.luminance == '3'):
+                    # Candela
+                    sub.prop(em, 'luminance_output', text="Output (cd)")
+                elif(em.luminance == '4'):
+                    # Luminance
+                    sub.prop(em, 'luminance_output', text="Output (cd/m)")
+            elif(em.emission == '1'):
+                # Temperature
+                sub.prop(em, 'temperature_value')
+            elif(em.emission == '2'):
+                # HDR Image
+                sub.prop_search(em, 'hdr_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                sub.separator()
+                sub.prop(em, 'hdr_intensity')
+
+
+class CustomMaterialBSDFs(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "BSDFs"
+    
+    def draw_header(self, context):
+        cl = context.material.maxwell_render.custom_layers
+        self.bl_label = "'{}' BSDFs".format(cl.layers[cl.index].name)
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        ls = mx.custom_layers.layers
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0)
+    
+    def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        cl = m.custom_layers
+        
+        # l.label("'{}' BSDFs:".format(cl.layers[cl.index].name))
+        # self.bl_label = "'{}' BSDFs".format(cl.layers[cl.index].name)
+        
+        clbs = cl.layers[cl.index].layer.bsdfs
+        r = l.row()
+        r.template_list("MaterialPanelCustomEditorLayerBSDFs", "", clbs, "bsdfs", clbs, "index", rows=4, maxrows=6, )
+        c = r.column(align=True)
+        c.operator("maxwell_render.material_editor_add_bsdf", icon='ZOOMIN', text="", )
+        c.operator("maxwell_render.material_editor_remove_bsdf", icon='ZOOMOUT', text="", )
+        c.separator()
+        c.operator("maxwell_render.material_editor_move_bsdf_up", icon='TRIA_UP', text="", )
+        c.operator("maxwell_render.material_editor_move_bsdf_down", icon='TRIA_DOWN', text="", )
+        c.operator("maxwell_render.material_editor_clone_bsdf", icon='GHOST', text="", )
+        
+        if(clbs.index >= 0):
+            l.separator()
+            
+            try:
+                bsdf = clbs.bsdfs[clbs.index].bsdf
+            except IndexError:
+                # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
+                return
+            
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label("Weight:")
+            c = s.column()
+            r = c.row()
+            r.prop(bsdf, 'weight', text="", )
+            r.prop(bsdf, 'weight_map_enabled', text="", )
+            r.prop_search(bsdf, 'weight_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+
+
+class CustomMaterialBSDF(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "BSDF"
+    
+    def draw_header(self, context):
+        m = context.material.maxwell_render
+        cl = m.custom_layers
+        clbs = cl.layers[cl.index].layer.bsdfs
+        if(clbs.index >= 0):
+            try:
+                bsdfitem = clbs.bsdfs[clbs.index]
+                self.bl_label = "'{}' BSDF".format(bsdfitem.name)
+            except IndexError:
+                self.bl_label = "BSDF"
+        else:
+            self.bl_label = "BSDF"
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        cs = mx.custom_layers
+        ls = cs.layers
+        if(cs.index < 0):
+            return False
+        bs = ls[cs.index].layer.bsdfs.bsdfs
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0) and (len(bs) > 0)
+    
+    def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        
+        cl = m.custom_layers
+        clbs = cl.layers[cl.index].layer.bsdfs
+        if(clbs.index >= 0):
+            try:
+                bsdf = clbs.bsdfs[clbs.index].bsdf
+            except IndexError:
+                # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
+                return
+            
+            l.prop(bsdf, 'ior')
+        
+            if(bsdf.ior == '1'):
+                l.prop(bsdf, 'complex_ior')
+            else:
+                tab_color_and_map(l, "Reflectance 0:", bsdf, 'reflectance_0', 'reflectance_0_map_enabled', 'reflectance_0_map', )
+                tab_color_and_map(l, "Reflectance 90:", bsdf, 'reflectance_90', 'reflectance_90_map_enabled', 'reflectance_90_map', )
+                tab_color_and_map(l, "Transmittance:", bsdf, 'transmittance', 'transmittance_map_enabled', 'transmittance_map', )
+            
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Attenuation:")
+                c = s.column()
+                r = c.row()
+                r.prop(bsdf, 'attenuation', text="", )
+                r.prop(bsdf, 'attenuation_units', text="", )
+            
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Nd:")
+                c = s.column()
+                r = c.row()
+                r.prop(bsdf, 'nd', text="", )
+                c = r.column()
+                c.prop(bsdf, 'force_fresnel')
+                if(bsdf.roughness == 100.0):
+                    c.enabled = False
+            
+                r = l.row()
+                s = r.split(percentage=0.5)
+                c = s.column()
+                c.prop(bsdf, 'k')
+                if(bsdf.roughness == 100.0):
+                    c.enabled = False
+                c = s.column()
+                c.prop(bsdf, 'abbe')
+                if(not m.global_dispersion):
+                    c.enabled = False
+            
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.prop(bsdf, 'r2_enabled', text="R2", )
+                c = s.column()
+                r = c.row()
+                r.prop(bsdf, 'r2_falloff_angle', text="", )
+                r.prop(bsdf, 'r2_influence', text="", )
+                if(not bsdf.r2_enabled):
+                    r.enabled = False
+
+
+class CustomMaterialSurface(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Surface"
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        cs = mx.custom_layers
+        ls = cs.layers
+        if(cs.index < 0):
+            return False
+        bs = ls[cs.index].layer.bsdfs.bsdfs
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0) and (len(bs) > 0)
+    
+    def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        
+        cl = m.custom_layers
+        clbs = cl.layers[cl.index].layer.bsdfs
+        if(clbs.index >= 0):
+            try:
+                bsdf = clbs.bsdfs[clbs.index].bsdf
+            except IndexError:
+                # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
+                return
+            
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label("Roughness:")
+            c = s.column()
+            r = c.row()
+            r.prop(bsdf, 'roughness', text="", )
+            r.prop(bsdf, 'roughness_map_enabled', text="", )
+            r.prop_search(bsdf, 'roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label("Bump:")
+            c = s.column()
+            r = c.row()
+            c = r.column()
+            c.prop(bsdf, 'bump', text="", )
+        
+            if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
+                c.enabled = False
+            r.prop(bsdf, 'bump_map_enabled', text="", )
+            r.prop_search(bsdf, 'bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c = s.column()
+            r = c.row()
+            r.prop(bsdf, 'bump_map_use_normal', text="Normal Mapping", )
+        
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label("Anisotropy:")
+            c = s.column()
+            r = c.row()
+            r.prop(bsdf, 'anisotropy', text="", )
+            r.prop(bsdf, 'anisotropy_map_enabled', text="", )
+            r.prop_search(bsdf, 'anisotropy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label("Angle:")
+            c = s.column()
+            r = c.row()
+            r.prop(bsdf, 'anisotropy_angle', text="", )
+            r.prop(bsdf, 'anisotropy_angle_map_enabled', text="", )
+            r.prop_search(bsdf, 'anisotropy_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+
+
+class CustomMaterialSubsurface(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Subsurface"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        cs = mx.custom_layers
+        ls = cs.layers
+        if(cs.index < 0):
+            return False
+        bs = ls[cs.index].layer.bsdfs.bsdfs
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0) and (len(bs) > 0)
+    
+    def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        cl = m.custom_layers
+        clbs = cl.layers[cl.index].layer.bsdfs
+        if(clbs.index >= 0):
+            try:
+                bsdf = clbs.bsdfs[clbs.index].bsdf
+            except IndexError:
+                # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
+                return
+            
+            r = l.row()
+            r.prop(bsdf, 'scattering')
+        
+            r = l.row()
+            r.prop(bsdf, 'coef')
+            r.prop(bsdf, 'asymmetry')
+        
+            if(bsdf.single_sided):
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.prop(bsdf, 'single_sided')
+                c = s.column()
+                r = c.row()
+                r.prop(bsdf, 'single_sided_value', text="", )
+                r.prop(bsdf, 'single_sided_map_enabled', text="", )
+                r.prop_search(bsdf, 'single_sided_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                r = l.row(align=True)
+                r.prop(bsdf, 'single_sided_min', )
+                r.prop(bsdf, 'single_sided_max', )
+            else:
+                l.prop(bsdf, 'single_sided')
+
+
+class CustomMaterialCoating(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Coating"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw_header(self, context):
+        mx = context.material.maxwell_render
+        l = mx.custom_layers.layers[mx.custom_layers.index].layer
+        c = l.bsdfs.bsdfs[l.bsdfs.index].coating
+        self.layout.prop(c, "enabled", text="", )
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        cs = mx.custom_layers
+        ls = cs.layers
+        if(cs.index < 0):
+            return False
+        bs = ls[cs.index].layer.bsdfs.bsdfs
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0) and (len(bs) > 0)
+    
+    def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        
+        cl = m.custom_layers
+        clbs = cl.layers[cl.index].layer.bsdfs
+        if(clbs.index >= 0):
+            try:
+                bsdf = clbs.bsdfs[clbs.index].bsdf
+            except IndexError:
+                # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
+                return
+            
+            coat = clbs.bsdfs[clbs.index].coating
+            
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label("Thickness (nm):")
+            c = s.column()
+            r = c.row()
+            r.prop(coat, 'thickness', text="", )
+            r.prop(coat, 'thickness_map_enabled', text="", )
+            r.prop_search(coat, 'thickness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
+            r = l.row(align=True)
+            r.prop(coat, 'thickness_map_min', text="Min (nm)", )
+            r.prop(coat, 'thickness_map_max', text="Max (nm)", )
+            
+            l.prop(coat, 'ior')
+            if(coat.ior == '1'):
+                l.prop(coat, 'complex_ior')
+            else:
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Reflectance 0:")
+                c = s.column()
+                r = c.row()
+                r.prop(coat, 'reflectance_0', text="", )
+                r.prop(coat, 'reflectance_0_map_enabled', text="", )
+                r.prop_search(coat, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Reflectance 90:")
+                c = s.column()
+                r = c.row()
+                r.prop(coat, 'reflectance_90', text="", )
+                r.prop(coat, 'reflectance_90_map_enabled', text="", )
+                r.prop_search(coat, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.label("Nd:")
+                c = s.column()
+                r = c.row()
+                r.prop(coat, 'nd', text="", )
+                r.prop(coat, 'force_fresnel')
+                
+                l.prop(coat, 'k')
+                
+                r = l.row()
+                s = r.split(percentage=0.333)
+                c = s.column()
+                c.prop(coat, 'r2_enabled', text="R2", )
+                c = s.column()
+                r = c.row()
+                r.prop(coat, 'r2_falloff_angle', text="", )
+                if(not coat.r2_enabled):
+                    r.enabled = False
+
+
+class CustomMaterialUtilities(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Utilities"
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM')
+    
+    def draw(self, context):
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        
+        s = l.split(percentage=0.6, align=True)
+        r = s.row(align=True)
+        r.operator('maxwell_render.save_material_as_mxm')
+        r = s.row(align=True)
+        r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="", icon='LIBRARY_DATA_DIRECT', )
+        r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
+        r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
+        if(not m.force_preview):
+            r.active = False
+        l.operator('maxwell_render.load_material_from_mxm')
 
 
 class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
@@ -2862,8 +4438,8 @@ class ObjectPanelBlockedEmittersMenu(Menu):
                             if(mx.use == 'EMITTER'):
                                 # emitter extension material, this one should always be emitter, no need for further checks
                                 es.add(o.name)
-                            elif(mx.use == 'CUSTOM'):
-                                # now check if custom material has emitter layer
+                            elif(mx.use == 'REFERENCE'):
+                                # now check if referenced material has emitter layer
                                 p = bpy.path.abspath(mx.mxm_file)
                                 if(os.path.exists(p)):
                                     if(system.PLATFORM == 'Darwin'):
@@ -2874,6 +4450,10 @@ class ObjectPanelBlockedEmittersMenu(Menu):
                                         mxmec = mxs.MXMEmitterCheck(p)
                                         if(mxmec.emitter):
                                             es.add(o.name)
+                            elif(mx.use == 'CUSTOM'):
+                                for ilayer, layer in enumerate(mx.custom_layers.layers):
+                                    if(layer.emitter.enabled):
+                                        es.add(o.name)
                         else:
                             es.add(o.name)
         
