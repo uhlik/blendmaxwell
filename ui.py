@@ -2841,6 +2841,9 @@ class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
         mx = context.material.maxwell_render
         e = mx.custom_layers.layers[mx.custom_layers.index].emitter
         self.layout.prop(e, "enabled", text="", )
+        
+        cl = context.material.maxwell_render.custom_layers
+        self.bl_label = "'{}' Emitter".format(cl.layers[cl.index].name)
     
     @classmethod
     def poll(cls, context):
@@ -3011,6 +3014,10 @@ class CustomMaterialBSDFs(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "BSDFs"
     
+    def draw_header(self, context):
+        cl = context.material.maxwell_render.custom_layers
+        self.bl_label = "'{}' BSDFs".format(cl.layers[cl.index].name)
+    
     @classmethod
     def poll(cls, context):
         o = context.object
@@ -3059,7 +3066,8 @@ class CustomMaterialBSDFs(MaterialButtonsPanel, Panel):
         l = self.layout.column()
         cl = m.custom_layers
         
-        l.label("'{}' BSDFs:".format(cl.layers[cl.index].name))
+        # l.label("'{}' BSDFs:".format(cl.layers[cl.index].name))
+        # self.bl_label = "'{}' BSDFs".format(cl.layers[cl.index].name)
         
         clbs = cl.layers[cl.index].layer.bsdfs
         r = l.row()
@@ -3095,6 +3103,19 @@ class CustomMaterialBSDFs(MaterialButtonsPanel, Panel):
 class CustomMaterialBSDF(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "BSDF"
+    
+    def draw_header(self, context):
+        m = context.material.maxwell_render
+        cl = m.custom_layers
+        clbs = cl.layers[cl.index].layer.bsdfs
+        if(clbs.index >= 0):
+            try:
+                bsdfitem = clbs.bsdfs[clbs.index]
+                self.bl_label = "'{}' BSDF".format(bsdfitem.name)
+            except IndexError:
+                self.bl_label = "BSDF"
+        else:
+            self.bl_label = "BSDF"
     
     @classmethod
     def poll(cls, context):
