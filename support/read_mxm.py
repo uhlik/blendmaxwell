@@ -43,7 +43,7 @@ def log(msg, indent=0):
 
 
 def main(args):
-    log("mxm meshes to dict:", 1)
+    log("mxm to dict:", 1)
     p = args.mxm_path
     s = Cmaxwell(mwcallback)
     log("reading mxm from: {0}".format(p), 2)
