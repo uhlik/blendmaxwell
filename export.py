@@ -958,12 +958,14 @@ class MXSExport():
             for g in bpy.data.groups:
                 gmx = g.maxwell_render
                 if(gmx.custom_alpha_use):
-                    a = {'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
+                    a = {'name': MXSDatabase.only_sanitize_name(g.name), 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
                     for o in g.objects:
                         for mo in self.serialized_data:
                             if(mo['type'] in allowed):
-                                if(o.name == mo['name']):
-                                    a['objects'].append(o.name)
+                                orgnm = MXSDatabase.object_original_name_from_export_name(mo['name'])
+                                if(o.name == orgnm):
+                                    a['objects'].append(mo['name'])
+                                    # also add children of objects such as particles, hair, etc.. objects which are created as child of original
                                     for ch in self.serialized_data:
                                         if(ch['type'] in allowed):
                                             if(ch['parent'] == mo['name']):
@@ -976,15 +978,17 @@ class MXSExport():
             for g in bpy.data.groups:
                 gmx = g.maxwell_render
                 if(gmx.custom_alpha_use):
-                    a = {'name': g.name, 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
+                    a = {'name': MXSDatabase.only_sanitize_name(g.name), 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
                     for o in g.objects:
                         for mo in self.hierarchy:
                             # hierarchy: (0: name, 1: parent, 2: type), ...
                             # type
                             if(mo[2] in allowed):
                                 # name
-                                if(o.name == mo[0]):
-                                    a['objects'].append(o.name)
+                                orgnm = MXSDatabase.object_original_name_from_export_name(mo[0])
+                                if(o.name == orgnm):
+                                    a['objects'].append(mo[0])
+                                    # also add children of objects such as particles, hair, etc.. objects which are created as child of original
                                     for ch in self.hierarchy:
                                         # type
                                         if(ch[2] in allowed):
@@ -996,6 +1000,8 @@ class MXSExport():
                                                     a['objects'].append(ch[0])
                                                     break
                     groups.append(a)
+        for g in groups:
+            log("{} > {}".format(g['name'], g['objects']), 2)
         
         log("writing scene properties..", 1, LogStyles.MESSAGE, )
         o = MXSScene(self.mxs_path, groups, )
@@ -1529,9 +1535,20 @@ class MXSDatabase():
         return nm
     
     @classmethod
+    def only_sanitize_name(cls, nm, ):
+        nm = ''.join(c if c in cls.__valid_chars else '_' for c in nm)
+        return nm
+    
+    @classmethod
     def object_original_name(cls, ob, ):
         for o, n, onm in cls.__objects:
             if(o == ob):
+                return onm
+    
+    @classmethod
+    def object_original_name_from_export_name(cls, name, ):
+        for o, n, onm in cls.__objects:
+            if(name == n):
                 return onm
     
     @classmethod
