@@ -1687,12 +1687,40 @@ def environment(d, s, ):
 
 
 def custom_alphas(d, s, ):
+    def get_material_names(s):
+        it = CmaxwellMaterialIterator()
+        o = it.first(s)
+        l = []
+        while not o.isNull():
+            name = o.getName()
+            l.append(name)
+            o = it.next()
+        return l
+    
+    def get_object_names(s):
+        it = CmaxwellObjectIterator()
+        o = it.first(s)
+        l = []
+        while not o.isNull():
+            name, _ = o.getName()
+            l.append(name)
+            o = it.next()
+        return l
+    
+    sobs = get_object_names(s)
+    smats = get_material_names(s)
+    
     ags = d['channels_custom_alpha_groups']
     for a in ags:
         s.createCustomAlphaChannel(a['name'], a['opaque'])
         for n in a['objects']:
-            o = s.getObject(n)
-            o.addToCustomAlpha(a['name'])
+            if(n in sobs):
+                o = s.getObject(n)
+                o.addToCustomAlpha(a['name'])
+        for n in a['materials']:
+            if(n in smats):
+                m = s.getMaterial(n)
+                m.addToCustomAlpha(a['name'])
 
 
 def particles(d, s, ):

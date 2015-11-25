@@ -1770,11 +1770,40 @@ class MXSWriter():
         groups      list of dicts: {'name': string, 'objects': list of strings, 'opaque': bool, }
         """
         s = self.mxs
+        
+        def get_material_names(s):
+            it = CmaxwellMaterialIterator()
+            o = it.first(s)
+            l = []
+            while not o.isNull():
+                name = o.getName()
+                l.append(name)
+                o = it.next()
+            return l
+    
+        def get_object_names(s):
+            it = CmaxwellObjectIterator()
+            o = it.first(s)
+            l = []
+            while not o.isNull():
+                name, _ = o.getName()
+                l.append(name)
+                o = it.next()
+            return l
+        
+        sobs = get_object_names(s)
+        smats = get_material_names(s)
+        
         for a in groups:
             s.createCustomAlphaChannel(a['name'], a['opaque'])
             for n in a['objects']:
-                o = s.getObject(n)
-                o.addToCustomAlpha(a['name'])
+                if(n in sobs):
+                    o = s.getObject(n)
+                    o.addToCustomAlpha(a['name'])
+            for n in a['materials']:
+                if(n in smats):
+                    m = s.getMaterial(n)
+                    m.addToCustomAlpha(a['name'])
     
     def ext_particles(self, name, properties, matrix, object_props=None, material=None, backface_material=None, ):
         """Create particles object.

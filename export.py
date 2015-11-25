@@ -947,19 +947,73 @@ class MXSExport():
         o = MXSEnvironment()
         self._write(o)
         
-        log("writing custom alpha groups:", 1, LogStyles.MESSAGE, )
-        # all object are processed now, i can work with all object which have made it through
+        log("writing custom alphas:", 1, LogStyles.MESSAGE, )
         groups = []
-        allowed = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
-        children = ['PARTICLES', 'HAIR', 'SEA', ]
         
-        if(system.PLATFORM == 'Darwin'):
-            # my humble apologies for following if-for-if-for.. loop
-            for g in bpy.data.groups:
-                gmx = g.maxwell_render
-                if(gmx.custom_alpha_use):
-                    a = {'name': MXSDatabase.only_sanitize_name(g.name), 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
-                    for o in g.objects:
+        mx = bpy.context.scene.maxwell_render
+        if(mx.custom_alphas_use_groups):
+            # all object are processed now, i can work with all object which have made it through
+            allowed = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+            children = ['PARTICLES', 'HAIR', 'SEA', ]
+            
+            if(system.PLATFORM == 'Darwin'):
+                # my humble apologies for following if-for-if-for.. loop
+                for g in bpy.data.groups:
+                    gmx = g.maxwell_render
+                    if(gmx.custom_alpha_use):
+                        a = {'name': MXSDatabase.only_sanitize_name(g.name), 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
+                        for o in g.objects:
+                            for mo in self.serialized_data:
+                                if(mo['type'] in allowed):
+                                    orgnm = MXSDatabase.object_original_name_from_export_name(mo['name'])
+                                    if(o.name == orgnm):
+                                        a['objects'].append(mo['name'])
+                                        # also add children of objects such as particles, hair, etc.. objects which are created as child of original
+                                        for ch in self.serialized_data:
+                                            if(ch['type'] in allowed):
+                                                if(ch['parent'] == mo['name']):
+                                                    if(ch['type'] in children):
+                                                        a['objects'].append(ch['name'])
+                                                        break
+                        groups.append(a)
+            elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+                # really ugly.. i know
+                for g in bpy.data.groups:
+                    gmx = g.maxwell_render
+                    if(gmx.custom_alpha_use):
+                        a = {'name': MXSDatabase.only_sanitize_name(g.name), 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
+                        for o in g.objects:
+                            for mo in self.hierarchy:
+                                # hierarchy: (0: name, 1: parent, 2: type), ...
+                                # type
+                                if(mo[2] in allowed):
+                                    # name
+                                    orgnm = MXSDatabase.object_original_name_from_export_name(mo[0])
+                                    if(o.name == orgnm):
+                                        a['objects'].append(mo[0])
+                                        # also add children of objects such as particles, hair, etc.. objects which are created as child of original
+                                        for ch in self.hierarchy:
+                                            # type
+                                            if(ch[2] in allowed):
+                                                # parent, name
+                                                if(ch[1] == mo[0]):
+                                                    # type
+                                                    if(ch[2] in children):
+                                                        # name
+                                                        a['objects'].append(ch[0])
+                                                        break
+                        groups.append(a)
+        else:
+            alphas = mx.custom_alphas_manual.alphas
+            for alpha in alphas:
+                obs = [bpy.data.objects[o.name] for o in alpha.objects]
+                mats = [bpy.data.materials[m.name] for m in alpha.materials]
+                a = {'name': MXSDatabase.only_sanitize_name(alpha.name), 'opaque': alpha.opaque, 'objects': [], 'materials': [], }
+                
+                allowed = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
+                children = ['PARTICLES', 'HAIR', 'SEA', ]
+                if(system.PLATFORM == 'Darwin'):
+                    for o in obs:
                         for mo in self.serialized_data:
                             if(mo['type'] in allowed):
                                 orgnm = MXSDatabase.object_original_name_from_export_name(mo['name'])
@@ -972,36 +1026,34 @@ class MXSExport():
                                                 if(ch['type'] in children):
                                                     a['objects'].append(ch['name'])
                                                     break
-                    groups.append(a)
-        elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
-            # really ugly.. i know
-            for g in bpy.data.groups:
-                gmx = g.maxwell_render
-                if(gmx.custom_alpha_use):
-                    a = {'name': MXSDatabase.only_sanitize_name(g.name), 'objects': [], 'opaque': gmx.custom_alpha_opaque, }
-                    for o in g.objects:
+                elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+                    for o in obs:
                         for mo in self.hierarchy:
-                            # hierarchy: (0: name, 1: parent, 2: type), ...
-                            # type
                             if(mo[2] in allowed):
-                                # name
                                 orgnm = MXSDatabase.object_original_name_from_export_name(mo[0])
                                 if(o.name == orgnm):
                                     a['objects'].append(mo[0])
-                                    # also add children of objects such as particles, hair, etc.. objects which are created as child of original
                                     for ch in self.hierarchy:
-                                        # type
                                         if(ch[2] in allowed):
-                                            # parent, name
                                             if(ch[1] == mo[0]):
-                                                # type
                                                 if(ch[2] in children):
-                                                    # name
                                                     a['objects'].append(ch[0])
                                                     break
-                    groups.append(a)
-        for g in groups:
-            log("{} > {}".format(g['name'], g['objects']), 2)
+                for mat in mats:
+                    # only materials with (users - fake_user) > 0
+                    u = mat.users
+                    if(mat.use_fake_user):
+                        u -= 1
+                    if(u > 0):
+                        a['materials'].append(mat.name)
+                groups.append(a)
+        
+        if(mx.custom_alphas_use_groups):
+            for g in groups:
+                log("{} > {}".format(g['name'], g['objects']), 2)
+        else:
+            for g in groups:
+                log("{} > objects: {}, materials: {}".format(g['name'], g['objects'], g['materials']), 2)
         
         log("writing scene properties..", 1, LogStyles.MESSAGE, )
         o = MXSScene(self.mxs_path, groups, )

@@ -543,6 +543,115 @@ class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
         c.prop(m, 'channels_reflectance_file', text="", )
 
 
+class ManualCustomAlphasList(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        icon = 'IMAGE_ALPHA'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            # layout.prop(item, "name", text="", emboss=False, icon=icon, )
+            # layout.prop(item, "opaque")
+            
+            # s = layout.split(percentage=0.7)
+            c = layout.column()
+            c.prop(item, "name", text="", emboss=False, icon=icon, )
+            c = layout.column()
+            r = c.row()
+            r.alignment = 'RIGHT'
+            # r.label("Opaque")
+            # r.prop(item, "opaque", text="", )
+            r.prop(item, "opaque")
+            
+        
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+
+
+class ManualCustomAlphasObjectList(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        icon = 'OBJECT_DATA'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+        
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+
+
+class ManualCustomAlphasMaterialList(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        icon = 'MATERIAL_DATA'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+        
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+
+
+class ManualCustomAlphasObjectMenuAdd(Menu):
+    bl_label = "Add Object"
+    bl_idname = "ManualCustomAlphasObjectMenuAdd"
+    
+    @classmethod
+    def poll(cls, context):
+        return (len(context.objects) > 0)
+    
+    def draw(self, context):
+        l = self.layout
+        
+        allowed = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        obs = []
+        for o in bpy.context.scene.objects:
+            if(o.type in allowed):
+                obs.append(o.name)
+        
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        
+        num = 0
+        obs.sort(key=str.lower)
+        
+        for n in obs:
+            if(n not in alpha.objects):
+                op = l.operator("maxwell_render.custom_alphas_object_add", text=n, )
+                op.name = n
+                num += 1
+        
+        if(num == 0):
+            l.label("No objects to add..")
+
+
+class ManualCustomAlphasMaterialMenuAdd(Menu):
+    bl_label = "Add Material"
+    bl_idname = "ManualCustomAlphasMaterialMenuAdd"
+    
+    @classmethod
+    def poll(cls, context):
+        return (len(bpy.data.materials) > 0)
+    
+    def draw(self, context):
+        l = self.layout
+        
+        mats = []
+        for m in bpy.data.materials:
+            mats.append(m.name)
+        
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        
+        num = 0
+        mats.sort(key=str.lower)
+        
+        for n in mats:
+            if(n not in alpha.materials):
+                op = l.operator("maxwell_render.custom_alphas_material_add", text=n, )
+                op.name = n
+                num += 1
+        
+        if(num == 0):
+            l.label("No materials to add..")
+
+
 class ChannelsCustomAlphasPanel(RenderLayerButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Custom Alphas"
@@ -552,29 +661,68 @@ class ChannelsCustomAlphasPanel(RenderLayerButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         
-        sub.label("Custom Alphas are defined by Object groups.")
+        smx = context.scene.maxwell_render
+        r = sub.row()
+        r.prop(smx, 'custom_alphas_use_groups', )
         
-        for g in bpy.data.groups:
-            m = g.maxwell_render
+        if(smx.custom_alphas_use_groups):
+            sub.label("Custom Alphas defined by Object groups.")
             
-            b = sub.box()
-            s = b.split(percentage=0.20)
+            for g in bpy.data.groups:
+                m = g.maxwell_render
+                
+                b = sub.box()
+                s = b.split(percentage=0.20)
+                
+                c = s.column()
+                c.prop(m, 'custom_alpha_use')
+                
+                s = s.split(percentage=0.65)
+                
+                c = s.column()
+                r = c.row()
+                r.label('Group: "{}"'.format(g.name))
+                if(not m.custom_alpha_use):
+                    c.enabled = False
+                
+                c = s.column()
+                c.prop(m, 'custom_alpha_opaque')
+                if(not m.custom_alpha_use):
+                    c.enabled = False
+        else:
+            # 'MANUAL_SELECTION'
+            m = context.scene.maxwell_render
+            cam = m.custom_alphas_manual
             
-            c = s.column()
-            c.prop(m, 'custom_alpha_use')
+            sub.separator()
+            r = sub.row()
+            r.template_list("ManualCustomAlphasList", "", cam, "alphas", cam, "index", rows=3, maxrows=6, )
+            c = r.column(align=True)
+            c.operator("maxwell_render.custom_alphas_add", icon='ZOOMIN', text="", )
+            c.operator("maxwell_render.custom_alphas_remove", icon='ZOOMOUT', text="", )
             
-            s = s.split(percentage=0.65)
+            try:
+                alpha = cam.alphas[cam.index]
+            except:
+                return
             
-            c = s.column()
-            r = c.row()
-            r.label('Group: "{}"'.format(g.name))
-            if(not m.custom_alpha_use):
-                c.enabled = False
-            
-            c = s.column()
-            c.prop(m, 'custom_alpha_opaque')
-            if(not m.custom_alpha_use):
-                c.enabled = False
+            sub.label("'{}' Objects:".format(alpha.name))
+            r = sub.row()
+            r.template_list("ManualCustomAlphasObjectList", "", alpha, "objects", alpha, "o_index", rows=4, maxrows=6, )
+            c = r.column(align=True)
+            c.menu("ManualCustomAlphasObjectMenuAdd", text="", icon='ZOOMIN', )
+            c.operator("maxwell_render.custom_alphas_object_remove", icon='ZOOMOUT', text="", )
+            c.separator()
+            c.operator("maxwell_render.custom_alphas_add_selected_objects", icon='GROUP_VERTEX', text="", )
+            c.operator("maxwell_render.custom_alphas_object_clear", icon='X', text="", )
+            sub.label("'{}' Materials:".format(alpha.name))
+            r = sub.row()
+            r.template_list("ManualCustomAlphasMaterialList", "", alpha, "materials", alpha, "m_index", rows=3, maxrows=6, )
+            c = r.column(align=True)
+            c.menu("ManualCustomAlphasMaterialMenuAdd", text="", icon='ZOOMIN', )
+            c.operator("maxwell_render.custom_alphas_material_remove", icon='ZOOMOUT', text="", )
+            c.separator()
+            c.operator("maxwell_render.custom_alphas_material_clear", icon='X', text="", )
 
 
 class EnvironmentPanel(WorldButtonsPanel, Panel):

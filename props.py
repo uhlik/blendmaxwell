@@ -234,6 +234,42 @@ class PrivateProperties(PropertyGroup):
         del bpy.types.Scene.maxwell_render_private
 
 
+class CustomAlphaGroupsProperties(PropertyGroup):
+    custom_alpha_use = BoolProperty(name="Use", default=False, )
+    custom_alpha_opaque = BoolProperty(name="Opaque", default=False, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Group.maxwell_render = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregiser(cls):
+        del bpy.types.Group.maxwell_render
+
+
+class ManualCustomAlphasObjectItem(PropertyGroup):
+    name = StringProperty(name="Name", default="Layer", )
+
+
+class ManualCustomAlphasMaterialItem(PropertyGroup):
+    name = StringProperty(name="Name", default="Layer", )
+
+
+class ManualCustomAlphaItem(PropertyGroup):
+    name = StringProperty(name="Name", default="Custom Alpha", )
+    objects = CollectionProperty(name="Objects", type=ManualCustomAlphasObjectItem, )
+    materials = CollectionProperty(name="Materials", type=ManualCustomAlphasMaterialItem, )
+    # use = BoolProperty(name="Use", default=False, )
+    opaque = BoolProperty(name="Opaque", default=False, )
+    o_index = IntProperty(name="Active Object", default=-1, )
+    m_index = IntProperty(name="Active Material", default=-1, )
+
+
+class ManualCustomAlphas(PropertyGroup):
+    alphas = CollectionProperty(name="Alphas", type=ManualCustomAlphaItem, )
+    index = IntProperty(name="Active", default=-1, )
+
+
 class SceneProperties(PropertyGroup):
     scene_time = IntProperty(name="Time (minutes)", default=60, min=1, max=50000, description="Maximum render time (in minutes) for the render", )
     scene_sampling_level = FloatProperty(name="Sampling Level", default=12.0, min=1.0, max=50.00, precision=2, description="Maximum sampling level required", )
@@ -400,6 +436,10 @@ class SceneProperties(PropertyGroup):
     private_mxi = StringProperty(default="", options={'HIDDEN'}, )
     
     blocked_emitters_deep_check = BoolProperty(name="Deep Check", default=False, description="Check object materials for emitter layer. Might be very slow on Mac OS X..", )
+    
+    # custom_alphas_use = EnumProperty(name="Custom Alphas", items=[('OBJECT_GROUPS', "Object Groups", ""), ('MANUAL_SELECTION', "Manual Selection", ""), ], default='OBJECT_GROUPS', description="", )
+    custom_alphas_use_groups = BoolProperty(name="Use Object Groups", default=False, description="", )
+    custom_alphas_manual = PointerProperty(name="Manual Custom Alphas", type=ManualCustomAlphas, )
     
     @classmethod
     def register(cls):
@@ -830,19 +870,6 @@ class TextureProperties(PropertyGroup):
     @classmethod
     def unregiser(cls):
         del bpy.types.Texture.maxwell_render
-
-
-class CustomAlphaPropertyGroup(PropertyGroup):
-    custom_alpha_use = BoolProperty(name="Use", default=False, )
-    custom_alpha_opaque = BoolProperty(name="Opaque", default=False, )
-    
-    @classmethod
-    def register(cls):
-        bpy.types.Group.maxwell_render = PointerProperty(type=cls)
-    
-    @classmethod
-    def unregiser(cls):
-        del bpy.types.Group.maxwell_render
 
 
 class SunProperties(PropertyGroup):

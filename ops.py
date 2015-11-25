@@ -1376,6 +1376,215 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 c.r2_falloff_angle = math.radians(cd['r2_falloff_angle'])
 
 
+class CustomAlphasAdd(Operator):
+    bl_idname = "maxwell_render.custom_alphas_add"
+    bl_label = "Add Custom Alpha"
+    bl_description = "Add Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.scene.maxwell_render
+        obs = mx.custom_alphas_manual.alphas
+        
+        item = obs.add()
+        item.id = len(obs)
+        item.name = 'Custom Alpha'
+        mx.custom_alphas_manual.index = (len(obs) - 1)
+        
+        return {'FINISHED'}
+
+
+class CustomAlphasRemove(Operator):
+    bl_idname = "maxwell_render.custom_alphas_remove"
+    bl_label = "Remove Custom Alpha"
+    bl_description = "Remove Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.scene.maxwell_render
+        cam = mx.custom_alphas_manual
+        obs = cam.alphas
+        idx = cam.index
+        try:
+            item = obs[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        cam.index -= 1
+        obs.remove(idx)
+        if(idx == 0):
+            cam.index = idx
+        if(len(obs) == 0):
+            cam.index = -1
+        
+        return {'FINISHED'}
+
+
+class CustomAlphasObjectAdd(Operator):
+    bl_idname = "maxwell_render.custom_alphas_object_add"
+    bl_label = "Add Object"
+    bl_description = "Add Object To Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    name = StringProperty(name="Object Name", )
+    
+    def execute(self, context):
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        obs = alpha.objects
+        for n in obs:
+            if(self.name == n.name):
+                return {'PASS_THROUGH'}
+        
+        item = obs.add()
+        item.id = len(obs)
+        item.name = self.name
+        
+        alpha.o_index = (len(obs) - 1)
+        
+        return {'FINISHED'}
+
+
+class CustomAlphasObjectRemove(Operator):
+    bl_idname = "maxwell_render.custom_alphas_object_remove"
+    bl_label = "Remove Object"
+    bl_description = "Remove Object From Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        obs = alpha.objects
+        idx = alpha.o_index
+        try:
+            item = obs[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        alpha.o_index -= 1
+        obs.remove(idx)
+        if(idx == 0):
+            alpha.o_index = idx
+        if(len(obs) == 0):
+            alpha.o_index = -1
+        
+        return {'FINISHED'}
+
+
+class CustomAlphasObjectAddSelected(Operator):
+    bl_idname = "maxwell_render.custom_alphas_add_selected_objects"
+    bl_label = "Add Selected Objects"
+    bl_description = "Add Selected Objects To Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        allowed = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        aos = []
+        for o in bpy.context.selected_objects:
+            if(o.type in allowed):
+                aos.append(o.name)
+        
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        obs = alpha.objects
+        
+        def add(name):
+            item = obs.add()
+            item.id = len(obs)
+            item.name = name
+            alpha.o_index = (len(obs) - 1)
+        
+        for ao in aos:
+            existing = [o.name for o in obs]
+            if(ao not in existing):
+                add(ao)
+        
+        return {'FINISHED'}
+
+
+class CustomAlphasObjectClear(Operator):
+    bl_idname = "maxwell_render.custom_alphas_object_clear"
+    bl_label = "Remove All Objects"
+    bl_description = "Remove All Objects From Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        while(len(alpha.objects) > 0):
+            alpha.objects.remove(0)
+        alpha.o_index = -1
+        
+        return {'FINISHED'}
+
+
+class CustomAlphasMaterialAdd(Operator):
+    bl_idname = "maxwell_render.custom_alphas_material_add"
+    bl_label = "Add Material"
+    bl_description = "Add Material To Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    name = StringProperty(name="Material Name", )
+    
+    def execute(self, context):
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        mats = alpha.materials
+        for n in mats:
+            if(self.name == n.name):
+                return {'PASS_THROUGH'}
+        
+        item = mats.add()
+        item.id = len(mats)
+        item.name = self.name
+        
+        alpha.m_index = (len(mats) - 1)
+        
+        return {'FINISHED'}
+
+
+class CustomAlphasMaterialRemove(Operator):
+    bl_idname = "maxwell_render.custom_alphas_material_remove"
+    bl_label = "Remove Material"
+    bl_description = "Remove Material From Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        mats = alpha.materials
+        idx = alpha.m_index
+        try:
+            item = mats[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        alpha.m_index -= 1
+        mats.remove(idx)
+        if(idx == 0):
+            alpha.m_index = idx
+        if(len(mats) == 0):
+            alpha.m_index = -1
+        
+        return {'FINISHED'}
+
+
+class CustomAlphasMaterialClear(Operator):
+    bl_idname = "maxwell_render.custom_alphas_material_clear"
+    bl_label = "Remove All Materials"
+    bl_description = "Remove All Materials From Custom Alpha"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.scene.maxwell_render
+        alpha = mx.custom_alphas_manual.alphas[mx.custom_alphas_manual.index]
+        while(len(alpha.materials) > 0):
+            alpha.materials.remove(0)
+        alpha.m_index = -1
+        
+        return {'FINISHED'}
+
+
 class Render_preset_add(AddPresetBase, Operator):
     """Add a new render preset."""
     bl_idname = 'maxwell_render.render_preset_add'
