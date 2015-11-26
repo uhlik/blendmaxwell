@@ -559,8 +559,6 @@ class ManualCustomAlphasList(UIList):
             # r.label("Opaque")
             # r.prop(item, "opaque", text="", )
             r.prop(item, "opaque")
-            
-        
         elif(self.layout_type in {'GRID'}):
             layout.alignment = 'CENTER'
             layout.prop(item, "name", text="", emboss=False, icon=icon, )

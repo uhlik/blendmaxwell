@@ -1110,7 +1110,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         elif(enm == 'Hair'):
             mx.use = 'HAIR'
         else:
-            raise TypeError("{}: Unsupported extension material type: {}".format(material.name, enm, )) 
+            raise TypeError("{}: Unsupported extension material type: {}".format(material.name, enm, ))
         
         def texture(mat, d, n, ):
             if(d is None):
@@ -1120,7 +1120,11 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             slot = ts.add()
             tex = bpy.data.textures.new(n, 'IMAGE')
             slot.texture = tex
-            image = bpy.data.images.load(d['path'])
+            image = None
+            if(os.path.exists(d['path'])):
+                image = bpy.data.images.load(d['path'])
+            else:
+                self.report({'ERROR'}, "File '{}' does not exist.".format(d['path']))
             tex.image = image
             tm = tex.maxwell_render
             
@@ -1282,7 +1286,11 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             slot = ts.add()
             tex = bpy.data.textures.new(n, 'IMAGE')
             slot.texture = tex
-            image = bpy.data.images.load(d['path'])
+            image = None
+            if(os.path.exists(d['path'])):
+                image = bpy.data.images.load(d['path'])
+            else:
+                self.report({'ERROR'}, "File '{}' does not exist.".format(d['path']))
             tex.image = image
             tm = tex.maxwell_render
             
