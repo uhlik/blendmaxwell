@@ -1080,7 +1080,191 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         
         return {'FINISHED'}
     
-    def make(self, material, slot, data):
+    def extension(self, material, slot, data, ):
+        def gamma_correct(c):
+            g = 2.2
+            c = [v ** g for v in c]
+            return c
+        
+        material = bpy.data.materials.new(material.name)
+        slot.material = material
+        
+        d = data
+        e = data['extension']
+        mx = material.maxwell_render
+        
+        # extension type
+        enm = e['EXTENSION_NAME']
+        if(enm == 'AGS'):
+            mx.use = 'AGS'
+        elif(enm == 'Opaque'):
+            mx.use = 'OPAQUE'
+        elif(enm == 'Transparent'):
+            mx.use = 'TRANSPARENT'
+        elif(enm == 'Metal'):
+            mx.use = 'METAL'
+        elif(enm == 'Translucent'):
+            mx.use = 'TRANSLUCENT'
+        elif(enm == 'Car Paint'):
+            mx.use = 'CARPAINT'
+        elif(enm == 'Hair'):
+            mx.use = 'HAIR'
+        else:
+            raise TypeError("{}: Unsupported extension material type: {}".format(material.name, enm, )) 
+        
+        def texture(mat, d, n, ):
+            if(d is None):
+                return ""
+            
+            ts = mat.texture_slots
+            slot = ts.add()
+            tex = bpy.data.textures.new(n, 'IMAGE')
+            slot.texture = tex
+            image = bpy.data.images.load(d['path'])
+            tex.image = image
+            tm = tex.maxwell_render
+            
+            mx.path = d['path']
+            mx.use_global_map = d['use_global_map']
+            mx.channel = d['channel']
+            
+            mx.tiling_method = EnumProperty(name="Tiling Method", items=[('TILE_XY', "Tile XY", ""), ('TILE_X', "Tile X", ""), ('TILE_Y', "Tile Y", ""), ('NO_TILING', "No Tiling", ""), ], default='TILE_XY', )
+            
+            tm = d['tiling_method']
+            if(not tm[0] and not tm[1]):
+                mx.tiling_method = 'NO_TILING'
+            elif(tm[0] and not tm[1]):
+                mx.tiling_method = 'TILE_X'
+            elif(not tm[0] and tm[1]):
+                mx.tiling_method = 'TILE_Y'
+            else:
+                mx.tiling_method = 'TILE_XY'
+            
+            mx.tiling_units = str(d['tiling_units'])
+            mx.repeat = d['repeat']
+            mx.mirror_x = d['mirror'][0]
+            mx.mirror_y = d['mirror'][1]
+            mx.offset = d['offset']
+            mx.rotation = math.radians(d['rotation'])
+            mx.invert = d['invert']
+            mx.use_alpha = d['use_alpha']
+            mx.interpolation = bool(d['interpolation'])
+            mx.brightness = d['brightness']
+            mx.contrast = d['contrast']
+            mx.saturation = d['saturation']
+            mx.hue = d['hue']
+            mx.clamp = d['clamp']
+            
+            return tex.name
+        
+        # globals
+        gp = d['global_props']
+        if(gp['override_map'] is not None):
+            mx.global_override_map = texture(material, gp['override_map'], 'override map')
+        if(gp['bump_map'] is not None):
+            mx.global_bump = True
+            mx.global_bump_value = gp['bump_value']
+            mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
+        else:
+            mx.global_bump = False
+            mx.global_bump_value = gp['bump_value']
+            mx.global_bump_map = ''
+        mx.global_dispersion = gp['dispersion']
+        mx.global_shadow = gp['shadow']
+        mx.global_matte = gp['matte']
+        mx.global_priority = gp['priority']
+        mx.global_id = [v / 255 for v in gp['id']]
+        
+        # extension data
+        mxe = material.maxwell_material_extension
+        if(mx.use == 'AGS'):
+            mxe.ags_color = gamma_correct(e['Color'])
+            mxe.ags_reflection = e['Reflection']
+            mxe.ags_type = str(e['Type'])
+        elif(mx.use == 'OPAQUE'):
+            mxe.opaque_color_type = bool(e['Color Type'])
+            mxe.opaque_color = gamma_correct(e['Color'])
+            mxe.opaque_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.opaque_shininess_type = bool(e['Shininess Type'])
+            mxe.opaque_shininess = e['Shininess']
+            mxe.opaque_shininess_map = texture(material, e['Shininess Map'], 'shininess map')
+            mxe.opaque_roughness_type = bool(e['Roughness Type'])
+            mxe.opaque_roughness = e['Roughness']
+            mxe.opaque_roughness_map = texture(material, e['Roughness Map'], 'roughness map')
+            mxe.opaque_clearcoat = bool(e['Clearcoat'])
+        elif(mx.use == 'TRANSPARENT'):
+            mxe.transparent_color_type = bool(e['Color Type'])
+            mxe.transparent_color = gamma_correct(e['Color'])
+            mxe.transparent_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.transparent_ior = e['Ior']
+            mxe.transparent_transparency = e['Transparency']
+            mxe.transparent_roughness_type = bool(e['Roughness Type'])
+            mxe.transparent_roughness = e['Roughness']
+            mxe.transparent_roughness_map = texture(material, e['Roughness Map'], 'roughness map')
+            mxe.transparent_specular_tint = e['Specular Tint']
+            mxe.transparent_dispersion = e['Dispersion']
+            mxe.transparent_clearcoat = bool(e['Clearcoat'])
+        elif(mx.use == 'METAL'):
+            mxe.metal_ior = str(e['IOR'])
+            mxe.metal_tint = e['Tint']
+            mxe.metal_color_type = bool(e['Color Type'])
+            mxe.metal_color = gamma_correct(e['Color'])
+            mxe.metal_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.metal_roughness_type = bool(e['Roughness Type'])
+            mxe.metal_roughness = e['Roughness']
+            mxe.metal_roughness_map = texture(material, e['Roughness Map'], 'roughness map')
+            mxe.metal_anisotropy_type = bool(e['Anisotropy Type'])
+            mxe.metal_anisotropy = e['Anisotropy']
+            mxe.metal_anisotropy_map = texture(material, e['Anisotropy Map'], 'anisotropy map')
+            mxe.metal_angle_type = bool(e['Angle Type'])
+            mxe.metal_angle = e['Angle']
+            mxe.metal_angle_map = texture(material, e['Angle Map'], 'angle map')
+            mxe.metal_dust_type = bool(e['Dust Type'])
+            mxe.metal_dust = e['Dust']
+            mxe.metal_dust_map = texture(material, e['Dust Map'], 'dust map')
+            mxe.metal_perforation_enabled = bool(e['Perforation Enabled'])
+            mxe.metal_perforation_map = texture(material, e['Perforation Map'], 'perforation map')
+        elif(mx.use == 'TRANSLUCENT'):
+            mxe.translucent_scale = e['Scale']
+            mxe.translucent_ior = e['Ior']
+            mxe.translucent_color_type = bool(e['Color Type'])
+            mxe.translucent_color = gamma_correct(e['Color'])
+            mxe.translucent_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.translucent_hue_shift = e['Hue Shift']
+            mxe.translucent_invert_hue = bool(e['Invert Hue'])
+            mxe.translucent_vibrance = e['Vibrance']
+            mxe.translucent_density = e['Density']
+            mxe.translucent_opacity = e['Opacity']
+            mxe.translucent_roughness_type = bool(e['Roughness Type'])
+            mxe.translucent_roughness = e['Roughness']
+            mxe.translucent_roughness_map = texture(material, e['Roughness Map'], 'roughness map')
+            mxe.translucent_specular_tint = e['Specular Tint']
+            mxe.translucent_clearcoat = bool(e['Clearcoat'])
+            mxe.translucent_clearcoat_ior = e['Clearcoat Ior']
+        elif(mx.use == 'CARPAINT'):
+            mxe.carpaint_color = gamma_correct(e['Color'])
+            mxe.carpaint_metallic = e['Metallic']
+            mxe.carpaint_topcoat = e['Topcoat']
+        elif(mx.use == 'HAIR'):
+            mxe.hair_color_type = bool(e['Color Type'])
+            mxe.hair_color = gamma_correct(e['Color'])
+            mxe.hair_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.hair_root_tip_map = texture(material, e['Root-Tip Map'], 'root-tip map')
+            mxe.hair_root_tip_weight_type = bool(e['Root-Tip Weight Type'])
+            mxe.hair_root_tip_weight = e['Root-Tip Weight']
+            mxe.hair_root_tip_weight_map = texture(material, e['Root-Tip Weight Map'], 'root-tip weight map')
+            mxe.hair_primary_highlight_strength = e['Primary Highlight Strength']
+            mxe.hair_primary_highlight_spread = e['Primary Highlight Spread']
+            mxe.hair_primary_highlight_tint = gamma_correct(e['Primary Highlight Tint'])
+            mxe.hair_secondary_highlight_strength = e['Secondary Highlight Strength']
+            mxe.hair_secondary_highlight_spread = e['Secondary Highlight Spread']
+            mxe.hair_secondary_highlight_tint = gamma_correct(e['Secondary Highlight Tint'])
+    
+    def make(self, material, slot, data, ):
+        if('extension' in data):
+            self.extension(material, slot, data, )
+            return
+        
         def gamma_correct(c):
             g = 2.2
             c = [v ** g for v in c]

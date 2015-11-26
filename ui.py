@@ -1775,6 +1775,13 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Material"
     
+    # def draw_header(self, context):
+    #     try:
+    #         m = context.material.maxwell_render
+    #         self.bl_label = "'{}' Material".format(m.use)
+    #     except:
+    #         self.bl_label = "Material"
+    
     @classmethod
     def poll(cls, context):
         o = context.object
@@ -2205,16 +2212,22 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             
             s = sub.split(percentage=0.7, align=True)
             r = s.row(align=True)
-            r.operator('maxwell_render.edit_extension_material')
+            if(m.use == 'EMITTER'):
+                r.operator('maxwell_render.edit_extension_material', text="Edit Material in Mxed")
+            else:
+                r.operator('maxwell_render.edit_extension_material')
             r = s.row(align=True)
             r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
             r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
             if(not m.force_preview):
                 r.active = False
+            if(m.use != 'EMITTER'):
+                sub.operator('maxwell_render.load_material_from_mxm')
         
         if(m.use == 'REFERENCE'):
             # sub.separator()
             sub.operator('maxwell_render.browse_material')
+            sub.operator('maxwell_render.load_material_from_mxm')
         
         if(m.use == 'CUSTOM'):
             # sometimes little details cause big problems..

@@ -374,16 +374,79 @@ def material(s, m):
     return data
 
 
+def extension(s, m):
+    def texture(t):
+        if(t is None):
+            return None
+        if(t.isEmpty()):
+            return None
+        d = {'path': t.getPath(),
+             'use_global_map': t.useGlobalMap,
+             'channel': t.uvwChannelID,
+             'brightness': t.brightness * 100,
+             'contrast': t.contrast * 100,
+             'saturation': t.saturation * 100,
+             'hue': t.hue * 180,
+             'rotation': t.rotation,
+             'invert': t.invert,
+             'interpolation': t.typeInterpolation,
+             'use_alpha': t.useAlpha,
+             'repeat': [t.scale.x(), t.scale.y()],
+             'mirror': [t.uIsMirrored, t.vIsMirrored],
+             'offset': [t.offset.x(), t.offset.y()],
+             'clamp': [int(t.clampMin * 255), int(t.clampMax * 255)],
+             'tiling_units': t.useAbsoluteUnits,
+             'tiling_method': [t.uIsTiled, t.vIsTiled], }
+        return d
+    
+    def mxparamlistarray(v):
+        return None
+    
+    def rgb(v):
+        return (v.r(), v.g(), v.b())
+    
+    params, _ = m.getMaterialModifierExtensionParams()
+    types = [(0, 'UCHAR', params.getByte, ),
+             (1, 'UINT', params.getUInt, ),
+             (2, 'INT', params.getInt, ),
+             (3, 'FLOAT', params.getFloat, ),
+             (4, 'DOUBLE', params.getDouble, ),
+             (5, 'STRING', params.getString, ),
+             (6, 'FLOATARRAY', params.getFloatArray, ),
+             (7, 'DOUBLEARRAY', params.getDoubleArray, ),
+             (8, 'BYTEARRAY', params.getByteArray, ),
+             (9, 'INTARRAY', params.getIntArray, ),
+             (10, 'MXPARAMLIST', params.getTextureMap, ),
+             (11, 'MXPARAMLISTARRAY', mxparamlistarray, ),
+             (12, 'RGB', params.getRgb, ), ]
+    
+    d = {}
+    for i in range(params.getNumItems()):
+        name, data, _, _, data_type, _, data_count, _ = params.getByIndex(i)
+        _, _, f = types[data_type]
+        k = name
+        if(data_type not in [10, 11, 12]):
+            v, _ = f(name)
+        else:
+            if(data_type == 10):
+                v = texture(f(name)[0])
+            elif(data_type == 11):
+                pass
+            elif(data_type == 12):
+                v = rgb(f(name)[0])
+        d[k] = v
+    return d
+
+
 def main(args):
     log("mxm to dict:", 1)
     p = args.mxm_path
     s = Cmaxwell(mwcallback)
     log("reading mxm from: {0}".format(p), 2)
     m = s.readMaterial(p)
-    if(m.hasMaterialModifier()):
-        # TODO: import extension materials
-        pass
     data = material(s, m)
+    if(m.hasMaterialModifier()):
+        data['extension'] = extension(s, m)
     log("serializing..", 2)
     p = args.data_path
     with open("{0}.tmp".format(p), 'w', encoding='utf-8', ) as f:
