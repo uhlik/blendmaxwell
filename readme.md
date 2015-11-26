@@ -14,8 +14,8 @@
 * MXS references
 * Dupli verts, faces and group
 * Multiple UV channels
-* Custom Material creation and editing with inside Blender or with Mxed
-* Save/Load custom materials from/into Blender material editor (extension materials support will be added)
+* Custom and Extension Material creation and editing inside Blender or with Mxed
+* Save and load Custom and Extension Materials from or to Blender material editor
 * Material assignment (including backface materials) and multiple materials per object
 * Extension Materials creation and editing inside Blender
 * Cameras
@@ -37,13 +37,11 @@
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/Library/Application Support/Blender/2.76/scripts/addons/```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 * if you are updating from version before 0.3.3, please remove ```_pymaxwell.so``` and ```pymaxwell.py``` from ```/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages``` it is no longer necessary and it might cause conflicts
-* in case of problem with presets (emitters, extension materials, ..., ), remove ```~/Library/Application Support/Blender/2.76/scripts/presets/maxwell_render``` and restart Blender. default presets will be recreated automatically
 
 ### addon installation - Windows:
 
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.76\scripts\addons\```
 * Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
-* in case of problem with presets (emitters, extension materials, ..., ), remove ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.76\scripts\presets\maxwell_render``` and restart Blender. default presets will be recreated automatically
 
 ### addon installation - Linux:
 
