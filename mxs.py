@@ -337,7 +337,7 @@ class MXSWriter():
             if(d['bump_map_enabled']):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(d['bump_map'], s, )
+                t = self.texture(d['bump_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = d['bump']
@@ -755,7 +755,7 @@ class MXSWriter():
                     if(d['bump_map_enabled']):
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        t = texture(d['bump_map'], s, )
+                        t = self.texture(d['bump_map'])
                         if(t is not None):
                             a.textureMap = t
                         a.value = d['bump']
@@ -1007,7 +1007,7 @@ class MXSWriter():
                 if(d['bump_map_enabled']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(d['bump_map'], s, )
+                    t = self.texture(d['bump_map'])
                     if(t is not None):
                         a.textureMap = t
                     a.value = d['bump']
@@ -2578,7 +2578,7 @@ class MXMWriter():
             if(d['bump_map_enabled']):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = texture(d['bump_map'], s, )
+                t = self.texture(d['bump_map'])
                 if(t is not None):
                     a.textureMap = t
                 a.value = d['bump']
@@ -2996,7 +2996,7 @@ class MXMWriter():
                     if(d['bump_map_enabled']):
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        t = texture(d['bump_map'], s, )
+                        t = self.texture(d['bump_map'])
                         if(t is not None):
                             a.textureMap = t
                         a.value = d['bump']
@@ -3248,7 +3248,7 @@ class MXMWriter():
                 if(d['bump_map_enabled']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = texture(d['bump_map'], s, )
+                    t = self.texture(d['bump_map'])
                     if(t is not None):
                         a.textureMap = t
                     a.value = d['bump']
