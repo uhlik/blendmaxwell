@@ -57,7 +57,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions (no conversions float > 8 bit > float again)
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
 # TODO: change default material type to 'CUSTOM', will prevent missing path warning in unfinished materials
-# FIXME: link hide emmiter in particles with blender one, maybe with callbeck, don't want to rewrite export code, link also material assignment
+# FIXME: link hide emmiter in particles with blender one, maybe with callbeck, don't want to rewrite export code, link also material assignment (but i am not sure if both are possible, seems like it will bring more problems then benefits. postponing it almost indefinitely..)
 
 
 class MXSExport():
