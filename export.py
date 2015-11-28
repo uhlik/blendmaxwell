@@ -54,7 +54,10 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # FIXME: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
 # TODO: particles/cloner: check if size setting is correct, i think it sometimes is different from what it should be..
 # TODO: do something with sharp edges, auto smooth and custom normals..
-# TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions
+# TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions (no conversions float > 8 bit > float again)
+# TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
+# TODO: change default material type to 'CUSTOM', will prevent missing path warning in unfinished materials
+# FIXME: link hide emmiter in particles with blender one, maybe with callbeck, don't want to rewrite export code, link also material assignment
 
 
 class MXSExport():
@@ -3523,9 +3526,12 @@ class MXSMaterialMXM(MXSMaterial):
         self.m_override = m.override_global_properties
         if(self.m_override):
             self.m_override_map = self._texture_to_data(m.global_override_map)
+            
             self.m_bump = m.global_bump
-            self.m_bump_value = m.global_bump_value
+            self.m_bump_map_enabled = m.global_bump_map_enabled
             self.m_bump_map = self._texture_to_data(m.global_bump_map)
+            self.m_bump_map_use_normal = m.global_bump_map_use_normal
+            
             self.m_dispersion = m.global_dispersion
             self.m_shadow = m.global_shadow
             self.m_matte = m.global_matte
@@ -3548,9 +3554,12 @@ class MXSMaterialExtension(MXSMaterial):
         self.mx = mx
         
         self.m_override_map = self._texture_to_data(m.global_override_map)
+        
         self.m_bump = m.global_bump
-        self.m_bump_value = m.global_bump_value
+        self.m_bump_map_enabled = m.global_bump_map_enabled
         self.m_bump_map = self._texture_to_data(m.global_bump_map)
+        self.m_bump_map_use_normal = m.global_bump_map_use_normal
+        
         self.m_dispersion = m.global_dispersion
         self.m_shadow = m.global_shadow
         self.m_matte = m.global_matte
@@ -3701,11 +3710,19 @@ class MXSMaterialExtension(MXSMaterial):
 class MXSTexture(Serializable):
     def __init__(self, name, ):
         try:
+            # KeyError if not such texture
             tex = bpy.data.textures[name]
-            log("'{}' ({}: {}) '{}'".format(name, 'TEXTURE', 'IMAGE', bpy.path.abspath(tex.image.filepath), ), 3, )
+            image = tex.image
+            # AttributeError if not image is loaded
+            image_path = image.filepath
+            log("'{}' ({}: {}) '{}'".format(name, 'TEXTURE', 'IMAGE', bpy.path.abspath(image_path), ), 3, )
             self.invalid = False
         except KeyError:
             log("'{}' ({}: {}) does not exist!".format(name, 'TEXTURE', 'IMAGE', ), 3, LogStyles.WARNING, )
+            self.invalid = True
+            return
+        except AttributeError:
+            log("'{}' ({}: {}) image not loaded!".format(name, 'TEXTURE', 'IMAGE', ), 3, LogStyles.WARNING, )
             self.invalid = True
             return
         
@@ -3964,9 +3981,12 @@ class MXSMaterialCustom(MXSMaterial):
                 displacement['height'] = displacement['height'] / 100
         
         global_props = {'override_map': self._texture_to_data(m.global_override_map),
+                        
                         'bump': m.global_bump,
-                        'bump_value': m.global_bump_value,
+                        'bump_map_enabled': m.global_bump_map_enabled,
                         'bump_map': self._texture_to_data(m.global_bump_map),
+                        'bump_map_use_normal': m.global_bump_map_use_normal,
+                        
                         'dispersion': m.global_dispersion,
                         'shadow': m.global_shadow,
                         'matte': m.global_matte,

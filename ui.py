@@ -1746,14 +1746,27 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         sub.prop_search(m, 'global_override_map', mat, 'texture_slots', icon='TEXTURE', )
         
         r = sub.row()
-        s = r.split(percentage=0.2)
+        s = r.split(percentage=0.333)
         c = s.column()
-        c.label("Bump:")
+        c.label("Global Bump:")
         c = s.column()
         r = c.row()
-        r.prop(m, 'global_bump_value', text="", )
-        r.prop(m, 'global_bump', text="", )
+        c = r.column()
+        c.prop(m, 'global_bump', text="", )
+    
+        if(not m.global_bump_map_enabled or m.global_bump_map == ''):
+            c.enabled = False
+        r.prop(m, 'global_bump_map_enabled', text="", )
         r.prop_search(m, 'global_bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        r = sub.row()
+        s = r.split(percentage=0.333)
+        c = s.column()
+        c = s.column()
+        r = c.row()
+        if(not m.global_bump_map_enabled or m.global_bump_map == ''):
+            c.enabled = False
+        r.prop(m, 'global_bump_map_use_normal', text="Normal Mapping", )
         
         r = sub.row()
         r.prop(m, 'global_dispersion')
@@ -3483,6 +3496,8 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             c = s.column()
             c = s.column()
             r = c.row()
+            if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
+                c.enabled = False
             r.prop(bsdf, 'bump_map_use_normal', text="Normal Mapping", )
         
             r = l.row()

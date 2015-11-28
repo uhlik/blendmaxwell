@@ -1165,14 +1165,18 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         gp = d['global_props']
         if(gp['override_map'] is not None):
             mx.global_override_map = texture(material, gp['override_map'], 'override map')
+        
         if(gp['bump_map'] is not None):
-            mx.global_bump = True
-            mx.global_bump_value = gp['bump_value']
+            mx.global_bump_map_enabled = True
+            mx.global_bump = gp['bump']
             mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
+            mx.global_bump_map_use_normal = gp['bump_map_use_normal']
         else:
-            mx.global_bump = False
-            mx.global_bump_value = gp['bump_value']
+            mx.global_bump_map_enabled = False
+            mx.global_bump = gp['bump']
             mx.global_bump_map = ''
+            mx.global_bump_map_use_normal = gp['bump_map_use_normal']
+        
         mx.global_dispersion = gp['dispersion']
         mx.global_shadow = gp['shadow']
         mx.global_matte = gp['matte']
@@ -1331,14 +1335,18 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         gp = d['global_props']
         if(gp['override_map'] is not None):
             mx.global_override_map = texture(material, gp['override_map'], 'override map')
+        
         if(gp['bump_map'] is not None):
-            mx.global_bump = True
-            mx.global_bump_value = gp['bump_value']
+            mx.global_bump_map_enabled = True
+            mx.global_bump = gp['bump']
             mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
+            mx.global_bump_map_use_normal = gp['bump_map_use_normal']
         else:
-            mx.global_bump = False
-            mx.global_bump_value = gp['bump_value']
+            mx.global_bump_map_enabled = False
+            mx.global_bump = gp['bump']
             mx.global_bump_map = ''
+            mx.global_bump_map_use_normal = gp['bump_map_use_normal']
+        
         mx.global_dispersion = gp['dispersion']
         mx.global_shadow = gp['shadow']
         mx.global_matte = gp['matte']

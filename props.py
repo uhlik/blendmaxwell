@@ -216,6 +216,476 @@ def _get_material_preview_scenes(self, context):
     return l
 
 
+class MaterialEditorCallbacks():
+    def __init__(self):
+        raise Exception("no instance of this..")
+    
+    def bsdf_weight_map_get(self):
+        p = 'weight'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_weight_map_set(self, v):
+        p = 'weight'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def bsdf_reflectance_0_map_get(self):
+        p = 'reflectance_0'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_reflectance_0_map_set(self, v):
+        p = 'reflectance_0'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def bsdf_reflectance_90_map_get(self):
+        p = 'reflectance_90'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_reflectance_90_map_set(self, v):
+        p = 'reflectance_90'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def bsdf_transmittance_map_get(self):
+        p = 'transmittance'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_transmittance_map_set(self, v):
+        p = 'transmittance'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def bsdf_roughness_map_get(self):
+        p = 'roughness'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_roughness_map_set(self, v):
+        p = 'roughness'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def bsdf_bump_map_get(self):
+        p = 'bump'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_bump_map_set(self, v):
+        p = 'bump'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def bsdf_anisotropy_map_get(self):
+        p = 'anisotropy'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_anisotropy_map_set(self, v):
+        p = 'anisotropy'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def bsdf_anisotropy_angle_map_get(self):
+        p = 'anisotropy_angle'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_anisotropy_angle_map_set(self, v):
+        p = 'anisotropy_angle'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def bsdf_single_sided_map_get(self):
+        p = 'single_sided'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def bsdf_single_sided_map_set(self, v):
+        p = 'single_sided'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def coating_thickness_map_get(self):
+        p = 'thickness'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def coating_thickness_map_set(self, v):
+        p = 'thickness'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def coating_reflectance_0_map_get(self):
+        p = 'reflectance_0'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def coating_reflectance_0_map_set(self, v):
+        p = 'reflectance_0'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def coating_reflectance_90_map_get(self):
+        p = 'reflectance_90'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def coating_reflectance_90_map_set(self, v):
+        p = 'reflectance_90'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def emitter_spot_map_get(self):
+        p = 'spot'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def emitter_spot_map_set(self, v):
+        p = 'spot'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def layer_opacity_map_get(self):
+        p = 'opacity'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def layer_opacity_map_set(self, v):
+        p = 'opacity'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def global_bump_map_get(self):
+        p = 'global_bump'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def global_bump_map_set(self, v):
+        p = 'global_bump'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def ext_emitter_spot_map_get(self):
+        p = 'emitter_spot'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_emitter_spot_map_set(self, v):
+        p = 'emitter_spot'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_map_enabled'.format(p)] = True
+        else:
+            self['{}_map_enabled'.format(p)] = False
+    
+    def ext_opaque_color_map_get(self):
+        p = 'opaque_color'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_opaque_color_map_set(self, v):
+        p = 'opaque_color'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_opaque_shininess_map_get(self):
+        p = 'opaque_shininess'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_opaque_shininess_map_set(self, v):
+        p = 'opaque_shininess'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_opaque_roughness_map_get(self):
+        p = 'opaque_roughness'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_opaque_roughness_map_set(self, v):
+        p = 'opaque_roughness'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_transparent_color_map_get(self):
+        p = 'transparent_color'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_transparent_color_map_set(self, v):
+        p = 'transparent_color'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_transparent_roughness_map_get(self):
+        p = 'transparent_roughness'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_transparent_roughness_map_set(self, v):
+        p = 'transparent_roughness'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_metal_color_map_get(self):
+        p = 'metal_color'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_metal_color_map_set(self, v):
+        p = 'metal_color'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_metal_roughness_map_get(self):
+        p = 'metal_roughness'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_metal_roughness_map_set(self, v):
+        p = 'metal_roughness'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_metal_anisotropy_map_get(self):
+        p = 'metal_anisotropy'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_metal_anisotropy_map_set(self, v):
+        p = 'metal_anisotropy'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_metal_angle_map_get(self):
+        p = 'metal_angle'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_metal_angle_map_set(self, v):
+        p = 'metal_angle'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_metal_dust_map_get(self):
+        p = 'metal_dust'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_metal_dust_map_set(self, v):
+        p = 'metal_dust'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_metal_perforation_map_get(self):
+        p = 'metal_perforation'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_metal_perforation_map_set(self, v):
+        p = 'metal_perforation'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_enabled'.format(p)] = True
+        else:
+            self['{}_enabled'.format(p)] = False
+    
+    def ext_translucent_color_map_get(self):
+        p = 'translucent_color'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_translucent_color_map_set(self, v):
+        p = 'translucent_color'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_translucent_roughness_map_get(self):
+        p = 'translucent_roughness'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_translucent_roughness_map_set(self, v):
+        p = 'translucent_roughness'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_hair_color_map_get(self):
+        p = 'hair_color'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_hair_color_map_set(self, v):
+        p = 'hair_color'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+    
+    def ext_hair_root_tip_weight_map_get(self):
+        p = 'hair_root_tip_weight'
+        try:
+            return self['{}_map'.format(p)]
+        except KeyError:
+            return ''
+    
+    def ext_hair_root_tip_weight_map_set(self, v):
+        p = 'hair_root_tip_weight'
+        self['{}_map'.format(p)] = v
+        if(v != ''):
+            self['{}_type'.format(p)] = True
+        else:
+            self['{}_type'.format(p)] = False
+
+
 class _overrides():
     sun_skip = False
     output_image = False
@@ -1290,7 +1760,7 @@ class ExtMaterialProperties(PropertyGroup):
     emitter_ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
     emitter_ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )
     emitter_spot_map_enabled = BoolProperty(name="Spot Map Enabled", default=False, )
-    emitter_spot_map = StringProperty(name="Spot Map", default="", )
+    emitter_spot_map = StringProperty(name="Spot Map", default="", get=MaterialEditorCallbacks.ext_emitter_spot_map_get, set=MaterialEditorCallbacks.ext_emitter_spot_map_set, )
     emitter_spot_cone_angle = FloatProperty(name="Cone Angle", default=math.radians(45.0), min=math.radians(0.01), max=math.radians(179.99), precision=2, subtype='ANGLE', )
     emitter_spot_falloff_angle = FloatProperty(name="FallOff Angle", default=math.radians(10.0), min=math.radians(0.0), max=math.radians(89.99), precision=2, subtype='ANGLE', )
     emitter_spot_falloff_type = EnumProperty(name="FallOff Type", items=[('0', "Linear", ""), ('1', "Square Root", ""), ('2', "Sinusoidal", ""), ('3', "Squared Sinusoidal", ""),
@@ -1314,23 +1784,23 @@ class ExtMaterialProperties(PropertyGroup):
     
     opaque_color_type = BoolProperty(name="Color Type", default=False, )
     opaque_color = FloatVectorProperty(name="Color", default=(220 / 255, 220 / 255, 220 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    opaque_color_map = StringProperty(name="Color Map", default="", )
+    opaque_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_opaque_color_map_get, set=MaterialEditorCallbacks.ext_opaque_color_map_set, )
     opaque_shininess_type = BoolProperty(name="Shininess Type", default=False, )
     opaque_shininess = FloatProperty(name="Shininess (%)", default=40.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    opaque_shininess_map = StringProperty(name="Shininess Map", default="", )
+    opaque_shininess_map = StringProperty(name="Shininess Map", default="", get=MaterialEditorCallbacks.ext_opaque_shininess_map_get, set=MaterialEditorCallbacks.ext_opaque_shininess_map_set, )
     opaque_roughness_type = BoolProperty(name="Roughness Type", default=False, )
     opaque_roughness = FloatProperty(name="Roughness (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    opaque_roughness_map = StringProperty(name="Roughness Map", default="", )
+    opaque_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_opaque_roughness_map_get, set=MaterialEditorCallbacks.ext_opaque_roughness_map_set, )
     opaque_clearcoat = BoolProperty(name="Clearcoat", default=False, )
     
     transparent_color_type = BoolProperty(name="Color Type", default=False, )
     transparent_color = FloatVectorProperty(name="Color", default=(182 / 255, 182 / 255, 182 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    transparent_color_map = StringProperty(name="Color Map", default="", )
+    transparent_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_transparent_color_map_get, set=MaterialEditorCallbacks.ext_transparent_color_map_set, )
     transparent_ior = FloatProperty(name="Ref. Index", default=1.51, min=1.001, max=2.5, precision=3, )
     transparent_transparency = FloatProperty(name="Transparency (cm)", default=30.0, min=0.1, max=999.0, precision=1, )
     transparent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
     transparent_roughness = FloatProperty(name="Roughness (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    transparent_roughness_map = StringProperty(name="Roughness Map", default="", )
+    transparent_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_transparent_roughness_map_get, set=MaterialEditorCallbacks.ext_transparent_roughness_map_set, )
     transparent_specular_tint = FloatProperty(name="Specular Tint (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     transparent_dispersion = FloatProperty(name="Dispersion (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     transparent_clearcoat = BoolProperty(name="Clearcoat", default=False, )
@@ -1340,27 +1810,27 @@ class ExtMaterialProperties(PropertyGroup):
     metal_tint = FloatProperty(name="Tint", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     metal_color_type = BoolProperty(name="Color Type", default=False, )
     metal_color = FloatVectorProperty(name="Color", default=(167 / 255, 167 / 255, 167 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    metal_color_map = StringProperty(name="Color Map", default="", )
+    metal_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_metal_color_map_get, set=MaterialEditorCallbacks.ext_metal_color_map_set, )
     metal_roughness_type = BoolProperty(name="Roughness Type", default=False, )
     metal_roughness = FloatProperty(name="Roughness", default=30.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    metal_roughness_map = StringProperty(name="Roughness Map", default="", )
+    metal_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_metal_roughness_map_get, set=MaterialEditorCallbacks.ext_metal_roughness_map_set, )
     metal_anisotropy_type = BoolProperty(name="Anisotropy Type", default=False, )
     metal_anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    metal_anisotropy_map = StringProperty(name="Anisotropy Map", default="", )
+    metal_anisotropy_map = StringProperty(name="Anisotropy Map", default="", get=MaterialEditorCallbacks.ext_metal_anisotropy_map_get, set=MaterialEditorCallbacks.ext_metal_anisotropy_map_set, )
     metal_angle_type = BoolProperty(name="Angle Type", default=False, )
     metal_angle = FloatProperty(name="Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=1, subtype='ANGLE', )
-    metal_angle_map = StringProperty(name="Angle Map", default="", )
+    metal_angle_map = StringProperty(name="Angle Map", default="", get=MaterialEditorCallbacks.ext_metal_angle_map_get, set=MaterialEditorCallbacks.ext_metal_angle_map_set, )
     metal_dust_type = BoolProperty(name="Dust & Dirt Type", default=False, )
     metal_dust = FloatProperty(name="Dust & Dirt", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    metal_dust_map = StringProperty(name="Dust & Dirt Map", default="", )
+    metal_dust_map = StringProperty(name="Dust & Dirt Map", default="", get=MaterialEditorCallbacks.ext_metal_dust_map_get, set=MaterialEditorCallbacks.ext_metal_dust_map_set, )
     metal_perforation_enabled = BoolProperty(name="Perforation Enabled", default=False, )
-    metal_perforation_map = StringProperty(name="Perforation Map", default="", )
+    metal_perforation_map = StringProperty(name="Perforation Map", default="", get=MaterialEditorCallbacks.ext_metal_perforation_map_get, set=MaterialEditorCallbacks.ext_metal_perforation_map_set, )
     
     translucent_scale = FloatProperty(name="Scale (x10 cm)", default=8.0, min=0.00001, max=1000000.0, precision=2, )
     translucent_ior = FloatProperty(name="Ref. Index", default=1.3, min=1.001, max=2.5, precision=3, )
     translucent_color_type = BoolProperty(name="Color Type", default=False, )
     translucent_color = FloatVectorProperty(name="Color", default=(250 / 255, 245 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    translucent_color_map = StringProperty(name="Color Map", default="", )
+    translucent_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_translucent_color_map_get, set=MaterialEditorCallbacks.ext_translucent_color_map_set, )
     translucent_hue_shift = FloatProperty(name="Hue Shift", default=0.0, min=-120.0, max=120.0, precision=1, )
     translucent_invert_hue = BoolProperty(name="Invert Hue", default=True, )
     translucent_vibrance = FloatProperty(name="Vibrance", default=11.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
@@ -1368,7 +1838,7 @@ class ExtMaterialProperties(PropertyGroup):
     translucent_opacity = FloatProperty(name="Opacity", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     translucent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
     translucent_roughness = FloatProperty(name="Roughness", default=17.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    translucent_roughness_map = StringProperty(name="Roughness Map", default="", )
+    translucent_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_translucent_roughness_map_get, set=MaterialEditorCallbacks.ext_translucent_roughness_map_set, )
     translucent_specular_tint = FloatProperty(name="Specular Tint (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     translucent_clearcoat = BoolProperty(name="Clearcoat", default=False, )
     translucent_clearcoat_ior = FloatProperty(name="Clearcoat IOR", default=1.3, min=1.001, max=2.5, precision=3, )
@@ -1379,11 +1849,11 @@ class ExtMaterialProperties(PropertyGroup):
     
     hair_color_type = BoolProperty(name="Color Type", default=False, )
     hair_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    hair_color_map = StringProperty(name="Color Map", default="", )
+    hair_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_hair_color_map_get, set=MaterialEditorCallbacks.ext_hair_color_map_set, )
     hair_root_tip_map = StringProperty(name="Root-Tip Map", default="", )
     hair_root_tip_weight_type = BoolProperty(name="Root-Tip Weight Type", default=False, )
     hair_root_tip_weight = FloatProperty(name="Root-Tip Weight", default=50.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_root_tip_weight_map = StringProperty(name="Root-Tip Weight Map", default="", )
+    hair_root_tip_weight_map = StringProperty(name="Root-Tip Weight Map", default="", get=MaterialEditorCallbacks.ext_hair_root_tip_weight_map_get, set=MaterialEditorCallbacks.ext_hair_root_tip_weight_map_set, )
     hair_primary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     hair_primary_highlight_spread = FloatProperty(name="Spread", default=36.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     hair_primary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
@@ -1409,20 +1879,20 @@ class MaterialBSDFProperties(PropertyGroup):
     
     weight = FloatProperty(name="Weight", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     weight_map_enabled = BoolProperty(name="Weight Map Enabled", default=False, )
-    weight_map = StringProperty(name="Weight Map", default="", )
+    weight_map = StringProperty(name="Weight Map", default="", get=MaterialEditorCallbacks.bsdf_weight_map_get, set=MaterialEditorCallbacks.bsdf_weight_map_set, )
     
     ior = EnumProperty(name="IOR", items=[('0', "Custom", ""), ('1', "Measured Data", ""), ], default='0', )
     complex_ior = StringProperty(name="Complex IOR", default="", subtype='FILE_PATH', )
     
     reflectance_0 = FloatVectorProperty(name="Reflectance 0", default=(0.6, 0.6, 0.6), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     reflectance_0_map_enabled = BoolProperty(name="Reflectance 0 Map Enabled", default=False, )
-    reflectance_0_map = StringProperty(name="Reflectance 0 Map", default="", )
+    reflectance_0_map = StringProperty(name="Reflectance 0 Map", default="", get=MaterialEditorCallbacks.bsdf_reflectance_0_map_get, set=MaterialEditorCallbacks.bsdf_reflectance_0_map_set, )
     reflectance_90 = FloatVectorProperty(name="Reflectance 90", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     reflectance_90_map_enabled = BoolProperty(name="Reflectance 90 Map Enabled", default=False, )
-    reflectance_90_map = StringProperty(name="Reflectance 90 Map", default="", )
+    reflectance_90_map = StringProperty(name="Reflectance 90 Map", default="", get=MaterialEditorCallbacks.bsdf_reflectance_90_map_get, set=MaterialEditorCallbacks.bsdf_reflectance_90_map_set, )
     transmittance = FloatVectorProperty(name="Transmittance", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     transmittance_map_enabled = BoolProperty(name="Transmittance Map Enabled", default=False, )
-    transmittance_map = StringProperty(name="Transmittance Map", default="", )
+    transmittance_map = StringProperty(name="Transmittance Map", default="", get=MaterialEditorCallbacks.bsdf_transmittance_map_get, set=MaterialEditorCallbacks.bsdf_transmittance_map_set, )
     
     attenuation = FloatProperty(name="Attenuation", default=1.0, min=0.0, max=999.0, precision=1, )
     attenuation_units = EnumProperty(name="Attenuation Units", items=[('0', "nm", ""), ('1', "um", ""), ('2', "mm", ""), ('3', "cm", ""), ('4', "dm", ""), ('5', "m", ""), ], default='0', )
@@ -1438,20 +1908,20 @@ class MaterialBSDFProperties(PropertyGroup):
     
     roughness = FloatProperty(name="Roughness", default=100.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
     roughness_map_enabled = BoolProperty(name="Roughness Map Enabled", default=False, )
-    roughness_map = StringProperty(name="Roughness Map", default="", )
+    roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.bsdf_roughness_map_get, set=MaterialEditorCallbacks.bsdf_roughness_map_set, )
     
     bump = FloatProperty(name="Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, )
     bump_map_enabled = BoolProperty(name="Bump Map Enabled", default=False, )
-    bump_map = StringProperty(name="Bump Map", default="", )
+    bump_map = StringProperty(name="Bump Map", default="", get=MaterialEditorCallbacks.bsdf_bump_map_get, set=MaterialEditorCallbacks.bsdf_bump_map_set, )
     bump_map_use_normal = BoolProperty(name="Bump Map Use Normal", default=False, )
     
     anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
     anisotropy_map_enabled = BoolProperty(name="Anisotropy Map Enabled", default=False, )
-    anisotropy_map = StringProperty(name="Anisotropy Map", default="", )
+    anisotropy_map = StringProperty(name="Anisotropy Map", default="", get=MaterialEditorCallbacks.bsdf_anisotropy_map_get, set=MaterialEditorCallbacks.bsdf_anisotropy_map_set, )
     
     anisotropy_angle = FloatProperty(name="Anisotropy Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=2, subtype='ANGLE', )
     anisotropy_angle_map_enabled = BoolProperty(name="Anisotropy Angle Map Enabled", default=False, )
-    anisotropy_angle_map = StringProperty(name="Anisotropy Angle Map", default="", )
+    anisotropy_angle_map = StringProperty(name="Anisotropy Angle Map", default="", get=MaterialEditorCallbacks.bsdf_anisotropy_angle_map_get, set=MaterialEditorCallbacks.bsdf_anisotropy_angle_map_set, )
     
     scattering = FloatVectorProperty(name="Scattering", default=(0.5, 0.5, 0.5), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     coef = FloatProperty(name="Coef", default=0.0, min=0.0, max=99999.0, precision=2, )
@@ -1459,7 +1929,7 @@ class MaterialBSDFProperties(PropertyGroup):
     single_sided = BoolProperty(name="Single Sided", default=False, )
     single_sided_value = FloatProperty(name="Value (mm)", default=1.0, min=0.001, max=1000.0, precision=3, )
     single_sided_map_enabled = BoolProperty(name="Single Sided Map Enabled", default=False, )
-    single_sided_map = StringProperty(name="Single Sided Map", default="", )
+    single_sided_map = StringProperty(name="Single Sided Map", default="", get=MaterialEditorCallbacks.bsdf_single_sided_map_get, set=MaterialEditorCallbacks.bsdf_single_sided_map_set, )
     single_sided_min = FloatProperty(name="Min", default=0.001, min=0.001, max=1000.0, precision=3, )
     single_sided_max = FloatProperty(name="Max", default=10.0, min=0.001, max=1000.0, precision=3, )
 
@@ -1471,7 +1941,7 @@ class MaterialCoatingProperties(PropertyGroup):
     
     thickness = FloatProperty(name="Thickness (nm)", default=500.0, min=1.0, max=1000000.0, precision=3, )
     thickness_map_enabled = BoolProperty(name="Thickness Map Enabled", default=False, )
-    thickness_map = StringProperty(name="Thickness Map", default="", )
+    thickness_map = StringProperty(name="Thickness Map", default="", get=MaterialEditorCallbacks.coating_thickness_map_get, set=MaterialEditorCallbacks.coating_thickness_map_set, )
     thickness_map_min = FloatProperty(name="Thickness Map Min", default=100.0, min=1.0, max=1000000.0, precision=3, )
     thickness_map_max = FloatProperty(name="Thickness Map Max", default=1000.0, min=1.0, max=1000000.0, precision=3, )
     
@@ -1480,10 +1950,10 @@ class MaterialCoatingProperties(PropertyGroup):
     
     reflectance_0 = FloatVectorProperty(name="Reflectance 0", default=(0.6, 0.6, 0.6), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     reflectance_0_map_enabled = BoolProperty(name="Reflectance 0 Map Enabled", default=False, )
-    reflectance_0_map = StringProperty(name="Reflectance 0 Map", default="", )
+    reflectance_0_map = StringProperty(name="Reflectance 0 Map", default="", get=MaterialEditorCallbacks.coating_reflectance_0_map_get, set=MaterialEditorCallbacks.coating_reflectance_0_map_set, )
     reflectance_90 = FloatVectorProperty(name="Reflectance 90", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     reflectance_90_map_enabled = BoolProperty(name="Reflectance 90 Map Enabled", default=False, )
-    reflectance_90_map = StringProperty(name="Reflectance 90 Map", default="", )
+    reflectance_90_map = StringProperty(name="Reflectance 90 Map", default="", get=MaterialEditorCallbacks.coating_reflectance_90_map_get, set=MaterialEditorCallbacks.coating_reflectance_90_map_set, )
     
     nd = FloatProperty(name="Nd", default=3.0, min=0.01, max=1000.0, precision=3, )
     force_fresnel = BoolProperty(name="Force Fresnel", default=False, )
@@ -1524,7 +1994,7 @@ class MaterialEmitterProperties(PropertyGroup):
     ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
     ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )
     spot_map_enabled = BoolProperty(name="Spot Map Enabled", default=False, )
-    spot_map = StringProperty(name="Spot Map", default="", )
+    spot_map = StringProperty(name="Spot Map", default="", get=MaterialEditorCallbacks.emitter_spot_map_get, set=MaterialEditorCallbacks.emitter_spot_map_set, )
     spot_cone_angle = FloatProperty(name="Cone Angle", default=math.radians(45.0), min=math.radians(0.01), max=math.radians(179.99), precision=2, subtype='ANGLE', )
     spot_falloff_angle = FloatProperty(name="FallOff Angle", default=math.radians(10.0), min=math.radians(0.0), max=math.radians(89.99), precision=2, subtype='ANGLE', )
     spot_falloff_type = EnumProperty(name="FallOff Type", items=[('0', "Linear", ""), ('1', "Square Root", ""), ('2', "Sinusoidal", ""), ('3', "Squared Sinusoidal", ""),
@@ -1561,7 +2031,7 @@ class MaterialLayerProperties(PropertyGroup):
     
     opacity = FloatProperty(name="Opacity/Mask", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     opacity_map_enabled = BoolProperty(name="Opacity/Mask Map Enabled", default=False, )
-    opacity_map = StringProperty(name="Opacity/Mask Map", default="", )
+    opacity_map = StringProperty(name="Opacity/Mask Map", default="", get=MaterialEditorCallbacks.layer_opacity_map_get, set=MaterialEditorCallbacks.layer_opacity_map_set, )
     blending = EnumProperty(name="Layer Blending", items=[('0', "N", ""), ('1', "A", ""), ], default='0', )
     
     bsdfs = PointerProperty(name="BSDFs", type=MaterialCustomLayerBSDFs, )
@@ -1589,9 +2059,12 @@ class MaterialProperties(PropertyGroup):
     override_global_properties = BoolProperty(name="Override Global Properties In MXM", default=False, )
     
     global_override_map = StringProperty(name="Override Map", default="", )
-    global_bump = BoolProperty(name="Global Bump", default=False, )
-    global_bump_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=1, )
-    global_bump_map = StringProperty(name="Global Bump Map", default="", )
+    
+    global_bump = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, )
+    global_bump_map_enabled = BoolProperty(name="Global Bump Map Enabled", default=False, )
+    global_bump_map = StringProperty(name="Global Bump Map", default="", get=MaterialEditorCallbacks.global_bump_map_get, set=MaterialEditorCallbacks.global_bump_map_set, )
+    global_bump_map_use_normal = BoolProperty(name="Global Bump Map Use Normal", default=False, )
+    
     global_dispersion = BoolProperty(name="Dispersion", default=False, )
     global_shadow = BoolProperty(name="Shadow", default=False, )
     global_matte = BoolProperty(name="Matte", default=False, )

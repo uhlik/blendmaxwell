@@ -96,12 +96,15 @@ def material(d, s, ):
                     t = texture(d['override_map'], s, )
                     m.setGlobalMap(t)
                 
-                if(d['bump']):
+                if(d['bump_map_enabled']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    a.textureMap = texture(d['bump_map'], s, )
-                    a.value = d['bump_value']
+                    t = texture(d['bump_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    a.value = d['bump']
                     m.setAttribute('bump', a)
+                    m.setNormalMapState(d['bump_map_use_normal'])
                 
                 m.setDispersion(d['dispersion'])
                 m.setMatteShadow(d['shadow'])
@@ -341,12 +344,15 @@ def material(d, s, ):
                 t = texture(d['override_map'], s, )
                 m.setGlobalMap(t)
             
-            if(d['bump']):
+            if(d['bump_map_enabled']):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                a.textureMap = texture(d['bump_map'], s, )
-                a.value = d['bump_value']
+                t = texture(d['bump_map'], s, )
+                if(t is not None):
+                    a.textureMap = t
+                a.value = d['bump']
                 m.setAttribute('bump', a)
+                m.setNormalMapState(d['bump_map_use_normal'])
             
             m.setDispersion(d['dispersion'])
             m.setMatteShadow(d['shadow'])

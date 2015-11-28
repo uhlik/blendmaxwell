@@ -334,14 +334,15 @@ class MXSWriter():
                 if(t is not None):
                     m.setGlobalMap(t)
             
-            if(d['bump']):
+            if(d['bump_map_enabled']):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = self.texture(d['bump_map'])
+                t = texture(d['bump_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                a.value = d['bump_value']
+                a.value = d['bump']
                 m.setAttribute('bump', a)
+                m.setNormalMapState(d['bump_map_use_normal'])
             
             m.setDispersion(d['dispersion'])
             m.setMatteShadow(d['shadow'])
@@ -751,14 +752,15 @@ class MXSWriter():
                         if(t is not None):
                             m.setGlobalMap(t)
                     
-                    if(d['bump']):
+                    if(d['bump_map_enabled']):
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        t = self.texture(d['bump_map'])
+                        t = texture(d['bump_map'], s, )
                         if(t is not None):
                             a.textureMap = t
-                        a.value = d['bump_value']
+                        a.value = d['bump']
                         m.setAttribute('bump', a)
+                        m.setNormalMapState(d['bump_map_use_normal'])
                     
                     m.setDispersion(d['dispersion'])
                     m.setMatteShadow(d['shadow'])
@@ -1002,14 +1004,15 @@ class MXSWriter():
                     if(t is not None):
                         m.setGlobalMap(t)
                 
-                if(d['bump']):
+                if(d['bump_map_enabled']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = self.texture(d['bump_map'])
+                    t = texture(d['bump_map'], s, )
                     if(t is not None):
                         a.textureMap = t
-                    a.value = d['bump_value']
+                    a.value = d['bump']
                     m.setAttribute('bump', a)
+                    m.setNormalMapState(d['bump_map_use_normal'])
                 
                 m.setDispersion(d['dispersion'])
                 m.setMatteShadow(d['shadow'])
@@ -2572,14 +2575,15 @@ class MXMWriter():
                 if(t is not None):
                     m.setGlobalMap(t)
             
-            if(d['bump']):
+            if(d['bump_map_enabled']):
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
-                t = self.texture(d['bump_map'])
+                t = texture(d['bump_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                a.value = d['bump_value']
+                a.value = d['bump']
                 m.setAttribute('bump', a)
+                m.setNormalMapState(d['bump_map_use_normal'])
             
             m.setDispersion(d['dispersion'])
             m.setMatteShadow(d['shadow'])
@@ -2989,14 +2993,15 @@ class MXMWriter():
                         if(t is not None):
                             m.setGlobalMap(t)
                     
-                    if(d['bump']):
+                    if(d['bump_map_enabled']):
                         a = Cattribute()
                         a.activeType = MAP_TYPE_BITMAP
-                        t = self.texture(d['bump_map'])
+                        t = texture(d['bump_map'], s, )
                         if(t is not None):
                             a.textureMap = t
-                        a.value = d['bump_value']
+                        a.value = d['bump']
                         m.setAttribute('bump', a)
+                        m.setNormalMapState(d['bump_map_use_normal'])
                     
                     m.setDispersion(d['dispersion'])
                     m.setMatteShadow(d['shadow'])
@@ -3240,14 +3245,15 @@ class MXMWriter():
                     if(t is not None):
                         m.setGlobalMap(t)
                 
-                if(d['bump']):
+                if(d['bump_map_enabled']):
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
-                    t = self.texture(d['bump_map'])
+                    t = texture(d['bump_map'], s, )
                     if(t is not None):
                         a.textureMap = t
-                    a.value = d['bump_value']
+                    a.value = d['bump']
                     m.setAttribute('bump', a)
+                    m.setNormalMapState(d['bump_map_use_normal'])
                 
                 m.setDispersion(d['dispersion'])
                 m.setMatteShadow(d['shadow'])
@@ -3752,7 +3758,7 @@ class MXMReader():
                         'luminance': 0, 'luminance_power': 40.0, 'luminance_efficacy': 17.6, 'luminance_output': 100.0, 'temperature_value': 6500.0,
                         'hdr_map': None, 'hdr_intensity': 1.0, }
             layerd = {'visible': True, 'opacity': 100.0, 'opacity_map_enabled': False, 'opacity_map': None, 'blending': 0, }
-            globald = {'override_map': None, 'bump': False, 'bump_value': 30.0, 'bump_map': None, 'dispersion': False, 'shadow': False,
+            globald = {'override_map': None, 'bump': 30.0, 'bump_map_enabled': False, 'bump_map': None, 'bump_map_use_normal': False, 'dispersion': False, 'shadow': False,
                        'matte': False, 'priority': 0, 'id': (255, 255, 255), 'active_display_map': None, }
             
             # structure
@@ -3790,15 +3796,18 @@ class MXMReader():
             def global_props(m, d):
                 t, _ = m.getGlobalMap()
                 d['override_map'] = texture(t)
+                
                 a, _ = m.getAttribute('bump')
                 if(a.activeType == MAP_TYPE_BITMAP):
-                    d['bump'] = True
-                    d['bump_value'] = a.value
+                    d['bump_map_enabled'] = True
+                    d['bump'] = a.value
                     d['bump_map'] = texture(a.textureMap)
+                    d['bump_map_use_normal'] = m.getNormalMapState()[0]
                 else:
-                    d['bump'] = False
-                    d['bump_value'] = a.value
+                    d['bump_map_enabled'] = False
+                    d['bump'] = a.value
                     d['bump_map'] = None
+                    d['bump_map_use_normal'] = m.getNormalMapState()[0]
                 
                 d['dispersion'] = m.getDispersion()[0]
                 d['shadow'] = m.getMatteShadow()[0]
