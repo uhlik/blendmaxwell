@@ -684,6 +684,53 @@ class MaterialEditorCallbacks():
             self['{}_type'.format(p)] = True
         else:
             self['{}_type'.format(p)] = False
+    
+    def global_bump_normal_get(self):
+        try:
+            return self['global_bump_map_use_normal']
+        except KeyError:
+            # default value
+            return False
+    
+    def global_bump_normal_set(self, v):
+        self['global_bump_map_use_normal'] = v
+        if(v):
+            try:
+                self['global_bump_abnormal_value'] = self['global_bump']
+            except KeyError:
+                # default value
+                self['global_bump_abnormal_value'] = 30.0
+            self['global_bump'] = 100.0
+        else:
+            try:
+                self['global_bump'] = self['global_bump_abnormal_value']
+            except KeyError:
+                # default value
+                self['global_bump'] = 30.0
+    
+    
+    def bsdf_bump_normal_get(self):
+        try:
+            return self['bump_map_use_normal']
+        except KeyError:
+            # default value
+            return False
+    
+    def bsdf_bump_normal_set(self, v):
+        self['bump_map_use_normal'] = v
+        if(v):
+            try:
+                self['bump_abnormal_value'] = self['bump']
+            except KeyError:
+                # default value
+                self['bump_abnormal_value'] = 30.0
+            self['bump'] = 100.0
+        else:
+            try:
+                self['bump'] = self['bump_abnormal_value']
+            except KeyError:
+                # default value
+                self['bump'] = 30.0
 
 
 class _overrides():
@@ -1913,7 +1960,8 @@ class MaterialBSDFProperties(PropertyGroup):
     bump = FloatProperty(name="Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, )
     bump_map_enabled = BoolProperty(name="Bump Map Enabled", default=False, )
     bump_map = StringProperty(name="Bump Map", default="", get=MaterialEditorCallbacks.bsdf_bump_map_get, set=MaterialEditorCallbacks.bsdf_bump_map_set, )
-    bump_map_use_normal = BoolProperty(name="Bump Map Use Normal", default=False, )
+    bump_map_use_normal = BoolProperty(name="Bump Map Use Normal", default=False, get=MaterialEditorCallbacks.bsdf_bump_normal_get, set=MaterialEditorCallbacks.bsdf_bump_normal_set, )
+    bump_abnormal_value = FloatProperty(name="Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, options={'HIDDEN'}, )
     
     anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
     anisotropy_map_enabled = BoolProperty(name="Anisotropy Map Enabled", default=False, )
@@ -2054,7 +2102,7 @@ class MaterialProperties(PropertyGroup):
     
     use = EnumProperty(name="Type", items=[('REFERENCE', "Reference", ""), ('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""),
                                            ('TRANSPARENT', "Transparent", ""), ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""),
-                                           ('HAIR', "Hair", ""), ], default='REFERENCE', )
+                                           ('HAIR', "Hair", ""), ], default='CUSTOM', )
     
     override_global_properties = BoolProperty(name="Override Global Properties In MXM", default=False, )
     
@@ -2063,7 +2111,8 @@ class MaterialProperties(PropertyGroup):
     global_bump = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, )
     global_bump_map_enabled = BoolProperty(name="Global Bump Map Enabled", default=False, )
     global_bump_map = StringProperty(name="Global Bump Map", default="", get=MaterialEditorCallbacks.global_bump_map_get, set=MaterialEditorCallbacks.global_bump_map_set, )
-    global_bump_map_use_normal = BoolProperty(name="Global Bump Map Use Normal", default=False, )
+    global_bump_map_use_normal = BoolProperty(name="Global Bump Map Use Normal", default=False, get=MaterialEditorCallbacks.global_bump_normal_get, set=MaterialEditorCallbacks.global_bump_normal_set, )
+    global_bump_abnormal_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, options={'HIDDEN'}, )
     
     global_dispersion = BoolProperty(name="Dispersion", default=False, )
     global_shadow = BoolProperty(name="Shadow", default=False, )

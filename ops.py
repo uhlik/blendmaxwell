@@ -692,6 +692,42 @@ class BlockedEmitterAdd(Operator):
         return {'FINISHED'}
 
 
+class BpyOpsMaterialNewOverride(Operator):
+    bl_idname = "maxwell_render.material_new_override"
+    bl_label = "Add a new material"
+    bl_description = "Add a new material"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        # it is not drawn (clickable) when it can't be used right?
+        return True
+    
+    def execute(self, context):
+        bpy.ops.material.new()
+        
+        mat = context.object.active_material
+        mx = mat.maxwell_render
+        if(mx.use == 'CUSTOM'):
+            # add layer with bsdf
+            cl = mx.custom_layers
+            ls = cl.layers
+            idx = cl.index
+            auto_bsdf = True
+            
+            item = ls.add()
+            item.id = len(ls)
+            item.name = 'Layer {}'.format(len(ls))
+            cl.index = (len(ls) - 1)
+            if(auto_bsdf):
+                b = item.layer.bsdfs.bsdfs.add()
+                b.id = len(ls)
+                b.name = 'BSDF'
+                item.layer.bsdfs.index = 0
+        
+        return {'FINISHED'}
+
+
 class MaterialEditorAddLayer(Operator):
     bl_idname = "maxwell_render.material_editor_add_layer"
     bl_label = "Add New Layer"

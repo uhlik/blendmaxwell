@@ -1691,7 +1691,8 @@ class MaterialsPanel(MaterialButtonsPanel, Panel):
                 row.operator("object.material_slot_deselect", text="Deselect")
         split = layout.split(percentage=0.7)
         if(ob):
-            split.template_ID(ob, "active_material", new="material.new")
+            # split.template_ID(ob, "active_material", new="material.new")
+            split.template_ID(ob, "active_material", new="maxwell_render.material_new_override")
             row = split.row()
             if(slot):
                 row.prop(slot, "link", text="")
@@ -1717,9 +1718,9 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         # l.prop(bpy.context.scene.maxwell_render_private, 'material')
 
 
-class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
+class MaterialTypePanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Global Properties"
+    bl_label = "Type"
     
     def draw(self, context):
         l = self.layout
@@ -1728,12 +1729,24 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         mx = context.material.maxwell_material_extension
         mat = context.material
         
-        r = sub.row()
-        r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
-        sub.separator()
-        
         sub.prop(m, 'use', text="Material Type", )
         sub.separator()
+
+
+class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Global Properties"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        
+        # sub.prop(m, 'use', text="Material Type", )
+        # sub.separator()
         
         if(m.use == 'REFERENCE'):
             r = sub.row()
@@ -1780,6 +1793,10 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         
         if(m.use == 'CUSTOM'):
             sub.prop_search(m, 'custom_active_display_map', mat, 'texture_slots', icon='TEXTURE', )
+        
+        sub.separator()
+        r = sub.row()
+        r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
 
 
 class MaterialPanel(MaterialButtonsPanel, Panel):
