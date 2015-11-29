@@ -746,11 +746,15 @@ class MaterialEditorAddLayer(Operator):
         item.id = len(ls)
         item.name = 'Layer {}'.format(len(ls))
         cl.index = (len(ls) - 1)
+        
         if(self.auto_bsdf):
             b = item.layer.bsdfs.bsdfs.add()
             b.id = len(ls)
             b.name = 'BSDF'
             item.layer.bsdfs.index = 0
+        
+        while(cl['index'] != 0):
+            bpy.ops.maxwell_render.material_editor_move_layer_up()
         
         return {'FINISHED'}
 
@@ -873,6 +877,9 @@ class MaterialEditorAddBSDF(Operator):
         item.id = len(ls)
         item.name = 'BSDF'
         cl.index = (len(ls) - 1)
+        
+        while(cl['index'] != 0):
+            bpy.ops.maxwell_render.material_editor_move_bsdf_up()
         
         return {'FINISHED'}
 
