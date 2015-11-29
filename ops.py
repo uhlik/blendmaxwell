@@ -722,7 +722,7 @@ class BpyOpsMaterialNewOverride(Operator):
             if(auto_bsdf):
                 b = item.layer.bsdfs.bsdfs.add()
                 b.id = len(ls)
-                b.name = 'BSDF'
+                b.name = 'BSDF 1'
                 item.layer.bsdfs.index = 0
         
         return {'FINISHED'}
@@ -750,7 +750,7 @@ class MaterialEditorAddLayer(Operator):
         if(self.auto_bsdf):
             b = item.layer.bsdfs.bsdfs.add()
             b.id = len(ls)
-            b.name = 'BSDF'
+            b.name = 'BSDF 1'
             item.layer.bsdfs.index = 0
         
         while(cl['index'] != 0):
@@ -875,7 +875,7 @@ class MaterialEditorAddBSDF(Operator):
         
         item = ls.add()
         item.id = len(ls)
-        item.name = 'BSDF'
+        item.name = 'BSDF {}'.format(len(ls))
         cl.index = (len(ls) - 1)
         
         while(cl['index'] != 0):
