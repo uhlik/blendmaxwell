@@ -4284,6 +4284,12 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
         else:
             r.prop_search(m, "uv_layer", o.data, "uv_textures", )
         
+        if(m.uv_layer != "" and p.settings.child_type != 'NONE'):
+            # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
+            sub.label("Particle hair with children + UVs!", icon='ERROR', )
+            sub.label("Blender may crash during .mxs export!", icon='ERROR', )
+            sub.label("Save your work before hitting F12!", icon='ERROR', )
+        
         sub.separator()
         c = sub.column(align=True)
         c.prop(m, 'display_percent')
