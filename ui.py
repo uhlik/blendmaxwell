@@ -1857,6 +1857,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
         mat = context.material
         
         if(m.use == 'EMITTER'):
+            self.bl_label = "Emitter"
+            
             sub.prop(mx, 'emitter_type')
             sub.separator()
             if(mx.emitter_type == '0'):
@@ -1975,6 +1977,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     sub.prop(mx, 'emitter_hdr_intensity')
             
         elif(m.use == 'AGS'):
+            self.bl_label = "AGS"
+            
             r = sub.row()
             s = r.split(percentage=0.33)
             c = s.column()
@@ -1986,6 +1990,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'ags_type')
             
         elif(m.use == 'OPAQUE'):
+            self.bl_label = "Opaque"
+            
             sub.menu("Opaque_presets", text=bpy.types.Opaque_presets.bl_label)
             sub.separator()
             
@@ -2022,6 +2028,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'opaque_clearcoat')
             
         elif(m.use == 'TRANSPARENT'):
+            self.bl_label = "Transparent"
+            
             sub.menu("Transparent_presets", text=bpy.types.Transparent_presets.bl_label)
             sub.separator()
             
@@ -2053,6 +2061,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'transparent_clearcoat')
             
         elif(m.use == 'METAL'):
+            self.bl_label = "Metal"
+            
             sub.menu("Metal_presets", text=bpy.types.Metal_presets.bl_label)
             sub.separator()
             
@@ -2119,6 +2129,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r.prop_search(mx, 'metal_perforation_map', mat, 'texture_slots', icon='TEXTURE', text="", )
             
         elif(m.use == 'TRANSLUCENT'):
+            self.bl_label = "Translucent"
+            
             sub.menu("Translucent_presets", text=bpy.types.Translucent_presets.bl_label)
             sub.separator()
             
@@ -2156,6 +2168,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'translucent_clearcoat_ior')
             
         elif(m.use == 'CARPAINT'):
+            self.bl_label = "Carpaint"
+            
             sub.menu("Carpaint_presets", text=bpy.types.Carpaint_presets.bl_label)
             sub.separator()
             
@@ -2170,6 +2184,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'carpaint_topcoat')
             
         elif(m.use == 'HAIR'):
+            self.bl_label = "Hair"
+            
             sub.menu("Hair_presets", text=bpy.types.Hair_presets.bl_label)
             sub.separator()
 
@@ -2210,6 +2226,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r.prop(mx, 'hair_secondary_highlight_tint')
         
         elif(m.use == 'REFERENCE'):
+            self.bl_label = "Reference"
+            
             sub.prop(m, 'mxm_file')
             sub.prop(m, 'embed')
             r = sub.row(align=True)
