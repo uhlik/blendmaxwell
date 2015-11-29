@@ -58,8 +58,8 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
 # TODO: change default material type to 'CUSTOM', will prevent missing path warning in unfinished materials
 # FIXME: link hide emmiter in particles with blender one, maybe with callbeck, don't want to rewrite export code, link also material assignment (but i am not sure if both are possible, seems like it will bring more problems then benefits. postponing it almost indefinitely..)
-# TODO: put back World datablocks
 # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
+# TODO: maybe organize all props and remove the need of prefixes in names
 
 
 class MXSExport():
