@@ -735,6 +735,7 @@ class MaterialEditorAddLayer(Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     auto_bsdf = BoolProperty(name="auto_bsdf", default=True, options={'HIDDEN'}, )
+    add_to_top = BoolProperty(name="add_to_top", default=True, options={'HIDDEN'}, )
     
     def execute(self, context, ):
         mx = context.material.maxwell_render
@@ -753,8 +754,9 @@ class MaterialEditorAddLayer(Operator):
             b.name = 'BSDF 1'
             item.layer.bsdfs.index = 0
         
-        while(cl['index'] != 0):
-            bpy.ops.maxwell_render.material_editor_move_layer_up()
+        if(self.add_to_top):
+            while(cl['index'] != 0):
+                bpy.ops.maxwell_render.material_editor_move_layer_up()
         
         return {'FINISHED'}
 
@@ -866,6 +868,8 @@ class MaterialEditorAddBSDF(Operator):
     bl_description = "Add new BSDF"
     bl_options = {'REGISTER', 'UNDO'}
     
+    add_to_top = BoolProperty(name="add_to_top", default=True, options={'HIDDEN'}, )
+    
     def execute(self, context):
         mx = context.material.maxwell_render
         l = mx.custom_layers.layers[mx.custom_layers.index]
@@ -878,8 +882,9 @@ class MaterialEditorAddBSDF(Operator):
         item.name = 'BSDF {}'.format(len(ls))
         cl.index = (len(ls) - 1)
         
-        while(cl['index'] != 0):
-            bpy.ops.maxwell_render.material_editor_move_bsdf_up()
+        if(self.add_to_top):
+            while(cl['index'] != 0):
+                bpy.ops.maxwell_render.material_editor_move_bsdf_up()
         
         return {'FINISHED'}
 
@@ -1385,11 +1390,13 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         
         if(gp['bump_map'] is not None):
             mx.global_bump_map_enabled = True
+            mx.global_bump_abnormal_value = gp['bump']
             mx.global_bump = gp['bump']
             mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
             mx.global_bump_map_use_normal = gp['bump_map_use_normal']
         else:
             mx.global_bump_map_enabled = False
+            mx.global_bump_abnormal_value = gp['bump']
             mx.global_bump = gp['bump']
             mx.global_bump_map = ''
             mx.global_bump_map_use_normal = gp['bump_map_use_normal']
@@ -1426,7 +1433,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             
             override_context = bpy.context.copy()
             override_context['material'] = material
-            bpy.ops.maxwell_render.material_editor_add_layer(override_context, auto_bsdf=False, )
+            bpy.ops.maxwell_render.material_editor_add_layer(override_context, auto_bsdf=False, add_to_top=False, )
             layer = mx.custom_layers.layers[len(mx.custom_layers.layers) - 1]
             
             layer.name = ld['name']
@@ -1474,7 +1481,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             for j, bdp in enumerate(ld['bsdfs']):
                 override_context = bpy.context.copy()
                 override_context['material'] = material
-                bpy.ops.maxwell_render.material_editor_add_bsdf(override_context, )
+                bpy.ops.maxwell_render.material_editor_add_bsdf(override_context, add_to_top=False, )
                 # and now, some ugly line..
                 b = mx.custom_layers.layers[len(mx.custom_layers.layers) - 1].layer.bsdfs.bsdfs[len(mx.custom_layers.layers[len(mx.custom_layers.layers) - 1].layer.bsdfs.bsdfs) - 1].bsdf
                 
@@ -1536,6 +1543,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                     b.roughness_map_enabled = False
                     b.roughness_map = ""
                 
+                b.bump_abnormal_value = bd['bump']
                 b.bump = bd['bump']
                 
                 if(bd['bump_map'] is not None):
@@ -1546,6 +1554,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                     b.bump_map = ""
                 
                 b.bump_map_use_normal = bd['bump_map_use_normal']
+                
                 b.anisotropy = bd['anisotropy']
                 
                 if(bd['anisotropy_map'] is not None):
