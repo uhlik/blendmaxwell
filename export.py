@@ -3761,6 +3761,10 @@ class MXSTexture(Serializable):
         self.m_hue = m.hue
         self.m_rgb_clamp = (m.clamp[0], m.clamp[1], )
         
+        self.m_normal_mapping_flip_red = m.normal_mapping_flip_red
+        self.m_normal_mapping_flip_green = m.normal_mapping_flip_green
+        self.m_normal_mapping_full_range_blue = m.normal_mapping_full_range_blue
+        
         if(m.tiling_method == 'NO_TILING'):
             tm = (False, False, )
         elif(m.tiling_method == 'TILE_X'):

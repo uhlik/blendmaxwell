@@ -1162,13 +1162,11 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             else:
                 self.report({'ERROR'}, "File '{}' does not exist.".format(d['path']))
             tex.image = image
-            tm = tex.maxwell_render
+            mx = tex.maxwell_render
             
             mx.path = d['path']
             mx.use_global_map = d['use_global_map']
             mx.channel = d['channel']
-            
-            mx.tiling_method = EnumProperty(name="Tiling Method", items=[('TILE_XY', "Tile XY", ""), ('TILE_X', "Tile X", ""), ('TILE_Y', "Tile Y", ""), ('NO_TILING', "No Tiling", ""), ], default='TILE_XY', )
             
             tm = d['tiling_method']
             if(not tm[0] and not tm[1]):
@@ -1194,6 +1192,10 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             mx.saturation = d['saturation']
             mx.hue = d['hue']
             mx.clamp = d['clamp']
+            
+            mx.normal_mapping_flip_red = bool(d['normal_mapping_flip_red'])
+            mx.normal_mapping_flip_green = bool(d['normal_mapping_flip_green'])
+            mx.normal_mapping_full_range_blue = bool(d['normal_mapping_full_range_blue'])
             
             return tex.name
         
@@ -1332,13 +1334,11 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             else:
                 self.report({'ERROR'}, "File '{}' does not exist.".format(d['path']))
             tex.image = image
-            tm = tex.maxwell_render
+            mx = tex.maxwell_render
             
             mx.path = d['path']
             mx.use_global_map = d['use_global_map']
             mx.channel = d['channel']
-            
-            mx.tiling_method = EnumProperty(name="Tiling Method", items=[('TILE_XY', "Tile XY", ""), ('TILE_X', "Tile X", ""), ('TILE_Y', "Tile Y", ""), ('NO_TILING', "No Tiling", ""), ], default='TILE_XY', )
             
             tm = d['tiling_method']
             if(not tm[0] and not tm[1]):
@@ -1364,6 +1364,10 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             mx.saturation = d['saturation']
             mx.hue = d['hue']
             mx.clamp = d['clamp']
+            
+            mx.normal_mapping_flip_red = bool(d['normal_mapping_flip_red'])
+            mx.normal_mapping_flip_green = bool(d['normal_mapping_flip_green'])
+            mx.normal_mapping_full_range_blue = bool(d['normal_mapping_full_range_blue'])
             
             return tex.name
         

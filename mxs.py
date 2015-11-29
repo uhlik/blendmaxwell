@@ -214,9 +214,11 @@ class MXSWriter():
         t.invert = d['invert']
         # t.doGammaCorrection = 0
         t.useAbsoluteUnits = d['tile_method_units']
-        # t.normalMappingFlipRed = 0
-        # t.normalMappingFlipGreen = 0
-        # t.normalMappingFullRangeBlue = 0
+        
+        t.normalMappingFlipRed = d['normal_mapping_flip_red']
+        t.normalMappingFlipGreen = d['normal_mapping_flip_green']
+        t.normalMappingFullRangeBlue = d['normal_mapping_full_range_blue']
+        
         t.useAlpha = d['alpha_only']
         t.typeInterpolation = d['interpolation']
         t.saturation = d['saturation'] / 100
@@ -275,6 +277,10 @@ class MXSWriter():
         vec = Cvector2D()
         vec.assign(d['repeat'][0], d['repeat'][1])
         t.scale = vec
+        
+        t.normalMappingFlipRed = d['normal_mapping_flip_red']
+        t.normalMappingFlipGreen = d['normal_mapping_flip_green']
+        t.normalMappingFullRangeBlue = d['normal_mapping_full_range_blue']
         
         return t
     
@@ -2458,9 +2464,11 @@ class MXMWriter():
         t.invert = d['invert']
         # t.doGammaCorrection = 0
         t.useAbsoluteUnits = d['tile_method_units']
-        # t.normalMappingFlipRed = 0
-        # t.normalMappingFlipGreen = 0
-        # t.normalMappingFullRangeBlue = 0
+        
+        t.normalMappingFlipRed = d['normal_mapping_flip_red']
+        t.normalMappingFlipGreen = d['normal_mapping_flip_green']
+        t.normalMappingFullRangeBlue = d['normal_mapping_full_range_blue']
+        
         t.useAlpha = d['alpha_only']
         t.typeInterpolation = d['interpolation']
         t.saturation = d['saturation'] / 100
@@ -2516,6 +2524,10 @@ class MXMWriter():
         vec = Cvector2D()
         vec.assign(d['repeat'][0], d['repeat'][1])
         t.scale = vec
+        
+        t.normalMappingFlipRed = d['normal_mapping_flip_red']
+        t.normalMappingFlipGreen = d['normal_mapping_flip_green']
+        t.normalMappingFullRangeBlue = d['normal_mapping_full_range_blue']
         
         return t
     
@@ -3713,13 +3725,13 @@ class MXMReader():
                  'offset': [t.offset.x(), t.offset.y()],
                  'clamp': [int(t.clampMin * 255), int(t.clampMax * 255)],
                  'tiling_units': t.useAbsoluteUnits,
-                 'tiling_method': [t.uIsTiled, t.vIsTiled], }
+                 'tiling_method': [t.uIsTiled, t.vIsTiled],
+                 'normal_mapping_flip_red': t.normalMappingFlipRed,
+                 'normal_mapping_flip_green': t.normalMappingFlipGreen,
+                 'normal_mapping_full_range_blue': t.normalMappingFullRangeBlue, }
             
             # t.cosA
             # t.doGammaCorrection
-            # t.normalMappingFlipGreen
-            # t.normalMappingFlipRed
-            # t.normalMappingFullRangeBlue
             # t.sinA
             # t.theTextureExtensions
             
@@ -4038,7 +4050,10 @@ class MXMReader():
                      'offset': [t.offset.x(), t.offset.y()],
                      'clamp': [int(t.clampMin * 255), int(t.clampMax * 255)],
                      'tiling_units': t.useAbsoluteUnits,
-                     'tiling_method': [t.uIsTiled, t.vIsTiled], }
+                     'tiling_method': [t.uIsTiled, t.vIsTiled],
+                     'normal_mapping_flip_red': t.normalMappingFlipRed,
+                     'normal_mapping_flip_green': t.normalMappingFlipGreen,
+                     'normal_mapping_full_range_blue': t.normalMappingFullRangeBlue, }
                 return d
             
             def mxparamlistarray(v):

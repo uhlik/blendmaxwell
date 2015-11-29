@@ -708,7 +708,6 @@ class MaterialEditorCallbacks():
                 # default value
                 self['global_bump'] = 30.0
     
-    
     def bsdf_bump_normal_get(self):
         try:
             return self['bump_map_use_normal']
@@ -1242,6 +1241,10 @@ class TextureProperties(PropertyGroup):
     saturation = FloatProperty(name="Saturation", default=0.0, min=-100.0, max=100.0, precision=3, subtype='PERCENTAGE', )
     hue = FloatProperty(name="Hue", default=0.0, min=-180.0, max=180.0, precision=3, subtype='PERCENTAGE', )
     clamp = IntVectorProperty(name="RGB Clamp", default=(0, 255), min=0, max=255, subtype='NONE', size=2, )
+    
+    normal_mapping_flip_red = BoolProperty(name="Flip X", default=False, )
+    normal_mapping_flip_green = BoolProperty(name="Flip Y", default=True, )
+    normal_mapping_full_range_blue = BoolProperty(name="Wide", default=False, )
     
     use = EnumProperty(name="Type", items=[('IMAGE', "Image", ""), ('BRICK', "Brick", ""), ('CHECKER', "Checker", ""), ('CIRCLE', "Circle", ""), ('GRADIENT3', "Gradient3", ""),
                                            ('GRADIENT', "Gradient", ""), ('GRID', "Grid", ""), ('MARBLE', "Marble", ""), ('NOISE', "Noise", ""), ('VORONOI', "Voronoi", ""),

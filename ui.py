@@ -3899,6 +3899,13 @@ class TexturePanel(TextureButtonsPanel, Panel):
         
         r = sub.row()
         r.prop(m, 'clamp')
+        
+        l.label("Normal Mapping:")
+        sub = l.column()
+        r = sub.row()
+        r.prop(m, 'normal_mapping_flip_red')
+        r.prop(m, 'normal_mapping_flip_green')
+        r.prop(m, 'normal_mapping_full_range_blue')
 
 
 class TextureProceduralPanel(TextureButtonsPanel, Panel):

@@ -64,13 +64,13 @@ def texture(t):
          'offset': [t.offset.x(), t.offset.y()],
          'clamp': [int(t.clampMin * 255), int(t.clampMax * 255)],
          'tiling_units': t.useAbsoluteUnits,
-         'tiling_method': [t.uIsTiled, t.vIsTiled], }
+         'tiling_method': [t.uIsTiled, t.vIsTiled],
+         'normal_mapping_flip_red': t.normalMappingFlipRed,
+         'normal_mapping_flip_green': t.normalMappingFlipGreen,
+         'normal_mapping_full_range_blue': t.normalMappingFullRangeBlue, }
     
     # t.cosA
     # t.doGammaCorrection
-    # t.normalMappingFlipGreen
-    # t.normalMappingFlipRed
-    # t.normalMappingFullRangeBlue
     # t.sinA
     # t.theTextureExtensions
     
@@ -399,7 +399,10 @@ def extension(s, m):
              'offset': [t.offset.x(), t.offset.y()],
              'clamp': [int(t.clampMin * 255), int(t.clampMax * 255)],
              'tiling_units': t.useAbsoluteUnits,
-             'tiling_method': [t.uIsTiled, t.vIsTiled], }
+             'tiling_method': [t.uIsTiled, t.vIsTiled],
+             'normal_mapping_flip_red': t.normalMappingFlipRed,
+             'normal_mapping_flip_green': t.normalMappingFlipGreen,
+             'normal_mapping_full_range_blue': t.normalMappingFullRangeBlue, }
         return d
     
     def mxparamlistarray(v):

@@ -1142,11 +1142,12 @@ def texture(d, s, ):
     vec.assign(d['repeat'][0], d['repeat'][1])
     t.scale = vec
     
+    t.normalMappingFlipRed = d['normal_mapping_flip_red']
+    t.normalMappingFlipGreen = d['normal_mapping_flip_green']
+    t.normalMappingFullRangeBlue = d['normal_mapping_full_range_blue']
+    
     # t.cosA
     # t.doGammaCorrection
-    # t.normalMappingFlipGreen
-    # t.normalMappingFlipRed
-    # t.normalMappingFullRangeBlue
     # t.sinA
     # t.theTextureExtensions
     
@@ -2249,9 +2250,11 @@ def texture_data_to_mxparams(d, mp, name, ):
     t.invert = d['invert']
     # t.doGammaCorrection = 0
     t.useAbsoluteUnits = d['tile_method_units']
-    # t.normalMappingFlipRed = 0
-    # t.normalMappingFlipGreen = 0
-    # t.normalMappingFullRangeBlue = 0
+    
+    t.normalMappingFlipRed = d['normal_mapping_flip_red']
+    t.normalMappingFlipGreen = d['normal_mapping_flip_green']
+    t.normalMappingFullRangeBlue = d['normal_mapping_full_range_blue']
+    
     t.useAlpha = d['alpha_only']
     t.typeInterpolation = d['interpolation']
     
