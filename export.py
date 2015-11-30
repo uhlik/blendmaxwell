@@ -2279,7 +2279,14 @@ class MXSMesh(MXSObject):
         if('extra_options' in self.o):
             if('hidden_base' in self.o['extra_options']):
                 if(self.o['extra_options']['hidden_base'] is True):
-                    self.m_hide = True
+                    # zero scale base object, when only hidden, instances will be hidden too
+                    m = self.b_matrix_world * Matrix(((0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+                    b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+                    self.m_base = b
+                    self.m_pivot = p
+                    self.m_location = l
+                    self.m_rotation = r
+                    self.m_scale = s
     
     def _prepare_mesh(self):
         ob = self.b_object
