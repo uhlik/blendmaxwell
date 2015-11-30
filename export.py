@@ -405,6 +405,54 @@ class MXSExport():
         
         h = hierarchy()
         
+        # particle instances with hidden bases
+        class KillRecursiveFunctions(Exception):
+            pass
+        
+        def is_psys_instances_marked_to_export(obj):
+            def walk(o):
+                for c in o['children']:
+                    walk(c)
+                ob = o['object']
+                if(ob == obj):
+                    if(o['export']):
+                        raise KillRecursiveFunctions("here it is!")
+            try:
+                for o in h:
+                    walk(o)
+            except KillRecursiveFunctions:
+                return True
+        
+        def is_hidden_base(hob):
+            for ob in objs:
+                if(len(ob.particle_systems) > 0):
+                    for ps in ob.particle_systems:
+                        marked = is_psys_instances_marked_to_export(ob)
+                        if(marked):
+                            pset = ps.settings
+                            if(pset.maxwell_render.use == 'PARTICLE_INSTANCES'):
+                                if(pset.render_type in ['OBJECT', 'GROUP', ]):
+                                    if(pset.render_type == 'GROUP' and pset.dupli_group is not None):
+                                        for do in pset.dupli_group.objects:
+                                            if(do == hob):
+                                                return True
+                                    elif(pset.render_type == 'OBJECT' and pset.dupli_object is not None):
+                                        if(pset.dupli_object == hob):
+                                            return True
+            return False
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            ob = o['object']
+            hidden_base = is_hidden_base(ob)
+            if(hidden_base):
+                o['export'] = True
+                o['extra_options'] = {'hidden_base': True, }
+        
+        for o in h:
+            walk(o)
+        
         # if object is not visible and has renderable children, swap type to EMPTY and mark for export
         def renderable_children(o):
             r = False
@@ -1010,8 +1058,21 @@ class MXSExport():
         else:
             alphas = mx.custom_alphas_manual.alphas
             for alpha in alphas:
-                obs = [bpy.data.objects[o.name] for o in alpha.objects]
-                mats = [bpy.data.materials[m.name] for m in alpha.materials]
+                # obs = [bpy.data.objects[o.name] for o in alpha.objects]
+                # mats = [bpy.data.materials[m.name] for m in alpha.materials]
+                obs = []
+                for o in alpha.objects:
+                    if(o.name in bpy.data.objects):
+                        obs.append(bpy.data.objects[o.name])
+                    else:
+                        log("'{}': missing object: '{}'".format(alpha.name, o.name), 3, LogStyles.WARNING, )
+                mats = []
+                for m in alpha.materials:
+                    if(m.name in bpy.data.materials):
+                        mats.append(bpy.data.materials[m.name])
+                    else:
+                        log("'{}': missing material: '{}'".format(alpha.name, m.name), 3, LogStyles.WARNING, )
+                
                 a = {'name': MXSDatabase.only_sanitize_name(alpha.name), 'opaque': alpha.opaque, 'objects': [], 'materials': [], }
                 
                 allowed = ['MESH', 'MESH_INSTANCE', 'PARTICLES', 'HAIR', 'REFERENCE', 'VOLUMETRICS', 'SEA', ]
@@ -2214,6 +2275,11 @@ class MXSMesh(MXSObject):
         self._materials()
         # cleanup
         bpy.data.meshes.remove(me)
+        
+        if('extra_options' in self.o):
+            if('hidden_base' in self.o['extra_options']):
+                if(self.o['extra_options']['hidden_base'] is True):
+                    self.m_hide = True
     
     def _prepare_mesh(self):
         ob = self.b_object
