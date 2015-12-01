@@ -766,6 +766,52 @@ class MXSExport():
         self._particles = particles
         self._modifiers = modifiers
         
+        # handle hidden bases
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            
+            ob = o['object']
+            
+            if('extra_options' in o):
+                if('hidden_base' in o['extra_options']):
+                    if(o['extra_options']['hidden_base'] is True):
+                        # search for ob in self._bases
+                        base = None
+                        for bo in self._bases:
+                            if(bo['object'] == ob):
+                                base = bo
+                        # find its first instance
+                        instance = None
+                        dos = []
+                        for do in self._duplicates:
+                            if(do['mesh'] == base['mesh']):
+                                dos.append(do)
+                        if(len(dos) > 0):
+                            dos.sort(key=lambda k: k['dupli_name'])
+                            instance = dos[0]
+                        
+                        if(base is not None and instance is not None):
+                            # swap that instance with base (transformation, parent)
+                            swap_base = base.copy()
+                            swap_base['extra_options']['swap_matrix'] = instance['dupli_matrix']
+                            swap_base['extra_options']['swap_parent'] = instance['parent']
+                            if('extra_options' in instance):
+                                if('hide' in instance['extra_options']):
+                                    swap_base['extra_options']['hide'] = instance['extra_options']['hide']
+                            self._bases.remove(base)
+                            self._bases.append(swap_base)
+                            # change base to empty to keep hierarchy
+                            swap_empty = base.copy()
+                            swap_empty['export_type'] = 'EMPTY'
+                            swap_empty['extra_options']['swap_name'] = "{}-{}".format(base['object'].name, uuid.uuid1())
+                            self._empties.append(swap_empty)
+                            # remove instance completelly
+                            self._duplicates.remove(instance)
+        
+        for o in h:
+            walk(o)
+        
         # ----------------------------------------------------------------------------------
         # (everything above this line is pure magic, below is just standard code)
         
@@ -2236,10 +2282,21 @@ class MXSObject(Serializable):
 
 class MXSEmpty(MXSObject):
     def __init__(self, o, ):
-        log("'{}'".format(o['object'].name), 2)
+        swap_name = None
+        if('extra_options' in o):
+            if('swap_name' in o['extra_options']):
+                swap_name = o['extra_options']['swap_name']
+        
+        if(swap_name is not None):
+            log("'{}'".format(swap_name), 2)
+        else:
+            log("'{}'".format(o['object'].name), 2)
         
         super().__init__(o)
         self.m_type = 'EMPTY'
+        
+        if(swap_name is not None):
+            self.m_name = MXSDatabase.only_sanitize_name(swap_name)
 
 
 class MXSMesh(MXSObject):
@@ -2269,6 +2326,32 @@ class MXSMesh(MXSObject):
             self.m_scale = s
         # dupli overrides when self.use_instances = False
         
+        # handle hidden base objects for particle duplicators
+        swap_parent = None
+        if('extra_options' in o):
+            if('swap_parent' in o['extra_options']):
+                swap_parent = o['extra_options']['swap_parent']
+        if(swap_parent is not None):
+            self.m_parent = MXSDatabase.object_name(swap_parent['object'], swap_parent['object'].name)
+        swap_matrix = None
+        if('extra_options' in o and swap_parent is not None):
+            if('swap_matrix' in o['extra_options']):
+                swap_matrix = o['extra_options']['swap_matrix']
+        if(swap_matrix is not None):
+            m = swap_parent['object'].matrix_world.inverted() * swap_matrix
+            m *= ROTATE_X_90
+            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+            self.m_base = b
+            self.m_pivot = p
+            self.m_location = l
+            self.m_rotation = r
+            self.m_scale = s
+        # this can be property of swapped instance
+        if('extra_options' in self.o):
+            if('hide' in self.o['extra_options']):
+                if(self.o['extra_options']['hide'] is True):
+                    self.m_hide = True
+        
         me = self._prepare_mesh()
         
         self._mesh_to_data(me)
@@ -2276,17 +2359,17 @@ class MXSMesh(MXSObject):
         # cleanup
         bpy.data.meshes.remove(me)
         
-        if('extra_options' in self.o):
-            if('hidden_base' in self.o['extra_options']):
-                if(self.o['extra_options']['hidden_base'] is True):
-                    # zero scale base object, when only hidden, instances will be hidden too
-                    m = self.b_matrix_world * Matrix(((0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-                    b, p, l, r, s = self._matrix_to_base_and_pivot(m)
-                    self.m_base = b
-                    self.m_pivot = p
-                    self.m_location = l
-                    self.m_rotation = r
-                    self.m_scale = s
+        # if('extra_options' in self.o):
+        #     if('hidden_base' in self.o['extra_options']):
+        #         if(self.o['extra_options']['hidden_base'] is True):
+        #             # zero scale base object, when only hidden, instances will be hidden too
+        #             m = self.b_matrix_world * Matrix(((0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+        #             b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+        #             self.m_base = b
+        #             self.m_pivot = p
+        #             self.m_location = l
+        #             self.m_rotation = r
+        #             self.m_scale = s
     
     def _prepare_mesh(self):
         ob = self.b_object
