@@ -443,10 +443,13 @@ def python34_run_mxm_preview(mxm_path):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm_preview.py", )
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
         PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
-        command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
-                                                shlex.quote(script_path),
-                                                shlex.quote(PYMAXWELL_PATH),
-                                                shlex.quote(mxm_path), )
+        import numpy
+        NUMPY_PATH = os.path.split(os.path.split(numpy.__file__)[0])[0]
+        command_line = "{} {} {} {} {}".format(shlex.quote(PY),
+                                               shlex.quote(script_path),
+                                               shlex.quote(PYMAXWELL_PATH),
+                                               shlex.quote(NUMPY_PATH),
+                                               shlex.quote(mxm_path), )
         
         # log("read material preview from mxm:", 1)
         # log("command:", 2)
