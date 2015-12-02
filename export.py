@@ -56,7 +56,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: do something with sharp edges, auto smooth and custom normals..
 # TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions (no conversions float > 8 bit > float again)
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
-# FIXME: link hide emmiter in particles with blender one, maybe with callbeck, don't want to rewrite export code, link also material assignment (but i am not sure if both are possible, seems like it will bring more problems then benefits. postponing it almost indefinitely..)
+# FIXME: link hide emmiter in particles with blender one, rewrite export code to take it from psys settings, so it is linked to psys and not to object, would need extra loop in collect to set this to right object because particle system is handled as separate object
 # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
 # TODO: maybe organize all props and remove the need of prefixes in names
 
