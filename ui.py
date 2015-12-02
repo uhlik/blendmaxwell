@@ -1221,6 +1221,13 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
             r.active = False
         
         sub.prop(m, 'hide')
+        # warn user when particles have render emitter False
+        ob = context.active_object
+        if(len(ob.particle_systems) > 0):
+            for ps in ob.particle_systems:
+                pset = ps.settings
+                if((pset.use_render_emitter is True and m.hide is True) or (pset.use_render_emitter is False and m.hide is False)):
+                    sub.label("Overrided by particle system ('{}') settings".format(ps.name), icon='ERROR', )
         sub.separator()
         
         sub.prop(m, 'opacity')
@@ -4212,9 +4219,10 @@ class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
         
         sub.separator()
         
+        sub.prop(context.particle_system.settings, 'use_render_emitter', text="Render Emitter", )
         sub.prop(m, 'hide')
         # sub.prop(m, 'hide_parent')
-        sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object (Emitter)", )
+        # sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object (Emitter)", )
         sub.prop(m, 'opacity')
         sub.separator()
         r = sub.row()

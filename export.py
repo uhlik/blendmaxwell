@@ -56,7 +56,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: do something with sharp edges, auto smooth and custom normals..
 # TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions (no conversions float > 8 bit > float again)
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
-# FIXME: link hide emmiter in particles with blender one, rewrite export code to take it from psys settings, so it is linked to psys and not to object, would need extra loop in collect to set this to right object because particle system is handled as separate object
 # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
 # TODO: maybe organize all props and remove the need of prefixes in names
 
@@ -811,6 +810,51 @@ class MXSExport():
         
         for o in h:
             walk(o)
+        
+        # handle particle system settings 'use_render_emitter'
+        for o in self._particles:
+            {'type': None,
+             'object': bpy.data.objects['hair'].particle_systems["ParticleSystem"],
+             'export': True,
+             'children': [],
+             'psys': bpy.data.objects['hair'].particle_systems["ParticleSystem"],
+             'parent': bpy.data.objects['hair'],
+             'export_type': 'HAIR'}
+            hide = False
+            
+            ob = o['parent']
+            obmx = ob.maxwell_render
+            pset = o['psys'].settings
+            if(pset.use_render_emitter is True):
+                if(obmx.hide is True):
+                    # ps overrides ob
+                    log("object '{}' is set to hide from render, but particle system '{}' emitter is set to render. object will render.".format(ob.name, o['psys'].name), 2, LogStyles.WARNING, )
+                    hide = False
+                else:
+                    # ok, use ps settings
+                    hide = False
+                    # 'extra_options': {'hide': mpi.hide, },
+            else:
+                if(obmx.hide is True):
+                    # ok, use os settings
+                    hide = True
+                else:
+                    # ps overrides ob
+                    log("object '{}' is set to render, but particle system '{}' emitter is set to hide from render. object will not render.".format(ob.name, o['psys'].name), 2, LogStyles.WARNING, )
+                    hide = True
+            
+            found = False
+            for i, o in enumerate(self._meshes):
+                if(o['object'] == ob):
+                    found = True
+                    self._meshes[i]['extra_options'] = {'hide': hide, }
+                    break
+            if(not found):
+                for i, o in enumerate(self._bases):
+                    if(o['object'] == ob):
+                        found = True
+                        self._meshes[i]['extra_options'] = {'hide': hide, }
+                        break
         
         # ----------------------------------------------------------------------------------
         # (everything above this line is pure magic, below is just standard code)
@@ -2349,8 +2393,9 @@ class MXSMesh(MXSObject):
         # this can be property of swapped instance
         if('extra_options' in self.o):
             if('hide' in self.o['extra_options']):
-                if(self.o['extra_options']['hide'] is True):
-                    self.m_hide = True
+                # if(self.o['extra_options']['hide'] is True):
+                #     self.m_hide = True
+                self.m_hide = self.o['extra_options']['hide']
         
         me = self._prepare_mesh()
         
@@ -2582,8 +2627,9 @@ class MXSMeshInstance(MXSObject):
             
             if('extra_options' in self.o):
                 if('hide' in self.o['extra_options']):
-                    if(self.o['extra_options']['hide'] is True):
-                        self.m_hide = True
+                    # if(self.o['extra_options']['hide'] is True):
+                    #     self.m_hide = True
+                    self.m_hide = self.o['extra_options']['hide']
 
 
 class MXSReference(MXSObject):
