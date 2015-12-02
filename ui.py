@@ -1766,7 +1766,7 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         r = c.row()
         c = r.column()
         c.prop(m, 'global_bump', text="", )
-    
+        
         if(not m.global_bump_map_enabled or m.global_bump_map == ''):
             c.enabled = False
         r.prop(m, 'global_bump_map_enabled', text="", )
@@ -2835,6 +2835,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
 
 class MaterialPanelCustomEditorLayers(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        self.use_filter_show = False
+        
         icon = 'FILE_FOLDER'
         if(self.layout_type in {'DEFAULT', 'COMPACT'}):
             l = item.layer
@@ -2870,6 +2872,8 @@ class MaterialPanelCustomEditorLayers(UIList):
 
 class MaterialPanelCustomEditorLayerBSDFs(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        self.use_filter_show = False
+        
         icon = 'FCURVE'
         if(self.layout_type in {'DEFAULT', 'COMPACT'}):
             # layout.prop(item, "name", text="", emboss=False, icon=icon, )
@@ -3511,7 +3515,7 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             r.prop(bsdf, 'roughness', text="", )
             r.prop(bsdf, 'roughness_map_enabled', text="", )
             r.prop_search(bsdf, 'roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-        
+            
             r = l.row()
             s = r.split(percentage=0.333)
             c = s.column()
@@ -3520,12 +3524,12 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             r = c.row()
             c = r.column()
             c.prop(bsdf, 'bump', text="", )
-        
+            
             if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
                 c.enabled = False
             r.prop(bsdf, 'bump_map_enabled', text="", )
             r.prop_search(bsdf, 'bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-        
+            
             r = l.row()
             s = r.split(percentage=0.333)
             c = s.column()
@@ -3534,7 +3538,7 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
                 c.enabled = False
             r.prop(bsdf, 'bump_map_use_normal', text="Normal Mapping", )
-        
+            
             r = l.row()
             s = r.split(percentage=0.333)
             c = s.column()
@@ -3544,7 +3548,7 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             r.prop(bsdf, 'anisotropy', text="", )
             r.prop(bsdf, 'anisotropy_map_enabled', text="", )
             r.prop_search(bsdf, 'anisotropy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-        
+            
             r = l.row()
             s = r.split(percentage=0.333)
             c = s.column()
