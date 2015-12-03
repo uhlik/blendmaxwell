@@ -1182,7 +1182,8 @@ class ObjectProperties(PropertyGroup):
     hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
     hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
-    object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    # object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    object_id = FloatVectorProperty(name="Object ID", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
     backface_material = StringProperty(name="Backface Material", default="", )
     
@@ -1491,7 +1492,8 @@ class ExtParticlesProperties(PropertyGroup):
     hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
     hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
-    object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    # object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    object_id = FloatVectorProperty(name="Object ID", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     # hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
@@ -1581,7 +1583,8 @@ class ExtHairProperties(PropertyGroup):
     hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
     hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
-    object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    # object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    object_id = FloatVectorProperty(name="Object ID", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
     # hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
