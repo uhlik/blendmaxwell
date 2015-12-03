@@ -1235,7 +1235,7 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         r = sub.row()
         r.prop(m, 'object_id')
         
-        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
+        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface Material', )
         
         sub.label("Hidden from:")
         s = sub.split(percentage=0.5)
@@ -1737,7 +1737,7 @@ class MaterialTypePanel(MaterialButtonsPanel, Panel):
         mat = context.material
         
         sub.prop(m, 'use', text="Material Type", )
-        sub.separator()
+        # sub.separator()
 
 
 class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
