@@ -58,6 +58,8 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
 # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
 # TODO: maybe organize all props and remove the need of prefixes in names
+# TODO: addon preferences, like default matrial type and so on..
+# TODO: check all preset saving if all properties are correct and updated
 
 
 class MXSExport():
