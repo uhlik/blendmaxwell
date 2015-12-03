@@ -708,6 +708,12 @@ class BpyOpsMaterialNewOverride(Operator):
         
         mat = context.object.active_material
         mx = mat.maxwell_render
+        
+        prefs = system.prefs()
+        t = prefs.default_new_material_type
+        if(mx.use != t):
+            mx.use = t
+        
         if(mx.use == 'CUSTOM'):
             # add layer with bsdf
             cl = mx.custom_layers
@@ -724,6 +730,57 @@ class BpyOpsMaterialNewOverride(Operator):
                 b.id = len(ls)
                 b.name = 'BSDF 1'
                 item.layer.bsdfs.index = 0
+        
+        return {'FINISHED'}
+
+
+class BpyOpsWorldNewOverride(Operator):
+    bl_idname = "maxwell_render.world_new_override"
+    bl_label = "Add a new world"
+    bl_description = "Add a new world"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        # it is not drawn (clickable) when it can't be used right?
+        return True
+    
+    def execute(self, context):
+        bpy.ops.world.new()
+        
+        w = context.scene.world
+        mx = w.maxwell_render
+        
+        prefs = system.prefs()
+        t = prefs.default_new_world_type
+        if(mx.env_type != t):
+            mx.env_type = t
+        
+        return {'FINISHED'}
+
+
+class BpyOpsObjectParticleSystemAddOverride(Operator):
+    bl_idname = "maxwell_render.particle_system_add_override"
+    bl_label = "Add a particle system"
+    bl_description = "Add a particle system"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        # it is not drawn (clickable) when it can't be used right?
+        return True
+    
+    def execute(self, context):
+        bpy.ops.object.particle_system_add()
+        
+        o = context.object
+        ps = o.particle_systems.active
+        mx = ps.settings.maxwell_render
+        
+        prefs = system.prefs()
+        t = prefs.default_new_particles_type
+        if(mx.use != t):
+            mx.use = t
         
         return {'FINISHED'}
 

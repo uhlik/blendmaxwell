@@ -723,6 +723,36 @@ class ChannelsCustomAlphasPanel(RenderLayerButtonsPanel, Panel):
             c.operator("maxwell_render.custom_alphas_material_clear", icon='X', text="", )
 
 
+class WorldContextPanel(WorldButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_options = {'HIDE_HEADER'}
+    bl_label = ""
+    
+    @classmethod
+    def poll(cls, context):
+        rd = context.scene.render
+        return (not rd.use_game_engine) and (rd.engine in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        layout = self.layout
+        
+        scene = context.scene
+        world = context.world
+        space = context.space_data
+        
+        texture_count = world and len(world.texture_slots.keys())
+        
+        split = layout.split(percentage=0.85)
+        if scene:
+            # split.template_ID(scene, "world", new="world.new")
+            split.template_ID(scene, "world", new="maxwell_render.world_new_override")
+        elif world:
+            split.template_ID(space, "pin_id")
+        
+        if texture_count:
+            split.label(text=str(texture_count), icon='TEXTURE')
+
+
 class EnvironmentPanel(WorldButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Environment"
@@ -748,6 +778,8 @@ class SkySettingsPanel(WorldButtonsPanel, Panel):
     
     @classmethod
     def poll(cls, context):
+        if(context.world is None):
+            return False
         m = context.world.maxwell_render
         e = context.scene.render.engine
         return (m.env_type != 'NONE') and (e in cls.COMPAT_ENGINES)
@@ -786,6 +818,8 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
     
     @classmethod
     def poll(cls, context):
+        if(context.world is None):
+            return False
         m = context.world.maxwell_render
         e = context.scene.render.engine
         return (m.env_type != 'NONE') and (e in cls.COMPAT_ENGINES)
@@ -848,6 +882,8 @@ class IBLSettingsPanel(WorldButtonsPanel, Panel):
     
     @classmethod
     def poll(cls, context):
+        if(context.world is None):
+            return False
         m = context.world.maxwell_render
         e = context.scene.render.engine
         return (m.env_type != 'NONE' and m.env_type == 'IMAGE_BASED') and (e in cls.COMPAT_ENGINES)
@@ -1668,7 +1704,7 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'display_max_blades')
 
 
-class MaterialsPanel(MaterialButtonsPanel, Panel):
+class MaterialContextPanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_options = {'HIDE_HEADER'}
     bl_label = ""
@@ -4154,6 +4190,128 @@ class TextureProceduralPanel(TextureButtonsPanel, Panel):
             sub.prop(m, 'wireframe_edge_width')
             sub.prop(m, 'wireframe_coplanar_edge_width')
             sub.prop(m, 'wireframe_coplanar_threshold')
+
+
+class ParticleContextPanel(ParticleButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_options = {'HIDE_HEADER'}
+    bl_label = ""
+    
+    @classmethod
+    def poll(cls, context):
+        engine = context.scene.render.engine
+        return (context.particle_system or context.object or context.space_data.pin_id) and (engine in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        def particle_panel_enabled(context, psys):
+            if psys is None:
+                return True
+            phystype = psys.settings.physics_type
+            if psys.settings.type in {'EMITTER', 'REACTOR'} and phystype in {'NO', 'KEYED'}:
+                return True
+            else:
+                return (psys.point_cache.is_baked is False) and (not psys.is_edited) and (not context.particle_system_editable)
+        
+        def particle_get_settings(context):
+            if context.particle_system:
+                return context.particle_system.settings
+            elif isinstance(context.space_data.pin_id, bpy.types.ParticleSettings):
+                return context.space_data.pin_id
+            return None
+        
+        layout = self.layout
+        
+        if context.scene.render.engine == 'BLENDER_GAME':
+            layout.label("Not available in the Game Engine")
+            return
+        
+        ob = context.object
+        psys = context.particle_system
+        part = 0
+        
+        if ob:
+            row = layout.row()
+            
+            row.template_list("PARTICLE_UL_particle_systems", "particle_systems", ob, "particle_systems",
+                              ob.particle_systems, "active_index", rows=1)
+            
+            col = row.column(align=True)
+            # col.operator("object.particle_system_add", icon='ZOOMIN', text="")
+            col.operator("maxwell_render.particle_system_add_override", icon='ZOOMIN', text="")
+            col.operator("object.particle_system_remove", icon='ZOOMOUT', text="")
+            col.menu("PARTICLE_MT_specials", icon='DOWNARROW_HLT', text="")
+        
+        if psys is None:
+            part = particle_get_settings(context)
+            
+            # layout.operator("object.particle_system_add", icon='ZOOMIN', text="New")
+            layout.operator("maxwell_render.particle_system_add_override", icon='ZOOMIN', text="New")
+            
+            if part is None:
+                return
+            
+            layout.template_ID(context.space_data, "pin_id")
+            
+            if part.is_fluid:
+                layout.label(text="Settings used for fluid")
+                return
+            
+            layout.prop(part, "type", text="Type")
+        
+        elif not psys.settings:
+            split = layout.split(percentage=0.32)
+            
+            col = split.column()
+            col.label(text="Settings:")
+            
+            col = split.column()
+            col.template_ID(psys, "settings", new="particle.new")
+        else:
+            part = psys.settings
+            
+            split = layout.split(percentage=0.32)
+            col = split.column()
+            if part.is_fluid is False:
+                col.label(text="Settings:")
+                col.label(text="Type:")
+            
+            col = split.column()
+            if part.is_fluid is False:
+                row = col.row()
+                row.enabled = particle_panel_enabled(context, psys)
+                row.template_ID(psys, "settings", new="particle.new")
+            
+            if part.is_fluid:
+                layout.label(text=iface_("%d fluid particles for this frame") % part.count, translate=False)
+                return
+            
+            row = col.row()
+            row.enabled = particle_panel_enabled(context, psys)
+            row.prop(part, "type", text="")
+            row.prop(psys, "seed")
+        
+        if part:
+            split = layout.split(percentage=0.65)
+            if part.type == 'HAIR':
+                if psys is not None and psys.is_edited:
+                    split.operator("particle.edited_clear", text="Free Edit")
+                else:
+                    row = split.row()
+                    row.enabled = particle_panel_enabled(context, psys)
+                    row.prop(part, "regrow_hair")
+                    row.prop(part, "use_advanced_hair")
+                row = split.row()
+                row.enabled = particle_panel_enabled(context, psys)
+                row.prop(part, "hair_step")
+                if psys is not None and psys.is_edited:
+                    if psys.is_global_hair:
+                        layout.operator("particle.connect_hair")
+                    else:
+                        layout.operator("particle.disconnect_hair")
+            elif psys is not None and part.type == 'REACTOR':
+                split.enabled = particle_panel_enabled(context, psys)
+                split.prop(psys, "reactor_target_object")
+                split.prop(psys, "reactor_target_particle_system", text="Particle System")
 
 
 class ParticlesPanel(ParticleButtonsPanel, Panel):

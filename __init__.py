@@ -63,7 +63,7 @@ import os
 import platform
 
 import bpy
-from bpy.props import StringProperty
+from bpy.props import StringProperty, EnumProperty
 
 
 class MaxwellRenderPreferences(bpy.types.AddonPreferences):
@@ -72,12 +72,22 @@ class MaxwellRenderPreferences(bpy.types.AddonPreferences):
     python34_path = StringProperty(name="Python 3.4 Directory", default="", subtype='DIR_PATH', description="", )
     maxwell_path = StringProperty(name="Maxwell Render Directory", default="", subtype='DIR_PATH', description="", )
     
+    default_new_world_type = EnumProperty(name="Default World Type", items=[('NONE', "None", ""), ('PHYSICAL_SKY', "Physical Sky", ""), ('IMAGE_BASED', "Image Based", "")], default='PHYSICAL_SKY', )
+    default_new_material_type = EnumProperty(name="Default Material Type", items=[('REFERENCE', "Reference", ""), ('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""), ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ('HAIR', "Hair", ""), ], default='CUSTOM', )
+    default_new_particles_type = EnumProperty(name="Default Particles Type", items=[('HAIR', "Hair", ""), ('PARTICLES', "Particles", ""), ('CLONER', "Cloner", ""), ('PARTICLE_INSTANCES', "Instances", ""), ('NONE', "None", "")], default='NONE', )
+    
     def draw(self, context):
         l = self.layout
         s = platform.system()
         if(s == 'Darwin'):
             l.prop(self, "python34_path")
         l.prop(self, "maxwell_path")
+        
+        l.label("Default Types:")
+        r = l.row()
+        r.prop(self, "default_new_world_type", text="Environment", )
+        r.prop(self, "default_new_material_type", text="Material", )
+        r.prop(self, "default_new_particles_type", text="Particles", )
 
 
 def get_selected_panels():
@@ -87,7 +97,7 @@ def get_selected_panels():
     e = ['RENDERLAYER_PT_layer_options', 'RENDERLAYER_PT_layer_passes', 'RENDERLAYER_UL_renderlayers',
          'SCENE_PT_color_management', 'RENDERLAYER_PT_views', 'WORLD_PT_ambient_occlusion', 'WORLD_PT_custom_props',
          'WORLD_PT_environment_lighting', 'WORLD_PT_gather', 'WORLD_PT_indirect_lighting', 'WORLD_PT_mist',
-         'WORLD_PT_preview', 'WORLD_PT_world', ]
+         'WORLD_PT_preview', 'WORLD_PT_world', 'WORLD_PT_context_world', 'PARTICLE_PT_context_particles', ]
     a = get_all_panels()
     r = []
     for p in a:
