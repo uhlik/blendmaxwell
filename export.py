@@ -52,13 +52,11 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: restore instancer support for my personal use (python only)
 # FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
 # FIXME: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
-# TODO: particles/cloner: check if size setting is correct, i think it sometimes is different from what it should be..
 # TODO: do something with sharp edges, auto smooth and custom normals..
 # TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions (no conversions float > 8 bit > float again)
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
 # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
 # TODO: maybe organize all props and remove the need of prefixes in names
-# TODO: addon preferences, like default matrial type and so on..
 # TODO: check all preset saving if all properties are correct and updated
 
 
@@ -3040,13 +3038,15 @@ class MXSHair(MXSObject):
         pmw = o.matrix_world
         if(mxex.hair_type == 'GRASS'):
             self.m_extension = 'MGrassP'
-            self.m_grass_root_width = maths.real_length_to_relative(pmw, mxex.grass_root_width) / 1000
-            self.m_grass_tip_width = maths.real_length_to_relative(pmw, mxex.grass_tip_width) / 1000
+            # divide by two, because maxwell works with radius, but setting diameter is more convenient, you know, better to imagine
+            self.m_grass_root_width = maths.real_length_to_relative(pmw, mxex.grass_root_width) / 1000 / 2
+            self.m_grass_tip_width = maths.real_length_to_relative(pmw, mxex.grass_tip_width) / 1000 / 2
             self.m_display_max_blades = mxex.display_max_blades
         else:
             self.m_extension = 'MaxwellHair'
-            self.m_hair_root_radius = maths.real_length_to_relative(pmw, mxex.hair_root_radius) / 1000
-            self.m_hair_tip_radius = maths.real_length_to_relative(pmw, mxex.hair_tip_radius) / 1000
+            # divide by two, because maxwell works with radius, but setting diameter is more convenient, you know, better to imagine
+            self.m_hair_root_radius = maths.real_length_to_relative(pmw, mxex.hair_root_radius) / 1000 / 2
+            self.m_hair_tip_radius = maths.real_length_to_relative(pmw, mxex.hair_tip_radius) / 1000 / 2
             self.m_display_max_hairs = mxex.display_max_hairs
         
         ps.set_resolution(bpy.context.scene, o, 'RENDER')
@@ -3390,10 +3390,14 @@ class MXSCloner(MXSModifier):
                     else:
                         vels.append(Vector((0.0, 0.0, 0.0)))
                     # size per particle
+                    # if(mxex.bl_use_size):
+                    #     sizes.append(part.size / 2)
+                    # else:
+                    #     sizes.append(mxex.bl_size / 2)
                     if(mxex.bl_use_size):
-                        sizes.append(part.size / 2)
+                        sizes.append(part.size)
                     else:
-                        sizes.append(mxex.bl_size / 2)
+                        sizes.append(mxex.bl_size)
             
             rfms = Matrix.Scale(1.0, 4)
             rfms[0][0] = -1.0
@@ -3440,8 +3444,7 @@ class MXSCloner(MXSModifier):
                          'PARTICLE_RADII': [v for v in sizes],
                          'PARTICLE_IDS': [i for i in range(len(locs))],
                          'PARTICLE_NORMALS': [v for l in pnors for v in l],
-                         'PARTICLE_UVW': uv_locs,
-                         }
+                         'PARTICLE_UVW': uv_locs, }
             else:
                 if(os.path.exists(bpy.path.abspath(mxex.directory)) and not mxex.overwrite):
                     raise OSError("file: {} exists".format(bpy.path.abspath(mxex.directory)))
@@ -3452,7 +3455,8 @@ class MXSCloner(MXSModifier):
                         'frame': cf,
                         'particles': particles,
                         'fps': bpy.context.scene.render.fps,
-                        'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2,
+                        # 'size': 1.0 if mxex.bl_use_size else mxex.bl_size / 2,
+                        'size': 1.0 if mxex.bl_use_size else mxex.bl_size,
                         'log_indent': 3, }
                 rfbw = rfbin.RFBinWriter(**prms)
                 mxex.filename = rfbw.path

@@ -4444,8 +4444,8 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
             c.prop(m, 'grass_tip_width')
         else:
             c = sub.column(align=True)
-            c.prop(m, 'hair_root_radius')
-            c.prop(m, 'hair_tip_radius')
+            c.prop(m, 'hair_root_radius', text="Root Diameter (mm)", )
+            c.prop(m, 'hair_tip_radius', text="Tip Diameter (mm)", )
         
         sub.separator()
         r = sub.row()
