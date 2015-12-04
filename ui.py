@@ -4869,7 +4869,7 @@ class Render_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Render Presets"
     bl_idname = "Render_presets"
-    preset_subdir = "maxwell_render/render"
+    preset_subdir = "blendmaxwell/render"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4879,7 +4879,7 @@ class Channels_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Channels Presets"
     bl_idname = "Channels_presets"
-    preset_subdir = "maxwell_render/channels"
+    preset_subdir = "blendmaxwell/channels"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4889,7 +4889,7 @@ class Environment_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Environment Presets"
     bl_idname = "Environment_presets"
-    preset_subdir = "maxwell_render/environment"
+    preset_subdir = "blendmaxwell/environment"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4899,7 +4899,7 @@ class Camera_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Camera Presets"
     bl_idname = "Camera_presets"
-    preset_subdir = "maxwell_render/camera"
+    preset_subdir = "blendmaxwell/camera"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4908,7 +4908,7 @@ class Opaque_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Opaque Presets"
     bl_idname = "Opaque_presets"
-    preset_subdir = "maxwell_render/material/opaque"
+    preset_subdir = "blendmaxwell/material/opaque"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4917,7 +4917,7 @@ class Transparent_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Transparent Presets"
     bl_idname = "Transparent_presets"
-    preset_subdir = "maxwell_render/material/transparent"
+    preset_subdir = "blendmaxwell/material/transparent"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4926,7 +4926,7 @@ class Metal_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Metal Presets"
     bl_idname = "Metal_presets"
-    preset_subdir = "maxwell_render/material/metal"
+    preset_subdir = "blendmaxwell/material/metal"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4935,7 +4935,7 @@ class Translucent_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Translucent Presets"
     bl_idname = "Translucent_presets"
-    preset_subdir = "maxwell_render/material/translucent"
+    preset_subdir = "blendmaxwell/material/translucent"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4944,7 +4944,7 @@ class Carpaint_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Car Paint Presets"
     bl_idname = "Carpaint_presets"
-    preset_subdir = "maxwell_render/material/carpaint"
+    preset_subdir = "blendmaxwell/material/carpaint"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4953,7 +4953,7 @@ class Hair_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Hair Presets"
     bl_idname = "Hair_presets"
-    preset_subdir = "maxwell_render/material/hair"
+    preset_subdir = "blendmaxwell/material/hair"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4962,7 +4962,7 @@ class Emitter_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Emitter Presets"
     bl_idname = "Emitter_presets"
-    preset_subdir = "maxwell_render/material/emitter"
+    preset_subdir = "blendmaxwell/material/emitter"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
@@ -4971,6 +4971,6 @@ class Exposure_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Exposure Presets"
     bl_idname = "Exposure_presets"
-    preset_subdir = "maxwell_render/exposure"
+    preset_subdir = "blendmaxwell/exposure"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset

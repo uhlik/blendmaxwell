@@ -57,7 +57,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
 # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
 # TODO: maybe organize all props and remove the need of prefixes in names
-# TODO: check all preset saving if all properties are correct and updated
 
 
 class MXSExport():
@@ -1081,7 +1080,6 @@ class MXSExport():
                     o = MXSSubdivision(d, qp, )
                     self._write(o)
             elif(d['export_type'] == 'SEA'):
-                # FIXME: sea should not be in modifiers, move it to its own list, also maybe split particles to particles and hair, or unify all to extensions and that's it..
                 o = MXSSea(d)
                 self._write(o)
         

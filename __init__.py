@@ -389,7 +389,7 @@ def get_default_presets():
 
 def setup():
     # make all subdirs for presets
-    pd = os.path.join(bpy.utils.user_resource('SCRIPTS'), "presets", "maxwell_render")
+    pd = os.path.join(bpy.utils.user_resource('SCRIPTS'), "presets", "blendmaxwell")
     l = ['camera', 'channels', 'environment', 'exposure', 'material', 'render', ]
     for d in l:
         p = os.path.join(pd, d)
@@ -398,7 +398,7 @@ def setup():
     
     defaults = get_default_presets()
     for subdir, presets in defaults.items():
-        preset_subdir = os.path.join("maxwell_render", subdir)
+        preset_subdir = os.path.join("blendmaxwell", subdir)
         preset_directory = os.path.join(bpy.utils.user_resource('SCRIPTS'), "presets", preset_subdir)
         preset_paths = bpy.utils.preset_paths(preset_subdir)
         if(preset_directory not in preset_paths):

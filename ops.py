@@ -1903,7 +1903,7 @@ class Render_preset_add(AddPresetBase, Operator):
     bl_idname = 'maxwell_render.render_preset_add'
     bl_label = 'Add/Remove Render Preset'
     preset_menu = 'Render_presets'
-    preset_subdir = 'maxwell_render/render'
+    preset_subdir = 'blendmaxwell/render'
     preset_defines = ["m = bpy.context.scene.maxwell_render", ]
     preset_values = ["m.scene_time", "m.scene_sampling_level", "m.scene_multilight", "m.scene_multilight_type", "m.scene_cpu_threads",
                      "m.scene_quality", "m.output_depth", "m.output_image_enabled", "m.output_mxi_enabled", "m.materials_override",
@@ -1920,7 +1920,7 @@ class Channels_preset_add(AddPresetBase, Operator):
     bl_idname = 'maxwell_render.channels_preset_add'
     bl_label = 'Add/Remove Channels Preset'
     preset_menu = 'Channels_presets'
-    preset_subdir = 'maxwell_render/channels'
+    preset_subdir = 'blendmaxwell/channels'
     preset_defines = ["m = bpy.context.scene.maxwell_render", ]
     preset_values = ["m.channels_output_mode", "m.channels_render", "m.channels_render_type", "m.channels_alpha", "m.channels_alpha_file",
                      "m.channels_alpha_opaque", "m.channels_z_buffer", "m.channels_z_buffer_file", "m.channels_z_buffer_near",
@@ -1930,7 +1930,8 @@ class Channels_preset_add(AddPresetBase, Operator):
                      "m.channels_fresnel_file", "m.channels_normals", "m.channels_normals_file", "m.channels_normals_space",
                      "m.channels_position", "m.channels_position_file", "m.channels_position_space", "m.channels_deep",
                      "m.channels_deep_file", "m.channels_deep_type", "m.channels_deep_min_dist", "m.channels_deep_max_samples",
-                     "m.channels_uv", "m.channels_uv_file", "m.channels_custom_alpha", "m.channels_custom_alpha_file", ]
+                     "m.channels_uv", "m.channels_uv_file", "m.channels_custom_alpha", "m.channels_custom_alpha_file",
+                     "m.channels_reflectance", "m.channels_reflectance_file", ]
 
 
 class Environment_preset_add(AddPresetBase, Operator):
@@ -1938,7 +1939,7 @@ class Environment_preset_add(AddPresetBase, Operator):
     bl_idname = 'maxwell_render.environment_preset_add'
     bl_label = 'Add/Remove Environment Preset'
     preset_menu = 'Environment_presets'
-    preset_subdir = 'maxwell_render/environment'
+    preset_subdir = 'blendmaxwell/environment'
     preset_defines = ["m = bpy.context.world.maxwell_render", ]
     preset_values = ["m.env_type", "m.sky_type", "m.sky_use_preset", "m.sky_preset", "m.sky_intensity", "m.sky_planet_refl", "m.sky_ozone",
                      "m.sky_water", "m.sky_turbidity_coeff", "m.sky_wavelength_exp", "m.sky_reflectance", "m.sky_asymmetry", "m.dome_intensity",
@@ -1959,7 +1960,7 @@ class Camera_preset_add(AddPresetBase, Operator):
     bl_idname = 'maxwell_render.camera_preset_add'
     bl_label = 'Add/Remove Camera Preset'
     preset_menu = 'Camera_presets'
-    preset_subdir = 'maxwell_render/camera'
+    preset_subdir = 'blendmaxwell/camera'
     preset_defines = ["m = bpy.context.camera.maxwell_render", "o = bpy.context.camera", "r = bpy.context.scene.render", ]
     preset_values = ["m.lens", "m.shutter", "m.fstop", "m.fov", "m.azimuth", "m.angle", "m.iso", "m.screen_region", "m.screen_region_x",
                      "m.screen_region_y", "m.screen_region_w", "m.screen_region_h", "m.aperture", "m.diaphragm_blades", "m.diaphragm_angle",
