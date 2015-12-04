@@ -52,7 +52,7 @@
 
 #### installation notes:
 
-* in case of problem with presets (emitters, extension materials, ..., ), remove on **Mac OS X**: ```~/Library/Application Support/Blender/2.76/scripts/presets/maxwell_render```, on **Windows**: ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.76\scripts\presets\maxwell_render```, or on **Linux**: ```~/.config/blender/2.76/scripts/presets/maxwell_render``` and restart Blender. default presets will be recreated automatically.
+* in case of problem with presets (emitters, extension materials, ..., ), remove on **Mac OS X**: ```~/Library/Application Support/Blender/2.76/scripts/presets/blendmaxwell```, on **Windows**: ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.76\scripts\presets\blendmaxwell```, or on **Linux**: ```~/.config/blender/2.76/scripts/presets/blendmaxwell``` and restart Blender. default presets will be recreated automatically.
 
 
 ***
