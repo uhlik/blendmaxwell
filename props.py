@@ -746,7 +746,7 @@ class PrivateProperties(PropertyGroup):
         bpy.types.Scene.maxwell_render_private = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Scene.maxwell_render_private
 
 
@@ -759,7 +759,7 @@ class CustomAlphaGroupsProperties(PropertyGroup):
         bpy.types.Group.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Group.maxwell_render
 
 
@@ -962,7 +962,7 @@ class SceneProperties(PropertyGroup):
         bpy.types.Scene.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Scene.maxwell_render
 
 
@@ -1052,7 +1052,7 @@ class EnvironmentProperties(PropertyGroup):
         bpy.types.World.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.World.maxwell_render
 
 
@@ -1162,7 +1162,7 @@ class CameraProperties(PropertyGroup):
         bpy.types.Camera.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Camera.maxwell_render
 
 
@@ -1197,7 +1197,7 @@ class ObjectProperties(PropertyGroup):
         bpy.types.Object.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Object.maxwell_render
 
 
@@ -1217,7 +1217,7 @@ class ReferenceProperties(PropertyGroup):
         bpy.types.Object.maxwell_render_reference = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Object.maxwell_render_reference
 
 
@@ -1389,7 +1389,7 @@ class TextureProperties(PropertyGroup):
         bpy.types.Texture.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Texture.maxwell_render
 
 
@@ -1401,7 +1401,7 @@ class SunProperties(PropertyGroup):
         bpy.types.SunLamp.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.SunLamp.maxwell_render
 
 
@@ -1418,7 +1418,7 @@ class ParticlesProperties(PropertyGroup):
         bpy.types.ParticleSettings.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.ParticleSettings.maxwell_render
 
 
@@ -1478,7 +1478,7 @@ class ExtGrassProperties(PropertyGroup):
         bpy.types.Object.maxwell_grass_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Object.maxwell_grass_extension
 
 
@@ -1569,7 +1569,7 @@ class ExtParticlesProperties(PropertyGroup):
         bpy.types.ParticleSettings.maxwell_particles_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.ParticleSettings.maxwell_particles_extension
 
 
@@ -1606,7 +1606,7 @@ class ExtHairProperties(PropertyGroup):
         bpy.types.ParticleSettings.maxwell_hair_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.ParticleSettings.maxwell_hair_extension
 
 
@@ -1665,7 +1665,7 @@ class ExtScatterProperties(PropertyGroup):
         bpy.types.Object.maxwell_scatter_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Object.maxwell_scatter_extension
 
 
@@ -1682,7 +1682,7 @@ class ExtSubdivisionProperties(PropertyGroup):
         bpy.types.Object.maxwell_subdivision_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Object.maxwell_subdivision_extension
 
 
@@ -1716,7 +1716,7 @@ class ExtSeaProperties(PropertyGroup):
         bpy.types.Object.maxwell_sea_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Object.maxwell_sea_extension
 
 
@@ -1754,7 +1754,7 @@ class ExtClonerProperties(PropertyGroup):
         bpy.types.ParticleSettings.maxwell_cloner_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.ParticleSettings.maxwell_cloner_extension
 
 
@@ -1779,7 +1779,7 @@ class ParticleInstancesProperties(PropertyGroup):
         bpy.types.ParticleSettings.maxwell_particle_instances = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.ParticleSettings.maxwell_particle_instances
 
 
@@ -1804,7 +1804,7 @@ class ExtVolumetricsProperties(PropertyGroup):
         bpy.types.Object.maxwell_volumetrics_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Object.maxwell_volumetrics_extension
 
 
@@ -1919,7 +1919,7 @@ class ExtMaterialProperties(PropertyGroup):
         bpy.types.Material.maxwell_material_extension = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Material.maxwell_material_extension
 
 
@@ -2141,5 +2141,5 @@ class MaterialProperties(PropertyGroup):
         bpy.types.Material.maxwell_render = PointerProperty(type=cls)
     
     @classmethod
-    def unregiser(cls):
+    def unregister(cls):
         del bpy.types.Material.maxwell_render
