@@ -812,13 +812,6 @@ class MXSExport():
         
         # handle particle system settings 'use_render_emitter'
         for o in self._particles:
-            {'type': None,
-             'object': bpy.data.objects['hair'].particle_systems["ParticleSystem"],
-             'export': True,
-             'children': [],
-             'psys': bpy.data.objects['hair'].particle_systems["ParticleSystem"],
-             'parent': bpy.data.objects['hair'],
-             'export_type': 'HAIR'}
             hide = False
             
             ob = o['parent']
