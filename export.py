@@ -2180,6 +2180,9 @@ class MXSCamera(Serializable):
             dof_distance = ob.data.dof_distance
             if(dof_distance == 0.0):
                 dof_distance = 1.0
+        if(mx.lens == 'TYPE_ORTHO_2'):
+            dof_distance = cd.ortho_scale
+        
         focal_point = mw * Vector((0.0, 0.0, -dof_distance))
         up = mw * Vector((0.0, 1.0, 0.0)) - origin
         

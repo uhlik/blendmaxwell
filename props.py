@@ -134,6 +134,21 @@ def _update_gpu_dof(self, context):
     _lock_exposure_update_fstop(self, context)
 
 
+def _update_camera_projection(self, context):
+    c = context.active_object
+    cd = c.data
+    
+    l = self.lens
+    if(l == 'TYPE_ORTHO_2'):
+        cd.type = 'ORTHO'
+        cd.ortho_scale = cd.dof_distance
+        cd.lens = 32.0
+        if(cd.dof_object is not None):
+            cd.dof_object = None
+    else:
+        cd.type = 'PERSP'
+
+
 def _lock_exposure_update_shutter(self, context):
     # fstop = 11
     # time = 250
@@ -1072,7 +1087,7 @@ class CameraProperties(PropertyGroup):
                                             ('TYPE_ORTHO_2', "Ortho", ""),
                                             ('TYPE_FISHEYE_3', "Fish Eye", ""),
                                             ('TYPE_SPHERICAL_4', "Spherical", ""),
-                                            ('TYPE_CYLINDRICAL_5', "Cylindical", ""), ], default='TYPE_THIN_LENS_0', )
+                                            ('TYPE_CYLINDRICAL_5', "Cylindical", ""), ], default='TYPE_THIN_LENS_0', update=_update_camera_projection, )
     
     shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", update=_lock_exposure_update_shutter, )
     fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_update_gpu_dof, )

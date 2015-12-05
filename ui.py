@@ -1005,12 +1005,15 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
         
         sub.operator('maxwell_render.auto_focus', "Auto Focus")
         
-        cam = context.camera
-        sub.prop(o, 'dof_object')
-        
-        r = sub.row()
-        r.enabled = cam.dof_object is None
-        r.prop(o, 'dof_distance')
+        if(m.lens == 'TYPE_ORTHO_2'):
+            sub.prop(o, 'ortho_scale', )
+        else:
+            cam = context.camera
+            sub.prop(o, 'dof_object')
+            
+            r = sub.row()
+            r.enabled = cam.dof_object is None
+            r.prop(o, 'dof_distance')
         
         sub.prop(m, 'lens')
         r = sub.row()
