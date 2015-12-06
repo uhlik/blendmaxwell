@@ -3910,16 +3910,19 @@ class TexturePanel(TextureButtonsPanel, Panel):
                     tex = ts.texture
             if(tex is None):
                 l.active = False
-        
-            c = l.column()
+            
+            # c = l.column()
             if(tex is not None and tex.image):
-                image = tex.image
-                c.active = False
-                c.enabled = False
-                c.prop(image, 'filepath', text="Path:")
-                c.prop(tex, 'image')
+                # image = tex.image
+                # c.active = False
+                # c.enabled = False
+                # c.prop(image, 'filepath', text="Path:")
+                # c.prop(tex, 'image')
+                pass
             else:
-                c.label("Load an image", icon='ERROR', )
+                # c = l.column()
+                # c.label("Load an image", icon='ERROR', )
+                l.label("Load an image", icon='ERROR', )
         
         l.label("Projection Properties:")
         l.prop(m, 'use_global_map')
