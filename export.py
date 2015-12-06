@@ -59,6 +59,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: maybe organize all props and remove the need of prefixes in names
 # TODO: more standardized setting render file type and bit depth, this will require change in render workflow and that is dangerous..
 # TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works
+# TODO: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. it is nearly that way, but a few still slips away..
 
 
 class MXSExport():
@@ -90,6 +91,12 @@ class MXSExport():
         self._finish()
         
         MXSDatabase.clear()
+        
+        for me in bpy.data.meshes:
+            if(me.users == 0):
+                if(not me.use_fake_user):
+                    bpy.data.meshes.remove(me)
+                    # log("orphan mesh: '{}'".format(me.name), 1, LogStyles.ERROR, )
     
     def _progress(self, progress=0.0, ):
         if(progress == 0.0):
@@ -295,8 +302,8 @@ class MXSExport():
                             me = o.to_mesh(self.context.scene, True, 'RENDER', )
                             if(len(me.polygons) > 0):
                                 t = 'MESH'
-                                # remove mesh, was created only for testing..
-                                bpy.data.meshes.remove(me)
+                            # remove mesh, was created only for testing..
+                            bpy.data.meshes.remove(me)
                         # else:
                         #     t = 'EMPTY'
                 else:
@@ -307,8 +314,8 @@ class MXSExport():
                         me = o.to_mesh(self.context.scene, True, 'RENDER', )
                         if(len(me.polygons) > 0):
                             t = 'MESH'
-                            # remove mesh, was created only for testing..
-                            bpy.data.meshes.remove(me)
+                        # remove mesh, was created only for testing..
+                        bpy.data.meshes.remove(me)
                     # else:
                     #     t = 'EMPTY'
             elif(o.type == 'EMPTY'):
@@ -347,6 +354,8 @@ class MXSExport():
                                 t = 'MESH'
                                 m = me
                                 c = True
+                        else:
+                            pass
                     else:
                         if(len(me.polygons) > 0):
                             t = 'MESH'
@@ -553,6 +562,17 @@ class MXSExport():
                     references.append(o)
                 elif(o['export_type'] == 'VOLUMETRICS'):
                     volumetrics.append(o)
+            else:
+                # objects that will not export/render, remove meshes if they are converted from non-mesh object
+                if(o['converted']):
+                    me = o['mesh']
+                    # using the EAFP principle, hehe, lazy me..
+                    try:
+                        if(me.users == 0 and not me.use_fake_user):
+                            bpy.data.meshes.remove(me)
+                    except ReferenceError:
+                        # already removed..
+                        pass
         
         for o in h:
             walk(o)
