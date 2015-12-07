@@ -64,6 +64,9 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 class MXSExport():
     def __init__(self, mxs_path, engine=None, ):
+        # clear db, before we start, previous error will cause more errors
+        MXSDatabase.clear()
+        
         clear_log()
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
         
