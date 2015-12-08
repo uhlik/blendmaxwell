@@ -59,6 +59,7 @@
 
 **changelog:**
 
+* 0.3.8 custom alphas for objects and materials, many ui improvements, particle object/group instances now exports correctly when base objects are hidden, addon preferences for automatic type selection for new material, environment and particles, changed preset location, setting camera to ortho now changes viewport to ortho
 * 0.3.7 custom material editor, custom material import/export
 * 0.3.6 added: export particle uvs, camera lock exposure, choosing external materials with mxed in browser mode, choose scene for auto preview in mxed, fixed: import mxs: object transformation
 * 0.3.5 particle object/group instances, quick setting object properties/object id to multiple objects, blocked emitters, many fixes (reading/drawing material previews, missing cloner objects, hair uvs, ...)
