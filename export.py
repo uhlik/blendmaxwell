@@ -76,6 +76,7 @@ class MXSExport():
             log("pymaxwell version >= {}".format(system.REQUIRED), 1, )
         
         self.mxs_path = os.path.realpath(mxs_path)
+        log("exporting mxs: '{}'".format(self.mxs_path), 1, LogStyles.MESSAGE, )
         self.engine = engine
         
         self.progress_current = 0
