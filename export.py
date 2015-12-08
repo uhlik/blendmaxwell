@@ -60,6 +60,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: more standardized setting render file type and bit depth, this will require change in render workflow and that is dangerous..
 # TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works
 # TODO: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. it is nearly that way, but a few still slips away..
+# TODO: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export
 
 
 class MXSExport():
@@ -3186,7 +3187,7 @@ class MXSHair(MXSObject):
             root_uvs = 1
             uv_locs = [0.0] * (num_curves * 2)
             
-            log("emitter has no UVs or no UV is selected to be used.. root UVs will be exported all roots will be set to (0.0, 0.0)".format(self.mxex.material, ), 3, LogStyles.WARNING, )
+            log("emitter has no UVs or no UV is selected to be used.. root UVs will be exported, but all coordinates will be set to (0.0, 0.0)".format(self.mxex.material, ), 3, LogStyles.WARNING, )
         
         ps.set_resolution(bpy.context.scene, o, 'PREVIEW')
         
