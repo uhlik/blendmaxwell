@@ -2133,6 +2133,7 @@ class MaterialProperties(PropertyGroup):
     global_bump_map_enabled = BoolProperty(name="Global Bump Map Enabled", default=False, )
     global_bump_map = StringProperty(name="Global Bump Map", default="", get=MaterialEditorCallbacks.global_bump_map_get, set=MaterialEditorCallbacks.global_bump_map_set, )
     global_bump_map_use_normal = BoolProperty(name="Global Bump Map Use Normal", default=False, get=MaterialEditorCallbacks.global_bump_normal_get, set=MaterialEditorCallbacks.global_bump_normal_set, )
+    # TODO: use one value from normal and another for 'normal', then switch them in ui. this callback is messy, this will require change in export code, but this is confusing..
     global_bump_abnormal_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, options={'HIDDEN'}, )
     
     global_dispersion = BoolProperty(name="Dispersion", default=False, )

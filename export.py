@@ -61,6 +61,8 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works
 # TODO: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. it is nearly that way, but a few still slips away..
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export
+# TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
+# TODO: from Maxwell 3.2.0.3 beta changelog: Fixed extensions presets were not loading some map parameters correctly. - fix presets, according to preset files. so it was a bug
 
 
 class MXSExport():
