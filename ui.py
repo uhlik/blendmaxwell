@@ -3925,7 +3925,16 @@ class TexturePanel(TextureButtonsPanel, Panel):
                 l.label("Load an image", icon='ERROR', )
         
         l.label("Projection Properties:")
-        l.prop(m, 'use_global_map')
+        
+        def is_override_map(tex, mat):
+            mmx = mat.maxwell_render
+            if(mmx.global_override_map is not ""):
+                if(mmx.global_override_map == tex.name):
+                    return True
+            return False
+        
+        if(not is_override_map(tex, context.material)):
+            l.prop(m, 'use_global_map')
         
         sub = l.column()
         sub.active = not m.use_global_map
