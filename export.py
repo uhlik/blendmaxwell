@@ -63,6 +63,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
 # TODO: from Maxwell 3.2.0.3 beta changelog: Fixed extensions presets were not loading some map parameters correctly. - fix presets, according to preset files. so it was a bug
+# TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses
 
 
 class MXSExport():
@@ -288,6 +289,8 @@ class MXSExport():
         might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
         c_bases_meshes = []
         
+        no_polygons_meshes = []
+        
         def export_type(o):
             """determine export type, if convertible, try convert to mesh and store result"""
             t = 'EMPTY'
@@ -311,6 +314,14 @@ class MXSExport():
                                 t = 'MESH'
                             # remove mesh, was created only for testing..
                             bpy.data.meshes.remove(me)
+                            
+                            # in case mesh without polygons has particles systems to be exported
+                            if(len(o.particle_systems) > 0):
+                                for ps in o.particle_systems:
+                                    if(ps.settings.maxwell_render.use is not 'NONE'):
+                                        t = 'MESH'
+                                        no_polygons_meshes.append(o)
+                            
                         # else:
                         #     t = 'EMPTY'
                 else:
@@ -323,6 +334,14 @@ class MXSExport():
                             t = 'MESH'
                         # remove mesh, was created only for testing..
                         bpy.data.meshes.remove(me)
+                        
+                        # in case mesh without polygons has particles systems to be exported
+                        if(len(o.particle_systems) > 0):
+                            for ps in o.particle_systems:
+                                if(ps.settings.maxwell_render.use is not 'NONE'):
+                                    t = 'MESH'
+                                    no_polygons_meshes.append(o)
+                        
                     # else:
                     #     t = 'EMPTY'
             elif(o.type == 'EMPTY'):
@@ -792,6 +811,17 @@ class MXSExport():
         
         self._particles = particles
         self._modifiers = modifiers
+        
+        def walk(o):
+            for c in o['children']:
+                walk(c)
+            if(o['object'] in no_polygons_meshes):
+                o['export_type'] = 'EMPTY'
+                self._meshes.remove(o)
+                self._empties.append(o)
+        
+        for o in h:
+            walk(o)
         
         # handle hidden bases
         def walk(o):
