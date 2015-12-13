@@ -419,13 +419,8 @@ class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
         r = sub.row()
         s = r.split(percentage=0.33)
         c = s.column()
-        c = s.column()
+        c = s.column(align=True)
         c.prop(m, 'channels_z_buffer_near', text="Near (m)")
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c = s.column()
         c.prop(m, 'channels_z_buffer_far', text="Far (m)")
         
         r = sub.row()
@@ -1766,7 +1761,7 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
 
 class MaterialTypePanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Type"
+    bl_label = "Material Type"
     
     def draw(self, context):
         l = self.layout
@@ -1775,8 +1770,7 @@ class MaterialTypePanel(MaterialButtonsPanel, Panel):
         mx = context.material.maxwell_material_extension
         mat = context.material
         
-        sub.prop(m, 'use', text="Material Type", )
-        # sub.separator()
+        sub.prop(m, 'use', text="", )
 
 
 class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
@@ -1826,6 +1820,468 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         if(not m.global_bump_map_enabled or m.global_bump_map == ''):
             c.enabled = False
         r.prop(m, 'global_bump_map_use_normal', text="Normal Mapping", )
+        
+        '''
+        # # regular color/map
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Global Bump:")
+        # s = s.split(percentage=0.333)
+        # c = s.column()
+        # c.prop(m, 'global_bump', text="", )
+        # if(not m.global_bump_map_enabled or m.global_bump_map == ''):
+        #     c.enabled = False
+        # s = s.split(percentage=0.15, align=True, )
+        # r = s.row()
+        # r.alignment = 'RIGHT'
+        # r.prop(m, 'global_bump_map_enabled', text="", )
+        # s = s.split(percentage=1.0, align=True, )
+        # s.prop_search(m, 'global_bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        # # special color/map with extra button
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Global Bump:")
+        # s = s.split(percentage=0.333)
+        # c = s.column()
+        # c.prop(m, 'global_bump', text="", )
+        # if(not m.global_bump_map_enabled or m.global_bump_map == ''):
+        #     c.enabled = False
+        # s = s.split(percentage=0.15, align=True, )
+        # r = s.row()
+        # r.alignment = 'RIGHT'
+        # r.prop(m, 'global_bump_map_enabled', text="", )
+        # s = s.split(percentage=0.85, align=True, )
+        # s.prop_search(m, 'global_bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+        # s = s.split(percentage=1.0, align=True, )
+        # s.prop(m, 'global_bump_map_use_normal', text="N", toggle=True, )
+        
+        # # color
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Color Id:")
+        # s = s.split(percentage=1.0)
+        # s.prop(m, 'global_id', text="", )
+        
+        # # texture select
+        # r = sub.row()
+        # r.prop_search(m, 'global_override_map', mat, 'texture_slots', icon='TEXTURE', )
+        
+        # cd = m.custom_displacement
+        
+        # # tabbed single property
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Height:")
+        # s = s.split(percentage=1.0)
+        # s.prop(cd, 'height', text="", )
+        
+        # # tabbed double property aligned
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Height:")
+        # s = s.split(percentage=0.666, align=True, )
+        # s.prop(cd, 'height', text="", )
+        # s = s.split(percentage=1.0, align=True, )
+        # s.prop(cd, 'height_units', text="", )
+        
+        # # tabbed double property, split half aligned
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Height:")
+        # s = s.split(percentage=0.5, align=True, )
+        # s.prop(cd, 'height', text="", )
+        # s = s.split(percentage=1.0, align=True, )
+        # s.prop(cd, 'height_units', text="", )
+        
+        # # tabbed two properties, split half
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Height:")
+        # s = s.split(percentage=0.5)
+        # s.prop(cd, 'height', text="", )
+        # s = s.split(percentage=1.0)
+        # s.prop(cd, 'height_units', text="", )
+        
+        # # tabbed three properties
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Height:")
+        # s = s.split(percentage=0.333)
+        # s.prop(cd, 'height', text="", )
+        # s = s.split(percentage=0.5)
+        # s.prop(cd, 'height_units', text="", )
+        # s = s.split(percentage=1.0)
+        # s.prop(cd, 'height_units', text="", )
+        
+        # # tabbed three properties aligned
+        # r = sub.row()
+        # s = r.split(percentage=0.333)
+        # s.label("Height:")
+        # s = s.split(percentage=0.333, align=True, )
+        # s.prop(cd, 'height', text="", )
+        # s = s.split(percentage=0.5, align=True, )
+        # s.prop(cd, 'height_units', text="", )
+        # s = s.split(percentage=1.0, align=True, )
+        # s.prop(cd, 'height_units', text="", )
+        
+        # # different solution for a buch of checkboxes aligned
+        # r = sub.row(align=True)
+        # r.prop(m, 'global_dispersion', toggle=True, )
+        # r.prop(m, 'global_shadow', toggle=True, )
+        # r.prop(m, 'global_matte', toggle=True, )
+        
+        def prop_name(cls, prop, colon=False, ):
+            """find property name"""
+            for p in cls.bl_rna.properties:
+                if(p.identifier == prop):
+                    if(colon):
+                        return "{}:".format(p.name)
+                    return p.name
+            return ''
+        
+        def tab_single(layout, cls, prop, label=True, text=False, ):
+            """single property in a row, property name as label, then property value
+            if label is True, label will be property name, if False, label will be omitted, if something else, it will be used as string
+            if text is True, text will be added to property control, otherwise only value will be drawn
+            returns whole ui element that can be enabled/disabled
+            0         1/3                1
+            | Name:   [*********   xx% ] |
+            """
+            r = layout.row()
+            s = r.split(percentage=0.333)
+            if(type(label) is bool):
+                if(label):
+                    s.label(prop_name(cls, prop, True, ))
+                else:
+                    s.label("")
+            else:
+                s.label("{}:".format(label))
+            s = s.split(percentage=1.0)
+            if(text):
+                s.prop(cls, prop, )
+            else:
+                s.prop(cls, prop, text="", )
+            return r
+        
+        def tab_singles_multi(layout, classes, props, align=False, label=True, text=False, ):
+            """multiple property in a row of columns, property name as label, then property value, optionally aligned.
+            if classes contains just one element, that class will be used for all, otherwise length of classes and names must be equal
+            if label is True, label will be property name, if False, label will be omitted
+            if text is True, text will be added to property control, otherwise only value will be drawn
+            returns whole ui element that can be enabled/disabled
+            0         1/3                1
+            | Name:   [*********   xx% ] |
+            | Name:   [*********   xx% ] |
+            | Name:   [*********   xx% ] |
+            ...
+            """
+            r = layout.row()
+            s = r.split(percentage=0.333)
+            c = s.column(align=align)
+            if(len(classes) == 1):
+                for i in range(len(props)):
+                    if(label):
+                        c.label(prop_name(classes[0], props[i], True, ))
+                    else:
+                        c.label("")
+            else:
+                for i in range(len(classes)):
+                    if(label):
+                        c.label(prop_name(classes[i], props[i], True, ))
+                    else:
+                        c.label("")
+            s = s.split(percentage=1.0)
+            c = s.column(align=align)
+            if(len(classes) == 1):
+                for i in range(len(props)):
+                    if(text):
+                        c.prop(classes[0], props[i], )
+                    else:
+                        c.prop(classes[0], props[i], text="", )
+            else:
+                for i in range(len(classes)):
+                    if(text):
+                        c.prop(classes[i], props[i], )
+                    else:
+                        c.prop(classes[i], props[i], text="", )
+            return r
+        
+        def tab_double_one_third_split(layout, cls, name, props, align=False, label=True, text=False, ):
+            """label and two properties in a row, split in one third, optionally aligned
+            if label is True, label will be name argument, if False, label will be omitted, if something else, it will be used as string
+            if text is True, text will be added to property control, otherwise only value will be drawn
+            returns whole ui element that can be enabled/disabled
+            0         1/3                1
+                      0    1/3           1
+            | Name:   [1st] [  second  ] |
+            """
+            r = layout.row()
+            s = r.split(percentage=0.333)
+            # s.label("{}:".format(name))
+            if(type(label) is bool):
+                if(label):
+                    s.label("{}:".format(name))
+                else:
+                    s.label("")
+            else:
+                s.label("{}:".format(label))
+            s = s.split(percentage=0.333, align=align, )
+            if(text):
+                s.prop(cls, props[0], )
+            else:
+                s.prop(cls, props[0], text="", )
+            s = s.split(percentage=1.0, align=align, )
+            if(text):
+                s.prop(cls, props[1], )
+            else:
+                s.prop(cls, props[1], text="", )
+            return r
+        
+        def tab_double_half_split(layout, cls, name, props, align=False, label=True, text=False, ):
+            """label and two properties in a row, split in half, optionally aligned
+            if label is True, label will be name argument, if False, label will be omitted, if something else, it will be used as string
+            if text is True, text will be added to property control, otherwise only value will be drawn
+            returns whole ui element that can be enabled/disabled
+            0         1/3                1
+                      0        1/2       1
+            | Name:   [ first ] [second] |
+            """
+            r = layout.row()
+            s = r.split(percentage=0.333)
+            # s.label("{}:".format(name))
+            if(type(label) is bool):
+                if(label):
+                    s.label("{}:".format(name))
+                else:
+                    s.label("")
+            else:
+                s.label("{}:".format(label))
+            s = s.split(percentage=0.5, align=align, )
+            if(text):
+                s.prop(cls, props[0], )
+            else:
+                s.prop(cls, props[0], text="", )
+            s = s.split(percentage=1.0, align=align, )
+            if(text):
+                s.prop(cls, props[1], )
+            else:
+                s.prop(cls, props[1], text="", )
+            return r
+        
+        def tab_double_two_thirds_split(layout, cls, name, props, align=False, label=True, text=False, ):
+            """label and two properties in a row, split in two thirds, optionally aligned
+            if label is True, label will be name argument, if False, label will be omitted, if something else, it will be used as string
+            if text is True, text will be added to property control, otherwise only value will be drawn
+            returns whole ui element that can be enabled/disabled
+            0         1/3                1
+                      0           2/3    1
+            | Name:   [   first   ][2nd] |
+            """
+            r = layout.row()
+            s = r.split(percentage=0.333)
+            # s.label("{}:".format(name))
+            if(type(label) is bool):
+                if(label):
+                    s.label("{}:".format(name))
+                else:
+                    s.label("")
+            else:
+                s.label("{}:".format(label))
+            s = s.split(percentage=0.666, align=align, )
+            if(text):
+                s.prop(cls, props[0], )
+            else:
+                s.prop(cls, props[0], text="", )
+            s = s.split(percentage=1.0, align=align, )
+            if(text):
+                s.prop(cls, props[1], )
+            else:
+                s.prop(cls, props[1], text="", )
+            return r
+        
+        def tab_triple(layout, cls, name, props, align=False, label=True, text=False, ):
+            """label and three properties in a row, split in thirds, optionally aligned
+            if label is True, label will be name argument, if False, label will be omitted, if something else, it will be used as string
+            if text is True, text will be added to property control, otherwise only value will be drawn
+            returns whole ui element that can be enabled/disabled
+            0          1/3               1
+                       0    1/3    2/3   1
+            | Name:    [1st] [2nd] [3rd] |
+            """
+            r = layout.row()
+            s = r.split(percentage=0.333)
+            # s.label("{}:".format(name))
+            if(type(label) is bool):
+                if(label):
+                    s.label("{}:".format(name))
+                else:
+                    s.label("")
+            else:
+                s.label("{}:".format(label))
+            s = s.split(percentage=0.333, align=align, )
+            if(text):
+                s.prop(cls, props[0], )
+            else:
+                s.prop(cls, props[0], text="", )
+            s = s.split(percentage=0.5, align=align, )
+            if(text):
+                s.prop(cls, props[1], )
+            else:
+                s.prop(cls, props[1], text="", )
+            s = s.split(percentage=1.0, align=align, )
+            if(text):
+                s.prop(cls, props[2], )
+            else:
+                s.prop(cls, props[2], text="", )
+        
+        def tab_value_and_map(layout, cls, name, value, enabled, texture, search, ):
+            """label and map value/color, texture enabled and texture map name
+            if name is None label is taken from value property
+            returns whole ui element that can be enabled/disabled
+            0          1/3                   1
+            | Name:    [value] [x] [texture] |
+            """
+            if(name is None):
+                name = prop_name(cls, value, True, )
+            r = layout.row()
+            elm = r
+            s = r.split(percentage=0.333)
+            s.label(name)
+            s = s.split(percentage=0.333)
+            c = s.column()
+            c.prop(cls, value, text="", )
+            s = s.split(percentage=0.15, align=True, )
+            r = s.row()
+            r.alignment = 'RIGHT'
+            r.prop(cls, enabled, text="", )
+            s = s.split(percentage=1.0, align=True, )
+            s.prop_search(cls, texture, search, 'texture_slots', icon='TEXTURE', text="", )
+            return elm
+        
+        def tab_bump_value_and_map(layout, cls, name, value, enabled, texture, search, normal, ):
+            """label and bump map value, texture enabled, texture map name and use normal
+            if name is None label is taken from value property
+            returns whole ui element that can be enabled/disabled and column with value to be disabled when no map is present
+            0          1/3                    1
+            | Name:    [value][x][texture][n] |
+            
+            usage:
+            _, elm = tab_bump_value_and_map(sub, m, prop_name(m, 'global_bump', True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', )
+            if(not m.global_bump_map_enabled or m.global_bump_map == ''):
+                elm.enabled = False
+            """
+            if(name is None):
+                name = prop_name(cls, value, True, )
+            r = layout.row()
+            elm = r
+            s = r.split(percentage=0.333)
+            s.label(name)
+            s = s.split(percentage=0.333)
+            c = s.column()
+            c.prop(cls, value, text="", )
+            # if(not m.global_bump_map_enabled or m.global_bump_map == ''):
+            #     c.enabled = False
+            s = s.split(percentage=0.15, align=True, )
+            r = s.row()
+            r.alignment = 'RIGHT'
+            r.prop(cls, enabled, text="", )
+            s = s.split(percentage=0.85, align=True, )
+            s.prop_search(cls, texture, search, 'texture_slots', icon='TEXTURE', text="", )
+            s = s.split(percentage=1.0, align=True, )
+            s.prop(cls, normal, text="N", toggle=True, )
+            return elm, c
+        
+        
+        
+        
+        # tests:
+        sub.separator()
+        sub.separator()
+        sub.label("--- drawing tests ---")
+        sub.separator()
+        
+        cd = m.custom_displacement
+        
+        sub.label("tab_single")
+        tab_single(sub, cd, 'height')
+        tab_single(sub, cd, 'height_units')
+        tab_single(sub, m, 'global_id')
+        sub.separator()
+        tab_single(sub, m, 'global_id', label=True, )
+        tab_single(sub, m, 'global_id', label=False, )
+        tab_single(sub, m, 'global_id', label="Something", )
+        tab_single(sub, cd, 'height', label=False, text=True, )
+        
+        sub.label("tab_singles_multi")
+        tab_singles_multi(sub, [cd, cd, cd], ['height', 'height', 'height_units'], False)
+        tab_singles_multi(sub, [cd, cd, cd], ['height', 'height', 'height_units'], True)
+        
+        tab_singles_multi(sub, [cd], ['height', 'height', 'height_units'], False)
+        tab_singles_multi(sub, [cd], ['height', 'height', 'height_units'], True)
+        
+        tab_singles_multi(sub, [cd], ['height', 'height', 'height_units'], False, False)
+        tab_singles_multi(sub, [cd], ['height', 'height', 'height_units'], True, False)
+        
+        tab_singles_multi(sub, [cd], ['height', 'height', 'height_units'], False, False, text=True, )
+        tab_singles_multi(sub, [cd], ['height', 'height', 'height'], True, False, text=True, )
+        
+        # two columns of multi singles..
+        r = sub.row()
+        s = r.split()
+        tab_singles_multi(s, [cd], ['height', 'height', 'height_units'], True)
+        s = r.split()
+        tab_singles_multi(s, [cd], ['height', 'height', 'height_units'], True)
+        
+        sub.label("tab_double_one_third_split")
+        tab_double_one_third_split(sub, cd, 'Height', ['height', 'height_units'], align=False, )
+        tab_double_one_third_split(sub, cd, 'Height', ['height', 'height_units'], align=True, )
+        tab_double_one_third_split(sub, cd, 'Height', ['height', 'height_units'], align=True, label=False, )
+        tab_double_one_third_split(sub, cd, 'Height', ['height', 'height_units'], align=True, label="Something", )
+        tab_double_one_third_split(sub, cd, 'Height', ['height', 'height'], align=True, label="Something", text=True, )
+        
+        sub.label("tab_double_half_split")
+        tab_double_half_split(sub, cd, 'Height', ['height', 'height_units'], align=False, )
+        tab_double_half_split(sub, cd, 'Height', ['height', 'height_units'], align=True, )
+        tab_double_half_split(sub, cd, 'Height', ['height', 'height_units'], align=True, label=False, )
+        tab_double_half_split(sub, cd, 'Height', ['height', 'height_units'], align=True, label="Something", )
+        tab_double_half_split(sub, cd, 'Height', ['height', 'height'], align=True, label="Something", text=True, )
+        
+        sub.label("tab_double_two_thirds_split")
+        tab_double_two_thirds_split(sub, cd, 'Height', ['height', 'height_units'], align=False, )
+        tab_double_two_thirds_split(sub, cd, 'Height', ['height', 'height_units'], align=True, )
+        tab_double_two_thirds_split(sub, cd, 'Height', ['height', 'height_units'], align=True, label=False, )
+        tab_double_two_thirds_split(sub, cd, 'Height', ['height', 'height_units'], align=True, label="Something", )
+        tab_double_two_thirds_split(sub, cd, 'Height', ['height', 'height'], align=True, label="Something", text=True, )
+        
+        sub.label("tab_triple")
+        tab_triple(sub, cd, 'Height', ['height', 'height_units', 'height_units'], align=False, )
+        tab_triple(sub, cd, 'Height', ['height', 'height', 'height_units'], align=True, )
+        tab_triple(sub, cd, 'Height', ['height', 'height', 'height_units'], align=True, label=False, )
+        tab_triple(sub, cd, 'Height', ['height', 'height', 'height_units'], align=True, label="Something", )
+        tab_triple(sub, cd, 'Height', ['height', 'height', 'height'], align=True, label="Something", text=True, )
+        
+        sub.label("tab_value_and_map")
+        elm = tab_value_and_map(sub, m, prop_name(m, 'global_bump', True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, )
+        elm = tab_value_and_map(sub, m, prop_name(m, 'global_bump', True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, )
+        elm.enabled = False
+        
+        sub.label("tab_bump_value_and_map")
+        _, elm = tab_bump_value_and_map(sub, m, prop_name(m, 'global_bump', True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', )
+        if(not m.global_bump_map_enabled or m.global_bump_map == ''):
+            elm.enabled = False
+        
+        elm = tab_value_and_map(sub, m, None, 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, )
+        
+        _, elm = tab_bump_value_and_map(sub, m, None, 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', )
+        if(not m.global_bump_map_enabled or m.global_bump_map == ''):
+            elm.enabled = False
+        
+        sub.separator()
+        sub.separator()
+        sub.label("--- drawing tests ---")
+        sub.separator()
+        '''
         
         r = sub.row()
         r.prop(m, 'global_dispersion')
@@ -4469,11 +4925,11 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
         else:
             r.prop_search(m, "uv_layer", o.data, "uv_textures", )
         
-        if(m.uv_layer != "" and p.settings.child_type != 'NONE'):
-            # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
-            sub.label("Particle hair with children + UVs!", icon='ERROR', )
-            sub.label("Blender may crash during .mxs export!", icon='ERROR', )
-            sub.label("Save your work before hitting F12!", icon='ERROR', )
+        # if(m.uv_layer != "" and p.settings.child_type != 'NONE'):
+        #     # TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
+        #     sub.label("Particle hair with children + UVs!", icon='ERROR', )
+        #     sub.label("Blender may crash during .mxs export!", icon='ERROR', )
+        #     sub.label("Save your work before hitting F12!", icon='ERROR', )
         
         sub.separator()
         c = sub.column(align=True)
