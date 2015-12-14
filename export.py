@@ -1999,6 +1999,32 @@ class MXSEnvironment(Serializable):
         self.m_sun_dir_y = v.y
         self.m_sun_dir_z = v.z
         
+        if(mx.env_type == 'IMAGE_BASED'):
+            if(mx.ibl_bg_type == 'HDR_IMAGE'):
+                if(mx.ibl_bg_map == ''):
+                    log("IBL environment: Background map file is empty", 3, LogStyles.WARNING, )
+                else:
+                    if(not os.path.exists(bpy.path.abspath(mx.ibl_bg_map))):
+                        log("IBL environment: Background map file '{}' does not exist".format(mx.ibl_bg_map), 3, LogStyles.WARNING, )
+            if(mx.ibl_refl_type == 'HDR_IMAGE'):
+                if(mx.ibl_refl_map == ''):
+                    log("IBL environment: Reflection map file is empty", 3, LogStyles.WARNING, )
+                else:
+                    if(not os.path.exists(bpy.path.abspath(mx.ibl_refl_map))):
+                        log("IBL environment: Reflection map file '{}' does not exist".format(mx.ibl_refl_map), 3, LogStyles.WARNING, )
+            if(mx.ibl_refr_type == 'HDR_IMAGE'):
+                if(mx.ibl_refr_map == ''):
+                    log("IBL environment: Refraction map file is empty", 3, LogStyles.WARNING, )
+                else:
+                    if(not os.path.exists(bpy.path.abspath(mx.ibl_refr_map))):
+                        log("IBL environment: Refraction map file '{}' does not exist".format(mx.ibl_refr_map), 3, LogStyles.WARNING, )
+            if(mx.ibl_illum_type == 'HDR_IMAGE'):
+                if(mx.ibl_illum_map == ''):
+                    log("IBL environment: Illumination map file is empty", 3, LogStyles.WARNING, )
+                else:
+                    if(not os.path.exists(bpy.path.abspath(mx.ibl_illum_map))):
+                        log("IBL environment: Illumination map file '{}' does not exist".format(mx.ibl_illum_map), 3, LogStyles.WARNING, )
+        
         self.m_ibl_intensity = mx.ibl_intensity
         self.m_ibl_interpolation = mx.ibl_interpolation
         self.m_ibl_screen_mapping = mx.ibl_screen_mapping
