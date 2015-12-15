@@ -815,7 +815,7 @@ class MXSExport():
         def walk(o):
             for c in o['children']:
                 walk(c)
-            if(o['object'] in no_polygons_meshes):
+            if(o['object'] in no_polygons_meshes and o['export'] is True):
                 o['export_type'] = 'EMPTY'
                 self._meshes.remove(o)
                 self._empties.append(o)
