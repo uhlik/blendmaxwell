@@ -64,7 +64,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
 # TODO: from Maxwell 3.2.0.3 beta changelog: Fixed extensions presets were not loading some map parameters correctly. - fix presets, according to preset files. so it was a bug
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
-# FIXME: there are many problems when frame is set to 0 with particles/instances and hidden bases, also if there are no particles alive (which is not handled at all)
 
 
 class MXSExport():
@@ -466,6 +465,17 @@ class MXSExport():
                         marked = is_psys_instances_marked_to_export(ob)
                         if(marked):
                             pset = ps.settings
+                            
+                            # check if there are any alive particles
+                            ok = False
+                            for p in ps.particles:
+                                if(p.alive_state == "ALIVE"):
+                                    ok = True
+                                    break
+                            if(not ok):
+                                # if there are no alive particles, it can't be hidden base because it can't be swapped to one of instances
+                                return False
+                            
                             if(pset.maxwell_render.use == 'PARTICLE_INSTANCES'):
                                 if(pset.render_type in ['OBJECT', 'GROUP', ]):
                                     if(pset.render_type == 'GROUP' and pset.dupli_group is not None):
@@ -2837,14 +2847,18 @@ class MXSParticles(MXSObject):
         if(mxex.source == 'BLENDER_PARTICLES'):
             def check(ps):
                 if(len(ps.particles) == 0):
-                    raise ValueError("particle system {} has no particles".format(ps.name))
+                    # raise ValueError("particle system {} has no particles".format(ps.name))
+                    log("particle system {} has no particles".format(ps.name), 3, LogStyles.WARNING, )
+                    self.skip = True
                 ok = False
                 for p in ps.particles:
                     if(p.alive_state == "ALIVE"):
                         ok = True
                         break
                 if(not ok):
-                    raise ValueError("particle system {} has no 'ALIVE' particles".format(ps.name))
+                    # raise ValueError("particle system {} has no 'ALIVE' particles".format(ps.name))
+                    log("particle system {} has no 'ALIVE' particles".format(ps.name), 3, LogStyles.WARNING, )
+                    self.skip = True
             
             check(ps)
             
@@ -3485,14 +3499,18 @@ class MXSCloner(MXSModifier):
         if(mxex.source == 'BLENDER_PARTICLES'):
             def check(ps):
                 if(len(ps.particles) == 0):
-                    raise ValueError("particle system {} has no particles".format(ps.name))
+                    # raise ValueError("particle system {} has no particles".format(ps.name))
+                    log("particle system {} has no particles".format(ps.name), 3, LogStyles.WARNING, )
+                    self.skip = True
                 ok = False
                 for p in ps.particles:
                     if(p.alive_state == "ALIVE"):
                         ok = True
                         break
                 if(not ok):
-                    raise ValueError("particle system {} has no 'ALIVE' particles".format(ps.name))
+                    # raise ValueError("particle system {} has no 'ALIVE' particles".format(ps.name))
+                    log("particle system {} has no 'ALIVE' particles".format(ps.name), 3, LogStyles.WARNING, )
+                    self.skip = True
             
             check(ps)
             
