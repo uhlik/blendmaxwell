@@ -824,8 +824,8 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
         sub = l.column()
         m = context.world.maxwell_render
         
-        sub.prop(m, 'sun_lamp_priority')
-        sub.separator()
+        # sub.prop(m, 'sun_lamp_priority')
+        # sub.separator()
         
         sub.prop(m, 'sun_type')
         if(m.sun_type != 'DISABLED'):
@@ -847,11 +847,29 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
                 sub.prop(m, 'sun_angles_zenith')
                 sub.prop(m, 'sun_angles_azimuth')
             elif(m.sun_location_type == 'DIRECTION'):
-                sub.operator('maxwell_render.set_sun', "Set Sun")
+                
+                r = sub.row()
+                s = r.split(percentage=0.333)
+                s.prop(m, 'use_sun_lamp', )
+                s = s.split(percentage=1.0, align=True, )
+                s.prop_search(m, 'sun_lamp', bpy.data, 'lamps', icon='LAMP_SUN', text="", )
+                if(not m.use_sun_lamp):
+                    s.enabled = False
+                
+                sub.separator()
+                
+                r = sub.row()
+                r.operator('maxwell_render.set_sun')
+                if(m.sun_lamp != '' and m.use_sun_lamp is True):
+                    r.enabled = False
+                
                 c = sub.column(align=True)
                 c.prop(m, 'sun_dir_x')
                 c.prop(m, 'sun_dir_y')
                 c.prop(m, 'sun_dir_z')
+                
+                if(m.sun_lamp != '' and m.use_sun_lamp is True):
+                    c.enabled = False
             else:
                 r = sub.row(align=True)
                 r.prop(m, 'sun_latlong_lat')

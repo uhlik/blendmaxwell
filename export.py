@@ -64,6 +64,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
 # TODO: from Maxwell 3.2.0.3 beta changelog: Fixed extensions presets were not loading some map parameters correctly. - fix presets, according to preset files. so it was a bug
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
+# FIXME: there are many problems when frame is set to 0 with particles/instances and hidden bases, also if there are no particles alive (which is not handled at all)
 
 
 class MXSExport():
@@ -1977,7 +1978,7 @@ class MXSEnvironment(Serializable):
         self.m_dome_horizon = self._color_to_rgb8(mx.dome_horizon)
         self.m_dome_mid_point = math.degrees(mx.dome_mid_point)
         
-        self.m_sun_lamp_priority = mx.sun_lamp_priority
+        # self.m_sun_lamp_priority = mx.sun_lamp_priority
         self.m_sun_type = mx.sun_type
         self.m_sun_power = mx.sun_power
         self.m_sun_radius_factor = mx.sun_radius_factor
@@ -2057,6 +2058,45 @@ class MXSEnvironment(Serializable):
         self.m_ibl_illum_offset_x = mx.ibl_illum_offset_x
         self.m_ibl_illum_offset_y = mx.ibl_illum_offset_y
         
+        if(mx.use_sun_lamp):
+            # use selected sun lamp
+            if(mx.sun_lamp != ''):
+                sun_lamp = None
+                try:
+                    sun_lamp = bpy.data.lamps[mx.sun_lamp]
+                except KeyError:
+                    log("specified Sun lamp cannot be found, using location vector..", 2, LogStyles.WARNING)
+                if(sun_lamp is not None):
+                    sun_obj = None
+                    for o in bpy.data.objects:
+                        if(o.type == 'LAMP'):
+                            if(o.data == sun_lamp):
+                                sun_obj = o
+                                break
+                    if(sun_obj is not None):
+                        # direction from matrix
+                        mw = sun_obj.matrix_world
+                        loc, rot, sca = mw.decompose()
+                        v = Vector((0.0, 0.0, 1.0))
+                        v.rotate(rot)
+                        v = AXIS_CONVERSION * v
+                        # mx.sun_dir_x = v.x
+                        # mx.sun_dir_y = v.y
+                        # mx.sun_dir_z = v.z
+                        self.m_sun_location_type = 'DIRECTION'
+                        self.m_sun_dir_x = v.x
+                        self.m_sun_dir_y = v.y
+                        self.m_sun_dir_z = v.z
+                        log("using Sun lamp object: '{}'".format(sun_obj.name), 2)
+                    else:
+                        log("Sun lamp object cannot be found, using location vector..", 2, LogStyles.WARNING)
+            else:
+                log("no Sun specified, using location vector..", 2, LogStyles.WARNING)
+        else:
+            # use_sun_lamp is false, use already processed environment options
+            pass    
+        
+        '''
         if(mx.sun_lamp_priority):
             # extract suns from objects
             objs = bpy.context.scene.objects
@@ -2106,6 +2146,7 @@ class MXSEnvironment(Serializable):
         else:
             # sun_lamp_priority is false, use already processed environment options
             pass
+        '''
         
         # and change this, just in case..
         import datetime
