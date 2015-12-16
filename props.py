@@ -901,7 +901,7 @@ class SceneProperties(PropertyGroup):
     tone_burn = FloatProperty(name="Burn", default=0.8, min=0.0, max=1.0, precision=2, description="Image burn value", )
     tone_gamma = FloatProperty(name="Monitor Gamma", default=2.20, min=0.10, max=3.50, precision=2, description="Image gamma value", )
     tone_sharpness = BoolProperty(name="Sharpness", default=False, description="Image sharpness", )
-    tone_sharpness_value = FloatProperty(name="Sharpness", default=60.0, min=0.0, max=100.0, precision=2, description="Image sharpness value", )
+    tone_sharpness_value = FloatProperty(name="Sharpness", default=60.0, min=0.0, max=100.0, precision=2, description="Image sharpness value", subtype='PERCENTAGE', )
     tone_whitepoint = FloatProperty(name="White Point (K)", default=6500.0, min=2000.0, max=20000.0, precision=1, description="", )
     tone_tint = FloatProperty(name="Tint", default=0.0, min=-100.0, max=100.0, precision=1, description="", )
     
