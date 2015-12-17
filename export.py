@@ -63,6 +63,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
+# FIXME: materials only with fake user, to be used for example in grass modifier, not linked to any other object are not exported
 
 
 class MXSExport():

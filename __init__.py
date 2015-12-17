@@ -61,6 +61,7 @@ else:
 
 import os
 import platform
+import math
 
 import bpy
 from bpy.props import StringProperty, EnumProperty
@@ -138,6 +139,43 @@ def get_default_presets():
                 'overcast_exterior': {'shutter': 200.0, 'fstop': 5.6, },
                 'bright_exterior': {'shutter': 500.0, 'fstop': 5.6, },
                 'night_exterior': {'shutter': 20.0, 'fstop': 5.6, },
+            }
+        },
+        'grass_modifier': {
+            'subdirs': False,
+            'defines': [
+                "import bpy",
+                "m = bpy.context.object.maxwell_grass_extension",
+            ],
+            'presets': {
+                'wild_grass': {
+                    'primitive_type': '1', 'points_per_blade': 8, 'density': 3000, 'density_map': "", 'seed': 0, 'length': 7.5, 'length_map': "", 'length_variation': 60.0,
+                    'root_width': 6.0, 'tip_width': 2.5, 'direction_type': 0.0, 'initial_angle': math.radians(60.0), 'initial_angle_variation': 50.0, 'initial_angle_map': "",
+                    'start_bend': 40.0, 'start_bend_variation': 25.0, 'start_bend_map': "", 'bend_radius': 5.0, 'bend_radius_variation': 50.0, 'bend_radius_map': "",
+                    'bend_angle': math.radians(80.0), 'bend_angle_variation': 50.0, 'bend_angle_map': "", 'cut_off': 100.0, 'cut_off_variation': 0.0, 'cut_off_map': "",
+                    'lod': False, 'lod_min_distance': 10.0, 'lod_max_distance': 50.0, 'lod_max_distance_density': 10.0, 'display_percent': 10.0, 'display_max_blades': 1000,
+                },
+                'golf_green': {
+                    'primitive_type': '1', 'points_per_blade': 4, 'density': 150000, 'density_map': "", 'seed': 0, 'length': 1.5, 'length_map': "", 'length_variation': 20.0,
+                    'root_width': 2.0, 'tip_width': 0.5, 'direction_type': 0.0, 'initial_angle': math.radians(70.0), 'initial_angle_variation': 50.0, 'initial_angle_map': "",
+                    'start_bend': 40.0, 'start_bend_variation': 25.0, 'start_bend_map': "", 'bend_radius': 1.0, 'bend_radius_variation': 25.0, 'bend_radius_map': "",
+                    'bend_angle': math.radians(80.0), 'bend_angle_variation': 50.0, 'bend_angle_map': "", 'cut_off': 65.0, 'cut_off_variation': 15.0, 'cut_off_map': "",
+                    'lod': False, 'lod_min_distance': 10.0, 'lod_max_distance': 50.0, 'lod_max_distance_density': 10.0, 'display_percent': 10.0, 'display_max_blades': 1000,
+                },
+                'tall_big_grass': {
+                    'primitive_type': '1', 'points_per_blade': 16, 'density': 2500, 'density_map': "", 'seed': 0, 'length': 40.0, 'length_map': "", 'length_variation': 30.0,
+                    'root_width': 11.0, 'tip_width': 3.0, 'direction_type': 0.0, 'initial_angle': math.radians(80.0), 'initial_angle_variation': 25.0, 'initial_angle_map': "",
+                    'start_bend': 30.0, 'start_bend_variation': 25.0, 'start_bend_map': "", 'bend_radius': 25.0, 'bend_radius_variation': 25.0, 'bend_radius_map': "",
+                    'bend_angle': math.radians(80.0), 'bend_angle_variation': 25.0, 'bend_angle_map': "", 'cut_off': 100.0, 'cut_off_variation': 0.0, 'cut_off_map': "",
+                    'lod': False, 'lod_min_distance': 10.0, 'lod_max_distance': 50.0, 'lod_max_distance_density': 10.0, 'display_percent': 10.0, 'display_max_blades': 1000,
+                },
+                'fast_generic_grass': {
+                    'primitive_type': '1', 'points_per_blade': 6, 'density': 4500, 'density_map': "", 'seed': 0, 'length': 8.0, 'length_map': "", 'length_variation': 50.0,
+                    'root_width': 5.0, 'tip_width': 2.0, 'direction_type': 0.0, 'initial_angle': math.radians(80.0), 'initial_angle_variation': 40.0, 'initial_angle_map': "",
+                    'start_bend': 30.0, 'start_bend_variation': 50.0, 'start_bend_map': "", 'bend_radius': 10.0, 'bend_radius_variation': 30.0, 'bend_radius_map': "",
+                    'bend_angle': math.radians(80.0), 'bend_angle_variation': 40.0, 'bend_angle_map': "", 'cut_off': 100.0, 'cut_off_variation': 0.0, 'cut_off_map': "",
+                    'lod': False, 'lod_min_distance': 10.0, 'lod_max_distance': 50.0, 'lod_max_distance_density': 10.0, 'display_percent': 10.0, 'display_max_blades': 1000,
+                },
             }
         },
         'material': {

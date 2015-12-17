@@ -2022,6 +2022,8 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         
         m = context.object.maxwell_grass_extension
         
+        sub.menu("Grass_Modifier_presets", text=bpy.types.Grass_Modifier_presets.bl_label)
+        
         sub.label("Primitive:")
         
         sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL', )
@@ -5383,5 +5385,14 @@ class Exposure_presets(Menu):
     bl_label = "Exposure Presets"
     bl_idname = "Exposure_presets"
     preset_subdir = "blendmaxwell/exposure"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class Grass_Modifier_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Grass Modifier Presets"
+    bl_idname = "Grass_Modifier_presets"
+    preset_subdir = "blendmaxwell/grass_modifier"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
