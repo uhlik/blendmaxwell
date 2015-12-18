@@ -63,7 +63,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
-# FIXME: materials only with fake user, to be used for example in grass modifier, not linked to any other object are not exported
 # TODO: add physical sky loading/saving or presets
 
 
@@ -1003,16 +1002,61 @@ class MXSExport():
             u = mat.users
             if(mat.use_fake_user):
                 u -= 1
+            # count material usage as backface material and in extensions
+            for d in self._empties:
+                if(d['object'].maxwell_render.backface_material == mat.name):
+                    u += 1
+            for d in self._meshes:
+                if(d['object'].maxwell_render.backface_material == mat.name):
+                    u += 1
+            for d in self._bases:
+                if(d['object'].maxwell_render.backface_material == mat.name):
+                    u += 1
+            for d in self._references:
+                if(d['object'].maxwell_render_reference.material == mat.name):
+                    u += 1
+                if(d['object'].maxwell_render_reference.backface_material == mat.name):
+                    u += 1
+            for d in self._particles:
+                if(d['export_type'] == 'HAIR'):
+                    if(d['psys'].settings.maxwell_hair_extension.material == mat.name):
+                        u += 1
+                    if(d['psys'].settings.maxwell_hair_extension.backface_material == mat.name):
+                        u += 1
+                if(d['export_type'] == 'PARTICLES'):
+                    if(d['psys'].settings.maxwell_particles_extension.material == mat.name):
+                        u += 1
+                    if(d['psys'].settings.maxwell_particles_extension.backface_material == mat.name):
+                        u += 1
+            for d in self._volumetrics:
+                if(d['object'].maxwell_volumetrics_extension.material == mat.name):
+                    u += 1
+                if(d['object'].maxwell_volumetrics_extension.backface_material == mat.name):
+                    u += 1
+            for d in self._modifiers:
+                if(d['export_type'] == 'GRASS'):
+                    if(d['object'].maxwell_grass_extension.material == mat.name):
+                        u += 1
+                    if(d['object'].maxwell_grass_extension.backface_material == mat.name):
+                        u += 1
+                if(d['export_type'] == 'SEA'):
+                    if(d['object'].maxwell_sea_extension.material == mat.name):
+                        u += 1
+                    if(d['object'].maxwell_sea_extension.backface_material == mat.name):
+                        u += 1
+            
             if(u > 0):
-                if(mx.use == 'REFERENCE' and mat.users > 0):
+                if(mx.use == 'REFERENCE'):
                     mxm = MXSMaterialMXM(mat.name, path=mx.mxm_file, embed=mx.embed, )
                     self._write(mxm)
-                elif(mx.use == 'CUSTOM' and mat.users > 0):
+                elif(mx.use == 'CUSTOM'):
                     cmat = MXSMaterialCustom(mat.name)
                     self._write(cmat)
                 else:
                     exmat = MXSMaterialExtension(mat.name)
                     self._write(exmat)
+            else:
+                log("'{}' > unused material, skipping..".format(mat.name), 2, )
         
         log("writing cameras:", 1, LogStyles.MESSAGE, )
         for d in self._cameras:
