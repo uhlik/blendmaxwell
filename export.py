@@ -49,17 +49,17 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
-# TODO: restore instancer support for my personal use (python only)
-# FIXME: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
-# FIXME: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
+# NOTE: restore instancer support for my personal use (python only)
+# NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
+# NOTE: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
 # TODO: do something with sharp edges, auto smooth and custom normals..
 # TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions (no conversions float > 8 bit > float again)
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
-# TODO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
+# NOTE: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
 # TODO: maybe organize all props and remove the need of prefixes in names
 # TODO: more standardized setting render file type and bit depth, this will require change in render workflow and that is dangerous..
 # TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works
-# TODO: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. it is nearly that way, but a few still slips away..
+# FIXME: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. it is nearly that way, but a few still slips away..
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
@@ -3018,7 +3018,6 @@ class MXSParticles(MXSObject):
                 pnor.normalize()
                 # particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ) + uv_locs[i * 3:(i * 3) + 3], )
                 # particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ))
-                # TODO: fix this mess, was too lazy to think for a while..
                 uv = uv_locs[i * 3:(i * 3) + 3]
                 uvv = Vector(uv).reflect(fv) * flip_xy
                 uvt = (uvv.z, uvv.x, uvv.y, )
@@ -4402,7 +4401,7 @@ class MXSMaterialCustom(MXSMaterial):
 
 class MXSWireframeBase(MXSMesh):
     def __init__(self, euuid, ):
-        # FIXME: try to do it without modifying scene during export, blender might crash, for now this is just hack..
+        # HACK: try to do it without modifying scene during export, blender might crash, for now this is just hack..
         n = 'WIREFRAME_BASE_{}'.format(euuid)
         mx = bpy.context.scene.maxwell_render
         gen = utils.CylinderMeshGenerator(height=1, radius=mx.export_wire_edge_radius, sides=mx.export_wire_edge_resolution, enhanced=True, )
@@ -4425,7 +4424,7 @@ class MXSWireframeBase(MXSMesh):
 
 class MXSWireframeContainer(MXSEmpty):
     def __init__(self, euuid, ):
-        # FIXME: try to do it without modifying scene during export, blender might crash, for now this is just hack..
+        # HACK: try to do it without modifying scene during export, blender might crash, for now this is just hack..
         n = 'WIREFRAME_CONTAINER_{}'.format(euuid)
         ob = utils.add_object2(n, None, )
         
