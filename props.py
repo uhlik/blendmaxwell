@@ -25,212 +25,6 @@ from bpy.types import PropertyGroup
 from mathutils import Vector
 
 
-def _output_depth_items(scene, context):
-    items = [('RGB8', "RGB 8 bpc", "", 0),
-             ('RGB16', "RGB 16 bpc", "", 1),
-             ('RGB32', "RGB 32 bpc", "", 2), ]
-    
-    m = bpy.context.scene.maxwell_render
-    e = os.path.splitext(os.path.split(m.output_image)[1])[1][1:].lower()
-    v = ''
-    if(e == "tga" or e == "jpg"):
-        return items[:1]
-    elif(e == "png"):
-        return items[:2]
-    else:
-        return items
-
-
-def _output_file_types(scene, context):
-    a = [('EXR32', "EXR 32", ""),
-         ('EXR16', "EXR 16", ""),
-         ('TIF32', "TIF 32", ""),
-         ('TIF16', "TIF 16", ""),
-         ('TIF8', "TIF 8", ""),
-         ('PSD32', "PSD 32", ""),
-         ('PSD16', "PSD 16", ""),
-         ('PSD8', "PSD 8", ""),
-         ('PNG16', "PNG 16", ""),
-         ('PNG8', "PNG 8", ""),
-         ('JPG', "JPG", ""),
-         ('JP2', "JP2", ""),
-         ('TGA', "TGA", ""), ]
-    return a
-
-
-def _gmt_auto(self, context):
-    if(self.sun_latlong_gmt_auto):
-        # http://stackoverflow.com/questions/1058342/rough-estimate-of-the-time-offset-from-gmt-from-latitude-longitude
-        # direction is 1 for east, -1 for west, and longitude is in (-180,180)
-        # not sure which to choose, prague is gmt+1 and longitude ~14, and it works for this combination..
-        offset = 1 * self.sun_latlong_lon * 24 / 360
-        self.sun_latlong_gmt = round(offset)
-
-
-def _override_sun(self, context):
-    if(_overrides.sun_skip):
-        return
-    _overrides.sun_skip = True
-    suns = [o for o in bpy.data.objects if (o and o.type == 'LAMP' and o.data.type == 'SUN')]
-    
-    for o in suns:
-        mx = o.data.maxwell_render
-        if(mx == self):
-            m = bpy.context.scene.world.maxwell_render
-            s = o
-            w = s.matrix_world
-            _, r, _ = w.decompose()
-            v = Vector((0, 0, 1))
-            v.rotate(r)
-            m.sun_dir_x = v.x
-            m.sun_dir_y = v.y
-            m.sun_dir_z = v.z
-        else:
-            mx.override = False
-    
-    _overrides.sun_skip = False
-
-
-def _override_output_image(self, context):
-    if(_overrides.output_image):
-        return
-    _overrides.output_image = True
-    
-    self.output_image = bpy.path.abspath(self.output_image)
-    
-    h, t = os.path.split(self.output_image)
-    n, e = os.path.splitext(t)
-    es = ['.png', '.psd', '.jpg', '.tga', '.tif', '.jp2', '.hdr', '.exr', '.bmp', ]
-    if(not e.lower() in es):
-        e = '.png'
-    
-    p = bpy.path.ensure_ext(self.output_image, e, case_sensitive=False, )
-    if(p != self.output_image and p != e):
-        self.output_image = p
-    
-    _overrides.output_image = False
-
-
-def _override_output_mxi(self, context):
-    if(_overrides.output_mxi):
-        return
-    _overrides.output_mxi = True
-    
-    self.output_mxi = bpy.path.abspath(self.output_mxi)
-    
-    e = '.mxi'
-    p = bpy.path.ensure_ext(self.output_mxi, '.mxi', case_sensitive=False, )
-    if(p != self.output_mxi and p != e):
-        self.output_mxi = p
-    
-    _overrides.output_mxi = False
-
-
-def _update_gpu_dof(self, context):
-    cam = context.camera
-    dof_options = cam.gpu_dof
-    dof_options.fstop = self.fstop
-    
-    _lock_exposure_update_fstop(self, context)
-
-
-def _update_camera_projection(self, context):
-    c = context.active_object
-    cd = c.data
-    
-    l = self.lens
-    if(l == 'TYPE_ORTHO_2'):
-        cd.type = 'ORTHO'
-        cd.ortho_scale = cd.dof_distance
-        cd.lens = 32.0
-        if(cd.dof_object is not None):
-            cd.dof_object = None
-    else:
-        cd.type = 'PERSP'
-
-
-def _lock_exposure_update_shutter(self, context):
-    # fstop = 11
-    # time = 250
-    # t = 1 / 250
-    # ev = math.log2((fstop ** 2) / t)
-    # fstop = math.sqrt((2 ** ev) * t)
-    # time = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
-    if(self.lock):
-        return
-    
-    self.lock = True
-    
-    fstop = self.fstop
-    shutter = self.shutter
-    t = 1 / shutter
-    
-    if(self.lock_exposure):
-        ev = self.ev
-        fstop = math.sqrt((2 ** ev) * t)
-        self.fstop = fstop
-    else:
-        ev = math.log2((fstop ** 2) / t)
-        self.ev = ev
-    
-    self.lock = False
-
-
-def _lock_exposure_update_fstop(self, context):
-    if(self.lock):
-        return
-    
-    self.lock = True
-    
-    fstop = self.fstop
-    shutter = self.shutter
-    t = 1 / shutter
-    
-    if(self.lock_exposure):
-        ev = self.ev
-        shutter = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
-        self.shutter = shutter
-    else:
-        ev = math.log2((fstop ** 2) / t)
-        self.ev = ev
-    
-    self.lock = False
-
-
-def _lock_exposure_update_ev(self, context):
-    if(self.lock):
-        return
-    
-    self.lock = True
-    
-    fstop = self.fstop
-    shutter = self.shutter
-    t = 1 / shutter
-    ev = self.ev
-    shutter = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
-    self.shutter = shutter
-    
-    self.lock = False
-
-
-def _get_custom_alphas(self, context):
-    r = []
-    for i, g in enumerate(bpy.data.groups):
-        gmx = g.maxwell_render
-        if(gmx.custom_alpha_use):
-            r.append((g.name, g.name, '', ))
-    if(len(r) == 0):
-        # return empty list if no groups in scene
-        return [("0", "", ""), ]
-    return r
-
-
-def _get_material_preview_scenes(self, context):
-    from . import system
-    l = system.mxed_get_preview_scenes()
-    return l
-
-
 class MaterialEditorCallbacks():
     def __init__(self):
         raise Exception("no instance of this..")
@@ -747,24 +541,6 @@ class MaterialEditorCallbacks():
                 self['bump'] = 30.0
 
 
-class _overrides():
-    sun_skip = False
-    output_image = False
-    output_mxi = False
-
-
-class PrivateProperties(PropertyGroup):
-    # material = StringProperty(name="m", default="", )
-    
-    @classmethod
-    def register(cls):
-        bpy.types.Scene.maxwell_render_private = PointerProperty(type=cls)
-    
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Scene.maxwell_render_private
-
-
 class CustomAlphaGroupsProperties(PropertyGroup):
     custom_alpha_use = BoolProperty(name="Use", default=False, )
     custom_alpha_opaque = BoolProperty(name="Opaque", default=False, )
@@ -802,6 +578,84 @@ class ManualCustomAlphas(PropertyGroup):
 
 
 class SceneProperties(PropertyGroup):
+    lock_output_image = BoolProperty(default=False, options={'HIDDEN'}, )
+    lock_output_mxi = BoolProperty(default=False, options={'HIDDEN'}, )
+    
+    def _output_depth_items(scene, context):
+        items = [('RGB8', "RGB 8 bpc", "", 0),
+                 ('RGB16', "RGB 16 bpc", "", 1),
+                 ('RGB32', "RGB 32 bpc", "", 2), ]
+        
+        m = bpy.context.scene.maxwell_render
+        e = os.path.splitext(os.path.split(m.output_image)[1])[1][1:].lower()
+        v = ''
+        if(e == "tga" or e == "jpg"):
+            return items[:1]
+        elif(e == "png"):
+            return items[:2]
+        else:
+            return items
+    
+    def _output_file_types(scene, context):
+        a = [('EXR32', "EXR 32", ""),
+             ('EXR16', "EXR 16", ""),
+             ('TIF32', "TIF 32", ""),
+             ('TIF16', "TIF 16", ""),
+             ('TIF8', "TIF 8", ""),
+             ('PSD32', "PSD 32", ""),
+             ('PSD16', "PSD 16", ""),
+             ('PSD8', "PSD 8", ""),
+             ('PNG16', "PNG 16", ""),
+             ('PNG8', "PNG 8", ""),
+             ('JPG', "JPG", ""),
+             ('JP2', "JP2", ""),
+             ('TGA', "TGA", ""), ]
+        return a
+    
+    def _override_output_image(self, context):
+        if(self.lock_output_image):
+            return
+        self.lock_output_image = True
+        
+        self.output_image = bpy.path.abspath(self.output_image)
+        
+        h, t = os.path.split(self.output_image)
+        n, e = os.path.splitext(t)
+        es = ['.png', '.psd', '.jpg', '.tga', '.tif', '.jp2', '.hdr', '.exr', '.bmp', ]
+        if(not e.lower() in es):
+            e = '.png'
+        
+        p = bpy.path.ensure_ext(self.output_image, e, case_sensitive=False, )
+        if(p != self.output_image and p != e):
+            self.output_image = p
+        
+        self.lock_output_image = False
+    
+    def _override_output_mxi(self, context):
+        if(self.lock_output_mxi):
+            return
+        self.lock_output_mxi = True
+        
+        self.output_mxi = bpy.path.abspath(self.output_mxi)
+        
+        e = '.mxi'
+        p = bpy.path.ensure_ext(self.output_mxi, '.mxi', case_sensitive=False, )
+        if(p != self.output_mxi and p != e):
+            self.output_mxi = p
+        
+        self.lock_output_mxi = False
+    
+    def _get_custom_alphas(self, context):
+        r = []
+        for i, g in enumerate(bpy.data.groups):
+            gmx = g.maxwell_render
+            if(gmx.custom_alpha_use):
+                r.append((g.name, g.name, '', ))
+        if(len(r) == 0):
+            # return empty list if no groups in scene
+            return [("0", "", ""), ]
+        return r
+    
     scene_time = IntProperty(name="Time (minutes)", default=60, min=1, max=50000, description="Maximum render time (in minutes) for the render", )
     scene_sampling_level = FloatProperty(name="Sampling Level", default=12.0, min=1.0, max=50.00, precision=2, description="Maximum sampling level required", )
     scene_multilight = EnumProperty(name="Multilight", items=[('DISABLED_0', "Disabled", ""), ('INTENSITY_1', "Intensity", ""), ('COLOR_2', "Color", "")], default='DISABLED_0', description="Multilight type", )
@@ -919,7 +773,7 @@ class SceneProperties(PropertyGroup):
     illum_caustics_refl_caustics = EnumProperty(name="Refl. Caustics", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Reflection caustics", )
     illum_caustics_refr_caustics = EnumProperty(name="Refr. Caustics", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Refraction caustics", )
     
-    # TODO: how to set overlay text?
+    # TODO: how to set overlay text? there is getOverlayTextOptions and setOverlayTextOptions, but no CoverlayTextOptions
     # overlay_enabled = BoolProperty(name="Overlay", default=False, )
     # overlay_text = StringProperty(name="Overlay Text", default="", )
     # overlay_position = EnumProperty(name="Position", items=[('BOTTOM', "Bottom", ""), ('TOP', "Top", "")], default='BOTTOM', )
@@ -982,6 +836,14 @@ class SceneProperties(PropertyGroup):
 
 
 class EnvironmentProperties(PropertyGroup):
+    def _gmt_auto(self, context):
+        if(self.sun_latlong_gmt_auto):
+            # http://stackoverflow.com/questions/1058342/rough-estimate-of-the-time-offset-from-gmt-from-latitude-longitude
+            # direction is 1 for east, -1 for west, and longitude is in (-180,180)
+            # not sure which to choose, prague is gmt+1 and longitude ~14, and it works for this combination..
+            offset = 1 * self.sun_latlong_lon * 24 / 360
+            self.sun_latlong_gmt = round(offset)
+    
     env_type = EnumProperty(name="Type", items=[('NONE', "None", ""), ('PHYSICAL_SKY', "Physical Sky", ""), ('IMAGE_BASED', "Image Based", "")], default='PHYSICAL_SKY', description="Environment type", )
     
     sky_type = EnumProperty(name="Type", items=[('PHYSICAL', "Physical", ""), ('CONSTANT', "Constant Dome", "")], default='PHYSICAL', description="Sky type", )
@@ -1074,6 +936,84 @@ class EnvironmentProperties(PropertyGroup):
 
 
 class CameraProperties(PropertyGroup):
+    def _update_camera_projection(self, context):
+        c = context.active_object
+        cd = c.data
+        
+        l = self.lens
+        if(l == 'TYPE_ORTHO_2'):
+            cd.type = 'ORTHO'
+            cd.ortho_scale = cd.dof_distance
+            cd.lens = 32.0
+            if(cd.dof_object is not None):
+                cd.dof_object = None
+        else:
+            cd.type = 'PERSP'
+    
+    def _lock_exposure_update_shutter(self, context):
+        # fstop = 11
+        # time = 250
+        # t = 1 / 250
+        # ev = math.log2((fstop ** 2) / t)
+        # fstop = math.sqrt((2 ** ev) * t)
+        # time = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
+        if(self.lock):
+            return
+        
+        self.lock = True
+        
+        fstop = self.fstop
+        shutter = self.shutter
+        t = 1 / shutter
+        
+        if(self.lock_exposure):
+            ev = self.ev
+            fstop = math.sqrt((2 ** ev) * t)
+            self.fstop = fstop
+        else:
+            ev = math.log2((fstop ** 2) / t)
+            self.ev = ev
+            
+        self.lock = False
+    
+    def _lock_exposure_update_fstop(self, context):
+        if(self.lock):
+            return
+        
+        self.lock = True
+        
+        fstop = self.fstop
+        shutter = self.shutter
+        t = 1 / shutter
+        
+        if(self.lock_exposure):
+            ev = self.ev
+            shutter = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
+            self.shutter = shutter
+        else:
+            ev = math.log2((fstop ** 2) / t)
+            self.ev = ev
+        
+        self.lock = False
+        
+        # update fstop in dof options to have a dof in viewport
+        context.camera.gpu_dof.fstop = self.fstop
+    
+    def _lock_exposure_update_ev(self, context):
+        if(self.lock):
+            return
+        
+        self.lock = True
+        
+        fstop = self.fstop
+        shutter = self.shutter
+        t = 1 / shutter
+        ev = self.ev
+        shutter = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
+        self.shutter = shutter
+        
+        self.lock = False
+    
     # optics
     # lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""), ('TYPE_PINHOLE_1', "Pin Hole", ""), ('TYPE_ORTHO_2', "Ortho", ""), ('TYPE_FISHEYE_3', "Fish Eye", ""), ('TYPE_SPHERICAL_4', "Spherical", ""), ('TYPE_CYLINDRICAL_5', "Cylindical", "")], default='TYPE_THIN_LENS_0', )
     # lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""),
@@ -1092,11 +1032,11 @@ class CameraProperties(PropertyGroup):
                                             ('TYPE_CYLINDRICAL_5', "Cylindical", ""), ], default='TYPE_THIN_LENS_0', update=_update_camera_projection, )
     
     shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", update=_lock_exposure_update_shutter, )
-    fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_update_gpu_dof, )
+    fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_lock_exposure_update_fstop, )
     ev = FloatProperty(name="EV Number", default=14.885, min=1.0, max=100000.0, precision=3, update=_lock_exposure_update_ev, )
     lock_exposure = BoolProperty(name="Lock Exposure", default=False, )
     
-    lock = BoolProperty(default=False, )
+    lock = BoolProperty(default=False, options={'HIDDEN'}, )
     
     fov = FloatProperty(name="FOV", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     azimuth = FloatProperty(name="Azimuth", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
@@ -1411,6 +1351,31 @@ class TextureProperties(PropertyGroup):
 
 
 class SunProperties(PropertyGroup):
+    lock_sun_skip = BoolProperty(default=False, options={'HIDDEN'}, )
+    
+    def _override_sun(self, context):
+        if(self.lock_sun_skip):
+            return
+        self.lock_sun_skip = True
+        suns = [o for o in bpy.data.objects if (o and o.type == 'LAMP' and o.data.type == 'SUN')]
+        
+        for o in suns:
+            mx = o.data.maxwell_render
+            if(mx == self):
+                m = bpy.context.scene.world.maxwell_render
+                s = o
+                w = s.matrix_world
+                _, r, _ = w.decompose()
+                v = Vector((0, 0, 1))
+                v.rotate(r)
+                m.sun_dir_x = v.x
+                m.sun_dir_y = v.y
+                m.sun_dir_z = v.z
+            else:
+                mx.override = False
+        
+        self.lock_sun_skip = False
+    
     override = BoolProperty(name="Override Environment Settings", default=False, description="When True, this lamp will override Sun direction from Environment Settings", update=_override_sun, )
     
     @classmethod
@@ -2120,6 +2085,11 @@ class MaterialCustomLayers(PropertyGroup):
 
 
 class MaterialProperties(PropertyGroup):
+    def _get_material_preview_scenes(self, context):
+        from . import system
+        l = system.mxed_get_preview_scenes()
+        return l
+    
     embed = BoolProperty(name="Embed Into Scene", default=True, description="When enabled, material file (.MXM) will be embedded to scene, otherwise will be referenced", )
     mxm_file = StringProperty(name="MXM File", default="", subtype='FILE_PATH', description="Path to material (.MXM) file", )
     
