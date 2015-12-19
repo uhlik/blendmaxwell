@@ -286,7 +286,7 @@ class BMPanel():
         s.prop_search(cls, texture, search, 'texture_slots', icon='TEXTURE', text="", )
         return elm
     
-    def tab_bump_value_and_map(self, layout, cls, name, value, enabled, texture, search, normal, ):
+    def tab_bump_value_and_map(self, layout, cls, name, value, enabled, texture, search, normal, normal_value, use_normal, ):
         """label and bump map value, texture enabled, texture map name and use normal
         if name is None label is taken from value property
         returns whole ui element that can be enabled/disabled and column with value to be disabled when no map is present
@@ -294,7 +294,7 @@ class BMPanel():
         | Name:    [value][x][texture][n] |
         
         usage:
-        _, elm = tab_bump_value_and_map(sub, m, prop_name(m, 'global_bump', True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', )
+        _, elm = self.tab_bump_value_and_map(sub, m, prop_name(m, 'global_bump', True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', 'global_bump_normal', m.global_bump_map_use_normal, )
         if(not m.global_bump_map_enabled or m.global_bump_map == ''):
             elm.enabled = False
         """
@@ -306,7 +306,10 @@ class BMPanel():
         s.label(name)
         s = s.split(percentage=0.333)
         c = s.column()
-        c.prop(cls, value, text="", )
+        if(use_normal):
+            c.prop(cls, normal_value, text="", )
+        else:
+            c.prop(cls, value, text="", )
         # if(not m.global_bump_map_enabled or m.global_bump_map == ''):
         #     c.enabled = False
         s = s.split(percentage=0.15, align=True, )
@@ -410,13 +413,13 @@ class BMPanel():
         elm.enabled = False
         
         sub.label(">>> tab_bump_value_and_map")
-        _, elm = self.tab_bump_value_and_map(sub, mx, self.prop_name(mx, 'global_bump', colon=True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', )
+        _, elm = self.tab_bump_value_and_map(sub, mx, prop_name(mx, 'global_bump', True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', 'global_bump_normal', mx.global_bump_map_use_normal )
         if(not mx.global_bump_map_enabled or mx.global_bump_map == ''):
             elm.enabled = False
         
         elm = self.tab_value_and_map(sub, mx, None, 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, )
         
-        _, elm = self.tab_bump_value_and_map(sub, mx, None, 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', )
+        _, elm = self.tab_bump_value_and_map(sub, mx, None, 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', 'global_bump_normal', mx.global_bump_map_use_normal, )
         if(not mx.global_bump_map_enabled or mx.global_bump_map == ''):
             elm.enabled = False
     '''
@@ -2209,7 +2212,10 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         c = s.column()
         r = c.row()
         c = r.column()
-        c.prop(m, 'global_bump', text="", )
+        if(m.global_bump_map_use_normal):
+            c.prop(m, 'global_bump_normal', text="", )
+        else:
+            c.prop(m, 'global_bump', text="", )
         
         if(not m.global_bump_map_enabled or m.global_bump_map == ''):
             c.enabled = False
@@ -3114,7 +3120,11 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         c = s.column()
                         r = c.row()
                         c = r.column()
-                        c.prop(bsdf, 'bump', text="", )
+                        
+                        if(bsdf.bump_map_use_normal):
+                            c.prop(bsdf, 'bump_normal', text="", )
+                        else:
+                            c.prop(bsdf, 'bump', text="", )
                         
                         if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
                             c.enabled = False
@@ -3967,7 +3977,11 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             c = s.column()
             r = c.row()
             c = r.column()
-            c.prop(bsdf, 'bump', text="", )
+            
+            if(bsdf.bump_map_use_normal):
+                c.prop(bsdf, 'bump_normal', text="", )
+            else:
+                c.prop(bsdf, 'bump', text="", )
             
             if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
                 c.enabled = False

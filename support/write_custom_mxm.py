@@ -98,7 +98,10 @@ def material_custom(d, s, ):
             t = texture(d['bump_map'], s, )
             if(t is not None):
                 a.textureMap = t
-            a.value = d['bump']
+            if(d['bump_map_use_normal']):
+                a.value = d['bump_normal']
+            else:
+                a.value = d['bump']
             m.setAttribute('bump', a)
             m.setNormalMapState(d['bump_map_use_normal'])
         
@@ -249,12 +252,18 @@ def material_custom(d, s, ):
             t = texture(bp['bump_map'], s, )
             if(t is not None):
                 a.textureMap = t
-            a.value = bp['bump']
+            if(bp['bump_map_use_normal']):
+                a.value = bp['bump_normal']
+            else:
+                a.value = bp['bump']
             # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
-            a.value = bp['bump']
+            if(bp['bump_map_use_normal']):
+                a.value = bp['bump_normal']
+            else:
+                a.value = bp['bump']
         b.setAttribute('bump', a)
         b.setNormalMapState(bp['bump_map_use_normal'])
         
@@ -518,7 +527,10 @@ def material(d, s, ):
                     t = texture(d['bump_map'], s, )
                     if(t is not None):
                         a.textureMap = t
-                    a.value = d['bump']
+                    if(d['bump_map_use_normal']):
+                        a.value = d['bump_normal']
+                    else:
+                        a.value = d['bump']
                     m.setAttribute('bump', a)
                     m.setNormalMapState(d['bump_map_use_normal'])
                 
@@ -769,7 +781,10 @@ def material(d, s, ):
                 t = texture(d['bump_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                a.value = d['bump']
+                if(d['bump_map_use_normal']):
+                    a.value = d['bump_normal']
+                else:
+                    a.value = d['bump']
                 m.setAttribute('bump', a)
                 m.setNormalMapState(d['bump_map_use_normal'])
             

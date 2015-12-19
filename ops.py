@@ -1278,11 +1278,13 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             mx.global_bump = gp['bump']
             mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
             mx.global_bump_map_use_normal = gp['bump_map_use_normal']
+            mx.global_bump_normal = gp['bump_normal']
         else:
             mx.global_bump_map_enabled = False
             mx.global_bump = gp['bump']
             mx.global_bump_map = ''
             mx.global_bump_map_use_normal = gp['bump_map_use_normal']
+            mx.global_bump_normal = gp['bump_normal']
         
         mx.global_dispersion = gp['dispersion']
         mx.global_shadow = gp['shadow']
@@ -1447,16 +1449,18 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         
         if(gp['bump_map'] is not None):
             mx.global_bump_map_enabled = True
-            mx.global_bump_abnormal_value = gp['bump']
+            # mx.global_bump_abnormal_value = gp['bump']
             mx.global_bump = gp['bump']
             mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
             mx.global_bump_map_use_normal = gp['bump_map_use_normal']
+            mx.global_bump_normal = gp['bump_normal']
         else:
             mx.global_bump_map_enabled = False
-            mx.global_bump_abnormal_value = gp['bump']
+            # mx.global_bump_abnormal_value = gp['bump']
             mx.global_bump = gp['bump']
             mx.global_bump_map = ''
             mx.global_bump_map_use_normal = gp['bump_map_use_normal']
+            mx.global_bump_normal = gp['bump_normal']
         
         mx.global_dispersion = gp['dispersion']
         mx.global_shadow = gp['shadow']
@@ -1600,7 +1604,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                     b.roughness_map_enabled = False
                     b.roughness_map = ""
                 
-                b.bump_abnormal_value = bd['bump']
+                # b.bump_abnormal_value = bd['bump']
                 b.bump = bd['bump']
                 
                 if(bd['bump_map'] is not None):
@@ -1611,6 +1615,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                     b.bump_map = ""
                 
                 b.bump_map_use_normal = bd['bump_map_use_normal']
+                b.bump_normal = bd['bump_normal']
                 
                 b.anisotropy = bd['anisotropy']
                 

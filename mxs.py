@@ -346,7 +346,10 @@ class MXSWriter():
                 t = self.texture(d['bump_map'])
                 if(t is not None):
                     a.textureMap = t
-                a.value = d['bump']
+                if(d['bump_map_use_normal']):
+                    a.value = d['bump_normal']
+                else:
+                    a.value = d['bump']
                 m.setAttribute('bump', a)
                 m.setNormalMapState(d['bump_map_use_normal'])
             
@@ -497,12 +500,18 @@ class MXSWriter():
                 t = self.texture(bp['bump_map'])
                 if(t is not None):
                     a.textureMap = t
-                a.value = bp['bump']
+                if(bp['bump_map_use_normal']):
+                    a.value = bp['bump_normal']
+                else:
+                    a.value = bp['bump']
                 # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
-                a.value = bp['bump']
+                if(bp['bump_map_use_normal']):
+                    a.value = bp['bump_normal']
+                else:
+                    a.value = bp['bump']
             b.setAttribute('bump', a)
             b.setNormalMapState(bp['bump_map_use_normal'])
             
@@ -764,7 +773,10 @@ class MXSWriter():
                         t = self.texture(d['bump_map'])
                         if(t is not None):
                             a.textureMap = t
-                        a.value = d['bump']
+                        if(d['bump_map_use_normal']):
+                            a.value = d['bump_normal']
+                        else:
+                            a.value = d['bump']
                         m.setAttribute('bump', a)
                         m.setNormalMapState(d['bump_map_use_normal'])
                     
@@ -1016,7 +1028,10 @@ class MXSWriter():
                     t = self.texture(d['bump_map'])
                     if(t is not None):
                         a.textureMap = t
-                    a.value = d['bump']
+                    if(d['bump_map_use_normal']):
+                        a.value = d['bump_normal']
+                    else:
+                        a.value = d['bump']
                     m.setAttribute('bump', a)
                     m.setNormalMapState(d['bump_map_use_normal'])
                 
@@ -2593,7 +2608,10 @@ class MXMWriter():
                 t = self.texture(d['bump_map'])
                 if(t is not None):
                     a.textureMap = t
-                a.value = d['bump']
+                if(d['bump_map_use_normal']):
+                    a.value = d['bump_normal']
+                else:
+                    a.value = d['bump']
                 m.setAttribute('bump', a)
                 m.setNormalMapState(d['bump_map_use_normal'])
             
@@ -2744,12 +2762,18 @@ class MXMWriter():
                 t = self.texture(bp['bump_map'])
                 if(t is not None):
                     a.textureMap = t
-                a.value = bp['bump']
+                if(bp['bump_map_use_normal']):
+                    a.value = bp['bump_normal']
+                else:
+                    a.value = bp['bump']
                 # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
-                a.value = bp['bump']
+                if(bp['bump_map_use_normal']):
+                    a.value = bp['bump_normal']
+                else:
+                    a.value = bp['bump']
             b.setAttribute('bump', a)
             b.setNormalMapState(bp['bump_map_use_normal'])
             
@@ -3011,7 +3035,10 @@ class MXMWriter():
                         t = self.texture(d['bump_map'])
                         if(t is not None):
                             a.textureMap = t
-                        a.value = d['bump']
+                        if(d['bump_map_use_normal']):
+                            a.value = d['bump_normal']
+                        else:
+                            a.value = d['bump']
                         m.setAttribute('bump', a)
                         m.setNormalMapState(d['bump_map_use_normal'])
                     
@@ -3263,7 +3290,10 @@ class MXMWriter():
                     t = self.texture(d['bump_map'])
                     if(t is not None):
                         a.textureMap = t
-                    a.value = d['bump']
+                    if(d['bump_map_use_normal']):
+                        a.value = d['bump_normal']
+                    else:
+                        a.value = d['bump']
                     m.setAttribute('bump', a)
                     m.setNormalMapState(d['bump_map_use_normal'])
                 
@@ -3750,7 +3780,7 @@ class MXMReader():
                      'attenuation': 1.0, 'attenuation_units': 0, 'nd': 3.0, 'force_fresnel': False, 'k': 0.0, 'abbe': 1.0,
                      'r2_enabled': False, 'r2_falloff_angle': 75.0, 'r2_influence': 0.0,
                      'roughness': 100.0, 'roughness_map_enabled': False, 'roughness_map': None,
-                     'bump': 30.0, 'bump_map_enabled': False, 'bump_map': None, 'bump_map_use_normal': False,
+                     'bump': 30.0, 'bump_map_enabled': False, 'bump_map': None, 'bump_map_use_normal': False, 'bump_normal': 100.0,
                      'anisotropy': 0.0, 'anisotropy_map_enabled': False, 'anisotropy_map': None,
                      'anisotropy_angle': 0.0, 'anisotropy_angle_map_enabled': False, 'anisotropy_angle_map': None,
                      'scattering': (0.5, 0.5, 0.5, ), 'coef': 0.0, 'asymmetry': 0.0,
@@ -3770,8 +3800,8 @@ class MXMReader():
                         'luminance': 0, 'luminance_power': 40.0, 'luminance_efficacy': 17.6, 'luminance_output': 100.0, 'temperature_value': 6500.0,
                         'hdr_map': None, 'hdr_intensity': 1.0, }
             layerd = {'visible': True, 'opacity': 100.0, 'opacity_map_enabled': False, 'opacity_map': None, 'blending': 0, }
-            globald = {'override_map': None, 'bump': 30.0, 'bump_map_enabled': False, 'bump_map': None, 'bump_map_use_normal': False, 'dispersion': False, 'shadow': False,
-                       'matte': False, 'priority': 0, 'id': (255, 255, 255), 'active_display_map': None, }
+            globald = {'override_map': None, 'bump': 30.0, 'bump_map_enabled': False, 'bump_map': None, 'bump_map_use_normal': False, 'bump_normal': 100.0,
+                       'dispersion': False, 'shadow': False, 'matte': False, 'priority': 0, 'id': (255, 255, 255), 'active_display_map': None, }
             
             # structure
             structure = []
@@ -3812,14 +3842,20 @@ class MXMReader():
                 a, _ = m.getAttribute('bump')
                 if(a.activeType == MAP_TYPE_BITMAP):
                     d['bump_map_enabled'] = True
-                    d['bump'] = a.value
                     d['bump_map'] = texture(a.textureMap)
                     d['bump_map_use_normal'] = m.getNormalMapState()[0]
+                    if(d['bump_map_use_normal']):
+                        d['bump_normal'] = a.value
+                    else:
+                        d['bump'] = a.value
                 else:
                     d['bump_map_enabled'] = False
-                    d['bump'] = a.value
                     d['bump_map'] = None
                     d['bump_map_use_normal'] = m.getNormalMapState()[0]
+                    if(d['bump_map_use_normal']):
+                        d['bump_normal'] = a.value
+                    else:
+                        d['bump'] = a.value
                 
                 d['dispersion'] = m.getDispersion()[0]
                 d['shadow'] = m.getMatteShadow()[0]
@@ -3978,8 +4014,11 @@ class MXMReader():
                 d['r2_falloff_angle'], d['r2_influence'], d['r2_enabled'], _ = r.getFresnelCustom()
                 
                 d['roughness'], d['roughness_map_enabled'], d['roughness_map'] = cattribute_value(b.getAttribute('roughness')[0])
-                d['bump'], d['bump_map_enabled'], d['bump_map'] = cattribute_value(b.getAttribute('bump')[0])
                 d['bump_map_use_normal'] = b.getNormalMapState()[0]
+                if(d['bump_map_use_normal']):
+                    d['bump_normal'], d['bump_map_enabled'], d['bump_map'] = cattribute_value(b.getAttribute('bump')[0])
+                else:
+                    d['bump'], d['bump_map_enabled'], d['bump_map'] = cattribute_value(b.getAttribute('bump')[0])
                 d['anisotropy'], d['anisotropy_map_enabled'], d['anisotropy_map'] = cattribute_value(b.getAttribute('anisotropy')[0])
                 d['anisotropy_angle'], d['anisotropy_angle_map_enabled'], d['anisotropy_angle_map'] = cattribute_value(b.getAttribute('angle')[0])
                 

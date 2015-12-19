@@ -102,7 +102,10 @@ def material(d, s, ):
                     t = texture(d['bump_map'], s, )
                     if(t is not None):
                         a.textureMap = t
-                    a.value = d['bump']
+                    if(d['bump_map_use_normal']):
+                        a.value = d['bump_normal']
+                    else:
+                        a.value = d['bump']
                     m.setAttribute('bump', a)
                     m.setNormalMapState(d['bump_map_use_normal'])
                 
@@ -350,7 +353,10 @@ def material(d, s, ):
                 t = texture(d['bump_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                a.value = d['bump']
+                if(d['bump_map_use_normal']):
+                    a.value = d['bump_normal']
+                else:
+                    a.value = d['bump']
                 m.setAttribute('bump', a)
                 m.setNormalMapState(d['bump_map_use_normal'])
             

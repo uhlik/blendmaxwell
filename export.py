@@ -3923,6 +3923,7 @@ class MXSMaterialMXM(MXSMaterial):
             self.m_bump_map_enabled = m.global_bump_map_enabled
             self.m_bump_map = self._texture_to_data(m.global_bump_map)
             self.m_bump_map_use_normal = m.global_bump_map_use_normal
+            self.m_bump_normal = m.global_bump_normal
             
             self.m_dispersion = m.global_dispersion
             self.m_shadow = m.global_shadow
@@ -3951,6 +3952,7 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_bump_map_enabled = m.global_bump_map_enabled
         self.m_bump_map = self._texture_to_data(m.global_bump_map)
         self.m_bump_map_use_normal = m.global_bump_map_use_normal
+        self.m_bump_normal = m.global_bump_normal
         
         self.m_dispersion = m.global_dispersion
         self.m_shadow = m.global_shadow
@@ -4194,7 +4196,7 @@ class MXSMaterialCustom(MXSMaterial):
                  'attenuation': 1.0, 'attenuation_units': 0, 'nd': 3.0, 'force_fresnel': False, 'k': 0.0, 'abbe': 1.0,
                  'r2_enabled': False, 'r2_falloff_angle': math.radians(75.0), 'r2_influence': 0.0,
                  'roughness': 100.0, 'roughness_map_enabled': False, 'roughness_map': "",
-                 'bump': 30.0, 'bump_map_enabled': False, 'bump_map': "", 'bump_map_use_normal': False,
+                 'bump': 30.0, 'bump_map_enabled': False, 'bump_map': "", 'bump_map_use_normal': False, 'bump_normal': 100.0,
                  'anisotropy': 0.0, 'anisotropy_map_enabled': False, 'anisotropy_map': "",
                  'anisotropy_angle': math.radians(0.0), 'anisotropy_angle_map_enabled': False, 'anisotropy_angle_map': "",
                  'scattering': (0.5, 0.5, 0.5, ), 'coef': 0.0, 'asymmetry': 0.0,
@@ -4382,6 +4384,7 @@ class MXSMaterialCustom(MXSMaterial):
                         'bump_map_enabled': m.global_bump_map_enabled,
                         'bump_map': self._texture_to_data(m.global_bump_map),
                         'bump_map_use_normal': m.global_bump_map_use_normal,
+                        'bump_normal': m.global_bump_normal,
                         
                         'dispersion': m.global_dispersion,
                         'shadow': m.global_shadow,
