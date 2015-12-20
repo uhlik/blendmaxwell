@@ -53,7 +53,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
 # NOTE: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
 # TODO: do something with sharp edges, auto smooth and custom normals..
-# TODO: check color handling everywhere (gamma, etc..), swap to Crgb where possible and avoid unnecessary conversions (no conversions float > 8 bit > float again)
 # TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
 # NOTE: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
 # TODO: maybe organize all props and remove the need of prefixes in names
@@ -1985,9 +1984,9 @@ class MXSScene(Serializable):
         # self.m_overlay_enabled = mx.overlay_enabled
         # self.m_overlay_text = mx.overlay_text
         # self.m_overlay_position = mx.overlay_position
-        # self.m_overlay_color = self._color_to_rgb8(mx.overlay_color)
+        # self.m_overlay_color = tuple(mx.overlay_color)
         # self.m_overlay_background = mx.overlay_background
-        # self.m_overlay_background_color = self._color_to_rgb8(mx.overlay_background_color)
+        # self.m_overlay_background_color = tuple(mx.overlay_background_color)
         self.m_export_protect_mxs = mx.export_protect_mxs
         self.m_export_remove_unused_materials = mx.export_remove_unused_materials
         
@@ -2030,8 +2029,8 @@ class MXSEnvironment(Serializable):
         self.m_sky_asymmetry = mx.sky_asymmetry
         
         self.m_dome_intensity = mx.dome_intensity
-        self.m_dome_zenith = self._color_to_rgb8(mx.dome_zenith)
-        self.m_dome_horizon = self._color_to_rgb8(mx.dome_horizon)
+        self.m_dome_zenith = self._gamma_uncorrect(mx.dome_zenith)
+        self.m_dome_horizon = self._gamma_uncorrect(mx.dome_horizon)
         self.m_dome_mid_point = math.degrees(mx.dome_mid_point)
         
         # self.m_sun_lamp_priority = mx.sun_lamp_priority
@@ -2039,7 +2038,7 @@ class MXSEnvironment(Serializable):
         self.m_sun_power = mx.sun_power
         self.m_sun_radius_factor = mx.sun_radius_factor
         self.m_sun_temp = mx.sun_temp
-        self.m_sun_color = self._color_to_rgb8(mx.sun_color)
+        self.m_sun_color = self._gamma_uncorrect(mx.sun_color)
         self.m_sun_location_type = mx.sun_location_type
         self.m_sun_latlong_lat = mx.sun_latlong_lat
         self.m_sun_latlong_lon = mx.sun_latlong_lon
@@ -2220,8 +2219,10 @@ class MXSEnvironment(Serializable):
             else:
                 self.m_sun_time = n.strftime('%H:%M')
     
-    def _color_to_rgb8(self, c, ):
-        return tuple([int(255 * v) for v in c])
+    def _gamma_uncorrect(self, c, ):
+        g = 1 / 2.2
+        c = [v ** g for v in c]
+        return c
 
 
 class MXSCamera(Serializable):
@@ -2403,9 +2404,6 @@ class MXSObject(Serializable):
         self._object_properties()
         self._transformation()
     
-    def _color_to_rgb8(self, c, ):
-        return tuple([int(255 * v) for v in c])
-    
     def _object_properties(self):
         mx = self.mx
         self.m_hide = mx.hide
@@ -2415,7 +2413,7 @@ class MXSObject(Serializable):
         self.m_hidden_global_illumination = mx.hidden_global_illumination
         self.m_hidden_reflections_refractions = mx.hidden_reflections_refractions
         self.m_hidden_zclip_planes = mx.hidden_zclip_planes
-        self.m_object_id = self._color_to_rgb8(mx.object_id)
+        self.m_object_id = self._gamma_uncorrect(mx.object_id)
         
         self.m_blocked_emitters = []
         for be in mx.blocked_emitters.emitters:
@@ -2498,6 +2496,11 @@ class MXSObject(Serializable):
                 log("slot '{}' has no material assigned, material placeholder will be used..".format(i), 3, LogStyles.WARNING, )
         
         self.m_backface_material = self.b_object.maxwell_render.backface_material
+    
+    def _gamma_uncorrect(self, c, ):
+        g = 1 / 2.2
+        c = [v ** g for v in c]
+        return c
 
 
 class MXSEmpty(MXSObject):
@@ -3880,9 +3883,6 @@ class MXSMaterial(Serializable):
         self.m_type = 'MATERIAL'
         self.skip = False
     
-    def _color_to_rgb8(self, c, ):
-        return tuple([int(255 * v) for v in c])
-    
     def _texture_to_data(self, name, ):
         if(name == ''):
             return None
@@ -3892,7 +3892,6 @@ class MXSMaterial(Serializable):
     
     def _gamma_uncorrect(self, c, ):
         g = 1 / 2.2
-        # c = [(v / 255) ** g for v in c]
         c = [v ** g for v in c]
         return c
 
@@ -3929,7 +3928,7 @@ class MXSMaterialMXM(MXSMaterial):
             self.m_shadow = m.global_shadow
             self.m_matte = m.global_matte
             self.m_priority = m.global_priority
-            self.m_id = self._color_to_rgb8(m.global_id)
+            self.m_id = self._gamma_uncorrect(m.global_id)
 
 
 class MXSMaterialExtension(MXSMaterial):
@@ -3958,7 +3957,7 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_shadow = m.global_shadow
         self.m_matte = m.global_matte
         self.m_priority = m.global_priority
-        self.m_id = self._color_to_rgb8(m.global_id)
+        self.m_id = self._gamma_uncorrect(m.global_id)
         
         self.m_use = m.use
         
@@ -3993,7 +3992,7 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_emitter_spot_falloff_type = int(mx.emitter_spot_falloff_type)
         self.m_emitter_spot_blur = mx.emitter_spot_blur
         self.m_emitter_emission = int(mx.emitter_emission)
-        self.m_emitter_color = self._color_to_rgb8(mx.emitter_color)
+        self.m_emitter_color = self._gamma_uncorrect(mx.emitter_color)
         self.m_emitter_color_black_body_enabled = mx.emitter_color_black_body_enabled
         self.m_emitter_color_black_body = mx.emitter_color_black_body
         self.m_emitter_luminance = int(mx.emitter_luminance)
@@ -4006,14 +4005,14 @@ class MXSMaterialExtension(MXSMaterial):
     
     def _ags(self):
         mx = self.mx
-        self.m_ags_color = self._color_to_rgb8(mx.ags_color)
+        self.m_ags_color = self._gamma_uncorrect(mx.ags_color)
         self.m_ags_reflection = mx.ags_reflection
         self.m_ags_type = int(mx.ags_type)
     
     def _opaque(self):
         mx = self.mx
         self.m_opaque_color_type = mx.opaque_color_type
-        self.m_opaque_color = self._color_to_rgb8(mx.opaque_color)
+        self.m_opaque_color = self._gamma_uncorrect(mx.opaque_color)
         self.m_opaque_color_map = self._texture_to_data(mx.opaque_color_map)
         self.m_opaque_shininess_type = mx.opaque_shininess_type
         self.m_opaque_shininess = mx.opaque_shininess
@@ -4026,7 +4025,7 @@ class MXSMaterialExtension(MXSMaterial):
     def _transparent(self):
         mx = self.mx
         self.m_transparent_color_type = mx.transparent_color_type
-        self.m_transparent_color = self._color_to_rgb8(mx.transparent_color)
+        self.m_transparent_color = self._gamma_uncorrect(mx.transparent_color)
         self.m_transparent_color_map = self._texture_to_data(mx.transparent_color_map)
         self.m_transparent_ior = mx.transparent_ior
         self.m_transparent_transparency = mx.transparent_transparency
@@ -4042,7 +4041,7 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_metal_ior = int(mx.metal_ior)
         self.m_metal_tint = mx.metal_tint
         self.m_metal_color_type = mx.metal_color_type
-        self.m_metal_color = self._color_to_rgb8(mx.metal_color)
+        self.m_metal_color = self._gamma_uncorrect(mx.metal_color)
         self.m_metal_color_map = self._texture_to_data(mx.metal_color_map)
         self.m_metal_roughness_type = mx.metal_roughness_type
         self.m_metal_roughness = mx.metal_roughness
@@ -4064,7 +4063,7 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_translucent_scale = mx.translucent_scale
         self.m_translucent_ior = mx.translucent_ior
         self.m_translucent_color_type = mx.translucent_color_type
-        self.m_translucent_color = self._color_to_rgb8(mx.translucent_color)
+        self.m_translucent_color = self._gamma_uncorrect(mx.translucent_color)
         self.m_translucent_color_map = self._texture_to_data(mx.translucent_color_map)
         self.m_translucent_hue_shift = mx.translucent_hue_shift
         self.m_translucent_invert_hue = mx.translucent_invert_hue
@@ -4080,14 +4079,14 @@ class MXSMaterialExtension(MXSMaterial):
     
     def _carpaint(self):
         mx = self.mx
-        self.m_carpaint_color = self._color_to_rgb8(mx.carpaint_color)
+        self.m_carpaint_color = self._gamma_uncorrect(mx.carpaint_color)
         self.m_carpaint_metallic = mx.carpaint_metallic
         self.m_carpaint_topcoat = mx.carpaint_topcoat
     
     def _hair(self):
         mx = self.mx
         self.m_hair_color_type = mx.hair_color_type
-        self.m_hair_color = self._color_to_rgb8(mx.hair_color)
+        self.m_hair_color = self._gamma_uncorrect(mx.hair_color)
         self.m_hair_color_map = self._texture_to_data(mx.hair_color_map)
         self.m_hair_root_tip_map = self._texture_to_data(mx.hair_root_tip_map)
         self.m_hair_root_tip_weight_type = mx.hair_root_tip_weight_type
@@ -4095,10 +4094,10 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_hair_root_tip_weight_map = self._texture_to_data(mx.hair_root_tip_weight_map)
         self.m_hair_primary_highlight_strength = mx.hair_primary_highlight_strength
         self.m_hair_primary_highlight_spread = mx.hair_primary_highlight_spread
-        self.m_hair_primary_highlight_tint = self._color_to_rgb8(mx.hair_primary_highlight_tint)
+        self.m_hair_primary_highlight_tint = self._gamma_uncorrect(mx.hair_primary_highlight_tint)
         self.m_hair_secondary_highlight_strength = mx.hair_secondary_highlight_strength
         self.m_hair_secondary_highlight_spread = mx.hair_secondary_highlight_spread
-        self.m_hair_secondary_highlight_tint = self._color_to_rgb8(mx.hair_secondary_highlight_tint)
+        self.m_hair_secondary_highlight_tint = self._gamma_uncorrect(mx.hair_secondary_highlight_tint)
 
 
 class MXSTexture(Serializable):
@@ -4249,16 +4248,12 @@ class MXSMaterialCustom(MXSMaterial):
                     epd[k] = v
             
             # converting..
-            # ccolor = ['color', ]
-            ccolor = []
             cmap = ['spot_map', 'hdr_map', ]
             cangle = ['spot_cone_angle', 'spot_falloff_angle', ]
             cenum = ['type', 'spot_falloff_type', 'emission', 'luminance', ]
             cpath = ['ies_data', ]
             cgamma = ['color', ]
             for k, v in epd.items():
-                if(k in ccolor):
-                    epd[k] = self._color_to_rgb8(v)
                 if(k in cmap):
                     epd[k] = self._texture_to_data(v)
                 if(k in cangle):
@@ -4281,8 +4276,6 @@ class MXSMaterialCustom(MXSMaterial):
                         bpd[k] = v
                 
                 # converting..
-                # ccolor = ['reflectance_0', 'reflectance_90', 'transmittance', 'scattering', ]
-                ccolor = []
                 cmap = ['weight_map', 'reflectance_0_map', 'reflectance_90_map', 'transmittance_map', 'roughness_map', 'bump_map', 'anisotropy_map', 'anisotropy_angle_map', 'single_sided_map', ]
                 cangle = ['r2_falloff_angle', 'anisotropy_angle', ]
                 cenum = ['ior', 'attenuation_units', ]
@@ -4290,8 +4283,6 @@ class MXSMaterialCustom(MXSMaterial):
                 cmm = ['single_sided_value', 'single_sided_min', 'single_sided_max', ]
                 cgamma = ['reflectance_0', 'reflectance_90', 'transmittance', 'scattering', ]
                 for k, v in bpd.items():
-                    if(k in ccolor):
-                        bpd[k] = self._color_to_rgb8(v)
                     if(k in cmap):
                         bpd[k] = self._texture_to_data(v)
                     if(k in cangle):
@@ -4314,8 +4305,6 @@ class MXSMaterialCustom(MXSMaterial):
                         cpd[k] = v
                 
                 # converting..
-                # ccolor = ['reflectance_0', 'reflectance_90', ]
-                ccolor = []
                 cmap = ['thickness_map', 'reflectance_0_map', 'reflectance_90_map', ]
                 cangle = ['r2_falloff_angle', ]
                 cenum = ['ior', ]
@@ -4323,8 +4312,6 @@ class MXSMaterialCustom(MXSMaterial):
                 cnm = ['thickness', 'thickness_map_min', 'thickness_map_max', ]
                 cgamma = ['reflectance_0', 'reflectance_90', ]
                 for k, v in cpd.items():
-                    if(k in ccolor):
-                        cpd[k] = self._color_to_rgb8(v)
                     if(k in cmap):
                         cpd[k] = self._texture_to_data(v)
                     if(k in cangle):
@@ -4390,8 +4377,7 @@ class MXSMaterialCustom(MXSMaterial):
                         'shadow': m.global_shadow,
                         'matte': m.global_matte,
                         'priority': m.global_priority,
-                        'id': self._color_to_rgb8(m.global_id),
-                        # 'id': self._color_to_rgb8(self._gamma_uncorrect(m.global_id)),
+                        'id': self._gamma_uncorrect(m.global_id),
                         'active_display_map': self._texture_to_data(m.custom_active_display_map), }
         
         self.m_data = {'global_props': global_props,

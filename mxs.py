@@ -135,12 +135,12 @@ class MXSWriter():
         o.setRotation(Cvector(*r))
         o.setScale(Cvector(*s))
     
-    def set_object_props(self, o, hide=False, opacity=100, cid=(255, 255, 255), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, blocked_emitters=None, ):
+    def set_object_props(self, o, hide=False, opacity=100, cid=(1.0, 1.0, 1.0), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, blocked_emitters=None, ):
         """Set common object properties.
         o                   CmaxwellObject
         hide                bool
         opacity             float
-        cid                 (int, int, int) 0-255 rgb
+        cid                 (float, float, float) 0.0 - 1.0 rgb
         hcam                bool
         hcamsc              bool
         hgi                 bool
@@ -153,7 +153,7 @@ class MXSWriter():
         if(opacity != 100.0):
             o.setOpacity(opacity)
         c = Crgb()
-        c.assign(*[v / 255 for v in cid])
+        c.assign(*cid)
         o.setColorID(c)
         if(hcam):
             o.setHideToCamera(True)
@@ -359,8 +359,7 @@ class MXSWriter():
             m.setNestedPriority(d['priority'])
             
             c = Crgb()
-            cc = [c / 255 for c in d['id']]
-            c.assign(*cc)
+            c.assign(*d['id'])
             m.setColorID(c)
             
             if(d['active_display_map']):
@@ -671,10 +670,8 @@ class MXSWriter():
             if(d['emission'] == 0):
                 e.setActiveEmissionType(EMISSION_TYPE_PAIR)
                 ep = CemitterPair()
-                # c = Crgb8()
                 c = Crgb()
                 c.assign(*d['color'])
-                # ep.rgb.assign(c.toRGB())
                 ep.rgb.assign(c)
                 ep.temperature = d['color_black_body']
                 ep.watts = d['luminance_power']
@@ -786,8 +783,7 @@ class MXSWriter():
                     m.setNestedPriority(d['priority'])
                     
                     c = Crgb()
-                    cc = [c / 255 for c in d['id']]
-                    c.assign(*cc)
+                    c.assign(*d['id'])
                     m.setColorID(c)
         
         elif(d['subtype'] == 'EXTENSION'):
@@ -818,9 +814,9 @@ class MXSWriter():
                     e.setActiveEmissionType(EMISSION_TYPE_PAIR)
                     
                     ep = CemitterPair()
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['emitter_color'])
-                    ep.rgb.assign(c.toRGB())
+                    ep.rgb.assign(c)
                     ep.temperature = d['emitter_color_black_body']
                     ep.watts = d['emitter_luminance_power']
                     ep.luminousEfficacy = d['emitter_luminance_efficacy']
@@ -866,9 +862,9 @@ class MXSWriter():
                     e = m.createDefaultMaterialModifierExtension('AGS')
                     p = e.getExtensionData()
                     
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['ags_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     p.setFloat('Reflection', d['ags_reflection'])
                     p.setUInt('Type', d['ags_type'])
                 
@@ -877,9 +873,9 @@ class MXSWriter():
                     p = e.getExtensionData()
                     
                     p.setByte('Color Type', d['opaque_color_type'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['opaque_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['opaque_color_map'], p, )
                     
                     p.setByte('Shininess Type', d['opaque_shininess_type'])
@@ -897,9 +893,9 @@ class MXSWriter():
                     p = e.getExtensionData()
                     
                     p.setByte('Color Type', d['transparent_color_type'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['transparent_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['transparent_color_map'], p, )
                     
                     p.setFloat('Ior', d['transparent_ior'])
@@ -922,9 +918,9 @@ class MXSWriter():
                     p.setFloat('Tint', d['metal_tint'])
                     
                     p.setByte('Color Type', d['metal_color_type'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['metal_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['metal_color_map'], p, )
                     
                     p.setByte('Roughness Type', d['metal_roughness_type'])
@@ -954,9 +950,9 @@ class MXSWriter():
                     p.setFloat('Ior', d['translucent_ior'])
                     
                     p.setByte('Color Type', d['translucent_color_type'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['translucent_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['translucent_color_map'], p, )
                     
                     p.setFloat('Hue Shift', d['translucent_hue_shift'])
@@ -977,9 +973,9 @@ class MXSWriter():
                     e = m.createDefaultMaterialModifierExtension('Car Paint')
                     p = e.getExtensionData()
                     
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['carpaint_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     
                     p.setFloat('Metallic', d['carpaint_metallic'])
                     p.setFloat('Topcoat', d['carpaint_topcoat'])
@@ -990,9 +986,9 @@ class MXSWriter():
                     
                     p.setByte('Color Type', d['hair_color_type'])
                     
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['hair_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['hair_color_map'], p, )
                     
                     self.texture_data_to_mxparams('Root-Tip Map', d['hair_root_tip_map'], p, )
@@ -1003,15 +999,15 @@ class MXSWriter():
                     
                     p.setFloat('Primary Highlight Strength', d['hair_primary_highlight_strength'])
                     p.setFloat('Primary Highlight Spread', d['hair_primary_highlight_spread'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['hair_primary_highlight_tint'])
-                    p.setRgb('Primary Highlight Tint', c.toRGB())
+                    p.setRgb('Primary Highlight Tint', c)
                     
                     p.setFloat('Secondary Highlight Strength', d['hair_secondary_highlight_strength'])
                     p.setFloat('Secondary Highlight Spread', d['hair_secondary_highlight_spread'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['hair_secondary_highlight_tint'])
-                    p.setRgb('Secondary Highlight Tint', c.toRGB())
+                    p.setRgb('Secondary Highlight Tint', c)
                 
                 m = s.createMaterial(d['name'])
                 m.applyMaterialModifierExtension(p)
@@ -1042,8 +1038,7 @@ class MXSWriter():
                 m.setNestedPriority(d['priority'])
                 
                 c = Crgb()
-                cc = [c / 255 for c in d['id']]
-                c.assign(*cc)
+                c.assign(*d['id'])
                 m.setColorID(c)
         elif(d['subtype'] == 'CUSTOM'):
             m = self.material_custom(d)
@@ -1411,41 +1406,41 @@ class MXSWriter():
                                                      sky["sky_planet_refl"], )
                     else:
                         env.loadSkyFromPreset(sky["sky_preset"])
-                    
-                    sc = Crgb()
-                    sc.assign(*[c / 255 for c in sun['sun_color']])
-                    if(sun_type == 'PHYSICAL'):
-                        env.setSunProperties(SUN_PHYSICAL, sun["sun_temp"], sun["sun_power"], sun["sun_radius_factor"], sc)
-                    elif(sun_type == 'CUSTOM'):
-                        env.setSunProperties(SUN_CONSTANT, sun["sun_temp"], sun["sun_power"], sun["sun_radius_factor"], sc)
-                    else:
-                        # sun_type == 'DISABLED' or sun_type == None
-                        env.setSunProperties(SUN_DISABLED, sun["sun_temp"], sun["sun_power"], sun["sun_radius_factor"], sc)
-                    
-                    if(sun['sun_location_type'] == 'LATLONG'):
-                        env.setSunPositionType(0)
-                        l = sun["sun_date"].split(".")
-                        date = datetime.date(int(l[2]), int(l[1]), int(l[0]))
-                        day = int(date.timetuple().tm_yday)
-                        l = sun["sun_time"].split(":")
-                        hour = int(l[0])
-                        minute = int(l[1])
-                        time = hour + (minute / 60)
-                        env.setSunLongitudeAndLatitude(sun["sun_latlong_lon"], sun["sun_latlong_lat"], sun["sun_latlong_gmt"], day, time)
-                        env.setSunRotation(sun["sun_latlong_ground_rotation"])
-                    elif(sun['sun_location_type'] == 'ANGLES'):
-                        env.setSunPositionType(1)
-                        env.setSunAngles(sun["sun_angles_zenith"], sun["sun_angles_azimuth"])
-                    elif(sun['sun_location_type'] == 'DIRECTION'):
-                        env.setSunPositionType(2)
-                        env.setSunDirection(Cvector(sun["sun_dir_x"], sun["sun_dir_y"], sun["sun_dir_z"]))
                 
                 elif(sky_type == 'CONSTANT'):
                     hc = Crgb()
-                    hc.assign(*[c / 255 for c in dome['dome_horizon']])
+                    hc.assign(*dome['dome_horizon'])
                     zc = Crgb()
-                    zc.assign(*[c / 255 for c in dome['dome_zenith']])
+                    zc.assign(*dome['dome_zenith'])
                     env.setSkyConstant(dome["dome_intensity"], hc, zc, dome['dome_mid_point'])
+            
+            sc = Crgb()
+            sc.assign(*sun['sun_color'])
+            if(sun_type == 'PHYSICAL'):
+                env.setSunProperties(SUN_PHYSICAL, sun["sun_temp"], sun["sun_power"], sun["sun_radius_factor"], sc)
+            elif(sun_type == 'CUSTOM'):
+                env.setSunProperties(SUN_CONSTANT, sun["sun_temp"], sun["sun_power"], sun["sun_radius_factor"], sc)
+            else:
+                # sun_type == 'DISABLED' or sun_type == None
+                env.setSunProperties(SUN_DISABLED, sun["sun_temp"], sun["sun_power"], sun["sun_radius_factor"], sc)
+            
+            if(sun['sun_location_type'] == 'LATLONG'):
+                env.setSunPositionType(0)
+                l = sun["sun_date"].split(".")
+                date = datetime.date(int(l[2]), int(l[1]), int(l[0]))
+                day = int(date.timetuple().tm_yday)
+                l = sun["sun_time"].split(":")
+                hour = int(l[0])
+                minute = int(l[1])
+                time = hour + (minute / 60)
+                env.setSunLongitudeAndLatitude(sun["sun_latlong_lon"], sun["sun_latlong_lat"], sun["sun_latlong_gmt"], day, time)
+                env.setSunRotation(sun["sun_latlong_ground_rotation"])
+            elif(sun['sun_location_type'] == 'ANGLES'):
+                env.setSunPositionType(1)
+                env.setSunAngles(sun["sun_angles_zenith"], sun["sun_angles_azimuth"])
+            elif(sun['sun_location_type'] == 'DIRECTION'):
+                env.setSunPositionType(2)
+                env.setSunDirection(Cvector(sun["sun_dir_x"], sun["sun_dir_y"], sun["sun_dir_z"]))
             
             if(env_type == 'IMAGE_BASED'):
                 env.enableEnvironment(True)
@@ -2621,8 +2616,7 @@ class MXMWriter():
             m.setNestedPriority(d['priority'])
             
             c = Crgb()
-            cc = [c / 255 for c in d['id']]
-            c.assign(*cc)
+            c.assign(*d['id'])
             m.setColorID(c)
             
             if(d['active_display_map']):
@@ -2933,10 +2927,8 @@ class MXMWriter():
             if(d['emission'] == 0):
                 e.setActiveEmissionType(EMISSION_TYPE_PAIR)
                 ep = CemitterPair()
-                # c = Crgb8()
                 c = Crgb()
                 c.assign(*d['color'])
-                # ep.rgb.assign(c.toRGB())
                 ep.rgb.assign(c)
                 ep.temperature = d['color_black_body']
                 ep.watts = d['luminance_power']
@@ -3048,8 +3040,7 @@ class MXMWriter():
                     m.setNestedPriority(d['priority'])
                     
                     c = Crgb()
-                    cc = [c / 255 for c in d['id']]
-                    c.assign(*cc)
+                    c.assign(*d['id'])
                     m.setColorID(c)
         
         elif(d['subtype'] == 'EXTENSION'):
@@ -3080,9 +3071,9 @@ class MXMWriter():
                     e.setActiveEmissionType(EMISSION_TYPE_PAIR)
                     
                     ep = CemitterPair()
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['emitter_color'])
-                    ep.rgb.assign(c.toRGB())
+                    ep.rgb.assign(c)
                     ep.temperature = d['emitter_color_black_body']
                     ep.watts = d['emitter_luminance_power']
                     ep.luminousEfficacy = d['emitter_luminance_efficacy']
@@ -3128,9 +3119,9 @@ class MXMWriter():
                     e = m.createDefaultMaterialModifierExtension('AGS')
                     p = e.getExtensionData()
                     
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['ags_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     p.setFloat('Reflection', d['ags_reflection'])
                     p.setUInt('Type', d['ags_type'])
                 
@@ -3139,9 +3130,9 @@ class MXMWriter():
                     p = e.getExtensionData()
                     
                     p.setByte('Color Type', d['opaque_color_type'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['opaque_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['opaque_color_map'], p, )
                     
                     p.setByte('Shininess Type', d['opaque_shininess_type'])
@@ -3159,9 +3150,9 @@ class MXMWriter():
                     p = e.getExtensionData()
                     
                     p.setByte('Color Type', d['transparent_color_type'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['transparent_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['transparent_color_map'], p, )
                     
                     p.setFloat('Ior', d['transparent_ior'])
@@ -3184,9 +3175,9 @@ class MXMWriter():
                     p.setFloat('Tint', d['metal_tint'])
                     
                     p.setByte('Color Type', d['metal_color_type'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['metal_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['metal_color_map'], p, )
                     
                     p.setByte('Roughness Type', d['metal_roughness_type'])
@@ -3216,9 +3207,9 @@ class MXMWriter():
                     p.setFloat('Ior', d['translucent_ior'])
                     
                     p.setByte('Color Type', d['translucent_color_type'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['translucent_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['translucent_color_map'], p, )
                     
                     p.setFloat('Hue Shift', d['translucent_hue_shift'])
@@ -3239,9 +3230,9 @@ class MXMWriter():
                     e = m.createDefaultMaterialModifierExtension('Car Paint')
                     p = e.getExtensionData()
                     
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['carpaint_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     
                     p.setFloat('Metallic', d['carpaint_metallic'])
                     p.setFloat('Topcoat', d['carpaint_topcoat'])
@@ -3252,9 +3243,9 @@ class MXMWriter():
                     
                     p.setByte('Color Type', d['hair_color_type'])
                     
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['hair_color'])
-                    p.setRgb('Color', c.toRGB())
+                    p.setRgb('Color', c)
                     self.texture_data_to_mxparams('Color Map', d['hair_color_map'], p, )
                     
                     self.texture_data_to_mxparams('Root-Tip Map', d['hair_root_tip_map'], p, )
@@ -3265,15 +3256,15 @@ class MXMWriter():
                     
                     p.setFloat('Primary Highlight Strength', d['hair_primary_highlight_strength'])
                     p.setFloat('Primary Highlight Spread', d['hair_primary_highlight_spread'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['hair_primary_highlight_tint'])
-                    p.setRgb('Primary Highlight Tint', c.toRGB())
+                    p.setRgb('Primary Highlight Tint', c)
                     
                     p.setFloat('Secondary Highlight Strength', d['hair_secondary_highlight_strength'])
                     p.setFloat('Secondary Highlight Spread', d['hair_secondary_highlight_spread'])
-                    c = Crgb8()
+                    c = Crgb()
                     c.assign(*d['hair_secondary_highlight_tint'])
-                    p.setRgb('Secondary Highlight Tint', c.toRGB())
+                    p.setRgb('Secondary Highlight Tint', c)
                 
                 m = s.createMaterial(d['name'])
                 m.applyMaterialModifierExtension(p)
@@ -3304,8 +3295,7 @@ class MXMWriter():
                 m.setNestedPriority(d['priority'])
                 
                 c = Crgb()
-                cc = [c / 255 for c in d['id']]
-                c.assign(*cc)
+                c.assign(*d['id'])
                 m.setColorID(c)
         elif(d['subtype'] == 'CUSTOM'):
             m = self.material_custom(d)
@@ -3801,7 +3791,7 @@ class MXMReader():
                         'hdr_map': None, 'hdr_intensity': 1.0, }
             layerd = {'visible': True, 'opacity': 100.0, 'opacity_map_enabled': False, 'opacity_map': None, 'blending': 0, }
             globald = {'override_map': None, 'bump': 30.0, 'bump_map_enabled': False, 'bump_map': None, 'bump_map_use_normal': False, 'bump_normal': 100.0,
-                       'dispersion': False, 'shadow': False, 'matte': False, 'priority': 0, 'id': (255, 255, 255), 'active_display_map': None, }
+                       'dispersion': False, 'shadow': False, 'matte': False, 'priority': 0, 'id': (1.0, 1.0, 1.0), 'active_display_map': None, }
             
             # structure
             structure = []
@@ -3863,7 +3853,7 @@ class MXMReader():
                 d['priority'] = m.getNestedPriority()[0]
                 
                 c, _ = m.getColorID()
-                d['id'] = [c.r() * 255, c.g() * 255, c.b() * 255]
+                d['id'] = [c.r(), c.g(), c.b()]
                 return d
             
             data['global_props'] = global_props(m, data['global_props'])

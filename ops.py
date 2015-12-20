@@ -1290,7 +1290,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         mx.global_shadow = gp['shadow']
         mx.global_matte = gp['matte']
         mx.global_priority = gp['priority']
-        mx.global_id = [v / 255 for v in gp['id']]
+        mx.global_id = gp['id']
         
         # extension data
         mxe = material.maxwell_material_extension
@@ -1466,7 +1466,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         mx.global_shadow = gp['shadow']
         mx.global_matte = gp['matte']
         mx.global_priority = gp['priority']
-        mx.global_id = [v / 255 for v in gp['id']]
+        mx.global_id = gp['id']
         # displacement
         dp = d['displacement']
         cd = mx.custom_displacement

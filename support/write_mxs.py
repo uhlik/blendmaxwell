@@ -402,8 +402,7 @@ def material_custom(d, s, ):
         m.setNestedPriority(d['priority'])
         
         c = Crgb()
-        cc = [c / 255 for c in d['id']]
-        c.assign(*cc)
+        c.assign(*d['id'])
         m.setColorID(c)
         
         if(d['active_display_map']):
@@ -714,10 +713,8 @@ def material_custom(d, s, ):
         if(d['emission'] == 0):
             e.setActiveEmissionType(EMISSION_TYPE_PAIR)
             ep = CemitterPair()
-            # c = Crgb8()
             c = Crgb()
             c.assign(*d['color'])
-            # ep.rgb.assign(c.toRGB())
             ep.rgb.assign(c)
             ep.temperature = d['color_black_body']
             ep.watts = d['luminance_power']
@@ -831,8 +828,7 @@ def material(d, s, ):
                 m.setNestedPriority(d['priority'])
                 
                 c = Crgb()
-                cc = [c / 255 for c in d['id']]
-                c.assign(*cc)
+                c.assign(*d['id'])
                 m.setColorID(c)
         
     elif(d['subtype'] == 'EXTENSION'):
@@ -863,9 +859,9 @@ def material(d, s, ):
                 e.setActiveEmissionType(EMISSION_TYPE_PAIR)
                 
                 ep = CemitterPair()
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['emitter_color'])
-                ep.rgb.assign(c.toRGB())
+                ep.rgb.assign(c)
                 ep.temperature = d['emitter_color_black_body']
                 ep.watts = d['emitter_luminance_power']
                 ep.luminousEfficacy = d['emitter_luminance_efficacy']
@@ -910,9 +906,9 @@ def material(d, s, ):
                 e = m.createDefaultMaterialModifierExtension('AGS')
                 p = e.getExtensionData()
             
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['ags_color'])
-                p.setRgb('Color', c.toRGB())
+                p.setRgb('Color', c)
                 p.setFloat('Reflection', d['ags_reflection'])
                 p.setUInt('Type', d['ags_type'])
             
@@ -921,9 +917,9 @@ def material(d, s, ):
                 p = e.getExtensionData()
             
                 p.setByte('Color Type', d['opaque_color_type'])
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['opaque_color'])
-                p.setRgb('Color', c.toRGB())
+                p.setRgb('Color', c)
                 texture_data_to_mxparams(d['opaque_color_map'], p, 'Color Map', )
             
                 p.setByte('Shininess Type', d['opaque_shininess_type'])
@@ -941,9 +937,9 @@ def material(d, s, ):
                 p = e.getExtensionData()
             
                 p.setByte('Color Type', d['transparent_color_type'])
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['transparent_color'])
-                p.setRgb('Color', c.toRGB())
+                p.setRgb('Color', c)
                 texture_data_to_mxparams(d['transparent_color_map'], p, 'Color Map', )
             
                 p.setFloat('Ior', d['transparent_ior'])
@@ -966,9 +962,9 @@ def material(d, s, ):
                 p.setFloat('Tint', d['metal_tint'])
             
                 p.setByte('Color Type', d['metal_color_type'])
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['metal_color'])
-                p.setRgb('Color', c.toRGB())
+                p.setRgb('Color', c)
                 texture_data_to_mxparams(d['metal_color_map'], p, 'Color Map', )
             
                 p.setByte('Roughness Type', d['metal_roughness_type'])
@@ -998,9 +994,9 @@ def material(d, s, ):
                 p.setFloat('Ior', d['translucent_ior'])
             
                 p.setByte('Color Type', d['translucent_color_type'])
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['translucent_color'])
-                p.setRgb('Color', c.toRGB())
+                p.setRgb('Color', c)
                 texture_data_to_mxparams(d['translucent_color_map'], p, 'Color Map', )
             
                 p.setFloat('Hue Shift', d['translucent_hue_shift'])
@@ -1021,9 +1017,9 @@ def material(d, s, ):
                 e = m.createDefaultMaterialModifierExtension('Car Paint')
                 p = e.getExtensionData()
             
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['carpaint_color'])
-                p.setRgb('Color', c.toRGB())
+                p.setRgb('Color', c)
             
                 p.setFloat('Metallic', d['carpaint_metallic'])
                 p.setFloat('Topcoat', d['carpaint_topcoat'])
@@ -1034,9 +1030,9 @@ def material(d, s, ):
                 
                 p.setByte('Color Type', d['hair_color_type'])
                 
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['hair_color'])
-                p.setRgb('Color', c.toRGB())
+                p.setRgb('Color', c)
                 texture_data_to_mxparams(d['hair_color_map'], p, 'Color Map', )
                 
                 texture_data_to_mxparams(d['hair_root_tip_map'], p, 'Root-Tip Map', )
@@ -1047,15 +1043,15 @@ def material(d, s, ):
                 
                 p.setFloat('Primary Highlight Strength', d['hair_primary_highlight_strength'])
                 p.setFloat('Primary Highlight Spread', d['hair_primary_highlight_spread'])
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['hair_primary_highlight_tint'])
-                p.setRgb('Primary Highlight Tint', c.toRGB())
+                p.setRgb('Primary Highlight Tint', c)
                 
                 p.setFloat('Secondary Highlight Strength', d['hair_secondary_highlight_strength'])
                 p.setFloat('Secondary Highlight Spread', d['hair_secondary_highlight_spread'])
-                c = Crgb8()
+                c = Crgb()
                 c.assign(*d['hair_secondary_highlight_tint'])
-                p.setRgb('Secondary Highlight Tint', c.toRGB())
+                p.setRgb('Secondary Highlight Tint', c)
             
             m = s.createMaterial(d['name'])
             m.applyMaterialModifierExtension(p)
@@ -1086,8 +1082,7 @@ def material(d, s, ):
             m.setNestedPriority(d['priority'])
             
             c = Crgb()
-            cc = [c / 255 for c in d['id']]
-            c.assign(*cc)
+            c.assign(*d['id'])
             m.setColorID(c)
     elif(d['subtype'] == 'CUSTOM'):
         material_custom(d, s, )
@@ -1209,8 +1204,7 @@ def object_props(o, d, ):
     if(d['hide']):
         o.setHide(d['hide'])
     c = Crgb()
-    cc = [c / 255 for c in d['object_id']]
-    c.assign(*cc)
+    c.assign(*d['object_id'])
     o.setColorID(c)
     for n in d['blocked_emitters']:
         ok = o.addExcludedLight(n)
@@ -1630,41 +1624,39 @@ def environment(d, s, ):
                 env.setPhysicalSkyAtmosphere(d["sky_intensity"], d["sky_ozone"], d["sky_water"], d["sky_turbidity_coeff"], d["sky_wavelength_exp"], d["sky_reflectance"], d["sky_asymmetry"], d["sky_planet_refl"], )
             else:
                 env.loadSkyFromPreset(d["sky_preset"])
-            
-            sc = Crgb()
-            scc = [c / 255 for c in d['sun_color']]
-            sc.assign(*scc)
-            if(d["sun_type"] == 'PHYSICAL'):
-                env.setSunProperties(SUN_PHYSICAL, d["sun_temp"], d["sun_power"], d["sun_radius_factor"], sc)
-            elif(d["sun_type"] == 'CUSTOM'):
-                env.setSunProperties(SUN_CONSTANT, d["sun_temp"], d["sun_power"], d["sun_radius_factor"], sc)
-            elif(d["sun_type"] == 'DISABLED'):
-                env.setSunProperties(SUN_DISABLED, d["sun_temp"], d["sun_power"], d["sun_radius_factor"], sc)
-            if(d["sun_location_type"] == 'LATLONG'):
-                env.setSunPositionType(0)
-                l = d["sun_date"].split(".")
-                date = datetime.date(int(l[2]), int(l[1]), int(l[0]))
-                day = int(date.timetuple().tm_yday)
-                l = d["sun_time"].split(":")
-                hour = int(l[0])
-                minute = int(l[1])
-                time = hour + (minute / 60)
-                env.setSunLongitudeAndLatitude(d["sun_latlong_lon"], d["sun_latlong_lat"], d["sun_latlong_gmt"], day, time)
-                env.setSunRotation(d["sun_latlong_ground_rotation"])
-            elif(d["sun_location_type"] == 'ANGLES'):
-                env.setSunPositionType(1)
-                env.setSunAngles(d["sun_angles_zenith"], d["sun_angles_azimuth"])
-            elif(d["sun_location_type"] == 'DIRECTION'):
-                env.setSunPositionType(2)
-                env.setSunDirection(Cvector(d["sun_dir_x"], d["sun_dir_y"], d["sun_dir_z"]))
+        
         if(d["sky_type"] == 'CONSTANT'):
             hc = Crgb()
-            hcc = [c / 255 for c in d['dome_horizon']]
-            hc.assign(*hcc)
+            hc.assign(*d['dome_horizon'])
             zc = Crgb()
-            zcc = [c / 255 for c in d['dome_zenith']]
-            zc.assign(*zcc)
+            zc.assign(*d['dome_zenith'])
             env.setSkyConstant(d["dome_intensity"], hc, zc, d['dome_mid_point'])
+        
+        sc = Crgb()
+        sc.assign(*d['sun_color'])
+        if(d["sun_type"] == 'PHYSICAL'):
+            env.setSunProperties(SUN_PHYSICAL, d["sun_temp"], d["sun_power"], d["sun_radius_factor"], sc)
+        elif(d["sun_type"] == 'CUSTOM'):
+            env.setSunProperties(SUN_CONSTANT, d["sun_temp"], d["sun_power"], d["sun_radius_factor"], sc)
+        elif(d["sun_type"] == 'DISABLED'):
+            env.setSunProperties(SUN_DISABLED, d["sun_temp"], d["sun_power"], d["sun_radius_factor"], sc)
+        if(d["sun_location_type"] == 'LATLONG'):
+            env.setSunPositionType(0)
+            l = d["sun_date"].split(".")
+            date = datetime.date(int(l[2]), int(l[1]), int(l[0]))
+            day = int(date.timetuple().tm_yday)
+            l = d["sun_time"].split(":")
+            hour = int(l[0])
+            minute = int(l[1])
+            time = hour + (minute / 60)
+            env.setSunLongitudeAndLatitude(d["sun_latlong_lon"], d["sun_latlong_lat"], d["sun_latlong_gmt"], day, time)
+            env.setSunRotation(d["sun_latlong_ground_rotation"])
+        elif(d["sun_location_type"] == 'ANGLES'):
+            env.setSunPositionType(1)
+            env.setSunAngles(d["sun_angles_zenith"], d["sun_angles_azimuth"])
+        elif(d["sun_location_type"] == 'DIRECTION'):
+            env.setSunPositionType(2)
+            env.setSunDirection(Cvector(d["sun_dir_x"], d["sun_dir_y"], d["sun_dir_z"]))
         
         if(d["env_type"] == 'IMAGE_BASED'):
             env.enableEnvironment(True)

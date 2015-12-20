@@ -111,7 +111,7 @@ def material(s, m):
                 'hdr_map': None, 'hdr_intensity': 1.0, }
     layerd = {'visible': True, 'opacity': 100.0, 'opacity_map_enabled': False, 'opacity_map': None, 'blending': 0, }
     globald = {'override_map': None, 'bump': 30.0, 'bump_map_enabled': False, 'bump_map': None, 'bump_map_use_normal': False, 'bump_normal': 100.0,
-               'dispersion': False, 'shadow': False, 'matte': False, 'priority': 0, 'id': (255, 255, 255), 'active_display_map': None, }
+               'dispersion': False, 'shadow': False, 'matte': False, 'priority': 0, 'id': (1.0, 1.0, 1.0), 'active_display_map': None, }
     
     # structure
     structure = []
@@ -183,7 +183,7 @@ def material(s, m):
         d['priority'] = m.getNestedPriority()[0]
         
         c, _ = m.getColorID()
-        d['id'] = [c.r() * 255, c.g() * 255, c.b() * 255]
+        d['id'] = [c.r(), c.g(), c.b()]
         return d
     
     data['global_props'] = global_props(m, data['global_props'])

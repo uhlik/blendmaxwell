@@ -2385,7 +2385,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 sub.separator()
                 
                 if(mx.emitter_emission == '0'):
-                    sub.menu("Emitter_presets", text=bpy.types.Emitter_presets.bl_label)
+                    sub.menu("ExtEmitter_presets", text=bpy.types.ExtEmitter_presets.bl_label)
                     sub.separator()
                     # Color
                     r = sub.row()
@@ -5389,6 +5389,15 @@ class Emitter_presets(Menu):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Emitter Presets"
     bl_idname = "Emitter_presets"
+    preset_subdir = "blendmaxwell/emitter"
+    preset_operator = "script.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class ExtEmitter_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Emitter Presets"
+    bl_idname = "ExtEmitter_presets"
     preset_subdir = "blendmaxwell/material/emitter"
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset

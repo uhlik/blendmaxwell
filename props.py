@@ -24,6 +24,8 @@ from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty,
 from bpy.types import PropertyGroup
 from mathutils import Vector
 
+from . import utils
+
 
 class MaterialEditorCallbacks():
     def __init__(self):
@@ -844,6 +846,17 @@ class EnvironmentProperties(PropertyGroup):
             offset = 1 * self.sun_latlong_lon * 24 / 360
             self.sun_latlong_gmt = round(offset)
     
+    lock_sun_color = BoolProperty(default=False, options={'HIDDEN'}, )
+    
+    def update_sun_color(self, context):
+        if(self.sun_type != 'PHYSICAL'):
+            return
+        if(self.lock_sun_color):
+            return
+        self.lock_sun_color = True
+        self.sun_color = utils.color_temperature_to_rgb(self.sun_temp)
+        self.lock_sun_color = False
+    
     env_type = EnumProperty(name="Type", items=[('NONE', "None", ""), ('PHYSICAL_SKY', "Physical Sky", ""), ('IMAGE_BASED', "Image Based", "")], default='PHYSICAL_SKY', description="Environment type", )
     
     sky_type = EnumProperty(name="Type", items=[('PHYSICAL', "Physical", ""), ('CONSTANT', "Constant Dome", "")], default='PHYSICAL', description="Sky type", )
@@ -869,11 +882,11 @@ class EnvironmentProperties(PropertyGroup):
     use_sun_lamp = BoolProperty(name="Use Sun Lamp", default=False, description="Use specific Sun lamp.", )
     sun_lamp = StringProperty(name="Sun Lamp", default="", )
     
-    sun_type = EnumProperty(name="Type", items=[('DISABLED', "Disabled", ""), ('PHYSICAL', "Physical", ""), ('CUSTOM', "Custom", "")], default='PHYSICAL', )
+    sun_type = EnumProperty(name="Type", items=[('DISABLED', "Disabled", ""), ('PHYSICAL', "Physical", ""), ('CUSTOM', "Custom", "")], default='PHYSICAL', update=update_sun_color, )
     sun_power = FloatProperty(name="Power", default=1.0, min=0.010, max=100.000, precision=3, )
     sun_radius_factor = FloatProperty(name="Radius Factor (x)", default=1.0, min=0.01, max=100.00, precision=2, )
-    sun_temp = FloatProperty(name="Temperature (K)", default=5776.0, min=1.0, max=10000.0, precision=1, )
-    sun_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    sun_temp = FloatProperty(name="Temperature (K)", default=5776.0, min=1.0, max=10000.0, precision=1, update=update_sun_color, )
+    sun_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', update=update_sun_color, )
     sun_location_type = EnumProperty(name="Location", items=[('LATLONG', "Latitude / Longitude", ""), ('ANGLES', "Angles", ""), ('DIRECTION', "Direction", "")], default='DIRECTION', )
     sun_latlong_lat = FloatProperty(name="Lat", default=40.000, min=-90.000, max=90.000, precision=3, )
     sun_latlong_lon = FloatProperty(name="Lon", default=-3.000, min=-180.000, max=180.000, precision=3, update=_gmt_auto, )
@@ -1791,6 +1804,18 @@ class ExtVolumetricsProperties(PropertyGroup):
 
 
 class ExtMaterialProperties(PropertyGroup):
+    lock_emitter_color = BoolProperty(default=False, options={'HIDDEN'}, )
+    
+    def update_emitter_color(self, context):
+        if(self.lock_emitter_color):
+            return
+        self.lock_emitter_color = True
+        
+        if(self.emitter_emission == '0' and self.emitter_color_black_body_enabled):
+            self.emitter_color = utils.color_temperature_to_rgb(self.emitter_color_black_body)
+        
+        self.lock_emitter_color = False
+    
     emitter_type = EnumProperty(name="Type", items=[('0', "Area", ""), ('1', "IES", ""), ('2', "Spot", ""), ], default='0', )
     emitter_ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
     emitter_ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )
@@ -1802,9 +1827,9 @@ class ExtMaterialProperties(PropertyGroup):
                                                                          ('4', "Quadratic", ""), ('5', "Cubic", ""), ], default='0', )
     emitter_spot_blur = FloatProperty(name="Blur", default=1.0, min=0.01, max=1000.00, precision=2, )
     emitter_emission = EnumProperty(name="Emission", items=[('0', "Color", ""), ('1', "Temperature", ""), ('2', "HDR Image", ""), ], default='0', )
-    emitter_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    emitter_color_black_body_enabled = BoolProperty(name="Temperature Enabled", default=False, )
-    emitter_color_black_body = FloatProperty(name="Temperature (K)", default=6500.0, min=273.0, max=100000.0, precision=1, )
+    emitter_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', update=update_emitter_color, )
+    emitter_color_black_body_enabled = BoolProperty(name="Temperature Enabled", default=False, update=update_emitter_color, )
+    emitter_color_black_body = FloatProperty(name="Temperature (K)", default=6500.0, min=273.0, max=100000.0, precision=1, update=update_emitter_color, )
     emitter_luminance = EnumProperty(name="Luminance", items=[('0', "Power & Efficacy", ""), ('1', "Lumen", ""), ('2', "Lux", ""), ('3', "Candela", ""), ('4', "Luminance", ""), ], default='0', )
     emitter_luminance_power = FloatProperty(name="Power (W)", default=40.0, min=0.0, max=1000000000.0, precision=1, )
     emitter_luminance_efficacy = FloatProperty(name="Efficacy (lm/W)", default=17.6, min=0.0, max=683.0, precision=1, )
@@ -2028,6 +2053,18 @@ class MaterialEmitterProperties(PropertyGroup):
     enabled = BoolProperty(name="Enabled", default=False, )
     # visible = BoolProperty(name="Visible", default=True, )
     
+    lock_color = BoolProperty(default=False, options={'HIDDEN'}, )
+    
+    def update_color(self, context):
+        if(self.lock_color):
+            return
+        self.lock_color = True
+        
+        if(self.emission == '0' and self.color_black_body_enabled):
+            self.color = utils.color_temperature_to_rgb(self.color_black_body)
+        
+        self.lock_color = False
+    
     type = EnumProperty(name="Type", items=[('0', "Area", ""), ('1', "IES", ""), ('2', "Spot", ""), ], default='0', )
     ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
     ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )
@@ -2039,9 +2076,9 @@ class MaterialEmitterProperties(PropertyGroup):
                                                                  ('4', "Quadratic", ""), ('5', "Cubic", ""), ], default='0', )
     spot_blur = FloatProperty(name="Blur", default=1.0, min=0.01, max=1000.00, precision=2, )
     emission = EnumProperty(name="Emission", items=[('0', "Color", ""), ('1', "Temperature", ""), ('2', "HDR Image", ""), ], default='0', )
-    color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    color_black_body_enabled = BoolProperty(name="Temperature Enabled", default=False, )
-    color_black_body = FloatProperty(name="Temperature (K)", default=6500.0, min=273.0, max=100000.0, precision=1, )
+    color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', update=update_color, )
+    color_black_body_enabled = BoolProperty(name="Temperature Enabled", default=False, update=update_color, )
+    color_black_body = FloatProperty(name="Temperature (K)", default=6500.0, min=273.0, max=100000.0, precision=1, update=update_color, )
     luminance = EnumProperty(name="Luminance", items=[('0', "Power & Efficacy", ""), ('1', "Lumen", ""), ('2', "Lux", ""), ('3', "Candela", ""), ('4', "Luminance", ""), ], default='0', )
     luminance_power = FloatProperty(name="Power (W)", default=40.0, min=0.0, max=1000000000.0, precision=1, )
     luminance_efficacy = FloatProperty(name="Efficacy (lm/W)", default=17.6, min=0.0, max=683.0, precision=1, )
