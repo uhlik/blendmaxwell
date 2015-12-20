@@ -609,6 +609,38 @@ def material(d, s, ):
                 e.setMXI(a)
             
             e.setState(True)
+            
+            def global_props(d, m):
+                # global properties
+                if(d['override_map']):
+                    t = texture(d['override_map'], s, )
+                    if(t is not None):
+                        m.setGlobalMap(t)
+                
+                if(d['bump_map_enabled']):
+                    a = Cattribute()
+                    a.activeType = MAP_TYPE_BITMAP
+                    t = texture(d['bump_map'], s, )
+                    if(t is not None):
+                        a.textureMap = t
+                    if(d['bump_map_use_normal']):
+                        a.value = d['bump_normal']
+                    else:
+                        a.value = d['bump']
+                    m.setAttribute('bump', a)
+                    m.setNormalMapState(d['bump_map_use_normal'])
+                
+                m.setDispersion(d['dispersion'])
+                m.setMatteShadow(d['shadow'])
+                m.setMatte(d['matte'])
+                m.setNestedPriority(d['priority'])
+                
+                c = Crgb()
+                c.assign(*d['id'])
+                m.setColorID(c)
+            
+            global_props(d, m)
+            
         else:
             m = CextensionManager.instance()
             if(d['use'] == 'AGS'):
