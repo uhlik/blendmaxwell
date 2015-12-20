@@ -65,6 +65,8 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: add physical sky loading/saving or presets
 # NOTE: maybe remove wireframe export completely, or only as export operator, also prepare wireframe scene before actual scene write, so the mostly unused switches and functions can be removed
 # TODO: join 'write_custom_mxm.py' and 'write_ext_mxm.py' to one file to avoid code duplication
+# TODO: add displacement to material extensions
+# TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred)
 
 
 class MXSExport():
