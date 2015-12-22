@@ -2309,7 +2309,7 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
         if(not cd.enabled):
             l.enabled = False
         
-        l.label("Global Properties:")
+        l.label("Common Properties:")
         l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
         l.prop(cd, 'type')
         
@@ -2330,13 +2330,15 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
         l.label("HeightMap Properties:")
         tab_double(l, "Height:", cd, 'height', 'height_units', )
         
-        l.separator()
-        l.label("Vector 3D Properties:")
-        l.prop(cd, 'v3d_preset')
-        l.prop(cd, 'v3d_transform')
-        l.prop(cd, 'v3d_rgb_mapping')
-        r = l.row()
-        r.prop(cd, 'v3d_scale')
+        if(cd.type == '2'):
+            # Vector displacement
+            l.separator()
+            l.label("Vector 3D Properties:")
+            l.prop(cd, 'v3d_preset')
+            l.prop(cd, 'v3d_transform')
+            l.prop(cd, 'v3d_rgb_mapping')
+            r = l.row()
+            r.prop(cd, 'v3d_scale')
 
 
 class MaterialPanel(MaterialButtonsPanel, Panel):
@@ -3558,7 +3560,7 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
         if(not cd.enabled):
             l.enabled = False
         
-        l.label("Global Properties:")
+        l.label("Common Properties:")
         l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
         l.prop(cd, 'type')
         
@@ -3579,13 +3581,15 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
         l.label("HeightMap Properties:")
         tab_double(l, "Height:", cd, 'height', 'height_units', )
         
-        l.separator()
-        l.label("Vector 3D Properties:")
-        l.prop(cd, 'v3d_preset')
-        l.prop(cd, 'v3d_transform')
-        l.prop(cd, 'v3d_rgb_mapping')
-        r = l.row()
-        r.prop(cd, 'v3d_scale')
+        if(cd.type == '2'):
+            # Vector displacement
+            l.separator()
+            l.label("Vector 3D Properties:")
+            l.prop(cd, 'v3d_preset')
+            l.prop(cd, 'v3d_transform')
+            l.prop(cd, 'v3d_rgb_mapping')
+            r = l.row()
+            r.prop(cd, 'v3d_scale')
 
 
 class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
