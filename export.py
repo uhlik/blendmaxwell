@@ -59,7 +59,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: more standardized setting render file type and bit depth, this will require change in render workflow and that is dangerous..
 # TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works
 # FIXME: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. it is nearly that way, but a few still slips away..
-# TODO: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export
+# NOTE: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export - should be ok now, but better to check it more thoroughly
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # TODO: add physical sky loading/saving or presets
@@ -105,8 +105,11 @@ class MXSExport():
         for me in bpy.data.meshes:
             if(me.users == 0):
                 if(not me.use_fake_user):
-                    bpy.data.meshes.remove(me)
-                    # log("orphan mesh: '{}'".format(me.name), 1, LogStyles.ERROR, )
+                    # just log it, there is no need to remove orphan meshes because all meshes created during export should be removed now.
+                    # user might need those meshes in future..
+                    # NOTE: this can be removed once i am sure there is no other leak. now just scare user..
+                    log("orphan mesh: '{}' is it intentional?".format(me.name), 1, LogStyles.ERROR, )
+                    # bpy.data.meshes.remove(me)
     
     def _progress(self, progress=0.0, ):
         if(progress == 0.0):
@@ -290,6 +293,7 @@ class MXSExport():
         # export type
         might_be_renderable = ['CURVE', 'SURFACE', 'FONT', ]
         c_bases_meshes = []
+        c_instance_meshes = []
         
         no_polygons_meshes = []
         
@@ -368,6 +372,9 @@ class MXSExport():
                                     c = True
                                     c_bases_meshes.append([o, me])
                                 else:
+                                    # seems like those meshes are not removed when finished..
+                                    c_instance_meshes.append([o, me])
+                                    
                                     t = 'INSTANCE'
                                     # m = me
                                     m = None
@@ -383,12 +390,15 @@ class MXSExport():
                                 m = me
                                 c = True
                         else:
-                            pass
+                            # pass
+                            bpy.data.meshes.remove(me)
                     else:
                         if(len(me.polygons) > 0):
                             t = 'MESH'
                             m = me
                             c = True
+                        else:
+                            bpy.data.meshes.remove(me)
                 
                 # me = o.to_mesh(self.context.scene, True, 'RENDER', )
                 # if(me is not None):
@@ -441,6 +451,11 @@ class MXSExport():
             return h
         
         h = hierarchy()
+        
+        # print(c_bases_meshes)
+        # fix the leak, at last!
+        for _, me in c_instance_meshes:
+            bpy.data.meshes.remove(me)
         
         # particle instances with hidden bases
         class KillRecursiveFunctions(Exception):
@@ -516,6 +531,16 @@ class MXSExport():
             if(o['export'] is False and renderable_children(o)):
                 o['export_type'] = 'EMPTY'
                 o['export'] = True
+                # if(ob.type in might_be_renderable):
+                #     if(o['converted']):
+                #         # log(o, style=LogStyles.ERROR, )
+                #         bpy.data.meshes.remove(o['mesh'])
+                try:
+                    if(o['converted']):
+                        # log(o, style=LogStyles.ERROR, )
+                        bpy.data.meshes.remove(o['mesh'])
+                except KeyError:
+                    pass
         
         for o in h:
             walk(o)
