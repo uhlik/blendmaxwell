@@ -2249,6 +2249,96 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
 
 
+class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Displacement"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw_header(self, context):
+        d = context.material.maxwell_material_extension.displacement
+        self.layout.prop(d, "enabled", text="", )
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        dtypes = ['AGS', 'OPAQUE', 'TRANSPARENT', 'METAL', 'TRANSLUCENT', 'CARPAINT', 'HAIR', ]
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use in dtypes)
+    
+    def draw(self, context):
+        def tab_single(l, t, o, pn):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn, text="", )
+        
+        def tab_double(l, t, o, pn0, pn1):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, pn0, text="", )
+            r.prop(o, pn1, text="", )
+        
+        def tab_color_and_map(l, t, o, p, pe, pm, ):
+            r = l.row()
+            s = r.split(percentage=0.333)
+            c = s.column()
+            c.label(t)
+            c = s.column()
+            r = c.row()
+            r.prop(o, p, text="", )
+            r.prop(o, pe, text="", )
+            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        
+        m = context.material.maxwell_render
+        mx = context.material.maxwell_material_extension
+        mat = context.material
+        l = self.layout.column()
+        cd = mx.displacement
+        
+        if(not cd.enabled):
+            l.enabled = False
+        
+        l.label("Global Properties:")
+        l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
+        l.prop(cd, 'type')
+        
+        r = l.row()
+        s = r.split(percentage=0.333)
+        c = s.column()
+        c.label("Subdivision:")
+        c = s.column()
+        r = c.row()
+        r.prop(cd, 'subdivision', text="", )
+        r.prop(cd, 'adaptive', )
+        l.prop(cd, 'subdivision_method')
+        tab_single(l, "Offset:", cd, 'offset')
+        tab_single(l, "Smoothing:", cd, 'smoothing')
+        l.prop(cd, 'uv_interpolation')
+        
+        l.separator()
+        l.label("HeightMap Properties:")
+        tab_double(l, "Height:", cd, 'height', 'height_units', )
+        
+        l.separator()
+        l.label("Vector 3D Properties:")
+        l.prop(cd, 'v3d_preset')
+        l.prop(cd, 'v3d_transform')
+        l.prop(cd, 'v3d_rgb_mapping')
+        r = l.row()
+        r.prop(cd, 'v3d_scale')
+
+
 class MaterialPanel(MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Material"

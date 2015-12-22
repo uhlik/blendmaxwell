@@ -1294,6 +1294,33 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         
         # extension data
         mxe = material.maxwell_material_extension
+        
+        # displacement
+        def displacement(dp, cd):
+            cd.enabled = dp['enabled']
+            if(dp['map'] is not None):
+                cd.map = texture(material, dp['map'], 'displacement map')
+            cd.type = str(dp['type'])
+            cd.subdivision = dp['subdivision']
+            cd.adaptive = dp['adaptive']
+            cd.subdivision_method = str(dp['subdivision_method'])
+            cd.offset = dp['offset']
+            cd.smoothing = dp['smoothing']
+            cd.uv_interpolation = str(dp['uv_interpolation'])
+            cd.height = dp['height'] * 100
+            cd.height_units = str(int(dp['height_units']))
+            cd.v3d_preset = str(dp['v3d_preset'])
+            cd.v3d_transform = str(dp['v3d_transform'])
+            cd.v3d_rgb_mapping = str(dp['v3d_rgb_mapping'])
+            cd.v3d_scale = dp['v3d_scale']
+        
+        try:
+            dp = d['displacement']
+            cd = mxe.displacement
+            displacement(dp, cd)
+        except KeyError:
+            pass
+        
         if(mx.use == 'AGS'):
             mxe.ags_color = gamma_correct(e['Color'])
             mxe.ags_reflection = e['Reflection']

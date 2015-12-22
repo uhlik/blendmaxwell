@@ -1803,133 +1803,6 @@ class ExtVolumetricsProperties(PropertyGroup):
         del bpy.types.Object.maxwell_volumetrics_extension
 
 
-class ExtMaterialProperties(PropertyGroup):
-    lock_emitter_color = BoolProperty(default=False, options={'HIDDEN'}, )
-    
-    def update_emitter_color(self, context):
-        if(self.lock_emitter_color):
-            return
-        self.lock_emitter_color = True
-        
-        if(self.emitter_emission == '0' and self.emitter_color_black_body_enabled):
-            self.emitter_color = utils.color_temperature_to_rgb(self.emitter_color_black_body)
-        
-        self.lock_emitter_color = False
-    
-    emitter_type = EnumProperty(name="Type", items=[('0', "Area", ""), ('1', "IES", ""), ('2', "Spot", ""), ], default='0', )
-    emitter_ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
-    emitter_ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )
-    emitter_spot_map_enabled = BoolProperty(name="Spot Map Enabled", default=False, )
-    emitter_spot_map = StringProperty(name="Spot Map", default="", get=MaterialEditorCallbacks.ext_emitter_spot_map_get, set=MaterialEditorCallbacks.ext_emitter_spot_map_set, )
-    emitter_spot_cone_angle = FloatProperty(name="Cone Angle", default=math.radians(45.0), min=math.radians(0.01), max=math.radians(179.99), precision=2, subtype='ANGLE', )
-    emitter_spot_falloff_angle = FloatProperty(name="FallOff Angle", default=math.radians(10.0), min=math.radians(0.0), max=math.radians(89.99), precision=2, subtype='ANGLE', )
-    emitter_spot_falloff_type = EnumProperty(name="FallOff Type", items=[('0', "Linear", ""), ('1', "Square Root", ""), ('2', "Sinusoidal", ""), ('3', "Squared Sinusoidal", ""),
-                                                                         ('4', "Quadratic", ""), ('5', "Cubic", ""), ], default='0', )
-    emitter_spot_blur = FloatProperty(name="Blur", default=1.0, min=0.01, max=1000.00, precision=2, )
-    emitter_emission = EnumProperty(name="Emission", items=[('0', "Color", ""), ('1', "Temperature", ""), ('2', "HDR Image", ""), ], default='0', )
-    emitter_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', update=update_emitter_color, )
-    emitter_color_black_body_enabled = BoolProperty(name="Temperature Enabled", default=False, update=update_emitter_color, )
-    emitter_color_black_body = FloatProperty(name="Temperature (K)", default=6500.0, min=273.0, max=100000.0, precision=1, update=update_emitter_color, )
-    emitter_luminance = EnumProperty(name="Luminance", items=[('0', "Power & Efficacy", ""), ('1', "Lumen", ""), ('2', "Lux", ""), ('3', "Candela", ""), ('4', "Luminance", ""), ], default='0', )
-    emitter_luminance_power = FloatProperty(name="Power (W)", default=40.0, min=0.0, max=1000000000.0, precision=1, )
-    emitter_luminance_efficacy = FloatProperty(name="Efficacy (lm/W)", default=17.6, min=0.0, max=683.0, precision=1, )
-    emitter_luminance_output = FloatProperty(name="Output (lm, lm, lm/m, cd, cd/m)", default=100.0, min=0.0, max=1000000000.0, precision=1, )
-    emitter_temperature_value = FloatProperty(name="Value (K)", default=6500.0, min=273.0, max=100000.0, precision=3, )
-    emitter_hdr_map = StringProperty(name="Image", default="", )
-    emitter_hdr_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=1000000.0, precision=1, )
-    
-    ags_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, subtype='COLOR', )
-    ags_reflection = FloatProperty(name="Reflection (%)", default=12.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    ags_type = EnumProperty(name="Type", items=[('0', "Normal", ""), ('1', "Clear", "")], default='0', )
-    
-    opaque_color_type = BoolProperty(name="Color Type", default=False, )
-    opaque_color = FloatVectorProperty(name="Color", default=(220 / 255, 220 / 255, 220 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    opaque_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_opaque_color_map_get, set=MaterialEditorCallbacks.ext_opaque_color_map_set, )
-    opaque_shininess_type = BoolProperty(name="Shininess Type", default=False, )
-    opaque_shininess = FloatProperty(name="Shininess (%)", default=40.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    opaque_shininess_map = StringProperty(name="Shininess Map", default="", get=MaterialEditorCallbacks.ext_opaque_shininess_map_get, set=MaterialEditorCallbacks.ext_opaque_shininess_map_set, )
-    opaque_roughness_type = BoolProperty(name="Roughness Type", default=False, )
-    opaque_roughness = FloatProperty(name="Roughness (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    opaque_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_opaque_roughness_map_get, set=MaterialEditorCallbacks.ext_opaque_roughness_map_set, )
-    opaque_clearcoat = BoolProperty(name="Clearcoat", default=False, )
-    
-    transparent_color_type = BoolProperty(name="Color Type", default=False, )
-    transparent_color = FloatVectorProperty(name="Color", default=(182 / 255, 182 / 255, 182 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    transparent_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_transparent_color_map_get, set=MaterialEditorCallbacks.ext_transparent_color_map_set, )
-    transparent_ior = FloatProperty(name="Ref. Index", default=1.51, min=1.001, max=2.5, precision=3, )
-    transparent_transparency = FloatProperty(name="Transparency (cm)", default=30.0, min=0.1, max=999.0, precision=1, )
-    transparent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
-    transparent_roughness = FloatProperty(name="Roughness (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    transparent_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_transparent_roughness_map_get, set=MaterialEditorCallbacks.ext_transparent_roughness_map_set, )
-    transparent_specular_tint = FloatProperty(name="Specular Tint (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    transparent_dispersion = FloatProperty(name="Dispersion (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    transparent_clearcoat = BoolProperty(name="Clearcoat", default=False, )
-    
-    metal_ior = EnumProperty(name="Type", items=[('0', "Aluminium", ""), ('1', "Chromium", ""), ('2', "Cobalt", ""), ('3', "Copper", ""), ('4', "Germanium", ""), ('5', "Gold", ""),
-                                                 ('6', "Iron", ""), ('7', "Nickel", ""), ('8', "Silver", ""), ('9', "Titanium", ""), ('10', "Vanadium", ""), ], default='0', )
-    metal_tint = FloatProperty(name="Tint", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    metal_color_type = BoolProperty(name="Color Type", default=False, )
-    metal_color = FloatVectorProperty(name="Color", default=(167 / 255, 167 / 255, 167 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    metal_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_metal_color_map_get, set=MaterialEditorCallbacks.ext_metal_color_map_set, )
-    metal_roughness_type = BoolProperty(name="Roughness Type", default=False, )
-    metal_roughness = FloatProperty(name="Roughness", default=30.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    metal_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_metal_roughness_map_get, set=MaterialEditorCallbacks.ext_metal_roughness_map_set, )
-    metal_anisotropy_type = BoolProperty(name="Anisotropy Type", default=False, )
-    metal_anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    metal_anisotropy_map = StringProperty(name="Anisotropy Map", default="", get=MaterialEditorCallbacks.ext_metal_anisotropy_map_get, set=MaterialEditorCallbacks.ext_metal_anisotropy_map_set, )
-    metal_angle_type = BoolProperty(name="Angle Type", default=False, )
-    metal_angle = FloatProperty(name="Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=1, subtype='ANGLE', )
-    metal_angle_map = StringProperty(name="Angle Map", default="", get=MaterialEditorCallbacks.ext_metal_angle_map_get, set=MaterialEditorCallbacks.ext_metal_angle_map_set, )
-    metal_dust_type = BoolProperty(name="Dust & Dirt Type", default=False, )
-    metal_dust = FloatProperty(name="Dust & Dirt", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    metal_dust_map = StringProperty(name="Dust & Dirt Map", default="", get=MaterialEditorCallbacks.ext_metal_dust_map_get, set=MaterialEditorCallbacks.ext_metal_dust_map_set, )
-    metal_perforation_enabled = BoolProperty(name="Perforation Enabled", default=False, )
-    metal_perforation_map = StringProperty(name="Perforation Map", default="", get=MaterialEditorCallbacks.ext_metal_perforation_map_get, set=MaterialEditorCallbacks.ext_metal_perforation_map_set, )
-    
-    translucent_scale = FloatProperty(name="Scale (x10 cm)", default=8.0, min=0.00001, max=1000000.0, precision=2, )
-    translucent_ior = FloatProperty(name="Ref. Index", default=1.3, min=1.001, max=2.5, precision=3, )
-    translucent_color_type = BoolProperty(name="Color Type", default=False, )
-    translucent_color = FloatVectorProperty(name="Color", default=(250 / 255, 245 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    translucent_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_translucent_color_map_get, set=MaterialEditorCallbacks.ext_translucent_color_map_set, )
-    translucent_hue_shift = FloatProperty(name="Hue Shift", default=0.0, min=-120.0, max=120.0, precision=1, )
-    translucent_invert_hue = BoolProperty(name="Invert Hue", default=True, )
-    translucent_vibrance = FloatProperty(name="Vibrance", default=11.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    translucent_density = FloatProperty(name="Density", default=90.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    translucent_opacity = FloatProperty(name="Opacity", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    translucent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
-    translucent_roughness = FloatProperty(name="Roughness", default=17.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    translucent_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_translucent_roughness_map_get, set=MaterialEditorCallbacks.ext_translucent_roughness_map_set, )
-    translucent_specular_tint = FloatProperty(name="Specular Tint (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    translucent_clearcoat = BoolProperty(name="Clearcoat", default=False, )
-    translucent_clearcoat_ior = FloatProperty(name="Clearcoat IOR", default=1.3, min=1.001, max=2.5, precision=3, )
-    
-    carpaint_color = FloatVectorProperty(name="Color", default=(100 / 255, 0 / 255, 16 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    carpaint_metallic = FloatProperty(name="Metallic", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    carpaint_topcoat = FloatProperty(name="Topcoat", default=50.0, min=1.001, max=100.0, precision=3, subtype='PERCENTAGE', )
-    
-    hair_color_type = BoolProperty(name="Color Type", default=False, )
-    hair_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    hair_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_hair_color_map_get, set=MaterialEditorCallbacks.ext_hair_color_map_set, )
-    hair_root_tip_map = StringProperty(name="Root-Tip Map", default="", )
-    hair_root_tip_weight_type = BoolProperty(name="Root-Tip Weight Type", default=False, )
-    hair_root_tip_weight = FloatProperty(name="Root-Tip Weight", default=50.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_root_tip_weight_map = StringProperty(name="Root-Tip Weight Map", default="", get=MaterialEditorCallbacks.ext_hair_root_tip_weight_map_get, set=MaterialEditorCallbacks.ext_hair_root_tip_weight_map_set, )
-    hair_primary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_primary_highlight_spread = FloatProperty(name="Spread", default=36.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_primary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    hair_secondary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_secondary_highlight_spread = FloatProperty(name="Spread", default=45.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
-    hair_secondary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
-    
-    @classmethod
-    def register(cls):
-        bpy.types.Material.maxwell_material_extension = PointerProperty(type=cls)
-    
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Material.maxwell_material_extension
-
-
 class MaterialBSDFProperties(PropertyGroup):
     expanded_ior = BoolProperty(name="Expanded", default=True, )
     expanded_surface = BoolProperty(name="Expanded", default=True, )
@@ -2121,6 +1994,135 @@ class MaterialCustomLayersItem(PropertyGroup):
 class MaterialCustomLayers(PropertyGroup):
     layers = CollectionProperty(name="Material Layers", type=MaterialCustomLayersItem, )
     index = IntProperty(name="Active", default=-1, )
+
+
+class ExtMaterialProperties(PropertyGroup):
+    lock_emitter_color = BoolProperty(default=False, options={'HIDDEN'}, )
+    
+    def update_emitter_color(self, context):
+        if(self.lock_emitter_color):
+            return
+        self.lock_emitter_color = True
+        
+        if(self.emitter_emission == '0' and self.emitter_color_black_body_enabled):
+            self.emitter_color = utils.color_temperature_to_rgb(self.emitter_color_black_body)
+        
+        self.lock_emitter_color = False
+    
+    emitter_type = EnumProperty(name="Type", items=[('0', "Area", ""), ('1', "IES", ""), ('2', "Spot", ""), ], default='0', )
+    emitter_ies_data = StringProperty(name="Data", default="", subtype='FILE_PATH', )
+    emitter_ies_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=100000.0, precision=1, )
+    emitter_spot_map_enabled = BoolProperty(name="Spot Map Enabled", default=False, )
+    emitter_spot_map = StringProperty(name="Spot Map", default="", get=MaterialEditorCallbacks.ext_emitter_spot_map_get, set=MaterialEditorCallbacks.ext_emitter_spot_map_set, )
+    emitter_spot_cone_angle = FloatProperty(name="Cone Angle", default=math.radians(45.0), min=math.radians(0.01), max=math.radians(179.99), precision=2, subtype='ANGLE', )
+    emitter_spot_falloff_angle = FloatProperty(name="FallOff Angle", default=math.radians(10.0), min=math.radians(0.0), max=math.radians(89.99), precision=2, subtype='ANGLE', )
+    emitter_spot_falloff_type = EnumProperty(name="FallOff Type", items=[('0', "Linear", ""), ('1', "Square Root", ""), ('2', "Sinusoidal", ""), ('3', "Squared Sinusoidal", ""),
+                                                                         ('4', "Quadratic", ""), ('5', "Cubic", ""), ], default='0', )
+    emitter_spot_blur = FloatProperty(name="Blur", default=1.0, min=0.01, max=1000.00, precision=2, )
+    emitter_emission = EnumProperty(name="Emission", items=[('0', "Color", ""), ('1', "Temperature", ""), ('2', "HDR Image", ""), ], default='0', )
+    emitter_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', update=update_emitter_color, )
+    emitter_color_black_body_enabled = BoolProperty(name="Temperature Enabled", default=False, update=update_emitter_color, )
+    emitter_color_black_body = FloatProperty(name="Temperature (K)", default=6500.0, min=273.0, max=100000.0, precision=1, update=update_emitter_color, )
+    emitter_luminance = EnumProperty(name="Luminance", items=[('0', "Power & Efficacy", ""), ('1', "Lumen", ""), ('2', "Lux", ""), ('3', "Candela", ""), ('4', "Luminance", ""), ], default='0', )
+    emitter_luminance_power = FloatProperty(name="Power (W)", default=40.0, min=0.0, max=1000000000.0, precision=1, )
+    emitter_luminance_efficacy = FloatProperty(name="Efficacy (lm/W)", default=17.6, min=0.0, max=683.0, precision=1, )
+    emitter_luminance_output = FloatProperty(name="Output (lm, lm, lm/m, cd, cd/m)", default=100.0, min=0.0, max=1000000000.0, precision=1, )
+    emitter_temperature_value = FloatProperty(name="Value (K)", default=6500.0, min=273.0, max=100000.0, precision=3, )
+    emitter_hdr_map = StringProperty(name="Image", default="", )
+    emitter_hdr_intensity = FloatProperty(name="Intensity", default=1.0, min=0.0, max=1000000.0, precision=1, )
+    
+    ags_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, subtype='COLOR', )
+    ags_reflection = FloatProperty(name="Reflection (%)", default=12.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    ags_type = EnumProperty(name="Type", items=[('0', "Normal", ""), ('1', "Clear", "")], default='0', )
+    
+    opaque_color_type = BoolProperty(name="Color Type", default=False, )
+    opaque_color = FloatVectorProperty(name="Color", default=(220 / 255, 220 / 255, 220 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    opaque_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_opaque_color_map_get, set=MaterialEditorCallbacks.ext_opaque_color_map_set, )
+    opaque_shininess_type = BoolProperty(name="Shininess Type", default=False, )
+    opaque_shininess = FloatProperty(name="Shininess (%)", default=40.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    opaque_shininess_map = StringProperty(name="Shininess Map", default="", get=MaterialEditorCallbacks.ext_opaque_shininess_map_get, set=MaterialEditorCallbacks.ext_opaque_shininess_map_set, )
+    opaque_roughness_type = BoolProperty(name="Roughness Type", default=False, )
+    opaque_roughness = FloatProperty(name="Roughness (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    opaque_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_opaque_roughness_map_get, set=MaterialEditorCallbacks.ext_opaque_roughness_map_set, )
+    opaque_clearcoat = BoolProperty(name="Clearcoat", default=False, )
+    
+    transparent_color_type = BoolProperty(name="Color Type", default=False, )
+    transparent_color = FloatVectorProperty(name="Color", default=(182 / 255, 182 / 255, 182 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    transparent_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_transparent_color_map_get, set=MaterialEditorCallbacks.ext_transparent_color_map_set, )
+    transparent_ior = FloatProperty(name="Ref. Index", default=1.51, min=1.001, max=2.5, precision=3, )
+    transparent_transparency = FloatProperty(name="Transparency (cm)", default=30.0, min=0.1, max=999.0, precision=1, )
+    transparent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
+    transparent_roughness = FloatProperty(name="Roughness (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    transparent_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_transparent_roughness_map_get, set=MaterialEditorCallbacks.ext_transparent_roughness_map_set, )
+    transparent_specular_tint = FloatProperty(name="Specular Tint (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    transparent_dispersion = FloatProperty(name="Dispersion (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    transparent_clearcoat = BoolProperty(name="Clearcoat", default=False, )
+    
+    metal_ior = EnumProperty(name="Type", items=[('0', "Aluminium", ""), ('1', "Chromium", ""), ('2', "Cobalt", ""), ('3', "Copper", ""), ('4', "Germanium", ""), ('5', "Gold", ""),
+                                                 ('6', "Iron", ""), ('7', "Nickel", ""), ('8', "Silver", ""), ('9', "Titanium", ""), ('10', "Vanadium", ""), ], default='0', )
+    metal_tint = FloatProperty(name="Tint", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_color_type = BoolProperty(name="Color Type", default=False, )
+    metal_color = FloatVectorProperty(name="Color", default=(167 / 255, 167 / 255, 167 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    metal_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_metal_color_map_get, set=MaterialEditorCallbacks.ext_metal_color_map_set, )
+    metal_roughness_type = BoolProperty(name="Roughness Type", default=False, )
+    metal_roughness = FloatProperty(name="Roughness", default=30.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_metal_roughness_map_get, set=MaterialEditorCallbacks.ext_metal_roughness_map_set, )
+    metal_anisotropy_type = BoolProperty(name="Anisotropy Type", default=False, )
+    metal_anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_anisotropy_map = StringProperty(name="Anisotropy Map", default="", get=MaterialEditorCallbacks.ext_metal_anisotropy_map_get, set=MaterialEditorCallbacks.ext_metal_anisotropy_map_set, )
+    metal_angle_type = BoolProperty(name="Angle Type", default=False, )
+    metal_angle = FloatProperty(name="Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(360.0), precision=1, subtype='ANGLE', )
+    metal_angle_map = StringProperty(name="Angle Map", default="", get=MaterialEditorCallbacks.ext_metal_angle_map_get, set=MaterialEditorCallbacks.ext_metal_angle_map_set, )
+    metal_dust_type = BoolProperty(name="Dust & Dirt Type", default=False, )
+    metal_dust = FloatProperty(name="Dust & Dirt", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    metal_dust_map = StringProperty(name="Dust & Dirt Map", default="", get=MaterialEditorCallbacks.ext_metal_dust_map_get, set=MaterialEditorCallbacks.ext_metal_dust_map_set, )
+    metal_perforation_enabled = BoolProperty(name="Perforation Enabled", default=False, )
+    metal_perforation_map = StringProperty(name="Perforation Map", default="", get=MaterialEditorCallbacks.ext_metal_perforation_map_get, set=MaterialEditorCallbacks.ext_metal_perforation_map_set, )
+    
+    translucent_scale = FloatProperty(name="Scale (x10 cm)", default=8.0, min=0.00001, max=1000000.0, precision=2, )
+    translucent_ior = FloatProperty(name="Ref. Index", default=1.3, min=1.001, max=2.5, precision=3, )
+    translucent_color_type = BoolProperty(name="Color Type", default=False, )
+    translucent_color = FloatVectorProperty(name="Color", default=(250 / 255, 245 / 255, 230 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    translucent_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_translucent_color_map_get, set=MaterialEditorCallbacks.ext_translucent_color_map_set, )
+    translucent_hue_shift = FloatProperty(name="Hue Shift", default=0.0, min=-120.0, max=120.0, precision=1, )
+    translucent_invert_hue = BoolProperty(name="Invert Hue", default=True, )
+    translucent_vibrance = FloatProperty(name="Vibrance", default=11.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_density = FloatProperty(name="Density", default=90.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_opacity = FloatProperty(name="Opacity", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_roughness_type = BoolProperty(name="Roughness Type", default=False, )
+    translucent_roughness = FloatProperty(name="Roughness", default=17.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_roughness_map = StringProperty(name="Roughness Map", default="", get=MaterialEditorCallbacks.ext_translucent_roughness_map_get, set=MaterialEditorCallbacks.ext_translucent_roughness_map_set, )
+    translucent_specular_tint = FloatProperty(name="Specular Tint (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    translucent_clearcoat = BoolProperty(name="Clearcoat", default=False, )
+    translucent_clearcoat_ior = FloatProperty(name="Clearcoat IOR", default=1.3, min=1.001, max=2.5, precision=3, )
+    
+    carpaint_color = FloatVectorProperty(name="Color", default=(100 / 255, 0 / 255, 16 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    carpaint_metallic = FloatProperty(name="Metallic", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    carpaint_topcoat = FloatProperty(name="Topcoat", default=50.0, min=1.001, max=100.0, precision=3, subtype='PERCENTAGE', )
+    
+    hair_color_type = BoolProperty(name="Color Type", default=False, )
+    hair_color = FloatVectorProperty(name="Color", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    hair_color_map = StringProperty(name="Color Map", default="", get=MaterialEditorCallbacks.ext_hair_color_map_get, set=MaterialEditorCallbacks.ext_hair_color_map_set, )
+    hair_root_tip_map = StringProperty(name="Root-Tip Map", default="", )
+    hair_root_tip_weight_type = BoolProperty(name="Root-Tip Weight Type", default=False, )
+    hair_root_tip_weight = FloatProperty(name="Root-Tip Weight", default=50.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_root_tip_weight_map = StringProperty(name="Root-Tip Weight Map", default="", get=MaterialEditorCallbacks.ext_hair_root_tip_weight_map_get, set=MaterialEditorCallbacks.ext_hair_root_tip_weight_map_set, )
+    hair_primary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_primary_highlight_spread = FloatProperty(name="Spread", default=36.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_primary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    hair_secondary_highlight_strength = FloatProperty(name="Strength", default=40.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_secondary_highlight_spread = FloatProperty(name="Spread", default=45.0, min=1.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    hair_secondary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    
+    displacement = PointerProperty(name="Displacement", type=MaterialDisplacementProperties, )
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Material.maxwell_material_extension = PointerProperty(type=cls)
+    
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Material.maxwell_material_extension
 
 
 class MaterialProperties(PropertyGroup):

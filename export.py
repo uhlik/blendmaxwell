@@ -65,7 +65,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: add physical sky loading/saving or presets
 # NOTE: maybe remove wireframe export completely, or only as export operator, also prepare wireframe scene before actual scene write, so the mostly unused switches and functions can be removed
 # TODO: join 'write_custom_mxm.py' and 'write_ext_mxm.py' to one file to avoid code duplication
-# TODO: add displacement to material extensions
 # TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred)
 
 
@@ -3982,6 +3981,10 @@ class MXSMaterialExtension(MXSMaterial):
             self._hair()
         else:
             raise TypeError("{}: Unsupported extension material type: {}".format(self.m_name, self.m_use, ))
+        
+        dtypes = ['AGS', 'OPAQUE', 'TRANSPARENT', 'METAL', 'TRANSLUCENT', 'CARPAINT', 'HAIR', ]
+        if(self.m_use in dtypes):
+            self._displacement()
     
     def _emitter(self):
         mx = self.mx
@@ -4101,6 +4104,34 @@ class MXSMaterialExtension(MXSMaterial):
         self.m_hair_secondary_highlight_strength = mx.hair_secondary_highlight_strength
         self.m_hair_secondary_highlight_spread = mx.hair_secondary_highlight_spread
         self.m_hair_secondary_highlight_tint = self._gamma_uncorrect(mx.hair_secondary_highlight_tint)
+    
+    def _displacement(self):
+        mx = self.mx
+        displacementd = {'enabled': False, 'map': "", 'type': 1, 'subdivision': 5, 'adaptive': False, 'subdivision_method': 0,
+                         'offset': 0.5, 'smoothing': True, 'uv_interpolation': 2, 'height': 2.0, 'height_units': 0,
+                         'v3d_preset': 0, 'v3d_transform': 0, 'v3d_rgb_mapping': 0, 'v3d_scale': (1.0, 1.0, 1.0), }
+        
+        if(mx.displacement.enabled):
+            displacement = mx['displacement'].to_dict()
+            for k, v in displacementd.items():
+                if(k not in displacement):
+                    displacement[k] = v
+            
+            # converting..
+            cmap = ['map', ]
+            cenum = ['type', 'subdivision_method', 'uv_interpolation', 'height_units', 'v3d_preset', 'v3d_transform', 'v3d_rgb_mapping', ]
+            for k, v in displacement.items():
+                if(k in cmap):
+                    displacement[k] = self._texture_to_data(v)
+                if(k in cenum):
+                    displacement[k] = int(v)
+            
+            if(displacement['height_units'] == 1):
+                displacement['height'] = displacement['height'] / 100
+            
+            self.m_displacement = displacement
+        else:
+            self.m_displacement = displacementd.copy()
 
 
 class MXSTexture(Serializable):
