@@ -58,8 +58,8 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: maybe organize all props and remove the need of prefixes in names
 # TODO: more standardized setting render file type and bit depth, this will require change in render workflow and that is dangerous..
 # TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works
-# FIXME: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. it is nearly that way, but a few still slips away..
-# NOTE: check if in case of some error during exporting, everything is cleaned up and won't cause probles during next export - should be ok now, but better to check it more thoroughly
+# NOTE: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. - should be ok now, but better to check it more thoroughly
+# TODO: check if in case of some error during exporting, everything is cleaned up and won't cause problems during next export
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # TODO: add physical sky loading/saving or presets
