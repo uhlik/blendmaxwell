@@ -1113,7 +1113,12 @@ class MXSWriter():
         shift_lens      (float x, float y) or None
         """
         s = self.mxs
-        c = s.addCamera(*props)
+        if(props[13] in [6, 7]):
+            props2 = props[:]
+            props2[13] = TYPE_EXTENSION_LENS
+            c = s.addCamera(*props2)
+        else:
+            c = s.addCamera(*props)
         for step in steps:
             l = list(step[:])
             l[1] = Cvector(*l[1])
@@ -1129,6 +1134,37 @@ class MXSWriter():
                 c.setSphericalLensProperties(lens_extra)
             if(props[13] == TYPE_CYLINDRICAL):
                 c.setCylindricalLensProperties(lens_extra)
+            if(props[13] == 6):
+                p = MXparamList()
+                p.createString('EXTENSION_NAME', 'Lat-Long Stereo')
+                p.createUInt('Type', lens_extra[0], 0, 2)
+                p.createFloat('FOV Vertical', lens_extra[1], 180.0, 0.0)
+                p.createFloat('FOV Horizontal', lens_extra[2], 360.0, 0.0)
+                p.createByte('Flip Ray X', lens_extra[3], 0, 1)
+                p.createByte('Flip Ray Y', lens_extra[4], 0, 1)
+                p.createFloat('Parallax Distance', lens_extra[5], 0.0, 360.0)
+                p.createByte('Zenith Mode', lens_extra[6], 0, 1)
+                p.createFloat('Separation', lens_extra[7], 0.0, 100000.0)
+                p.createTextureMap('Separation Map', CtextureMap())
+                self.texture_data_to_mxparams('Separation Map', lens_extra[8], p, )
+                c.applyCameraLensExtension(p)
+            if(props[13] == 7):
+                p = MXparamList()
+                p.createString('EXTENSION_NAME', 'Fish Stereo')
+                p.createUInt('Type', lens_extra[0], 0, 2)
+                p.createFloat('FOV', lens_extra[1], 0.0, 360.0)
+                p.createFloat('Separation', lens_extra[2], 0.0, 1000000.0)
+                p.createTextureMap('Separation Map', CtextureMap())
+                self.texture_data_to_mxparams('Separation Map', lens_extra[3], p, )
+                p.createByte('Vertical Mode', lens_extra[4], 0, 1)
+                p.createFloat('Dome Radius', lens_extra[5], 1.0, 1000000.0)
+                p.createTextureMap('Turn Map', CtextureMap())
+                self.texture_data_to_mxparams('Turn Map', lens_extra[6], p, )
+                p.createByte('Dome Tilt Compensation', lens_extra[7], 0, 1)
+                p.createFloat('Dome Tilt', lens_extra[8], 0.0, 90.0)
+                p.createTextureMap('Tilt Map', CtextureMap())
+                self.texture_data_to_mxparams('Tilt Map', lens_extra[9], p, )
+                c.applyCameraLensExtension(p)
         if(response is not None):
             c.setCameraResponsePreset(response)
         if(custom_bokeh is not None):

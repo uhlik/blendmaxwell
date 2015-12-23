@@ -1262,9 +1262,14 @@ def object_props(o, d, ):
 
 
 def camera(d, s, ):
-    c = s.addCamera(d['name'], d['number_of_steps'], d['shutter'], d['film_width'], d['film_height'], d['iso'],
-                    d['aperture'], d['diaphragm_angle'], d['diaphragm_blades'], d['frame_rate'],
-                    d['resolution_x'], d['resolution_y'], d['pixel_aspect'], d['lens'], )
+    if(d['lens'] in [6, 7]):
+        c = s.addCamera(d['name'], d['number_of_steps'], d['shutter'], d['film_width'], d['film_height'], d['iso'],
+                        d['aperture'], d['diaphragm_angle'], d['diaphragm_blades'], d['frame_rate'],
+                        d['resolution_x'], d['resolution_y'], d['pixel_aspect'], TYPE_EXTENSION_LENS, )
+    else:
+        c = s.addCamera(d['name'], d['number_of_steps'], d['shutter'], d['film_width'], d['film_height'], d['iso'],
+                        d['aperture'], d['diaphragm_angle'], d['diaphragm_blades'], d['frame_rate'],
+                        d['resolution_x'], d['resolution_y'], d['pixel_aspect'], d['lens'], )
     
     # will crash, just set it without asking for the list
     # l, _ = c.getCameraResponsePresetsList()
@@ -1300,43 +1305,38 @@ def camera(d, s, ):
     if(d['lens'] == 5):
         c.setCylindricalLensProperties(d['angle'])
     
-    '''
     if(d['lens'] == 6):
         p = MXparamList()
-        # p.createUInt('Type', 1, 0, 2)
-        # p.createFloat('FOV Vertical', 180.0, 180.0, 0.0)
-        # p.createFloat('FOV Horizontal', 360.0, 360.0, 0.0)
-        # p.createByte('Flip Ray X', 0, 0, 1)
-        # p.createByte('Flip Ray Y', 0, 0, 1)
-        # p.createFloat('Parallax Distance', 360.0, 0.0, 360.0)
-        # p.createByte('Zenith Mode', 0, 0, 1)
-        # p.createFloat('Separation', 6.0, 0.0, 100000.0)
-        
-        p.setUInt('Type', d['lls_type'])
-        p.setFloat('FOV Vertical', d['lls_fovv'])
-        p.setFloat('FOV Horizontal', d['lls_fovh'])
-        p.setByte('Flip Ray X', d['lls_flip_ray_x'])
-        p.setByte('Flip Ray Y', d['lls_flip_ray_y'])
-        p.setFloat('Parallax Distance', d['lls_parallax_distance'])
-        p.setByte('Zenith Mode', d['lls_zenith_mode'])
-        p.setFloat('Separation', d['lls_separation'])
-        # texture_data_to_mxparams(d['lls_separation_map'], p, 'Separation Map')
+        p.createString('EXTENSION_NAME', 'Lat-Long Stereo')
+        p.createUInt('Type', d['lls_type'], 0, 2)
+        p.createFloat('FOV Vertical', d['lls_fovv'], 180.0, 0.0)
+        p.createFloat('FOV Horizontal', d['lls_fovh'], 360.0, 0.0)
+        p.createByte('Flip Ray X', d['lls_flip_ray_x'], 0, 1)
+        p.createByte('Flip Ray Y', d['lls_flip_ray_y'], 0, 1)
+        p.createFloat('Parallax Distance', d['lls_parallax_distance'], 0.0, 360.0)
+        p.createByte('Zenith Mode', d['lls_zenith_mode'], 0, 1)
+        p.createFloat('Separation', d['lls_separation'], 0.0, 100000.0)
+        p.createTextureMap('Separation Map', CtextureMap())
+        texture_data_to_mxparams(d['lls_separation_map'], p, 'Separation Map')
         c.applyCameraLensExtension(p)
     
     if(d['lens'] == 7):
         p = MXparamList()
-        p.setUInt('Type', d['fs_type'])
-        p.setFloat('FOV', d['fs_fov'])
-        p.setFloat('Separation', d['fs_separation'])
+        p.createString('EXTENSION_NAME', 'Fish Stereo')
+        p.createUInt('Type', d['fs_type'], 0, 2)
+        p.createFloat('FOV', d['fs_fov'], 0.0, 360.0)
+        p.createFloat('Separation', d['fs_separation'], 0.0, 1000000.0)
+        p.createTextureMap('Separation Map', CtextureMap())
         texture_data_to_mxparams(d['fs_separation_map'], p, 'Separation Map')
-        p.setByte('Vertical Mode', d['fs_vertical_mode'])
-        p.setFloat('Dome Radius', d['fs_dome_radius'])
+        p.createByte('Dome Tilt Compensation', d['fs_dome_tilt_compensation'], 0, 1)
+        p.createFloat('Dome Tilt', d['fs_dome_tilt'], 0.0, 90.0)
+        p.createByte('Vertical Mode', d['fs_vertical_mode'], 0, 1)
+        p.createFloat('Dome Radius', d['fs_dome_radius'], 1.0, 1000000.0)
+        p.createTextureMap('Turn Map', CtextureMap())
         texture_data_to_mxparams(d['fs_head_turn_map'], p, 'Turn Map')
-        p.setByte('Dome Tilt Compensation', d['fs_dome_tilt_compensation'])
-        p.setFloat('Dome Tilt', d['fs_dome_tilt'])
+        p.createTextureMap('Tilt Map', CtextureMap())
         texture_data_to_mxparams(d['fs_head_tilt_map'], p, 'Tilt Map')
         c.applyCameraLensExtension(p)
-    '''
     
     # c.setShutter(d['shutter'])
     c.setCutPlanes(d['set_cut_planes'][0], d['set_cut_planes'][1], d['set_cut_planes'][2], )

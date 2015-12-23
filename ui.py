@@ -1443,7 +1443,6 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
             sub.prop(m, 'azimuth')
         if(m.lens == 'TYPE_CYLINDRICAL_5'):
             sub.prop(m, 'angle')
-        '''
         if(m.lens == 'TYPE_LAT_LONG_STEREO_6'):
             sub.separator()
             sub.label('Lat-Long Stereo:')
@@ -1471,7 +1470,6 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
             sub.prop(m, 'fs_dome_tilt_compensation')
             sub.prop(m, 'fs_dome_tilt')
             sub.prop_search(m, 'fs_head_tilt_map', bpy.data, 'textures', icon='TEXTURE')
-        '''
 
 
 class CameraSensorPanel(CameraButtonsPanel, Panel):
