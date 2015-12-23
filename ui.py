@@ -1227,9 +1227,13 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
             r.prop(m, 'sun_color')
             if(m.sun_type == 'PHYSICAL'):
                 r.enabled = False
+            # sub.separator()
+            
+            sub.label("Location:")
+            r = sub.row()
+            r.prop(m, 'sun_location_type', expand=True, )
             sub.separator()
             
-            sub.prop(m, 'sun_location_type')
             if(m.sun_location_type == 'ANGLES'):
                 sub.prop(m, 'sun_angles_zenith')
                 sub.prop(m, 'sun_angles_azimuth')

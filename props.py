@@ -887,7 +887,8 @@ class EnvironmentProperties(PropertyGroup):
     sun_radius_factor = FloatProperty(name="Radius Factor (x)", default=1.0, min=0.01, max=100.00, precision=2, )
     sun_temp = FloatProperty(name="Temperature (K)", default=5776.0, min=1.0, max=10000.0, precision=1, update=update_sun_color, )
     sun_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', update=update_sun_color, )
-    sun_location_type = EnumProperty(name="Location", items=[('LATLONG', "Latitude / Longitude", ""), ('ANGLES', "Angles", ""), ('DIRECTION', "Direction", "")], default='DIRECTION', )
+    # sun_location_type = EnumProperty(name="Location", items=[('LATLONG', "Latitude / Longitude", ""), ('ANGLES', "Angles", ""), ('DIRECTION', "Direction", "")], default='DIRECTION', )
+    sun_location_type = EnumProperty(name="Location", items=[('LATLONG', "Lat / Long", ""), ('ANGLES', "Angles", ""), ('DIRECTION', "Direction", "")], default='DIRECTION', )
     sun_latlong_lat = FloatProperty(name="Lat", default=40.000, min=-90.000, max=90.000, precision=3, )
     sun_latlong_lon = FloatProperty(name="Lon", default=-3.000, min=-180.000, max=180.000, precision=3, update=_gmt_auto, )
     

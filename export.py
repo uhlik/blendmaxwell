@@ -2140,7 +2140,7 @@ class MXSEnvironment(Serializable):
         self.m_ibl_illum_offset_x = mx.ibl_illum_offset_x
         self.m_ibl_illum_offset_y = mx.ibl_illum_offset_y
         
-        if(mx.use_sun_lamp):
+        if(mx.use_sun_lamp and mx.sun_location_type == 'DIRECTION'):
             # use selected sun lamp
             if(mx.sun_lamp != ''):
                 sun_lamp = None

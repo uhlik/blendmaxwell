@@ -1973,20 +1973,18 @@ class Environment_preset_add(AddPresetBase, Operator):
     preset_menu = 'Environment_presets'
     preset_subdir = 'blendmaxwell/environment'
     preset_defines = ["m = bpy.context.world.maxwell_render", ]
-    preset_values = ["m.env_type", "m.sky_type", "m.sky_use_preset", "m.sky_preset", "m.sky_intensity", "m.sky_planet_refl", "m.sky_ozone",
-                     "m.sky_water", "m.sky_turbidity_coeff", "m.sky_wavelength_exp", "m.sky_reflectance", "m.sky_asymmetry", "m.dome_intensity",
-                     "m.dome_zenith", "m.dome_horizon", "m.dome_mid_point",
-                     # "m.sun_lamp_priority",
-                     "m.sun_type", "m.sun_power",
-                     "m.sun_radius_factor", "m.sun_temp", "m.sun_color", "m.sun_location_type", "m.sun_latlong_lat", "m.sun_latlong_lon",
-                     "m.sun_date", "m.sun_time", "m.sun_latlong_gmt", "m.sun_latlong_gmt_auto", "m.sun_latlong_ground_rotation",
-                     "m.sun_angles_zenith", "m.sun_angles_azimuth", "m.sun_dir_x", "m.sun_dir_y", "m.sun_dir_z", "m.ibl_intensity",
-                     "m.ibl_interpolation", "m.ibl_screen_mapping", "m.ibl_bg_type", "m.ibl_bg_map", "m.ibl_bg_intensity", "m.ibl_bg_scale_x",
-                     "m.ibl_bg_scale_y", "m.ibl_bg_offset_x", "m.ibl_bg_offset_y", "m.ibl_refl_type", "m.ibl_refl_map", "m.ibl_refl_intensity",
-                     "m.ibl_refl_scale_x", "m.ibl_refl_scale_y", "m.ibl_refl_offset_x", "m.ibl_refl_offset_y", "m.ibl_refr_type", "m.ibl_refr_map",
-                     "m.ibl_refr_intensity", "m.ibl_refr_scale_x", "m.ibl_refr_scale_y", "m.ibl_refr_offset_x", "m.ibl_refr_offset_y",
-                     "m.ibl_illum_type", "m.ibl_illum_map", "m.ibl_illum_intensity", "m.ibl_illum_scale_x", "m.ibl_illum_scale_y",
-                     "m.ibl_illum_offset_x", "m.ibl_illum_offset_y", ]
+    preset_values = ['m.env_type', 'm.sky_type', 'm.sky_use_preset', 'm.sky_preset', 'm.sky_intensity', 'm.sky_planet_refl', 'm.sky_ozone',
+                     'm.sky_water', 'm.sky_turbidity_coeff', 'm.sky_wavelength_exp', 'm.sky_reflectance', 'm.sky_asymmetry', 'm.sun_type',
+                     'm.sun_power', 'm.sun_radius_factor', 'm.sun_color', 'm.sun_temp', 'm.sun_location_type', 'm.sun_latlong_lat',
+                     'm.sun_latlong_lon', 'm.sun_date', 'm.sun_time', 'm.sun_latlong_gmt', 'm.sun_latlong_gmt_auto',
+                     'm.sun_latlong_ground_rotation', 'm.sun_angles_zenith', 'm.sun_angles_azimuth', 'm.sun_dir_x', 'm.sun_dir_y',
+                     'm.sun_dir_z', 'm.ibl_intensity', 'm.ibl_interpolation', 'm.ibl_screen_mapping', 'm.ibl_bg_type', 'm.ibl_bg_map',
+                     'm.ibl_bg_intensity', 'm.ibl_bg_scale_x', 'm.ibl_bg_scale_y', 'm.ibl_bg_offset_x', 'm.ibl_bg_offset_y',
+                     'm.ibl_refl_type', 'm.ibl_refl_map', 'm.ibl_refl_intensity', 'm.ibl_refl_scale_x', 'm.ibl_refl_scale_y',
+                     'm.ibl_refl_offset_x', 'm.ibl_refl_offset_y', 'm.ibl_refr_type', 'm.ibl_refr_map', 'm.ibl_refr_intensity',
+                     'm.ibl_refr_scale_x', 'm.ibl_refr_scale_y', 'm.ibl_refr_offset_x', 'm.ibl_refr_offset_y', 'm.ibl_illum_type',
+                     'm.ibl_illum_map', 'm.ibl_illum_intensity', 'm.ibl_illum_scale_x', 'm.ibl_illum_scale_y', 'm.ibl_illum_offset_x',
+                     'm.ibl_illum_offset_y', ]
 
 
 class Camera_preset_add(AddPresetBase, Operator):
