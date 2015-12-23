@@ -67,6 +67,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: join 'write_custom_mxm.py' and 'write_ext_mxm.py' to one file to avoid code duplication
 # TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred)
 # TODO: some better name for 'import_mxs' module.. i hate the name.. and undescore..
+# TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow
 
 
 class MXSExport():

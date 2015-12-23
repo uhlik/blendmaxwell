@@ -500,6 +500,11 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
     bl_label = "Export Specials"
     bl_options = {'DEFAULT_CLOSED'}
     
+    @classmethod
+    def poll(cls, context):
+        # NOTE: disabling it for now
+        return False
+    
     def draw(self, context):
         l = self.layout
         sub = l.column()
