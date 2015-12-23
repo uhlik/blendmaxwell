@@ -60,12 +60,13 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works
 # NOTE: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. - should be ok now, but better to check it more thoroughly
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause problems during next export
-# TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out
+# TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version.
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # TODO: add physical sky loading/saving or presets
 # NOTE: maybe remove wireframe export completely, or only as export operator, also prepare wireframe scene before actual scene write, so the mostly unused switches and functions can be removed
 # TODO: join 'write_custom_mxm.py' and 'write_ext_mxm.py' to one file to avoid code duplication
 # TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred)
+# TODO: some better name for 'import_mxs' module.. i hate the name.. and undescore..
 
 
 class MXSExport():
