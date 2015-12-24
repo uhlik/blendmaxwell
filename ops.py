@@ -30,7 +30,7 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 from . import maths
 from . import system
-from . import import_mxs
+from . import impmxs
 from . import export
 from .log import LOG_FILE_PATH
 
@@ -77,9 +77,9 @@ class ImportMXS(Operator, ImportHelper):
              'sun': self.sun, }
         if(system.PLATFORM == 'Darwin'):
             d['keep_intermediates'] = self.keep_intermediates
-            im = import_mxs.MXSImportMacOSX(**d)
+            im = impmxs.MXSImportMacOSX(**d)
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
-            im = import_mxs.MXSImportWinLin(**d)
+            im = impmxs.MXSImportWinLin(**d)
         else:
             pass
         
@@ -1175,9 +1175,9 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
     def execute(self, context):
         d = {'mxm_path': os.path.realpath(bpy.path.abspath(self.filepath)), }
         if(system.PLATFORM == 'Darwin'):
-            im = import_mxs.MXMImportMacOSX(**d)
+            im = impmxs.MXMImportMacOSX(**d)
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
-            im = import_mxs.MXMImportWinLin(**d)
+            im = impmxs.MXMImportWinLin(**d)
         else:
             pass
         
