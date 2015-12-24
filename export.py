@@ -63,7 +63,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version.
 # TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # NOTE: maybe remove wireframe export completely, or only as export operator, also prepare wireframe scene before actual scene write, so the mostly unused switches and functions can be removed
-# TODO: join 'write_custom_mxm.py' and 'write_ext_mxm.py' to one file to avoid code duplication
 # TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred)
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow
 
