@@ -502,7 +502,7 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
     
     @classmethod
     def poll(cls, context):
-        # NOTE: disabling it for now
+        # NOTE: disabling wireframe until fixed
         return False
     
     def draw(self, context):
