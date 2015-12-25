@@ -2153,7 +2153,7 @@ class MaterialProperties(PropertyGroup):
     global_shadow = BoolProperty(name="Shadow", default=False, )
     global_matte = BoolProperty(name="Matte", default=False, )
     global_priority = IntProperty(name="Nested Priority", default=0, min=0, max=1000, )
-    global_id = FloatVectorProperty(name="Material Id", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
+    global_id = FloatVectorProperty(name="Material Id", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, subtype='COLOR', )
     
     # flag = BoolProperty(name="Flag", default=False, description="True - redraw preview, False - skip", options={'HIDDEN'}, )
     
