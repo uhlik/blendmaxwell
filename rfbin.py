@@ -23,6 +23,13 @@ import shutil
 import string
 import time
 import datetime
+import math
+
+import bpy
+from bpy.types import Operator
+from bpy_extras.io_utils import ExportHelper
+from bpy.props import StringProperty, FloatProperty, BoolProperty
+from mathutils import Matrix, Vector
 
 from .log import log, LogStyles
 
@@ -167,3 +174,233 @@ class RFBinWriter():
         fw(p("=?", False))
         # RF5 internal data
         fw(p("=?", False))
+
+
+class ExportRFBin(Operator, ExportHelper):
+    bl_idname = "maxwell_render.export_bin"
+    bl_label = 'Realflow Particles (.bin)'
+    bl_description = 'Realflow Particles (.bin)'
+    
+    def _proper_bin_name_with_full_path(self, context, name, filepath):
+        e = "bin"
+        d, f = os.path.split(filepath)
+        fnm, fext = os.path.splitext(f)
+        if(fext != e):
+            fnm = "{0}.{1}".format(fnm, fext)
+            fext = ""
+        if(fext == ""):
+            fext = e
+        if(name == ""):
+            name = context.active_object.name
+        cf = context.scene.frame_current
+        binnm = "{0}-{1}.{2}".format(name, str(cf).zfill(5), e)
+        path = os.path.join(d, binnm)
+        return path
+    
+    def _filepath_update(self, context):
+        d, n = os.path.split(self.filepath)
+        p = re.compile('^.+-[0-9]{5}.bin$')
+        if(not re.fullmatch(p, n)):
+            n = os.path.splitext(os.path.split(self.filepath)[1])[0]
+            self.filepath = ExportRFBin._proper_bin_name_with_full_path(self, context, n, self.filepath)
+    
+    # maxlen 1024 - len('-00000.bin'): '-00000.bin' filename frame number suffix and extension
+    filepath = StringProperty(name="File Path", description="", maxlen=1024 - len('-00000.bin'), subtype='FILE_PATH', update=_filepath_update, )
+    filename_ext = ".bin"
+    check_extension = True
+    filter_glob = StringProperty(default="*.bin", options={'HIDDEN'}, )
+    
+    use_velocity = BoolProperty(name="Particle Velocity", default=False, )
+    use_size = BoolProperty(name="Size Per Particle", default=False, )
+    size = FloatProperty(name="Size", default=0.1, min=0.000001, max=1000000.0, step=3, precision=6, )
+    use_uv = BoolProperty(name="Particle UV", default=False, )
+    uv_layer = StringProperty(name="UV Layer", default="", )
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.active_object
+        if(o is not None):
+            # there is active object
+            if(len(o.particle_systems) > 0):
+                # has particle systems
+                if(o.particle_systems.active.settings.type == 'EMITTER'):
+                    # and is emitter (not hair)
+                    return True
+        return False
+    
+    def invoke(self, context, event):
+        p = context.blend_data.filepath
+        d = os.path.split(p)[0]
+        self.filepath = self._proper_bin_name_with_full_path(context, "", d)
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
+    def draw(self, context):
+        l = self.layout
+        
+        c = l.column()
+        c.prop(self, 'use_velocity')
+        c.prop(self, 'use_size')
+        c.prop(self, 'size')
+        
+        c = l.column()
+        c.prop(self, 'use_uv')
+        o = context.active_object
+        r = c.row()
+        r.prop_search(self, 'uv_layer', o.data, 'uv_textures', )
+        if(len(o.data.uv_textures) == 0):
+            c.enabled = False
+        if(not self.use_uv):
+            r.enabled = False
+    
+    def execute(self, context):
+        log('Export Realflow Particles (.bin)', 0, LogStyles.MESSAGE, )
+        log('use_velocity: {}, use_size: {}, size: {}, use_uv: {}, uv_layer: "{}"'.format(self.use_velocity, self.use_size, self.size, self.use_uv, self.uv_layer, ), 1, )
+        
+        o = context.active_object
+        ps = o.particle_systems.active
+        pset = ps.settings
+        
+        # no particles (number of particles set to zero) and no alive particles > kill export
+        if(len(ps.particles) == 0):
+            log("particle system {} has no particles".format(ps.name), 1, LogStyles.ERROR, )
+            self.report({'ERROR'}, "particle system {} has no particles".format(ps.name), )
+            return {'CANCELLED'}
+        ok = False
+        for p in ps.particles:
+            if(p.alive_state == "ALIVE"):
+                ok = True
+                break
+        if(not ok):
+            log("particle system {} has no 'ALIVE' particles".format(ps.name), 1, LogStyles.ERROR, )
+            self.report({'ERROR'}, "particle system {} has no 'ALIVE' particles".format(ps.name), )
+            return {'CANCELLED'}
+        
+        mat = o.matrix_world.copy()
+        mat.invert()
+        
+        locs = []
+        vels = []
+        sizes = []
+        
+        # location, velocity and size from alive particles
+        for part in ps.particles:
+            if(part.alive_state == "ALIVE"):
+                l = part.location.copy()
+                l = mat * l
+                locs.append(l)
+                if(self.use_velocity):
+                    v = part.velocity.copy()
+                    v = mat * v
+                    vels.append(v)
+                else:
+                    vels.append(Vector((0.0, 0.0, 0.0)))
+                # size per particle
+                if(self.use_size):
+                    sizes.append(part.size / 2)
+                else:
+                    sizes.append(self.size / 2)
+        
+        # transform
+        # TODO: overly complicated, isn't it? better to check it..
+        ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
+        rfms = Matrix.Scale(1.0, 4)
+        rfms[0][0] = -1.0
+        rfmr = Matrix.Rotation(math.radians(-90.0), 4, 'Z')
+        rfm = rfms * rfmr * ROTATE_X_90
+        mry90 = Matrix.Rotation(math.radians(90.0), 4, 'Y')
+        for i, l in enumerate(locs):
+            locs[i] = Vector(l * rfm).to_tuple()
+        if(self.use_velocity):
+            for i, v in enumerate(vels):
+                vels[i] = Vector(v * rfm).to_tuple()
+        
+        # particle uvs
+        if(self.uv_layer is not "" and self.use_uv):
+            uv_no = 0
+            for i, uv in enumerate(o.data.uv_textures):
+                if(self.uv_layer == uv.name):
+                    uv_no = i
+                    break
+            
+            uv_locs = tuple()
+            
+            if(len(ps.child_particles) > 0):
+                # TODO: use bvhtree to make uvs for particles, like with hair
+                log("child particles uvs are not supported yet..", 1, LogStyles.WARNING, )
+                self.report({'WARNING'}, "child particles uvs are not supported yet..")
+            else:
+                # no child particles, use 'uv_on_emitter'
+                nc0 = len(ps.particles)
+                nc1 = len(ps.child_particles) - nc0
+                uv_no = 0
+                for i, uv in enumerate(o.data.uv_textures):
+                    if(self.uv_layer == uv.name):
+                        uv_no = i
+                        break
+                mod = None
+                for m in o.modifiers:
+                    if(m.type == 'PARTICLE_SYSTEM'):
+                        if(m.particle_system == ps):
+                            mod = m
+                            break
+                uv_locs = tuple()
+                for i, p in enumerate(ps.particles):
+                    co = ps.uv_on_emitter(mod, p, particle_no=i, uv_no=uv_no, )
+                    # (x, y, 0.0, )
+                    t = co.to_tuple() + (0.0, )
+                    uv_locs += (t[0], 1.0 - t[1], t[2], )
+                if(nc1 != 0):
+                    ex = int(nc1 / nc0)
+                for i in range(ex):
+                    uv_locs += uv_locs
+            has_uvs = True
+        else:
+            uv_locs = [0.0] * (len(ps.particles) * 3)
+            if(self.use_uv):
+                log("emitter has no UVs or no UV is selected to be used.. UVs will be exported, but set to (0.0, 0.0)", 1, LogStyles.WARNING, )
+                self.report({'WARNING'}, "emitter has no UVs or no UV is selected to be used.. UVs will be exported, but set to (0.0, 0.0)")
+        
+        flip_xy = Matrix(((-1.0, 0.0, 0.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+        fv = Vector((-1.0, -1.0, 0.0))
+        particles = []
+        for i, ploc in enumerate(locs):
+            # normal from velocity
+            pnor = Vector(vels[i])
+            pnor.normalize()
+            uv = uv_locs[i * 3:(i * 3) + 3]
+            uvv = Vector(uv).reflect(fv) * flip_xy
+            uvt = (uvv.z, uvv.x, uvv.y, )
+            particles.append((i, ) + tuple(ploc[:3]) + pnor.to_tuple() + tuple(vels[i][:3]) + (sizes[i], ) + uvt, )
+        
+        # and now.. export!
+        h, t = os.path.split(self.filepath)
+        n, e = os.path.splitext(t)
+        # remove frame number automaticaly added in ui
+        n = n[:-6]
+        
+        cf = bpy.context.scene.frame_current
+        prms = {'directory': bpy.path.abspath(h),
+                'name': "{}".format(n),
+                'frame': cf,
+                'particles': particles,
+                'fps': bpy.context.scene.render.fps,
+                # blender's size is in fact diameter, but we need radius..
+                'size': 1.0 if self.use_size else self.size / 2,
+                'log_indent': 1, }
+        rfbw = RFBinWriter(**prms)
+        
+        log('done.', 1, )
+        
+        return {'FINISHED'}
+    
+    def _menu(self, context):
+        self.layout.operator(ExportRFBin.bl_idname, text="Realflow Particles (.bin)")
+    
+    @classmethod
+    def register(cls):
+        bpy.types.INFO_MT_file_export.append(cls._menu)
+    
+    @classmethod
+    def unregister(cls):
+        bpy.types.INFO_MT_file_export.remove(cls._menu)
