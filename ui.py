@@ -5087,9 +5087,10 @@ class ExtParticlesPanel(ParticleButtonsPanel, Panel):
         
         if(m.bin_advanced):
             sub.label("Multipoint:")
-            sub.prop(m, 'bin_extra_create_np_pp')
-            sub.prop(m, 'bin_extra_dispersion')
-            sub.prop(m, 'bin_extra_deformation')
+            c = sub.column(align=True)
+            c.prop(m, 'bin_extra_create_np_pp')
+            c.prop(m, 'bin_extra_dispersion')
+            c.prop(m, 'bin_extra_deformation')
             sub.separator()
             
             sub.label("Extra Arrays Loading:")
