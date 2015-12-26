@@ -53,18 +53,17 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
 # NOTE: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
 # TODO: do something with sharp edges, auto smooth and custom normals..
-# TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess..
 # NOTE: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
-# TODO: maybe organize all props and remove the need of prefixes in names
+# TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess.. - this is first priority for 0.4.0 refactoring
 # TODO: more standardized setting render file type and bit depth, this will require change in render workflow and that is dangerous..
-# TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works
+# TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works. at least try to remove that texture from texture drop down. but i think it is not possible to filter prop_search results, have to be enum with custom items function
 # NOTE: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. - should be ok now, but better to check it more thoroughly
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause problems during next export
-# TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version.
-# TODO: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
+# TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version. or check version and then decide. this will require version.py to return version number instead of true/false.
+# NOTE: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # NOTE: maybe remove wireframe export completely, or only as export operator, also prepare wireframe scene before actual scene write, so the mostly unused switches and functions can be removed
-# TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred)
-# TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow
+# TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred) - seems like it will not work. texture preview might be usable when together with maxwell material basic blender material is created, then it can be used for preview in viewport
+# TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender)
 
 
 class MXSExport():
@@ -1813,7 +1812,7 @@ class MXSDatabase():
     Also all extension which use some other object must use the final name.
     """
     
-    # TODO: MXSDatabase: use similar mechanism for materials to skip unused before actual export
+    # TODO: MXSDatabase: use similar mechanism for materials to skip unused before actual export, this will requre to check al materials possible uses, like in extensions.
     
     __objects = []
     __valid_chars = "-_ {}{}".format(string.ascii_letters, string.digits)
@@ -4442,7 +4441,6 @@ class MXSMaterialCustom(MXSMaterial):
 
 class MXSWireframeBase(MXSMesh):
     def __init__(self, euuid, ):
-        # HACK: try to do it without modifying scene during export, blender might crash, for now this is just hack..
         n = 'WIREFRAME_BASE_{}'.format(euuid)
         mx = bpy.context.scene.maxwell_render
         gen = utils.CylinderMeshGenerator(height=1, radius=mx.export_wire_edge_radius, sides=mx.export_wire_edge_resolution, enhanced=True, )
@@ -4465,7 +4463,6 @@ class MXSWireframeBase(MXSMesh):
 
 class MXSWireframeContainer(MXSEmpty):
     def __init__(self, euuid, ):
-        # HACK: try to do it without modifying scene during export, blender might crash, for now this is just hack..
         n = 'WIREFRAME_CONTAINER_{}'.format(euuid)
         ob = utils.add_object2(n, None, )
         

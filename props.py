@@ -775,7 +775,7 @@ class SceneProperties(PropertyGroup):
     illum_caustics_refl_caustics = EnumProperty(name="Refl. Caustics", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Reflection caustics", )
     illum_caustics_refr_caustics = EnumProperty(name="Refr. Caustics", items=[('BOTH_0', "Both", ""), ('DIRECT_1', "Direct", ""), ('INDIRECT_2', "Indirect", ""), ('NONE_3', "None", "")], default='BOTH_0', description="Refraction caustics", )
     
-    # TODO: how to set overlay text? there is getOverlayTextOptions and setOverlayTextOptions, but no CoverlayTextOptions
+    # NOTE: how to set overlay text? there is getOverlayTextOptions and setOverlayTextOptions, but no CoverlayTextOptions, seems like this is not implemented in pymaxwell, so nothing to do here..
     # overlay_enabled = BoolProperty(name="Overlay", default=False, )
     # overlay_text = StringProperty(name="Overlay Text", default="", )
     # overlay_position = EnumProperty(name="Position", items=[('BOTTOM', "Bottom", ""), ('TOP', "Top", "")], default='BOTTOM', )
@@ -783,7 +783,7 @@ class SceneProperties(PropertyGroup):
     # overlay_background = BoolProperty(name="Background", default=False, )
     # overlay_background_color = FloatVectorProperty(name="Background Color", description="", default=(0.69, 0.69, 0.69), min=0.0, max=1.0, subtype='COLOR', )
     
-    # TODO: split export options to its own PropertyGroup?
+    # TODO: split export options to its own PropertyGroup? - 0.4.0 refactoring
     
     export_protect_mxs = BoolProperty(name="Protect MXS", default=False, description="Protect MXS from importing.", )
     

@@ -302,7 +302,7 @@ class ExportRFBin(Operator, ExportHelper):
                     sizes.append(self.size / 2)
         
         # transform
-        # TODO: overly complicated, isn't it? better to check it..
+        # TODO: axis conversion is overly complicated, is it?
         ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
         rfms = Matrix.Scale(1.0, 4)
         rfms[0][0] = -1.0
@@ -326,7 +326,7 @@ class ExportRFBin(Operator, ExportHelper):
             uv_locs = tuple()
             
             if(len(ps.child_particles) > 0):
-                # TODO: use bvhtree to make uvs for particles, like with hair
+                # NOT TO DO: use bvhtree to make uvs for particles, like with hair - no way to get child particles locations = no uvs
                 log("child particles uvs are not supported yet..", 1, LogStyles.WARNING, )
                 self.report({'WARNING'}, "child particles uvs are not supported yet..")
             else:
