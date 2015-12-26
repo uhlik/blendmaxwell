@@ -1072,6 +1072,25 @@ class MXSWriter():
                 c = Crgb()
                 c.assign(*d['id'])
                 m.setColorID(c)
+                
+                def displacement(d, m):
+                    if(not d['enabled']):
+                        return
+                    
+                    m.enableDisplacement(True)
+                    if(d['map'] is not None):
+                        t = texture(d['map'], s)
+                        m.setDisplacementMap(t)
+                    m.setDisplacementCommonParameters(d['type'], d['subdivision'], int(d['smoothing']), d['offset'], d['subdivision_method'], d['uv_interpolation'], )
+                    m.setHeightMapDisplacementParameters(d['height'], d['height_units'], d['adaptive'], )
+                    v = Cvector(*d['v3d_scale'])
+                    m.setVectorDisplacementParameters(v, d['v3d_transform'], d['v3d_rgb_mapping'], d['v3d_preset'], )
+                
+                try:
+                    displacement(d['displacement'], m)
+                except KeyError:
+                    pass
+                
         elif(d['subtype'] == 'CUSTOM'):
             m = self.material_custom(d)
         else:
@@ -3407,6 +3426,25 @@ class MXMWriter():
                 c = Crgb()
                 c.assign(*d['id'])
                 m.setColorID(c)
+                
+                def displacement(d, m):
+                    if(not d['enabled']):
+                        return
+                
+                    m.enableDisplacement(True)
+                    if(d['map'] is not None):
+                        t = texture(d['map'], s)
+                        m.setDisplacementMap(t)
+                    m.setDisplacementCommonParameters(d['type'], d['subdivision'], int(d['smoothing']), d['offset'], d['subdivision_method'], d['uv_interpolation'], )
+                    m.setHeightMapDisplacementParameters(d['height'], d['height_units'], d['adaptive'], )
+                    v = Cvector(*d['v3d_scale'])
+                    m.setVectorDisplacementParameters(v, d['v3d_transform'], d['v3d_rgb_mapping'], d['v3d_preset'], )
+            
+                try:
+                    displacement(d['displacement'], m)
+                except KeyError:
+                    pass
+                
         elif(d['subtype'] == 'CUSTOM'):
             m = self.material_custom(d)
         else:
