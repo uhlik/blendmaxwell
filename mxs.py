@@ -1079,7 +1079,7 @@ class MXSWriter():
                     
                     m.enableDisplacement(True)
                     if(d['map'] is not None):
-                        t = texture(d['map'], s)
+                        t = self.texture(d['map'])
                         m.setDisplacementMap(t)
                     m.setDisplacementCommonParameters(d['type'], d['subdivision'], int(d['smoothing']), d['offset'], d['subdivision_method'], d['uv_interpolation'], )
                     m.setHeightMapDisplacementParameters(d['height'], d['height_units'], d['adaptive'], )
@@ -1133,7 +1133,7 @@ class MXSWriter():
         """
         s = self.mxs
         if(props[13] in [6, 7]):
-            props2 = props[:]
+            props2 = list(props[:])
             props2[13] = TYPE_EXTENSION_LENS
             c = s.addCamera(*props2)
         else:
@@ -1147,11 +1147,11 @@ class MXSWriter():
         
         # TYPE_THIN_LENS, TYPE_PINHOLE, TYPE_ORTHO
         if(lens_extra is not None):
-            if(props[13] == TYPE_FISHEYE):
+            if(props[13] == TYPE_FISHEYE_LENS):
                 c.setFishLensProperties(lens_extra)
-            if(props[13] == TYPE_SPHERICAL):
+            if(props[13] == TYPE_SPHERICAL_LENS):
                 c.setSphericalLensProperties(lens_extra)
-            if(props[13] == TYPE_CYLINDRICAL):
+            if(props[13] == TYPE_CYLINDRICAL_LENS):
                 c.setCylindricalLensProperties(lens_extra)
             if(props[13] == 6):
                 p = MXparamList()
@@ -3433,7 +3433,7 @@ class MXMWriter():
                 
                     m.enableDisplacement(True)
                     if(d['map'] is not None):
-                        t = texture(d['map'], s)
+                        t = self.texture(d['map'])
                         m.setDisplacementMap(t)
                     m.setDisplacementCommonParameters(d['type'], d['subdivision'], int(d['smoothing']), d['offset'], d['subdivision_method'], d['uv_interpolation'], )
                     m.setHeightMapDisplacementParameters(d['height'], d['height_units'], d['adaptive'], )

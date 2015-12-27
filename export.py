@@ -1501,8 +1501,8 @@ class MXSExport():
                         lens_extra = (o.m_lls_type, o.m_lls_fovv, o.m_lls_fovh, o.m_lls_flip_ray_x, o.m_lls_flip_ray_y,
                                       o.m_lls_parallax_distance, o.m_lls_zenith_mode, o.m_lls_separation, o.m_lls_separation_map, )
                     elif(o.m_lens == 7):
-                        lens_extra = (fs_type, fs_fov, fs_separation, fs_separation_map, fs_vertical_mode, fs_dome_radius,
-                                      fs_head_turn_map, fs_dome_tilt_compensation, fs_dome_tilt, fs_head_tilt_map, )
+                        lens_extra = (o.m_fs_type, o.m_fs_fov, o.m_fs_separation, o.m_fs_separation_map, o.m_fs_vertical_mode, o.m_fs_dome_radius,
+                                      o.m_fs_head_turn_map, o.m_fs_dome_tilt_compensation, o.m_fs_dome_tilt, o.m_fs_head_tilt_map, )
                 screen_region = None
                 if(o.m_screen_region != 'NONE'):
                     screen_region = o.m_screen_region_xywh
