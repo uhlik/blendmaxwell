@@ -35,20 +35,20 @@
 * Maxwell must be installed in usual place i.e. ```/Applications/Maxwell 3```
 * Download python 3.4.1 from [https://www.python.org/downloads/release/python-341/](https://www.python.org/downloads/release/python-341/) and install
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/Library/Application Support/Blender/2.76/scripts/addons/```
-* Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
+* Start Blender, go to User Preferences > Add-ons, search for 'blendmaxwell' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 * if you are updating from version before 0.3.3, please remove ```_pymaxwell.so``` and ```pymaxwell.py``` from ```/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/site-packages``` it is no longer necessary and it might cause conflicts
 
 ### addon installation - Windows:
 
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.76\scripts\addons\```
-* Start Blender, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
+* Start Blender, go to User Preferences > Add-ons, search for 'blendmaxwell' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
 ### addon installation - Linux:
 
 * append this ```export LD_LIBRARY_PATH=$MAXWELL3_ROOT:$LD_LIBRARY_PATH``` to your .bashrc after generated stuff from Maxwell installation, i.e. after ```MAXWELL3_ROOT``` is exported
 * to fix complains of some extensions, install ```libtbb-dev```, but this step might be optional, it is used by extension not supported in addon
 * Download this repository clicking 'Download ZIP', extract, rename directory to ```blendmaxwell``` and put to ```~/.config/blender/2.76/scripts/addons/```
-* Start Blender from terminal, go to User Preferences > Add-ons, search for 'Maxwell Render' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
+* Start Blender from terminal, go to User Preferences > Add-ons, search for 'blendmaxwell' in Render category and enable it, then choose 'Maxwell Render' from render engines list in Info panel header
 
 #### installation notes:
 
