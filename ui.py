@@ -4395,6 +4395,58 @@ class MaterialBackfacePanel(MaterialButtonsPanel, Panel):
             r.operator('maxwell_render.edit_material').backface = True
 
 
+class MaterialWizardPanel(BMPanel, MaterialButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Material Wizards"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        o = context.object
+        e = context.scene.render.engine
+        m = context.material
+        if(m is None):
+            return False
+        mx = m.maxwell_render
+        return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM')
+    
+    def draw(self, context):
+        mat = context.material
+        mx = mat.maxwell_render
+        w = mx.wizards
+        l = self.layout.column()
+        
+        l.prop(w, 'types')
+        l.separator()
+        
+        if(w.types == 'GREASY'):
+            self.tab_single(l, w, 'greasy_color')
+            l.separator()
+            l.operator('maxwell_render.material_wizard_greasy', text="Execute! (material will be replaced)", )
+        # elif(w.types == 'PLASTIC'):
+        #     # Plastic wizard is the same as Opaque extension..
+        #     self.tab_single(l, w, 'plastic_shininess')
+        #     self.tab_single(l, w, 'plastic_roughness')
+        #     self.tab_single(l, w, 'plastic_color')
+        #     l.separator()
+        #     l.operator('maxwell_render.material_wizard_plastic', text="Execute! (material will be replaced)", )
+        elif(w.types == 'TEXTURED'):
+            self.tab_single(l, w, 'textured_diffuse')
+            self.tab_single(l, w, 'textured_specular')
+            self.tab_single(l, w, 'textured_bump')
+            self.tab_single(l, w, 'textured_bump_strength')
+            self.tab_single(l, w, 'textured_normal')
+            self.tab_single(l, w, 'textured_alpha')
+            l.separator()
+            l.operator('maxwell_render.material_wizard_textured', text="Execute! (material will be replaced)", )
+        elif(w.types == 'VELVET'):
+            self.tab_single(l, w, 'velvet_color')
+            l.separator()
+            l.operator('maxwell_render.material_wizard_velvet', text="Execute! (material will be replaced)", )
+        else:
+            pass
+
+
 class TexturePanel(TextureButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Texture"

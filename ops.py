@@ -24,7 +24,7 @@ import math
 import bpy
 from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty, StringProperty, EnumProperty, FloatVectorProperty, IntVectorProperty
 from bpy.types import Operator
-from mathutils import Vector
+from mathutils import Vector, Color
 from bl_operators.presets import AddPresetBase
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
@@ -1928,6 +1928,387 @@ class CustomAlphasMaterialClear(Operator):
         alpha.m_index = -1
         
         return {'FINISHED'}
+
+
+class MaterialWizardPlastic(Operator):
+    bl_idname = "maxwell_render.material_wizard_plastic"
+    bl_label = "Plastic"
+    bl_description = "Material wizard: Plastic"
+    
+    # shininess = FloatProperty(name="Shininess", default=30.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
+    # roughness = FloatProperty(name="Roughness", default=0.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
+    # color = FloatVectorProperty(name="Color", default=(0.07805659603547627, 0.12752978241224922, 0.26735808898200775), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    
+    @classmethod
+    def poll(cls, context):
+        # Plastic wizard is the same as Opaque extension..
+        return False
+    
+    # def draw(self, context):
+    #     l = self.layout
+    #     l.prop(self, 'shininess')
+    #     l.prop(self, 'roughness')
+    #     l.prop(self, 'color')
+    
+    def execute(self, context):
+        mat = context.material
+        mx = mat.maxwell_render
+        w = mx.wizards
+        cl = mx.custom_layers
+        
+        while(len(cl.layers) > 0):
+            bpy.ops.maxwell_render.material_editor_remove_layer()
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Base"
+        li.emitter
+        l = li.layer
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = w.plastic_color
+        b.reflectance_90 = w.plastic_color
+        b.roughness = 97.0
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Topcoat"
+        li.emitter
+        l = li.layer
+        l.blending = '1'
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = (0.0, 0.0, 0.0, )
+        b.reflectance_90 = (0.0, 0.0, 0.0, )
+        b.nd = 1.1 + (w.plastic_shininess * 0.005)
+        b.force_fresnel = True
+        b.abbe = 50.0
+        b.roughness = w.plastic_roughness
+        
+        w.types = 'NONE'
+        
+        return {'FINISHED'}
+    
+    # def invoke(self, context, event):
+    #     return context.window_manager.invoke_props_dialog(self)
+
+
+class MaterialWizardGreasy(Operator):
+    bl_idname = "maxwell_render.material_wizard_greasy"
+    bl_label = "Greasy"
+    bl_description = "Material wizard: Greasy"
+    
+    # color = FloatVectorProperty(name="Color", default=(0.0008046585621626175, 0.0008046585621626175, 0.0008046585621626175), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    
+    # @classmethod
+    # def poll(cls, context):
+    #     return True
+    #
+    # def draw(self, context):
+    #     l = self.layout
+    #     l.prop(self, 'color')
+    
+    def execute(self, context):
+        mat = context.material
+        mx = mat.maxwell_render
+        w = mx.wizards
+        cl = mx.custom_layers
+        
+        while(len(cl.layers) > 0):
+            bpy.ops.maxwell_render.material_editor_remove_layer()
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Base"
+        li.emitter
+        l = li.layer
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = w.greasy_color
+        b.reflectance_90 = w.greasy_color
+        b.nd = 3.0
+        b.roughness = 97.0
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Topcoat"
+        li.emitter
+        l = cl.layers[0].layer
+        l.blending = '1'
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = (0.0, 0.0, 0.0, )
+        b.reflectance_90 = (0.0, 0.0, 0.0, )
+        b.nd = 1.250
+        b.force_fresnel = True
+        b.roughness = 0
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Scratches"
+        li.emitter
+        l = cl.layers[0].layer
+        l.blending = '1'
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = (0.0, 0.0, 0.0, )
+        b.reflectance_90 = (0.0, 0.0, 0.0, )
+        b.nd = 1.250
+        b.force_fresnel = True
+        b.roughness = 25.0
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Dust"
+        li.emitter
+        l = cl.layers[0].layer
+        l.blending = '1'
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = (0.0, 0.0, 0.0, )
+        b.reflectance_90 = (1.0, 1.0, 1.0, )
+        b.nd = 1.150
+        b.force_fresnel = False
+        b.r2_enabled = True
+        b.r2_falloff_angle = math.radians(76.0)
+        b.roughness = 90.0
+        
+        w.types = 'NONE'
+        
+        return {'FINISHED'}
+    
+    # def invoke(self, context, event):
+    #     return context.window_manager.invoke_props_dialog(self)
+
+
+class MaterialWizardVelvet(Operator):
+    bl_idname = "maxwell_render.material_wizard_velvet"
+    bl_label = "Velvet"
+    bl_description = "Material wizard: Velvet"
+    
+    # color = FloatVectorProperty(name="Color", default=(0.05112205630307245, 0.010397803645369345, 0.10114516973592808), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    
+    # @classmethod
+    # def poll(cls, context):
+    #     return True
+    #
+    # def draw(self, context):
+    #     l = self.layout
+    #     l.prop(self, 'color')
+    
+    def execute(self, context):
+        mat = context.material
+        mx = mat.maxwell_render
+        w = mx.wizards
+        cl = mx.custom_layers
+        
+        c0 = Color(w.velvet_color)
+        c0.h -= 0.04166666666666667
+        c1 = Color(w.velvet_color)
+        c1.h -= 0.04166666666666667
+        
+        while(len(cl.layers) > 0):
+            bpy.ops.maxwell_render.material_editor_remove_layer()
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Base"
+        li.emitter
+        l = li.layer
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = c0
+        b.reflectance_90 = c0
+        b.nd = 3.0
+        b.roughness = 97.0
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Sheen"
+        li.emitter
+        l = li.layer
+        l.blending = '1'
+        l.opacity = 20.0
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = c1
+        b.reflectance_90 = c1
+        b.nd = 1.250
+        b.force_fresnel = True
+        b.roughness = 60.0
+        b.anisotropy = 100.0
+        b.anisotropy_angle = math.radians(90.0)
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Microfiber"
+        li.emitter
+        l = li.layer
+        l.blending = '1'
+        l.opacity = 80.0
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = (0.0, 0.0, 0.0)
+        b.reflectance_90 = (1.0, 1.0, 1.0)
+        b.nd = 5.0
+        b.force_fresnel = False
+        b.r2_enabled = True
+        b.r2_falloff_angle = math.radians(79.0)
+        b.roughness = 90.0
+        
+        w.types = 'NONE'
+        
+        return {'FINISHED'}
+    
+    # def invoke(self, context, event):
+    #     return context.window_manager.invoke_props_dialog(self)
+
+
+class MaterialWizardTextured(Operator):
+    bl_idname = "maxwell_render.material_wizard_textured"
+    bl_label = "Textured"
+    bl_description = "Material wizard: Textured"
+    
+    # diffuse = StringProperty(name="Diffuse Map", default="", subtype='FILE_PATH', )
+    # specular = StringProperty(name="Specular Map", default="", subtype='FILE_PATH', )
+    # bump = StringProperty(name="Bump Map", default="", subtype='FILE_PATH', )
+    # bump_strength = FloatProperty(name="Bump Strength", default=20.0, min=0.0, max=200.0, precision=2, )
+    # normal = StringProperty(name="Normal Map", default="", subtype='FILE_PATH', )
+    # alpha = StringProperty(name="Alpha Map", default="", subtype='FILE_PATH', )
+    
+    # @classmethod
+    # def poll(cls, context):
+    #     return True
+    #
+    # def draw(self, context):
+    #     l = self.layout
+    #     l.prop(self, 'diffuse')
+    #     l.prop(self, 'specular')
+    #     l.prop(self, 'bump')
+    #     l.prop(self, 'bump_strength')
+    #     l.prop(self, 'normal')
+    #     l.prop(self, 'alpha')
+    
+    def execute(self, context):
+        mat = context.material
+        mx = mat.maxwell_render
+        w = mx.wizards
+        cl = mx.custom_layers
+        
+        while(len(cl.layers) > 0):
+            bpy.ops.maxwell_render.material_editor_remove_layer()
+        
+        def texture(m, n, p, sn):
+            ts = m.texture_slots
+            s = ts.create(sn)
+            t = bpy.data.textures.new(n, 'IMAGE')
+            s.texture = t
+            i = bpy.data.images.load(p)
+            t.image = i
+            return t.name
+        
+        dmap = ""
+        smap = ""
+        bmap = ""
+        nmap = ""
+        amap = ""
+        if(w.textured_diffuse):
+            dmap = texture(mat, 'diffuse map', w.textured_diffuse, 0, )
+        if(w.textured_specular):
+            smap = texture(mat, 'specular map', w.textured_specular, 1, )
+        if(w.textured_bump):
+            bmap = texture(mat, 'bump map', w.textured_bump, 3, )
+        if(w.textured_normal):
+            nmap = texture(mat, 'normal map', w.textured_normal, 4, )
+        if(w.textured_alpha):
+            amap = texture(mat, 'alpha map', w.textured_alpha, 5, )
+        
+        if(w.textured_normal):
+            mx.global_bump_map = nmap
+            mx.global_bump_map_use_normal = True
+            mx.global_bump_normal = 100.0
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Base"
+        li.emitter
+        l = li.layer
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = (0.0, 0.0, 0.0)
+        b.reflectance_90 = (0.0, 0.0, 0.0)
+        if(w.textured_diffuse):
+            t = dmap
+            b.reflectance_0_map_enabled = True
+            b.reflectance_0_map = t
+            b.reflectance_90_map_enabled = True
+            b.reflectance_90_map = t
+        b.nd = 3.0
+        b.roughness = 97.0
+        if(w.textured_bump):
+            b.bump = w.textured_bump_strength
+            b.bump_map_enabled = True
+            b.bump_map = bmap
+        
+        bpy.ops.maxwell_render.material_editor_add_layer()
+        li = cl.layers[0]
+        li.name = "Specular"
+        li.emitter
+        l = li.layer
+        l.blending = '1'
+        if(w.textured_specular):
+            l.opacity = 100.0
+            l.opacity_map_enabled = True
+            l.opacity_map = smap
+        bi = l.bsdfs.bsdfs[0]
+        bi.coating
+        b = bi.bsdf
+        b.reflectance_0 = (0.0, 0.0, 0.0)
+        b.reflectance_90 = (0.0, 0.0, 0.0)
+        b.nd = 1.5
+        b.force_fresnel = True
+        b.roughness = 0.0
+        if(w.textured_specular):
+            b.roughness = 50.0
+            b.roughness_map_enabled = True
+            b.roughness_map = texture(mat, 'specular map inverted', w.textured_specular, 2, )
+            bpy.data.textures[b.roughness_map].maxwell_render.invert = True
+        if(w.textured_bump):
+            b.bump = w.textured_bump_strength
+            b.bump_map_enabled = True
+            b.bump_map = bmap
+        
+        if(w.textured_alpha):
+            bpy.ops.maxwell_render.material_editor_add_layer()
+            li = cl.layers[0]
+            li.name = "Alpha"
+            li.emitter
+            l = li.layer
+            bi = l.bsdfs.bsdfs[0]
+            bi.coating
+            b = bi.bsdf
+            b.reflectance_0 = (0.0, 0.0, 0.0)
+            b.reflectance_90 = (0.0, 0.0, 0.0)
+            b.transmittance = (1.0, 1.0, 1.0)
+            b.nd = 1.0
+            b.roughness = 0.0
+        
+        w.types = 'NONE'
+        
+        return {'FINISHED'}
+    
+    # def invoke(self, context, event):
+    #     return context.window_manager.invoke_props_dialog(self)
 
 
 class Render_preset_add(AddPresetBase, Operator):

@@ -2124,6 +2124,27 @@ class ExtMaterialProperties(PropertyGroup):
         del bpy.types.Material.maxwell_material_extension
 
 
+class MaterialWizards(PropertyGroup):
+    # types = EnumProperty(name="Wizard", items=[('NONE', "Choose material wizard", ""), ('GREASY', "Greasy", ""), ('PLASTIC', "Plastic", ""), ('TEXTURED', "Textured", ""), ('VELVET', "Velvet", ""), ], default='NONE', )
+    types = EnumProperty(name="Wizard", items=[('NONE', "Choose material wizard", ""), ('GREASY', "Greasy", ""), ('TEXTURED', "Textured", ""), ('VELVET', "Velvet", ""), ], default='NONE', )
+    
+    greasy_color = FloatVectorProperty(name="Color", default=(0.0008046585621626175, 0.0008046585621626175, 0.0008046585621626175), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    
+    # # Plastic wizard is the same as Opaque extension..
+    # plastic_shininess = FloatProperty(name="Shininess", default=30.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
+    # plastic_roughness = FloatProperty(name="Roughness", default=0.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
+    # plastic_color = FloatVectorProperty(name="Color", default=(0.07805659603547627, 0.12752978241224922, 0.26735808898200775), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    
+    textured_diffuse = StringProperty(name="Diffuse Map", default="", subtype='FILE_PATH', )
+    textured_specular = StringProperty(name="Specular Map", default="", subtype='FILE_PATH', )
+    textured_bump = StringProperty(name="Bump Map", default="", subtype='FILE_PATH', )
+    textured_bump_strength = FloatProperty(name="Bump Strength", default=20.0, min=0.0, max=200.0, precision=2, )
+    textured_normal = StringProperty(name="Normal Map", default="", subtype='FILE_PATH', )
+    textured_alpha = StringProperty(name="Alpha Map", default="", subtype='FILE_PATH', )
+    
+    velvet_color = FloatVectorProperty(name="Color", default=(0.05112205630307245, 0.010397803645369345, 0.10114516973592808), min=0.0, max=1.0, precision=2, subtype='COLOR', )
+
+
 class MaterialProperties(PropertyGroup):
     def _get_material_preview_scenes(self, context):
         from . import system
@@ -2164,6 +2185,8 @@ class MaterialProperties(PropertyGroup):
     custom_displacement = PointerProperty(name="Displacement", type=MaterialDisplacementProperties, )
     custom_active_display_map = StringProperty(name="Active Display Map", description="Set texture displayed in Studio viewport", default="", )
     custom_open_in_mxed_after_save = BoolProperty(name="Open In Mxed", default=True, description="Open in Mxed after save", )
+    
+    wizards = PointerProperty(name="Material Wizards", type=MaterialWizards, )
     
     @classmethod
     def register(cls):
