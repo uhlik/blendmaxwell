@@ -25,7 +25,6 @@ import sys
 
 from .log import log, LogStyles
 from . import utils
-from . import system
 
 s = platform.system()
 if(s == 'Darwin'):
@@ -53,11 +52,6 @@ elif(s == 'Windows'):
         sys.path.insert(0, pp)
         os.environ['PATH'] = ';'.join([mp, os.environ['PATH']])
         from pymaxwell import *
-
-s = getPyMaxwellVersion()
-v = tuple([int(i) for i in s.split('.')])
-if(v < system.REQUIRED):
-    raise Exception("Found old pymaxwell {}, required version is: {}".format(v, REQUIRED))
 
 
 def read_mxm_preview(path):
