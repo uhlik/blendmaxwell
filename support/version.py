@@ -50,10 +50,14 @@ if __name__ == "__main__":
     parser.add_argument('version', type=str, help='minimum required version string, as returned from pymaxwell.getPyMaxwellVersion()')
     args = parser.parse_args()
     
+    PYMAXWELL_PATH = args.pymaxwell_path
+    
     try:
         import pymaxwell
     except ImportError:
-        sys.path.insert(0, args.pymaxwell_path)
+        if(not os.path.exists(PYMAXWELL_PATH)):
+            raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
+        sys.path.insert(0, PYMAXWELL_PATH)
         try:
             import pymaxwell
         except ImportError:

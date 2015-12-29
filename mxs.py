@@ -34,14 +34,22 @@ elif(s == 'Linux'):
         from pymaxwell import *
     except ImportError:
         mp = os.environ.get("MAXWELL3_ROOT")
-        sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
+        pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
+        if(not os.path.exists(pp)):
+            raise OSError("pymaxwell for python 3.4 does not exist ({})".format(pp))
+        # sys.path.append(pp)
+        sys.path.insert(0, pp)
         from pymaxwell import *
 elif(s == 'Windows'):
     try:
         from pymaxwell import *
     except ImportError:
         mp = os.environ.get("MAXWELL3_ROOT")
-        sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
+        pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
+        if(not os.path.exists(pp)):
+            raise OSError("pymaxwell for python 3.4 does not exist ({})".format(pp))
+        # sys.path.append(pp)
+        sys.path.insert(0, pp)
         os.environ['PATH'] = ';'.join([mp, os.environ['PATH']])
         from pymaxwell import *
 
