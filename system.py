@@ -538,7 +538,11 @@ def check_pymaxwell_version():
             import pymaxwell
         except ImportError:
             mp = os.environ.get("MAXWELL3_ROOT")
-            sys.path.append(os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4')))
+            pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
+            if(not os.path.exists(pp)):
+                raise OSError("pymaxwell for python 3.4 does not exist ({})".format(pp))
+            sys.path.insert(0, pp)
+            # sys.path.append(pp)
             if(PLATFORM == 'Windows'):
                 os.environ['PATH'] = ';'.join([mp, os.environ['PATH']])
             import pymaxwell
