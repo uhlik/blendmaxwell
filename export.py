@@ -65,6 +65,8 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred) - seems like it will not work. texture preview might be usable when together with maxwell material basic blender material is created, then it can be used for preview in viewport
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender)
 # TODO: verify installation during addon activation
+# TODO: material preview: export material to mxm, load preview scene, swap material named 'preview', save to /tmp and render required size. load image afterwards with CmaxwellMxi.getPreview > numpy array
+# TODO: procedural textures, but without preview are a bit useless. how to preview them? don't see anything usable in pymaxwell for it. create special scene a render it? some kind of light tent?
 
 
 class MXSExport():
