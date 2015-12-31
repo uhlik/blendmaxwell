@@ -2311,6 +2311,28 @@ class MaterialWizardTextured(Operator):
     #     return context.window_manager.invoke_props_dialog(self)
 
 
+class ExecuteMaxwellPreset(Operator):
+    """Execute a preset"""
+    
+    # https://git.blender.org/gitweb/gitweb.cgi/blender.git/blob/HEAD:/release/scripts/startup/bl_operators/presets.py
+    
+    bl_idname = "maxwell_render.execute_preset"
+    bl_label = "Execute a Python Preset"
+    
+    filepath = StringProperty(subtype='FILE_PATH', options={'SKIP_SAVE'}, )
+    
+    def execute(self, context):
+        from os.path import basename, splitext
+        filepath = self.filepath
+        ext = splitext(filepath)[1].lower()
+        if ext == ".py":
+            bpy.ops.script.python_file_run(filepath=filepath)
+        else:
+            self.report({'ERROR'}, "unknown filetype: %r" % ext)
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
 class Render_preset_add(AddPresetBase, Operator):
     """Add a new render preset."""
     bl_idname = 'maxwell_render.render_preset_add'
