@@ -2295,6 +2295,7 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
             r = c.row()
             r.prop(o, pn0, text="", )
             r.prop(o, pn1, text="", )
+            return r
         
         def tab_color_and_map(l, t, o, p, pe, pm, ):
             r = l.row()
@@ -2320,6 +2321,11 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
         l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
         l.prop(cd, 'type')
         
+        # cd.type values:
+        #   '0' On The Fly
+        #   '1' Pretessellated
+        #   '2' Vector
+        
         r = l.row()
         s = r.split(percentage=0.333)
         c = s.column()
@@ -2327,15 +2333,26 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
         c = s.column()
         r = c.row()
         r.prop(cd, 'subdivision', text="", )
-        r.prop(cd, 'adaptive', )
-        l.prop(cd, 'subdivision_method')
+        c = r.column()
+        c.prop(cd, 'adaptive', )
+        if(cd.type != '0'):
+            c.enabled = False
+        r = l.row()
+        r.prop(cd, 'subdivision_method')
+        if(cd.type == '0'):
+            r.enabled = False
         tab_single(l, "Offset:", cd, 'offset')
         tab_single(l, "Smoothing:", cd, 'smoothing')
-        l.prop(cd, 'uv_interpolation')
+        r = l.row()
+        r.prop(cd, 'uv_interpolation')
+        if(cd.type == '0'):
+            r.enabled = False
         
         l.separator()
         l.label("HeightMap Properties:")
-        tab_double(l, "Height:", cd, 'height', 'height_units', )
+        r = tab_double(l, "Height:", cd, 'height', 'height_units', )
+        if(cd.type == '2'):
+            r.enabled = False
         
         if(cd.type == '2'):
             # Vector displacement
@@ -3546,6 +3563,7 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
             r = c.row()
             r.prop(o, pn0, text="", )
             r.prop(o, pn1, text="", )
+            return r
         
         def tab_color_and_map(l, t, o, p, pe, pm, ):
             r = l.row()
@@ -3571,6 +3589,11 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
         l.prop_search(cd, 'map', mat, 'texture_slots', icon='TEXTURE', )
         l.prop(cd, 'type')
         
+        # cd.type values:
+        #   '0' On The Fly
+        #   '1' Pretessellated
+        #   '2' Vector
+        
         r = l.row()
         s = r.split(percentage=0.333)
         c = s.column()
@@ -3578,15 +3601,26 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
         c = s.column()
         r = c.row()
         r.prop(cd, 'subdivision', text="", )
-        r.prop(cd, 'adaptive', )
-        l.prop(cd, 'subdivision_method')
+        c = r.column()
+        c.prop(cd, 'adaptive', )
+        if(cd.type != '0'):
+            c.enabled = False
+        r = l.row()
+        r.prop(cd, 'subdivision_method')
+        if(cd.type == '0'):
+            r.enabled = False
         tab_single(l, "Offset:", cd, 'offset')
         tab_single(l, "Smoothing:", cd, 'smoothing')
-        l.prop(cd, 'uv_interpolation')
+        r = l.row()
+        r.prop(cd, 'uv_interpolation')
+        if(cd.type == '0'):
+            r.enabled = False
         
         l.separator()
         l.label("HeightMap Properties:")
-        tab_double(l, "Height:", cd, 'height', 'height_units', )
+        r = tab_double(l, "Height:", cd, 'height', 'height_units', )
+        if(cd.type == '2'):
+            r.enabled = False
         
         if(cd.type == '2'):
             # Vector displacement
