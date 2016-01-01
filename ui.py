@@ -4495,41 +4495,50 @@ class TexturePanel(TextureButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
-        m = context.texture.maxwell_render
+        # m = context.texture.maxwell_render
+        # ts = context.texture_slot
         
-        ts = context.texture_slot
-        
-        # l.label("Texture Type:")
-        # l.prop(m, 'use', text="")
+        tex = context.texture
+        m = tex.maxwell_render
         
         if(m.use == 'IMAGE'):
-            tex = None
-            if(ts.texture is not None):
-                if(ts.texture.type == 'IMAGE'):
-                    tex = ts.texture
-            if(tex is None):
-                l.active = False
-            
-            # c = l.column()
-            if(tex is not None and tex.image):
-                # image = tex.image
-                # c.active = False
-                # c.enabled = False
-                # c.prop(image, 'filepath', text="Path:")
-                # c.prop(tex, 'image')
-                pass
+            if(tex.type == 'IMAGE'):
+                if(not tex.image):
+                    l.label("Load an image", icon='ERROR', )
             else:
-                # c = l.column()
-                # c.label("Load an image", icon='ERROR', )
-                l.label("Load an image", icon='ERROR', )
+                l.active = False
+        
+        # if(m.use == 'IMAGE'):
+        #     tex = None
+        #     if(ts.texture is not None):
+        #         if(ts.texture.type == 'IMAGE'):
+        #             tex = ts.texture
+        #     if(tex is None):
+        #         l.active = False
+        #
+        #     # c = l.column()
+        #     if(tex is not None and tex.image):
+        #         # image = tex.image
+        #         # c.active = False
+        #         # c.enabled = False
+        #         # c.prop(image, 'filepath', text="Path:")
+        #         # c.prop(tex, 'image')
+        #         pass
+        #     else:
+        #         # c = l.column()
+        #         # c.label("Load an image", icon='ERROR', )
+        #         l.label("Load an image", icon='ERROR', )
         
         l.label("Projection Properties:")
         
         def is_override_map(tex, mat):
-            mmx = mat.maxwell_render
-            if(mmx.global_override_map is not ""):
-                if(mmx.global_override_map == tex.name):
-                    return True
+            try:
+                mmx = mat.maxwell_render
+                if(mmx.global_override_map is not ""):
+                    if(mmx.global_override_map == tex.name):
+                        return True
+            except AttributeError:
+                return False
             return False
         
         if(not is_override_map(tex, context.material)):
