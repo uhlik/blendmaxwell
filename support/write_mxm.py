@@ -638,6 +638,10 @@ def material(d, s, ):
                 c = Crgb()
                 c.assign(*d['id'])
                 m.setColorID(c)
+                
+                if(d['active_display_map']):
+                    t = texture(d['active_display_map'], s, )
+                    m.setActiveDisplayMap(t)
             
             global_props(d, m)
             
@@ -825,6 +829,10 @@ def material(d, s, ):
             c = Crgb()
             c.assign(*d['id'])
             m.setColorID(c)
+            
+            if(d['active_display_map']):
+                t = texture(d['active_display_map'], s, )
+                m.setActiveDisplayMap(t)
             
             def displacement(d, m):
                 if(not d['enabled']):

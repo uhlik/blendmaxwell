@@ -2183,7 +2183,7 @@ class MaterialProperties(PropertyGroup):
     
     custom_layers = PointerProperty(name="Custom Layers", type=MaterialCustomLayers, )
     custom_displacement = PointerProperty(name="Displacement", type=MaterialDisplacementProperties, )
-    custom_active_display_map = StringProperty(name="Active Display Map", description="Set texture displayed in Studio viewport", default="", )
+    active_display_map = StringProperty(name="Active Display Map", description="Set texture displayed in Studio viewport", default="", )
     custom_open_in_mxed_after_save = BoolProperty(name="Open In Mxed", default=True, description="Open in Mxed after save", )
     
     wizards = PointerProperty(name="Material Wizards", type=MaterialWizards, )

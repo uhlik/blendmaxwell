@@ -2248,8 +2248,7 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         r = sub.row()
         r.prop(m, 'global_id')
         
-        if(m.use == 'CUSTOM'):
-            sub.prop_search(m, 'custom_active_display_map', mat, 'texture_slots', icon='TEXTURE', )
+        sub.prop_search(m, 'active_display_map', mat, 'texture_slots', icon='TEXTURE', )
         
         sub.separator()
         r = sub.row()

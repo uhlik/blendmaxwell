@@ -4002,6 +4002,8 @@ class MXSMaterialExtension(MXSMaterial):
         else:
             raise TypeError("{}: Unsupported extension material type: {}".format(self.m_name, self.m_use, ))
         
+        self.m_active_display_map = self._texture_to_data(m.active_display_map)
+        
         dtypes = ['AGS', 'OPAQUE', 'TRANSPARENT', 'METAL', 'TRANSLUCENT', 'CARPAINT', 'HAIR', ]
         if(self.m_use in dtypes):
             self._displacement()
@@ -4432,7 +4434,7 @@ class MXSMaterialCustom(MXSMaterial):
                         'matte': m.global_matte,
                         'priority': m.global_priority,
                         'id': self._gamma_uncorrect(m.global_id),
-                        'active_display_map': self._texture_to_data(m.custom_active_display_map), }
+                        'active_display_map': self._texture_to_data(m.active_display_map), }
         
         self.m_data = {'global_props': global_props,
                        'displacement': displacement,
