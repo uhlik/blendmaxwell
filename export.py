@@ -67,7 +67,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: verify installation during addon activation
 # TODO: material preview: export material to mxm, load preview scene, swap material named 'preview', save to /tmp and render required size. load image afterwards with CmaxwellMxi.getPreview > numpy array
 # TODO: procedural textures, but without preview are a bit useless. how to preview them? don't see anything usable in pymaxwell for it. create special scene a render it? some kind of light tent?
-# FIXME: add display map for extension materials
 
 
 class MXSExport():
