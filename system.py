@@ -595,3 +595,65 @@ def mxed_browse_material_helper():
     if(mp == ''):
         return None
     return mp
+
+
+def verify_installation():
+    if(PLATFORM == 'Darwin'):
+        # maxwell installation is on default path or path specified in preferences
+        ump = prefs().maxwell_path
+        dmp = '/Applications/Maxwell 3/'
+        mp = ''
+        if(ump == ''):
+            mp = dmp
+        else:
+            mp = ump
+        if(not os.path.exists(mp)):
+            raise OSError("Maxwell instalation not found at '{}'".format(mp))
+        # python 3.4 is installed
+        upp = prefs().python34_path
+        dpp = '/Library/Frameworks/Python.framework/Versions/3.4/'
+        pp = ''
+        if(upp == ''):
+            pp = dpp
+        else:
+            pp = upp
+        if(not os.path.exists(pp)):
+            raise OSError("Python 3.4 instalation not found at '{}'".format(mp))
+        # pymaxwell imported from maxwell instalation is required version or above
+        pym = check_pymaxwell_version()
+        # check if there is pymaxwell in site-packages and complain
+        psp = os.path.join(pp, 'lib', 'python3.4', 'site-packages')
+        if(os.path.exists(os.path.join(psp), 'pymaxwell.py') or os.path.exists(os.path.join(psp), '_pymaxwell.so')):
+            log("found different pymaxwell at '{}', please remove it if possible, may cause conflicts..".format(psp), 1, LogStyles.WARNING, )
+    elif(PLATFORM == 'Linux'):
+        # maxwell installation is on default path or path specified in preferences
+        ump = prefs().maxwell_path
+        dmp = os.environ.get("MAXWELL3_ROOT")
+        mp = ''
+        if(ump == ''):
+            mp = dmp
+        else:
+            mp = ump
+        if(not os.path.exists(mp)):
+            raise OSError("Maxwell instalation not found at '{}'".format(mp))
+        # pymaxwell imported from maxwell instalation is required version or above
+        pym = check_pymaxwell_version()
+        # there is LD_LIBRARY_PATH and its value
+        ldlp = os.environ.get("LD_LIBRARY_PATH")
+        if(dmp not in ldlp):
+            raise OSError("LD_LIBRARY_PATH does not contain path to Maxwell")
+    elif(PLATFORM == 'Windows'):
+        # maxwell installation is on default path or path specified in preferences
+        ump = prefs().maxwell_path
+        dmp = os.environ.get("MAXWELL3_ROOT")
+        mp = ''
+        if(ump == ''):
+            mp = dmp
+        else:
+            mp = ump
+        if(not os.path.exists(mp)):
+            raise OSError("Maxwell instalation not found at '{}'".format(mp))
+        # pymaxwell imported from maxwell instalation is required version or above
+        pym = check_pymaxwell_version()
+    else:
+        raise OSError("Unknown platform: {}".format(PLATFORM))
