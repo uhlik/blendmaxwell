@@ -1293,7 +1293,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         mx.global_id = gp['id']
         
         # extension data
-        mxe = material.maxwell_material_extension
+        mxe = material.maxwell_render.extension
         
         # displacement
         def displacement(dp, cd):

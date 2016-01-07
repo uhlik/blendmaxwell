@@ -1731,7 +1731,7 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         e = context.scene.render.engine
         o = context.active_object
         ts = ['EMPTY']
-        vol = context.object.maxwell_volumetrics_extension.enabled
+        vol = context.object.maxwell_render.volumetrics.enabled
         # aref = context.object.maxwell_assetref_extension.enabled
         if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
             # if(vol or aref):
@@ -1741,13 +1741,13 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         return False
     
     def draw_header(self, context):
-        m = context.object.maxwell_render_reference
+        m = context.object.maxwell_render.reference
         self.layout.prop(m, 'enabled', text="")
     
     def draw(self, context):
         l = self.layout
         sub = l.column()
-        m = context.object.maxwell_render_reference
+        m = context.object.maxwell_render.reference
         
         sub.prop(m, 'path')
         
@@ -1793,7 +1793,7 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
         e = context.scene.render.engine
         o = context.active_object
         ts = ['EMPTY']
-        ref = context.object.maxwell_render_reference.enabled
+        ref = context.object.maxwell_render.reference.enabled
         # aref = context.object.maxwell_assetref_extension.enabled
         if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
             # if(ref or aref):
@@ -1803,13 +1803,13 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
         return False
     
     def draw_header(self, context):
-        m = context.object.maxwell_volumetrics_extension
+        m = context.object.maxwell_render.volumetrics
         self.layout.prop(m, 'enabled', text="")
     
     def draw(self, context):
         l = self.layout
         sub = l.column()
-        m = context.object.maxwell_volumetrics_extension
+        m = context.object.maxwell_render.volumetrics
         
         r = sub.row()
         r.prop(m, 'vtype', expand=True)
@@ -1844,12 +1844,12 @@ class ExtObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
         return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
     
     def draw_header(self, context):
-        m = context.object.maxwell_subdivision_extension
+        m = context.object.maxwell_render.subdivision
         self.layout.prop(m, "enabled", text="")
     
     def draw(self, context):
         l = self.layout
-        m = context.object.maxwell_subdivision_extension
+        m = context.object.maxwell_render.subdivision
         sub = l.column()
         if(not m.enabled):
             sub.active = False
@@ -1874,12 +1874,12 @@ class ExtObjectScatterPanel(ObjectButtonsPanel, Panel):
         return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
     
     def draw_header(self, context):
-        m = context.object.maxwell_scatter_extension
+        m = context.object.maxwell_render.scatter
         self.layout.prop(m, "enabled", text="")
     
     def draw(self, context):
         l = self.layout
-        m = context.object.maxwell_scatter_extension
+        m = context.object.maxwell_render.scatter
         sub = l.column()
         if(not m.enabled):
             sub.active = False
@@ -1968,12 +1968,12 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
         return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
     
     def draw_header(self, context):
-        m = context.object.maxwell_sea_extension
+        m = context.object.maxwell_render.sea
         self.layout.prop(m, "enabled", text="")
     
     def draw(self, context):
         l = self.layout
-        m = context.object.maxwell_sea_extension
+        m = context.object.maxwell_render.sea
         sub = l.column()
         if(not m.enabled):
             sub.active = False
@@ -2023,14 +2023,14 @@ class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
         return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
     
     def draw_header(self, context):
-        m = context.object.maxwell_grass_extension
+        m = context.object.maxwell_render.grass
         self.layout.prop(m, "enabled", text="")
     
     def draw(self, context):
         l = self.layout
         sub = l.column()
         
-        m = context.object.maxwell_grass_extension
+        m = context.object.maxwell_render.grass
         
         sub.menu("Grass_Modifier_presets", text=bpy.types.Grass_Modifier_presets.bl_label)
         
@@ -2181,7 +2181,7 @@ class MaterialTypePanel(MaterialButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         
         sub.prop(m, 'use', text="", )
@@ -2196,7 +2196,7 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         
         # sub.prop(m, 'use', text="Material Type", )
@@ -2261,7 +2261,7 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
     bl_options = {'DEFAULT_CLOSED'}
     
     def draw_header(self, context):
-        d = context.material.maxwell_material_extension.displacement
+        d = context.material.maxwell_render.extension.displacement
         self.layout.prop(d, "enabled", text="", )
     
     @classmethod
@@ -2308,7 +2308,7 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
         
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         cd = mx.displacement
@@ -2418,7 +2418,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         
         if(m.use == 'EMITTER'):
@@ -3491,7 +3491,7 @@ class CustomMaterialLayers(MaterialButtonsPanel, Panel):
     
     def draw(self, context):
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         
         l = self.layout.column()
@@ -3576,7 +3576,7 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
         
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         cd = m.custom_displacement
@@ -3688,7 +3688,7 @@ class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
         
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         cl = m.custom_layers
@@ -3861,7 +3861,7 @@ class CustomMaterialBSDFs(MaterialButtonsPanel, Panel):
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
         
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         cl = m.custom_layers
@@ -3964,7 +3964,7 @@ class CustomMaterialBSDF(MaterialButtonsPanel, Panel):
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
         
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         
@@ -4081,7 +4081,7 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
         
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         
@@ -4204,7 +4204,7 @@ class CustomMaterialSubsurface(MaterialButtonsPanel, Panel):
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
         
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         cl = m.custom_layers
@@ -4298,7 +4298,7 @@ class CustomMaterialCoating(MaterialButtonsPanel, Panel):
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
         
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         
@@ -4389,7 +4389,7 @@ class CustomMaterialUtilities(MaterialButtonsPanel, Panel):
     
     def draw(self, context):
         m = context.material.maxwell_render
-        mx = context.material.maxwell_material_extension
+        mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         
@@ -4988,9 +4988,9 @@ class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
         
         mm = context.particle_system.settings.maxwell_render
         if(mm.use == 'HAIR'):
-            m = context.particle_system.settings.maxwell_hair_extension
+            m = context.particle_system.settings.maxwell_render.hair
         elif(mm.use == 'PARTICLES'):
-            m = context.particle_system.settings.maxwell_particles_extension
+            m = context.particle_system.settings.maxwell_render.particles
         else:
             return
         
@@ -5054,7 +5054,7 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        m = context.particle_system.settings.maxwell_hair_extension
+        m = context.particle_system.settings.maxwell_render.hair
         
         r = sub.row()
         r.prop(m, 'hair_type', expand=True, )
@@ -5124,7 +5124,7 @@ class ExtParticlesPanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        m = context.particle_system.settings.maxwell_particles_extension
+        m = context.particle_system.settings.maxwell_render.particles
         
         r = sub.row()
         r.prop(m, 'source', expand=True)
@@ -5281,7 +5281,7 @@ class ExtClonerPanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        m = context.particle_system.settings.maxwell_cloner_extension
+        m = context.particle_system.settings.maxwell_render.cloner
         
         ps = p.settings
         r = sub.row()
@@ -5377,7 +5377,7 @@ class ParticlesInstancePanel(ParticleButtonsPanel, Panel):
         if(p is None):
             return
         
-        m = context.particle_system.settings.maxwell_particle_instances
+        m = context.particle_system.settings.maxwell_render.instances
         
         # sub.label("See 'Render' panel for settings.")
         # sub.label("'Object' and 'Group' types are supported.")
@@ -5448,7 +5448,7 @@ class ObjectPanelBlockedEmittersMenu(Menu):
                     if(s.material is not None):
                         m = s.material
                         mx = m.maxwell_render
-                        mxe = m.maxwell_material_extension
+                        mxe = m.maxwell_render.extension
                         if(context.scene.maxwell_render.blocked_emitters_deep_check):
                             if(mx.use == 'EMITTER'):
                                 # emitter extension material, this one should always be emitter, no need for further checks
