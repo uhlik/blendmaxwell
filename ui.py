@@ -322,6 +322,17 @@ class BMPanel():
         s.prop(cls, normal, text="N", toggle=True, )
         return elm, c
     
+    def draw_channel(self, layout, cls, enabled, enabled_ref, filetype, ):
+        r = layout.row()
+        s = r.split(percentage=0.33)
+        c = s.column()
+        c.prop(cls, enabled)
+        c = s.column()
+        c.prop(cls, filetype, text="", )
+        if(not enabled_ref):
+            c.active = False
+    
+    
     '''
     def draw(self, context):
         l = self.layout
@@ -761,7 +772,7 @@ class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
         c.separator()
 
 
-class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
+class ChannelsOptionsPanel(BMPanel, RenderLayerButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Channels"
     
@@ -786,148 +797,42 @@ class ChannelsOptionsPanel(RenderLayerButtonsPanel, Panel):
         c = s.column()
         c.prop(m, 'channels_render_type', text="", )
         if(not m.channels_render):
-            c.enabled = False
+            c.active = False
         
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_alpha')
-        c = s.column()
-        c.prop(m, 'channels_alpha_file', text="", )
+        self.draw_channel(sub, m, 'channels_alpha', m.channels_alpha, 'channels_alpha_file', )
+        r = self.tab_single(sub, m, 'channels_alpha_opaque', label=False, text=True, )
+        if(not m.channels_alpha):
+            r.active = False
         
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c = s.column()
-        c.prop(m, 'channels_alpha_opaque')
+        self.draw_channel(sub, m, 'channels_z_buffer', m.channels_z_buffer, 'channels_z_buffer_file', )
+        r = self.tab_singles_multi(sub, [m, ], ['channels_z_buffer_near', 'channels_z_buffer_far', ], align=True, label=False, text=True, )
+        if(not m.channels_z_buffer):
+            r.active = False
         
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_z_buffer')
-        c = s.column()
-        c.prop(m, 'channels_z_buffer_file', text="", )
+        self.draw_channel(sub, m, 'channels_shadow', m.channels_shadow, 'channels_shadow_file', )
+        self.draw_channel(sub, m, 'channels_material_id', m.channels_material_id, 'channels_material_id_file', )
+        self.draw_channel(sub, m, 'channels_object_id', m.channels_object_id, 'channels_object_id_file', )
+        self.draw_channel(sub, m, 'channels_motion_vector', m.channels_motion_vector, 'channels_motion_vector_file', )
+        self.draw_channel(sub, m, 'channels_roughness', m.channels_roughness, 'channels_roughness_file', )
+        self.draw_channel(sub, m, 'channels_fresnel', m.channels_fresnel, 'channels_fresnel_file', )
+        self.draw_channel(sub, m, 'channels_normals', m.channels_normals, 'channels_normals_file', )
+        r = self.tab_single(sub, m, 'channels_normals_space', label=False, text=True, )
+        if(not m.channels_normals):
+            r.active = False
         
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c = s.column(align=True)
-        c.prop(m, 'channels_z_buffer_near', text="Near (m)")
-        c.prop(m, 'channels_z_buffer_far', text="Far (m)")
+        self.draw_channel(sub, m, 'channels_position', m.channels_position, 'channels_position_file', )
+        r = self.tab_single(sub, m, 'channels_position_space', label=False, text=True, )
+        if(not m.channels_position):
+            r.active = False
         
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_shadow')
-        c = s.column()
-        c.prop(m, 'channels_shadow_file', text="", )
+        self.draw_channel(sub, m, 'channels_deep', m.channels_deep, 'channels_deep_file', )
+        r = self.tab_singles_multi(sub, [m, ], ['channels_deep_type', 'channels_deep_min_dist', 'channels_deep_max_samples', ], align=False, label=False, text=True, )
+        if(not m.channels_deep):
+            r.active = False
         
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_material_id')
-        c = s.column()
-        c.prop(m, 'channels_material_id_file', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_object_id')
-        c = s.column()
-        c.prop(m, 'channels_object_id_file', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_motion_vector')
-        c = s.column()
-        c.prop(m, 'channels_motion_vector_file', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_roughness')
-        c = s.column()
-        c.prop(m, 'channels_roughness_file', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_fresnel')
-        c = s.column()
-        c.prop(m, 'channels_fresnel_file', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_normals')
-        c = s.column()
-        c.prop(m, 'channels_normals_file', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c = s.column()
-        c.prop(m, 'channels_normals_space', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_position')
-        c = s.column()
-        c.prop(m, 'channels_position_file', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c = s.column()
-        c.prop(m, 'channels_position_space', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_deep')
-        c = s.column()
-        c.prop(m, 'channels_deep_file', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c = s.column()
-        c.prop(m, 'channels_deep_type')
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c = s.column()
-        c.prop(m, 'channels_deep_min_dist')
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c = s.column()
-        c.prop(m, 'channels_deep_max_samples')
-        
-        r = sub.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_uv')
-        c = s.column()
-        c.prop(m, 'channels_uv_file', text="", )
-        
-        r = l.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_custom_alpha')
-        c = s.column()
-        c.prop(m, 'channels_custom_alpha_file', text="", )
-        
-        r = l.row()
-        s = r.split(percentage=0.33)
-        c = s.column()
-        c.prop(m, 'channels_reflectance')
-        c = s.column()
-        c.prop(m, 'channels_reflectance_file', text="", )
+        self.draw_channel(sub, m, 'channels_uv', m.channels_uv, 'channels_uv_file', )
+        self.draw_channel(sub, m, 'channels_custom_alpha', m.channels_custom_alpha, 'channels_custom_alpha_file', )
+        self.draw_channel(sub, m, 'channels_reflectance', m.channels_reflectance, 'channels_reflectance_file', )
 
 
 class ManualCustomAlphasList(UIList):
@@ -2374,6 +2279,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
     #         self.bl_label = "'{}' Material".format(m.use)
     #     except:
     #         self.bl_label = "Material"
+    
+    # TODO: rewrite all material panels using BMPanel
     
     @classmethod
     def poll(cls, context):
