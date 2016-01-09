@@ -67,6 +67,9 @@ import bpy
 from bpy.props import StringProperty, EnumProperty
 
 
+# TODO: verify installation during addon activation
+
+
 class MaxwellRenderPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     

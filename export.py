@@ -49,22 +49,16 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
-# NOTE: restore instancer support for my personal use (python only)
+# TODO: restore instancer support for my personal use (python only)
 # NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
 # NOTE: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
 # TODO: do something with sharp edges, auto smooth and custom normals..
 # NOTE: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
 # TODO: more standardized setting render file type and bit depth, this will require change in render workflow and that is dangerous..
-# TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works. at least try to remove that texture from texture drop down. but i think it is not possible to filter prop_search results, have to be enum with custom items function
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause problems during next export
-# TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version. or check version and then decide. this will require version.py to return version number instead of true/false.
+# NOTE: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version. or check version and then decide. this will require version.py to return version number instead of true/false.
 # NOTE: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
-# NOTE: maybe remove wireframe export completely, or only as export operator, also prepare wireframe scene before actual scene write, so the mostly unused switches and functions can be removed
-# TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred) - seems like it will not work. texture preview might be usable when together with maxwell material basic blender material is created, then it can be used for preview in viewport
-# TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender)
-# TODO: verify installation during addon activation
-# TODO: material preview: export material to mxm, load preview scene, swap material named 'preview', save to /tmp and render required size. load image afterwards with CmaxwellMxi.getPreview > numpy array
-# TODO: procedural textures, but without preview are a bit useless. how to preview them? don't see anything usable in pymaxwell for it. create special scene a render it? some kind of light tent?
+# TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
 
 
 class MXSExport():
