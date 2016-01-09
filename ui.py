@@ -86,9 +86,11 @@ class BMPanel():
             s.label("{}:".format(label))
         s = s.split(percentage=1.0)
         if(text):
-            s.prop(cls, prop, )
+            r = s.row()
+            r.prop(cls, prop, )
         else:
-            s.prop(cls, prop, text="", )
+            r = s.row()
+            r.prop(cls, prop, text="", )
         return r
     
     def tab_singles_multi(self, layout, classes, props, align=False, label=True, text=False, ):
@@ -277,13 +279,16 @@ class BMPanel():
         s.label(name)
         s = s.split(percentage=0.333)
         c = s.column()
-        c.prop(cls, value, text="", )
+        if(value != ''):
+            c.prop(cls, value, text="", )
         s = s.split(percentage=0.15, align=True, )
         r = s.row()
         r.alignment = 'RIGHT'
-        r.prop(cls, enabled, text="", )
+        if(enabled != ''):
+            r.prop(cls, enabled, text="", )
         s = s.split(percentage=1.0, align=True, )
-        s.prop_search(cls, texture, search, 'texture_slots', icon='TEXTURE', text="", )
+        if(texture != ''):
+            s.prop_search(cls, texture, search, 'texture_slots', icon='TEXTURE', text="", )
         return elm
     
     def tab_bump_value_and_map(self, layout, cls, name, value, enabled, texture, search, normal, normal_value, use_normal, ):
@@ -2092,7 +2097,7 @@ class MaterialTypePanel(MaterialButtonsPanel, Panel):
         sub.prop(m, 'use', text="", )
 
 
-class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
+class MaterialGlobalsPanel(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Global Properties"
     bl_options = {'DEFAULT_CLOSED'}
@@ -2104,9 +2109,6 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         mx = context.material.maxwell_render.extension
         mat = context.material
         
-        # sub.prop(m, 'use', text="Material Type", )
-        # sub.separator()
-        
         if(m.use == 'REFERENCE'):
             r = sub.row()
             r.prop(m, 'override_global_properties')
@@ -2117,31 +2119,9 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         
         sub.prop_search(m, 'global_override_map', mat, 'texture_slots', icon='TEXTURE', )
         
-        r = sub.row()
-        s = r.split(percentage=0.333)
-        c = s.column()
-        c.label("Global Bump:")
-        c = s.column()
-        r = c.row()
-        c = r.column()
-        if(m.global_bump_map_use_normal):
-            c.prop(m, 'global_bump_normal', text="", )
-        else:
-            c.prop(m, 'global_bump', text="", )
-        
+        _, e = self.tab_bump_value_and_map(sub, m, self.prop_name(m, 'global_bump', True, ), 'global_bump', 'global_bump_map_enabled', 'global_bump_map', mat, 'global_bump_map_use_normal', 'global_bump_normal', m.global_bump_map_use_normal, )
         if(not m.global_bump_map_enabled or m.global_bump_map == ''):
-            c.enabled = False
-        r.prop(m, 'global_bump_map_enabled', text="", )
-        r.prop_search(m, 'global_bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-        
-        r = sub.row()
-        s = r.split(percentage=0.333)
-        c = s.column()
-        c = s.column()
-        r = c.row()
-        if(not m.global_bump_map_enabled or m.global_bump_map == ''):
-            c.enabled = False
-        r.prop(m, 'global_bump_map_use_normal', text="Normal Mapping", )
+            e.enabled = False
         
         r = sub.row()
         r.prop(m, 'global_dispersion')
@@ -2149,18 +2129,13 @@ class MaterialGlobalsPanel(MaterialButtonsPanel, Panel):
         r.prop(m, 'global_matte')
         
         sub.prop(m, 'global_priority')
-        
-        r = sub.row()
-        r.prop(m, 'global_id')
-        
-        sub.prop_search(m, 'active_display_map', mat, 'texture_slots', icon='TEXTURE', )
-        
+        self.tab_single(sub, m, 'global_id', label=True, text=False, )
+        sub.prop_search(m, 'active_display_map', mat, 'texture_slots', icon='TEXTURE', text="Display Map", )
         sub.separator()
-        r = sub.row()
-        r.prop(context.material, 'diffuse_color', text="Blender Viewport Color", )
+        self.tab_single(sub, context.material, 'diffuse_color', label="Viewport Color", text=False, )
 
 
-class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
+class ExtMaterialDisplacement(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Displacement"
     bl_options = {'DEFAULT_CLOSED'}
@@ -2181,37 +2156,6 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use in dtypes)
     
     def draw(self, context):
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-            return r
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        
         m = context.material.maxwell_render
         mx = context.material.maxwell_render.extension
         mat = context.material
@@ -2245,8 +2189,10 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
         r.prop(cd, 'subdivision_method')
         if(cd.type == '0'):
             r.enabled = False
-        tab_single(l, "Offset:", cd, 'offset')
-        tab_single(l, "Smoothing:", cd, 'smoothing')
+        
+        self.tab_single(l, cd, 'offset', label=True, text=False, )
+        self.tab_single(l, cd, 'smoothing', label=True, text=False, )
+        
         r = l.row()
         r.prop(cd, 'uv_interpolation')
         if(cd.type == '0'):
@@ -2254,7 +2200,7 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
         
         l.separator()
         l.label("HeightMap Properties:")
-        r = tab_double(l, "Height:", cd, 'height', 'height_units', )
+        r = self.tab_double_half_split(l, cd, "Height", ['height', 'height_units', ], align=False, label=True, text=False, )
         if(cd.type == '2'):
             r.enabled = False
         
@@ -2266,21 +2212,12 @@ class ExtMaterialDisplacement(MaterialButtonsPanel, Panel):
             l.prop(cd, 'v3d_transform')
             l.prop(cd, 'v3d_rgb_mapping')
             r = l.row()
-            r.prop(cd, 'v3d_scale')
+            self.tab_single(l, cd, 'v3d_scale', label=True, text=False, )
 
 
-class MaterialPanel(MaterialButtonsPanel, Panel):
+class MaterialPanel(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Material"
-    
-    # def draw_header(self, context):
-    #     try:
-    #         m = context.material.maxwell_render
-    #         self.bl_label = "'{}' Material".format(m.use)
-    #     except:
-    #         self.bl_label = "Material"
-    
-    # TODO: rewrite all material panels using BMPanel
     
     @classmethod
     def poll(cls, context):
@@ -2292,6 +2229,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (m.maxwell_render.use != 'CUSTOM')
     
     def draw(self, context):
+        '''
         def tab_single(l, t, o, pn):
             r = l.row()
             s = r.split(percentage=0.333)
@@ -2321,6 +2259,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             r.prop(o, p, text="", )
             r.prop(o, pe, text="", )
             r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
+        '''
         
         l = self.layout
         sub = l.column()
@@ -2345,12 +2284,14 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             elif(mx.emitter_type == '2'):
                 # Spot
                 r = sub.row()
-                s = r.split(percentage=0.2)
-                c = s.column()
-                c.label("Spot Map:")
-                c = s.column()
-                r = c.row()
+                s = r.split(percentage=0.333)
+                s.label("Spot Map:")
+                s = s.split(percentage=0.15, align=True, )
+                r = s.row()
+                r.alignment = 'RIGHT'
                 r.prop(mx, 'emitter_spot_map_enabled', text="", )
+                s = s.split(percentage=1.0, align=True, )
+                r = s.row()
                 r.prop_search(mx, 'emitter_spot_map', mat, 'texture_slots', icon='TEXTURE', text="", )
                 
                 sub.prop(mx, 'emitter_spot_cone_angle')
@@ -2358,38 +2299,44 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 sub.prop(mx, 'emitter_spot_falloff_type')
                 sub.prop(mx, 'emitter_spot_blur')
                 sub.separator()
-            
             if(mx.emitter_type == '1'):
                 # IES
                 r = sub.row()
-                s = r.split(percentage=0.2)
+                s = r.split(percentage=0.333)
+                s.label("Color:")
+                s = s.split(percentage=0.333)
                 c = s.column()
-                c.label("Color:")
-                c = s.column()
-                r = c.row()
-                r.prop(mx, 'emitter_color', text="", )
+                c.prop(mx, 'emitter_color', text="", )
+                s = s.split(percentage=0.15, align=True, )
+                r = s.row()
+                r.alignment = 'RIGHT'
                 r.prop(mx, 'emitter_color_black_body_enabled', text="", )
-                r.prop(mx, 'emitter_color_black_body')
+                s = s.split(percentage=1.0, align=True, )
+                r = s.row()
+                r.prop(mx, 'emitter_color_black_body', text="K", )
+            
             elif(mx.emitter_type == '2'):
                 # Spot
                 r = sub.row()
-                s = r.split(percentage=0.2)
+                s = r.split(percentage=0.333)
+                s.label("Color:")
+                s = s.split(percentage=0.333)
                 c = s.column()
-                c.label("Color:")
-                c = s.column()
-                r = c.row()
-                r.prop(mx, 'emitter_color', text="", )
+                c.prop(mx, 'emitter_color', text="", )
+                s = s.split(percentage=0.15, align=True, )
+                r = s.row()
+                r.alignment = 'RIGHT'
                 r.prop(mx, 'emitter_color_black_body_enabled', text="", )
-                r.prop(mx, 'emitter_color_black_body')
+                s = s.split(percentage=1.0, align=True, )
+                r = s.row()
+                r.prop(mx, 'emitter_color_black_body', text="K", )
+                
                 sub.separator()
                 sub.prop(mx, 'emitter_luminance')
                 if(mx.emitter_luminance == '0'):
                     # Power & Efficacy
                     sub.prop(mx, 'emitter_luminance_power')
                     sub.prop(mx, 'emitter_luminance_efficacy')
-                    # r = sub.row()
-                    # r.prop(mx, 'emitter_luminance_output', text="Output (lm)")
-                    # r.enabled = False
                 elif(mx.emitter_luminance == '1'):
                     # Lumen
                     sub.prop(mx, 'emitter_luminance_output', text="Output (lm)")
@@ -2405,20 +2352,24 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             else:
                 sub.prop(mx, 'emitter_emission')
                 sub.separator()
-                
                 if(mx.emitter_emission == '0'):
-                    sub.menu("ExtEmitter_presets", text=bpy.types.ExtEmitter_presets.bl_label)
+                    sub.menu("Emitter_presets", text=bpy.types.Emitter_presets.bl_label)
                     sub.separator()
-                    # Color
+                    
                     r = sub.row()
-                    s = r.split(percentage=0.2)
+                    s = r.split(percentage=0.333)
+                    s.label("Color:")
+                    s = s.split(percentage=0.333)
                     c = s.column()
-                    c.label("Color:")
-                    c = s.column()
-                    r = c.row()
-                    r.prop(mx, 'emitter_color', text="", )
+                    c.prop(mx, 'emitter_color', text="", )
+                    s = s.split(percentage=0.15, align=True, )
+                    r = s.row()
+                    r.alignment = 'RIGHT'
                     r.prop(mx, 'emitter_color_black_body_enabled', text="", )
-                    r.prop(mx, 'emitter_color_black_body')
+                    s = s.split(percentage=1.0, align=True, )
+                    r = s.row()
+                    r.prop(mx, 'emitter_color_black_body', text="K", )
+                    
                     sub.separator()
                     sub.prop(mx, 'emitter_luminance')
                     if(mx.emitter_luminance == '0'):
@@ -2441,7 +2392,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         sub.prop(mx, 'emitter_luminance_output', text="Output (cd/m)")
                 elif(mx.emitter_emission == '1'):
                     # Temperature
-                    sub.prop(mx, 'emitter_temperature_value')
+                    sub.prop(mx, 'emitter_temperature_value', text="K")
                 elif(mx.emitter_emission == '2'):
                     # HDR Image
                     sub.prop_search(mx, 'emitter_hdr_map', mat, 'texture_slots', icon='TEXTURE', text="", )
@@ -2467,35 +2418,9 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.menu("Opaque_presets", text=bpy.types.Opaque_presets.bl_label)
             sub.separator()
             
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Color:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'opaque_color', text="", )
-            r.prop(mx, 'opaque_color_type', text="", )
-            r.prop_search(mx, 'opaque_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Shininess:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'opaque_shininess', text="", )
-            r.prop(mx, 'opaque_shininess_type', text="", )
-            r.prop_search(mx, 'opaque_shininess_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Roughness:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'opaque_roughness', text="", )
-            r.prop(mx, 'opaque_roughness_type', text="", )
-            r.prop_search(mx, 'opaque_roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'opaque_color', colon=True, ), 'opaque_color', 'opaque_color_type', 'opaque_color_map', mat, )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'opaque_shininess', colon=True, ), 'opaque_shininess', 'opaque_shininess_type', 'opaque_shininess_map', mat, )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'opaque_roughness', colon=True, ), 'opaque_roughness', 'opaque_roughness_type', 'opaque_roughness_map', mat, )
             
             sub.prop(mx, 'opaque_clearcoat')
             
@@ -2505,28 +2430,12 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.menu("Transparent_presets", text=bpy.types.Transparent_presets.bl_label)
             sub.separator()
             
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Color:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'transparent_color', text="", )
-            r.prop(mx, 'transparent_color_type', text="", )
-            r.prop_search(mx, 'transparent_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'transparent_color', colon=True, ), 'transparent_color', 'transparent_color_type', 'transparent_color_map', mat, )
             
             sub.prop(mx, 'transparent_ior')
             sub.prop(mx, 'transparent_transparency')
             
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Roughness:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'transparent_roughness', text="", )
-            r.prop(mx, 'transparent_roughness_type', text="", )
-            r.prop_search(mx, 'transparent_roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'transparent_roughness', colon=True, ), 'transparent_roughness', 'transparent_roughness_type', 'transparent_roughness_map', mat, )
             
             sub.prop(mx, 'transparent_specular_tint')
             sub.prop(mx, 'transparent_dispersion')
@@ -2541,64 +2450,12 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'metal_ior')
             sub.prop(mx, 'metal_tint')
             
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Color:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'metal_color', text="", )
-            r.prop(mx, 'metal_color_type', text="", )
-            r.prop_search(mx, 'metal_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Roughness:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'metal_roughness', text="", )
-            r.prop(mx, 'metal_roughness_type', text="", )
-            r.prop_search(mx, 'metal_roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Anisotropy:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'metal_anisotropy', text="", )
-            r.prop(mx, 'metal_anisotropy_type', text="", )
-            r.prop_search(mx, 'metal_anisotropy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Angle:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'metal_angle', text="", )
-            r.prop(mx, 'metal_angle_type', text="", )
-            r.prop_search(mx, 'metal_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Dust & Dirt:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'metal_dust', text="", )
-            r.prop(mx, 'metal_dust_type', text="", )
-            r.prop_search(mx, 'metal_dust_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Perforation:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'metal_perforation_enabled', text="", )
-            r.prop_search(mx, 'metal_perforation_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'metal_color', colon=True, ), 'metal_color', 'metal_color_type', 'metal_color_map', mat, )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'metal_roughness', colon=True, ), 'metal_roughness', 'metal_roughness_type', 'metal_roughness_map', mat, )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'metal_anisotropy', colon=True, ), 'metal_anisotropy', 'metal_anisotropy_type', 'metal_anisotropy_map', mat, )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'metal_angle', colon=True, ), 'metal_angle', 'metal_angle_type', 'metal_angle_map', mat, )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'metal_dust', colon=True, ), 'metal_dust', 'metal_dust_type', 'metal_dust_map', mat, )
+            self.tab_value_and_map(sub, mx, "Perforation:", '', 'metal_perforation_enabled', 'metal_perforation_map', mat, )
             
         elif(m.use == 'TRANSLUCENT'):
             self.bl_label = "Translucent"
@@ -2609,15 +2466,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'translucent_scale')
             sub.prop(mx, 'translucent_ior')
             
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Color:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'translucent_color', text="", )
-            r.prop(mx, 'translucent_color_type', text="", )
-            r.prop_search(mx, 'translucent_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'translucent_color', colon=True, ), 'translucent_color', 'translucent_color_type', 'translucent_color_map', mat, )
             
             sub.prop(mx, 'translucent_hue_shift')
             sub.prop(mx, 'translucent_invert_hue')
@@ -2625,15 +2474,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.prop(mx, 'translucent_density')
             sub.prop(mx, 'translucent_opacity')
             
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Roughness:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'translucent_roughness', text="", )
-            r.prop(mx, 'translucent_roughness_type', text="", )
-            r.prop_search(mx, 'translucent_roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'translucent_roughness', colon=True, ), 'translucent_roughness', 'translucent_roughness_type', 'translucent_roughness_map', mat, )
             
             sub.prop(mx, 'translucent_specular_tint')
             sub.prop(mx, 'translucent_clearcoat')
@@ -2645,12 +2486,7 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.menu("Carpaint_presets", text=bpy.types.Carpaint_presets.bl_label)
             sub.separator()
             
-            r = sub.row()
-            s = r.split(percentage=0.33)
-            c = s.column()
-            c.label("Color:")
-            c = s.column()
-            c.prop(mx, 'carpaint_color', text="", )
+            self.tab_single(sub, mx, 'carpaint_color', label=True, text=False, )
             
             sub.prop(mx, 'carpaint_metallic')
             sub.prop(mx, 'carpaint_topcoat')
@@ -2660,42 +2496,30 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             
             sub.menu("Hair_presets", text=bpy.types.Hair_presets.bl_label)
             sub.separator()
-
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Color:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'hair_color', text="", )
-            r.prop(mx, 'hair_color_type', text="", )
-            r.prop_search(mx, 'hair_color_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-
+            
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'hair_color', colon=True, ), 'hair_color', 'hair_color_type', 'hair_color_map', mat, )
             sub.prop_search(mx, 'hair_root_tip_map', mat, 'texture_slots', icon='TEXTURE', )
-
-            r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Root-Tip Weight:")
-            c = s.column()
-            r = c.row()
-            r.prop(mx, 'hair_root_tip_weight', text="", )
-            r.prop(mx, 'hair_root_tip_weight_type', text="", )
-            r.prop_search(mx, 'hair_root_tip_weight_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-
-            sub.label('Primary Highlight:')
-            r = sub.row(align=True)
-            r.prop(mx, 'hair_primary_highlight_strength')
-            r.prop(mx, 'hair_primary_highlight_spread')
-            r = sub.row()
-            r.prop(mx, 'hair_primary_highlight_tint')
-
-            sub.label('Secondary Highlight:')
-            r = sub.row(align=True)
-            r.prop(mx, 'hair_secondary_highlight_strength')
-            r.prop(mx, 'hair_secondary_highlight_spread')
-            r = sub.row()
-            r.prop(mx, 'hair_secondary_highlight_tint')
+            self.tab_value_and_map(sub, mx, self.prop_name(mx, 'hair_root_tip_weight', colon=True, ), 'hair_root_tip_weight', 'hair_root_tip_weight_type', 'hair_root_tip_weight_map', mat, )
+            
+            # sub.label('Primary Highlight:')
+            # r = sub.row(align=True)
+            # r.prop(mx, 'hair_primary_highlight_strength')
+            # r.prop(mx, 'hair_primary_highlight_spread')
+            # r = sub.row()
+            # r.prop(mx, 'hair_primary_highlight_tint')
+            
+            self.tab_double_half_split(sub, mx, 'Primary Highlight', ['hair_primary_highlight_strength', 'hair_primary_highlight_spread', ], align=True, label=True, text=True, )
+            self.tab_single(sub, mx, 'hair_primary_highlight_tint', label=False, text=True, )
+            
+            # sub.label('Secondary Highlight:')
+            # r = sub.row(align=True)
+            # r.prop(mx, 'hair_secondary_highlight_strength')
+            # r.prop(mx, 'hair_secondary_highlight_spread')
+            # r = sub.row()
+            # r.prop(mx, 'hair_secondary_highlight_tint')
+            
+            self.tab_double_half_split(sub, mx, 'Secondary Highlight', ['hair_secondary_highlight_strength', 'hair_secondary_highlight_spread', ], align=True, label=True, text=True, )
+            self.tab_single(sub, mx, 'hair_secondary_highlight_tint', label=False, text=True, )
         
         elif(m.use == 'REFERENCE'):
             self.bl_label = "Reference"
@@ -2747,6 +2571,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             sub.operator('maxwell_render.browse_material')
             sub.operator('maxwell_render.load_material_from_mxm')
         
+        # the following is one panel custom material ui. i think it is a bit outdated too and will not work anymore. but leave it for now, just a reference for buttons creating
+        '''
         if(m.use == 'CUSTOM'):
             # sometimes little details cause big problems..
             l = sub
@@ -2777,45 +2603,12 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                 r.prop(cd, 'adaptive', )
                 
                 l.prop(cd, 'subdivision_method')
-                # l.prop(cd, 'offset')
-                # l.prop(cd, 'smoothing')
-                
-                # r = l.row()
-                # s = r.split(percentage=0.333)
-                # c = s.column()
-                # c.label("Offset:")
-                # c = s.column()
-                # r = c.row()
-                # r.prop(cd, 'offset', text="", )
-                
                 tab_single(l, "Offset:", cd, 'offset')
-                
-                # r = l.row()
-                # s = r.split(percentage=0.333)
-                # c = s.column()
-                # c.label("Smoothing:")
-                # c = s.column()
-                # r = c.row()
-                # r.prop(cd, 'smoothing', text="", )
-                
                 tab_single(l, "Smoothing:", cd, 'smoothing')
-                
                 l.prop(cd, 'uv_interpolation')
-                
                 l.separator()
                 l.label("HeightMap Properties:")
-                
-                # r = l.row()
-                # s = r.split(percentage=0.333)
-                # c = s.column()
-                # c.label("Height:")
-                # c = s.column()
-                # r = c.row()
-                # r.prop(cd, 'height', text="", )
-                # r.prop(cd, 'height_units', text="", )
-                
                 tab_double(l, "Height:", cd, 'height', 'height_units', )
-                
                 l.separator()
                 l.label("Vector 3D Properties:")
                 l.prop(cd, 'v3d_preset')
@@ -2924,9 +2717,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                             # Power & Efficacy
                             sub.prop(em, 'luminance_power')
                             sub.prop(em, 'luminance_efficacy')
-                            # r = sub.row()
-                            # r.prop(em, 'luminance_output', text="Output (lm)")
-                            # r.enabled = False
                         elif(em.luminance == '1'):
                             # Lumen
                             sub.prop(em, 'luminance_output', text="Output (lm)")
@@ -3035,40 +2825,8 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         if(bsdf.ior == '1'):
                             l.prop(bsdf, 'complex_ior')
                         else:
-                            # r = l.row()
-                            # s = r.split(percentage=0.333)
-                            # c = s.column()
-                            # c.label("Reflectance 0:")
-                            # c = s.column()
-                            # r = c.row()
-                            # r.prop(bsdf, 'reflectance_0', text="", )
-                            # r.prop(bsdf, 'reflectance_0_map_enabled', text="", )
-                            # r.prop_search(bsdf, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-                            
                             tab_color_and_map(l, "Reflectance 0:", bsdf, 'reflectance_0', 'reflectance_0_map_enabled', 'reflectance_0_map', )
-                            
-                            # r = l.row()
-                            # s = r.split(percentage=0.333)
-                            # c = s.column()
-                            # c.label("Reflectance 90:")
-                            # c = s.column()
-                            # r = c.row()
-                            # r.prop(bsdf, 'reflectance_90', text="", )
-                            # r.prop(bsdf, 'reflectance_90_map_enabled', text="", )
-                            # r.prop_search(bsdf, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-                            
                             tab_color_and_map(l, "Reflectance 90:", bsdf, 'reflectance_90', 'reflectance_90_map_enabled', 'reflectance_90_map', )
-                            
-                            # r = l.row()
-                            # s = r.split(percentage=0.333)
-                            # c = s.column()
-                            # c.label("Transmittance:")
-                            # c = s.column()
-                            # r = c.row()
-                            # r.prop(bsdf, 'transmittance', text="", )
-                            # r.prop(bsdf, 'transmittance_map_enabled', text="", )
-                            # r.prop_search(bsdf, 'transmittance_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-                            
                             tab_color_and_map(l, "Transmittance:", bsdf, 'transmittance', 'transmittance_map_enabled', 'transmittance_map', )
                             
                             r = l.row()
@@ -3119,7 +2877,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     b = l.box()
                     r = b.row()
                     r.prop(bsdf, "expanded_surface", icon="TRIA_DOWN" if bsdf.expanded_surface else "TRIA_RIGHT", icon_only=True, emboss=False, )
-                    # r.label(text="Surface", icon='SOLID', )
                     r.label(text="Surface")
                     ll = l
                     if(bsdf.expanded_surface):
@@ -3185,7 +2942,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     b = l.box()
                     r = b.row()
                     r.prop(bsdf, "expanded_subsurface", icon="TRIA_DOWN" if bsdf.expanded_subsurface else "TRIA_RIGHT", icon_only=True, emboss=False, )
-                    # r.label(text="Subsurface", icon='SMOOTH', )
                     r.label(text="Subsurface")
                     ll = l
                     if(bsdf.expanded_subsurface):
@@ -3198,12 +2954,10 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                         r.prop(bsdf, 'coef')
                         r.prop(bsdf, 'asymmetry')
                         
-                        # l.prop(bsdf, 'single_sided')
                         if(bsdf.single_sided):
                             r = l.row()
                             s = r.split(percentage=0.333)
                             c = s.column()
-                            # c.label("Single Sided:")
                             c.prop(bsdf, 'single_sided')
                             c = s.column()
                             r = c.row()
@@ -3223,7 +2977,6 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
                     r = b.row()
                     r.prop(coat, "expanded", icon="TRIA_DOWN" if coat.expanded else "TRIA_RIGHT", icon_only=True, emboss=False, )
                     r.prop(coat, 'enabled', text='', )
-                    # r.label(text="Coating", icon='TEXTURE_SHADED', )
                     r.label(text="Coating")
                     ll = l
                     if(coat.expanded):
@@ -3294,19 +3047,17 @@ class MaterialPanel(MaterialButtonsPanel, Panel):
             
             l.separator()
             sub = l
-            # s = sub.split(percentage=0.7, align=True)
             s = sub.split(percentage=0.6, align=True)
             r = s.row(align=True)
             r.operator('maxwell_render.save_material_as_mxm')
             r = s.row(align=True)
-            # r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="", icon='FILE_PARENT', )
             r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="", icon='LIBRARY_DATA_DIRECT', )
-            # r.prop(m, 'custom_open_in_mxed_after_save', toggle=True, text="Mxed", )
             r.prop(m, 'force_preview_scene', toggle=True, text="", icon='SCENE_DATA', )
             r.prop(m, 'force_preview', toggle=True, text="", icon='SMOOTH', )
             if(not m.force_preview):
                 r.active = False
             sub.operator('maxwell_render.load_material_from_mxm')
+        '''
 
 
 class MaterialPanelCustomEditorLayers(UIList):
@@ -3383,7 +3134,7 @@ class MaterialPanelCustomEditorLayerBSDFs(UIList):
             layout.prop(item, "name", text="", emboss=False, icon=icon, )
 
 
-class CustomMaterialLayers(MaterialButtonsPanel, Panel):
+class CustomMaterialLayers(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Layers"
     
@@ -3416,21 +3167,11 @@ class CustomMaterialLayers(MaterialButtonsPanel, Panel):
         
         if(cl.index >= 0):
             l.separator()
-            
             layer = cl.layers[cl.index].layer
-            
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label("Layer Opacity:")
-            c = s.column()
-            r = c.row()
-            r.prop(layer, 'opacity', text="", )
-            r.prop(layer, 'opacity_map_enabled', text="", )
-            r.prop_search(layer, 'opacity_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(l, layer, "Layer Opacity:", 'opacity', 'opacity_map_enabled', 'opacity_map', mat, )
 
 
-class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
+class CustomMaterialDisplacement(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Displacement"
     bl_options = {'DEFAULT_CLOSED'}
@@ -3451,37 +3192,6 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0)
     
     def draw(self, context):
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-            return r
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        
         m = context.material.maxwell_render
         mx = context.material.maxwell_render.extension
         mat = context.material
@@ -3515,8 +3225,10 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
         r.prop(cd, 'subdivision_method')
         if(cd.type == '0'):
             r.enabled = False
-        tab_single(l, "Offset:", cd, 'offset')
-        tab_single(l, "Smoothing:", cd, 'smoothing')
+        
+        self.tab_single(l, cd, 'offset', label=True, text=False, )
+        self.tab_single(l, cd, 'smoothing', label=True, text=False, )
+        
         r = l.row()
         r.prop(cd, 'uv_interpolation')
         if(cd.type == '0'):
@@ -3524,7 +3236,7 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
         
         l.separator()
         l.label("HeightMap Properties:")
-        r = tab_double(l, "Height:", cd, 'height', 'height_units', )
+        r = self.tab_double_half_split(l, cd, "Height", ['height', 'height_units', ], align=False, label=True, text=False, )
         if(cd.type == '2'):
             r.enabled = False
         
@@ -3536,10 +3248,10 @@ class CustomMaterialDisplacement(MaterialButtonsPanel, Panel):
             l.prop(cd, 'v3d_transform')
             l.prop(cd, 'v3d_rgb_mapping')
             r = l.row()
-            r.prop(cd, 'v3d_scale')
+            self.tab_single(l, cd, 'v3d_scale', label=True, text=False, )
 
 
-class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
+class CustomMaterialEmitter(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Emitter"
     bl_options = {'DEFAULT_CLOSED'}
@@ -3564,36 +3276,6 @@ class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0)
     
     def draw(self, context):
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        
         m = context.material.maxwell_render
         mx = context.material.maxwell_render.extension
         mat = context.material
@@ -3619,13 +3301,16 @@ class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
         elif(em.type == '2'):
             # Spot
             r = sub.row()
-            s = r.split(percentage=0.2)
-            c = s.column()
-            c.label("Spot Map:")
-            c = s.column()
-            r = c.row()
+            s = r.split(percentage=0.333)
+            s.label("Spot Map:")
+            s = s.split(percentage=0.15, align=True, )
+            r = s.row()
+            r.alignment = 'RIGHT'
             r.prop(em, 'spot_map_enabled', text="", )
+            s = s.split(percentage=1.0, align=True, )
+            r = s.row()
             r.prop_search(em, 'spot_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            
             sub.prop(em, 'spot_cone_angle')
             sub.prop(em, 'spot_falloff_angle')
             sub.prop(em, 'spot_falloff_type')
@@ -3634,25 +3319,35 @@ class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
         if(em.type == '1'):
             # IES
             r = sub.row()
-            s = r.split(percentage=0.2)
+            s = r.split(percentage=0.333)
+            s.label("Color:")
+            s = s.split(percentage=0.333)
             c = s.column()
-            c.label("Color:")
-            c = s.column()
-            r = c.row()
-            r.prop(em, 'color', text="", )
+            c.prop(em, 'color', text="", )
+            s = s.split(percentage=0.15, align=True, )
+            r = s.row()
+            r.alignment = 'RIGHT'
             r.prop(em, 'color_black_body_enabled', text="", )
-            r.prop(em, 'color_black_body')
+            s = s.split(percentage=1.0, align=True, )
+            r = s.row()
+            r.prop(em, 'color_black_body', text="K", )
+            
         elif(em.type == '2'):
             # Spot
             r = sub.row()
-            s = r.split(percentage=0.2)
+            s = r.split(percentage=0.333)
+            s.label("Color:")
+            s = s.split(percentage=0.333)
             c = s.column()
-            c.label("Color:")
-            c = s.column()
-            r = c.row()
-            r.prop(em, 'color', text="", )
+            c.prop(em, 'color', text="", )
+            s = s.split(percentage=0.15, align=True, )
+            r = s.row()
+            r.alignment = 'RIGHT'
             r.prop(em, 'color_black_body_enabled', text="", )
-            r.prop(em, 'color_black_body')
+            s = s.split(percentage=1.0, align=True, )
+            r = s.row()
+            r.prop(em, 'color_black_body', text="K", )
+            
             sub.separator()
             sub.prop(em, 'luminance')
             if(em.luminance == '0'):
@@ -3677,16 +3372,21 @@ class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
             if(em.emission == '0'):
                 sub.menu("Emitter_presets", text=bpy.types.Emitter_presets.bl_label)
                 sub.separator()
-                # Color
+                
                 r = sub.row()
-                s = r.split(percentage=0.2)
+                s = r.split(percentage=0.333)
+                s.label("Color:")
+                s = s.split(percentage=0.333)
                 c = s.column()
-                c.label("Color:")
-                c = s.column()
-                r = c.row()
-                r.prop(em, 'color', text="", )
+                c.prop(em, 'color', text="", )
+                s = s.split(percentage=0.15, align=True, )
+                r = s.row()
+                r.alignment = 'RIGHT'
                 r.prop(em, 'color_black_body_enabled', text="", )
-                r.prop(em, 'color_black_body')
+                s = s.split(percentage=1.0, align=True, )
+                r = s.row()
+                r.prop(em, 'color_black_body', text="K", )
+                
                 sub.separator()
                 sub.prop(em, 'luminance')
                 if(em.luminance == '0'):
@@ -3709,7 +3409,7 @@ class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
                     sub.prop(em, 'luminance_output', text="Output (cd/m)")
             elif(em.emission == '1'):
                 # Temperature
-                sub.prop(em, 'temperature_value')
+                sub.prop(em, 'temperature_value', text="K")
             elif(em.emission == '2'):
                 # HDR Image
                 sub.prop_search(em, 'hdr_map', mat, 'texture_slots', icon='TEXTURE', text="", )
@@ -3717,7 +3417,7 @@ class CustomMaterialEmitter(MaterialButtonsPanel, Panel):
                 sub.prop(em, 'hdr_intensity')
 
 
-class CustomMaterialBSDFs(MaterialButtonsPanel, Panel):
+class CustomMaterialBSDFs(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "BSDFs"
     
@@ -3737,44 +3437,11 @@ class CustomMaterialBSDFs(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0)
     
     def draw(self, context):
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        
         m = context.material.maxwell_render
         mx = context.material.maxwell_render.extension
         mat = context.material
         l = self.layout.column()
         cl = m.custom_layers
-        
-        # l.label("'{}' BSDFs:".format(cl.layers[cl.index].name))
-        # self.bl_label = "'{}' BSDFs".format(cl.layers[cl.index].name)
         
         clbs = cl.layers[cl.index].layer.bsdfs
         r = l.row()
@@ -3796,18 +3463,10 @@ class CustomMaterialBSDFs(MaterialButtonsPanel, Panel):
                 # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
                 return
             
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label("Weight:")
-            c = s.column()
-            r = c.row()
-            r.prop(bsdf, 'weight', text="", )
-            r.prop(bsdf, 'weight_map_enabled', text="", )
-            r.prop_search(bsdf, 'weight_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(l, bsdf, "Weight:", 'weight', 'weight_map_enabled', 'weight_map', mat, )
 
 
-class CustomMaterialBSDF(MaterialButtonsPanel, Panel):
+class CustomMaterialBSDF(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "BSDF"
     
@@ -3840,36 +3499,6 @@ class CustomMaterialBSDF(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0) and (len(bs) > 0)
     
     def draw(self, context):
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        
         m = context.material.maxwell_render
         mx = context.material.maxwell_render.extension
         mat = context.material
@@ -3889,31 +3518,21 @@ class CustomMaterialBSDF(MaterialButtonsPanel, Panel):
             if(bsdf.ior == '1'):
                 l.prop(bsdf, 'complex_ior')
             else:
-                tab_color_and_map(l, "Reflectance 0:", bsdf, 'reflectance_0', 'reflectance_0_map_enabled', 'reflectance_0_map', )
-                tab_color_and_map(l, "Reflectance 90:", bsdf, 'reflectance_90', 'reflectance_90_map_enabled', 'reflectance_90_map', )
-                tab_color_and_map(l, "Transmittance:", bsdf, 'transmittance', 'transmittance_map_enabled', 'transmittance_map', )
-            
+                self.tab_value_and_map(l, bsdf, self.prop_name(bsdf, 'reflectance_0', colon=True, ), 'reflectance_0', 'reflectance_0_map_enabled', 'reflectance_0_map', mat, )
+                self.tab_value_and_map(l, bsdf, self.prop_name(bsdf, 'reflectance_90', colon=True, ), 'reflectance_90', 'reflectance_90_map_enabled', 'reflectance_90_map', mat, )
+                self.tab_value_and_map(l, bsdf, self.prop_name(bsdf, 'transmittance', colon=True, ), 'transmittance', 'transmittance_map_enabled', 'transmittance_map', mat, )
+                self.tab_double_half_split(l, bsdf, self.prop_name(bsdf, 'attenuation', colon=False, ), ['attenuation', 'attenuation_units', ], align=False, label=True, text=False, )
+                
                 r = l.row()
                 s = r.split(percentage=0.333)
-                c = s.column()
-                c.label("Attenuation:")
-                c = s.column()
-                r = c.row()
-                r.prop(bsdf, 'attenuation', text="", )
-                r.prop(bsdf, 'attenuation_units', text="", )
-            
-                r = l.row()
-                s = r.split(percentage=0.333)
-                c = s.column()
-                c.label("Nd:")
-                c = s.column()
-                r = c.row()
-                r.prop(bsdf, 'nd', text="", )
-                c = r.column()
-                c.prop(bsdf, 'force_fresnel')
+                s.label("Nd:")
+                s = s.split(percentage=0.5, align=False, )
+                s.prop(bsdf, 'nd', text="", )
+                s = s.split(percentage=1.0, align=False, )
+                s.prop(bsdf, 'force_fresnel', )
                 if(bsdf.roughness == 100.0):
-                    c.enabled = False
-            
+                    s.enabled = False
+                
                 r = l.row()
                 s = r.split(percentage=0.5)
                 c = s.column()
@@ -3937,7 +3556,7 @@ class CustomMaterialBSDF(MaterialButtonsPanel, Panel):
                     r.enabled = False
 
 
-class CustomMaterialSurface(MaterialButtonsPanel, Panel):
+class CustomMaterialSurface(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Surface"
     
@@ -3957,36 +3576,6 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0) and (len(bs) > 0)
     
     def draw(self, context):
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        
         m = context.material.maxwell_render
         mx = context.material.maxwell_render.extension
         mat = context.material
@@ -4001,65 +3590,17 @@ class CustomMaterialSurface(MaterialButtonsPanel, Panel):
                 # there is no such index > bsdf is not created yet, skip drawing of everything past this point..
                 return
             
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label("Roughness:")
-            c = s.column()
-            r = c.row()
-            r.prop(bsdf, 'roughness', text="", )
-            r.prop(bsdf, 'roughness_map_enabled', text="", )
-            r.prop_search(bsdf, 'roughness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(l, bsdf, self.prop_name(bsdf, 'roughness', colon=True, ), 'roughness', 'roughness_map_enabled', 'roughness_map', mat, )
             
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label("Bump:")
-            c = s.column()
-            r = c.row()
-            c = r.column()
-            
-            if(bsdf.bump_map_use_normal):
-                c.prop(bsdf, 'bump_normal', text="", )
-            else:
-                c.prop(bsdf, 'bump', text="", )
-            
+            _, e = self.tab_bump_value_and_map(l, bsdf, self.prop_name(bsdf, 'bump', True, ), 'bump', 'bump_map_enabled', 'bump_map', mat, 'bump_map_use_normal', 'bump_normal', bsdf.bump_map_use_normal, )
             if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
-                c.enabled = False
-            r.prop(bsdf, 'bump_map_enabled', text="", )
-            r.prop_search(bsdf, 'bump_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                e.enabled = False
             
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c = s.column()
-            r = c.row()
-            if(not bsdf.bump_map_enabled or bsdf.bump_map == ''):
-                c.enabled = False
-            r.prop(bsdf, 'bump_map_use_normal', text="Normal Mapping", )
-            
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label("Anisotropy:")
-            c = s.column()
-            r = c.row()
-            r.prop(bsdf, 'anisotropy', text="", )
-            r.prop(bsdf, 'anisotropy_map_enabled', text="", )
-            r.prop_search(bsdf, 'anisotropy_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-            
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label("Angle:")
-            c = s.column()
-            r = c.row()
-            r.prop(bsdf, 'anisotropy_angle', text="", )
-            r.prop(bsdf, 'anisotropy_angle_map_enabled', text="", )
-            r.prop_search(bsdf, 'anisotropy_angle_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            self.tab_value_and_map(l, bsdf, self.prop_name(bsdf, 'anisotropy', colon=True, ), 'anisotropy', 'anisotropy_map_enabled', 'anisotropy_map', mat, )
+            self.tab_value_and_map(l, bsdf, self.prop_name(bsdf, 'anisotropy_angle', colon=True, ), 'anisotropy_angle', 'anisotropy_angle_map_enabled', 'anisotropy_angle_map', mat, )
 
 
-class CustomMaterialSubsurface(MaterialButtonsPanel, Panel):
+class CustomMaterialSubsurface(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Subsurface"
     bl_options = {'DEFAULT_CLOSED'}
@@ -4080,36 +3621,6 @@ class CustomMaterialSubsurface(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0) and (len(bs) > 0)
     
     def draw(self, context):
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        
         m = context.material.maxwell_render
         mx = context.material.maxwell_render.extension
         mat = context.material
@@ -4133,13 +3644,17 @@ class CustomMaterialSubsurface(MaterialButtonsPanel, Panel):
             if(bsdf.single_sided):
                 r = l.row()
                 s = r.split(percentage=0.333)
+                s.prop(bsdf, 'single_sided')
+                s = s.split(percentage=0.333)
                 c = s.column()
-                c.prop(bsdf, 'single_sided')
-                c = s.column()
-                r = c.row()
-                r.prop(bsdf, 'single_sided_value', text="", )
+                c.prop(bsdf, 'single_sided_value', text="", )
+                s = s.split(percentage=0.15, align=True, )
+                r = s.row()
+                r.alignment = 'RIGHT'
                 r.prop(bsdf, 'single_sided_map_enabled', text="", )
-                r.prop_search(bsdf, 'single_sided_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                s = s.split(percentage=1.0, align=True, )
+                s.prop_search(bsdf, 'single_sided_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                
                 r = l.row(align=True)
                 r.prop(bsdf, 'single_sided_min', )
                 r.prop(bsdf, 'single_sided_max', )
@@ -4147,7 +3662,7 @@ class CustomMaterialSubsurface(MaterialButtonsPanel, Panel):
                 l.prop(bsdf, 'single_sided')
 
 
-class CustomMaterialCoating(MaterialButtonsPanel, Panel):
+class CustomMaterialCoating(BMPanel, MaterialButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Coating"
     bl_options = {'DEFAULT_CLOSED'}
@@ -4174,36 +3689,6 @@ class CustomMaterialCoating(MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (mx.use == 'CUSTOM') and (len(ls) > 0) and (len(bs) > 0)
     
     def draw(self, context):
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        
         m = context.material.maxwell_render
         mx = context.material.maxwell_render.extension
         mat = context.material
@@ -4220,15 +3705,10 @@ class CustomMaterialCoating(MaterialButtonsPanel, Panel):
             
             coat = clbs.bsdfs[clbs.index].coating
             
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label("Thickness (nm):")
-            c = s.column()
-            r = c.row()
-            r.prop(coat, 'thickness', text="", )
-            r.prop(coat, 'thickness_map_enabled', text="", )
-            r.prop_search(coat, 'thickness_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+            if(not coat.enabled):
+                l.enabled = False
+            
+            self.tab_value_and_map(l, coat, self.prop_name(coat, 'thickness', colon=True, ), 'thickness', 'thickness_map_enabled', 'thickness_map', mat, )
             
             r = l.row(align=True)
             r.prop(coat, 'thickness_map_min', text="Min (nm)", )
@@ -4238,34 +3718,16 @@ class CustomMaterialCoating(MaterialButtonsPanel, Panel):
             if(coat.ior == '1'):
                 l.prop(coat, 'complex_ior')
             else:
-                r = l.row()
-                s = r.split(percentage=0.333)
-                c = s.column()
-                c.label("Reflectance 0:")
-                c = s.column()
-                r = c.row()
-                r.prop(coat, 'reflectance_0', text="", )
-                r.prop(coat, 'reflectance_0_map_enabled', text="", )
-                r.prop_search(coat, 'reflectance_0_map', mat, 'texture_slots', icon='TEXTURE', text="", )
+                self.tab_value_and_map(l, coat, self.prop_name(coat, 'reflectance_0', colon=True, ), 'reflectance_0', 'reflectance_0_map_enabled', 'reflectance_0_map', mat, )
+                self.tab_value_and_map(l, coat, self.prop_name(coat, 'reflectance_90', colon=True, ), 'reflectance_90', 'reflectance_90_map_enabled', 'reflectance_90_map', mat, )
                 
                 r = l.row()
                 s = r.split(percentage=0.333)
-                c = s.column()
-                c.label("Reflectance 90:")
-                c = s.column()
-                r = c.row()
-                r.prop(coat, 'reflectance_90', text="", )
-                r.prop(coat, 'reflectance_90_map_enabled', text="", )
-                r.prop_search(coat, 'reflectance_90_map', mat, 'texture_slots', icon='TEXTURE', text="", )
-                
-                r = l.row()
-                s = r.split(percentage=0.333)
-                c = s.column()
-                c.label("Nd:")
-                c = s.column()
-                r = c.row()
-                r.prop(coat, 'nd', text="", )
-                r.prop(coat, 'force_fresnel')
+                s.label("Nd:")
+                s = s.split(percentage=0.5, align=False, )
+                s.prop(coat, 'nd', text="", )
+                s = s.split(percentage=1.0, align=False, )
+                s.prop(coat, 'force_fresnel', )
                 
                 l.prop(coat, 'k')
                 
@@ -4276,6 +3738,7 @@ class CustomMaterialCoating(MaterialButtonsPanel, Panel):
                 c = s.column()
                 r = c.row()
                 r.prop(coat, 'r2_falloff_angle', text="", )
+                r.prop(coat, 'r2_influence', text="", )
                 if(not coat.r2_enabled):
                     r.enabled = False
 
