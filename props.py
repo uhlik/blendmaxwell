@@ -783,8 +783,6 @@ class SceneProperties(PropertyGroup):
     # overlay_background = BoolProperty(name="Background", default=False, )
     # overlay_background_color = FloatVectorProperty(name="Background Color", description="", default=(0.69, 0.69, 0.69), min=0.0, max=1.0, subtype='COLOR', )
     
-    # TODO: split export options to its own PropertyGroup? - 0.4.0 refactoring
-    
     export_protect_mxs = BoolProperty(name="Protect MXS", default=False, description="Protect MXS from importing.", )
     
     export_output_directory = StringProperty(name="Output Directory", subtype='DIR_PATH', default="//", description="Output directory for Maxwell scene (.MXS) file", )
