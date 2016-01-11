@@ -24,7 +24,6 @@ import traceback
 import argparse
 import textwrap
 import os
-# import pymaxwell
 
 
 def log(msg, indent=0):

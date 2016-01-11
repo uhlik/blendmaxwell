@@ -27,8 +27,6 @@ import argparse
 import textwrap
 import os
 
-# from pymaxwell import *
-
 
 quiet = False
 LOG_FILE_PATH = None
@@ -37,8 +35,6 @@ LOG_FILE_PATH = None
 def log(msg, indent=0):
     if(quiet):
         return
-    # print("{0}> {1}".format("    " * indent, msg))
-    # logger.info("{0}> {1}".format("    " * indent, msg))
     m = "{0}> {1}".format("    " * indent, msg)
     print(m)
     if(LOG_FILE_PATH is not None):
@@ -69,8 +65,6 @@ class PercentDone():
             self.last = self.percent
         if(self.percent >= 100 or self.total == self.current):
             sys.stdout.write(self.r)
-            # sys.stdout.write("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n))
-            # logger.info("{0}{1}{2}%".format(self.t * self.indent, self.prefix, 100))
             sys.stdout.write("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n))
             if(LOG_FILE_PATH is not None):
                 with open(LOG_FILE_PATH, mode='a', encoding='utf-8', ) as f:
@@ -95,7 +89,6 @@ def base_and_pivot(obj):
     y = b.yAxis
     z = b.zAxis
     rb = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
-    # rp = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
     
     o = p.origin
     x = p.xAxis
@@ -465,7 +458,6 @@ if __name__ == "__main__":
         if(not os.path.exists(PYMAXWELL_PATH)):
             raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
         sys.path.insert(0, PYMAXWELL_PATH)
-        # sys.path.append(PYMAXWELL_PATH)
         from pymaxwell import *
     
     quiet = args.quiet

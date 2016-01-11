@@ -495,52 +495,6 @@ class MaterialEditorCallbacks():
             self['{}_type'.format(p)] = True
         else:
             self['{}_type'.format(p)] = False
-    
-    # def global_bump_normal_get(self):
-    #     try:
-    #         return self['global_bump_map_use_normal']
-    #     except KeyError:
-    #         # default value
-    #         return False
-    #
-    # def global_bump_normal_set(self, v):
-    #     self['global_bump_map_use_normal'] = v
-    #     if(v):
-    #         try:
-    #             self['global_bump_abnormal_value'] = self['global_bump']
-    #         except KeyError:
-    #             # default value
-    #             self['global_bump_abnormal_value'] = 30.0
-    #         self['global_bump'] = 100.0
-    #     else:
-    #         try:
-    #             self['global_bump'] = self['global_bump_abnormal_value']
-    #         except KeyError:
-    #             # default value
-    #             self['global_bump'] = 30.0
-    #
-    # def bsdf_bump_normal_get(self):
-    #     try:
-    #         return self['bump_map_use_normal']
-    #     except KeyError:
-    #         # default value
-    #         return False
-    #
-    # def bsdf_bump_normal_set(self, v):
-    #     self['bump_map_use_normal'] = v
-    #     if(v):
-    #         try:
-    #             self['bump_abnormal_value'] = self['bump']
-    #         except KeyError:
-    #             # default value
-    #             self['bump_abnormal_value'] = 30.0
-    #         self['bump'] = 100.0
-    #     else:
-    #         try:
-    #             self['bump'] = self['bump_abnormal_value']
-    #         except KeyError:
-    #             # default value
-    #             self['bump'] = 30.0
 
 
 class CustomAlphaGroupsProperties(PropertyGroup):
@@ -568,7 +522,6 @@ class ManualCustomAlphaItem(PropertyGroup):
     name = StringProperty(name="Name", default="Custom Alpha", )
     objects = CollectionProperty(name="Objects", type=ManualCustomAlphasObjectItem, )
     materials = CollectionProperty(name="Materials", type=ManualCustomAlphasMaterialItem, )
-    # use = BoolProperty(name="Use", default=False, )
     opaque = BoolProperty(name="Opaque", default=False, )
     o_index = IntProperty(name="Active Object", default=-1, )
     m_index = IntProperty(name="Active Material", default=-1, )
@@ -822,7 +775,6 @@ class SceneProperties(PropertyGroup):
     
     blocked_emitters_deep_check = BoolProperty(name="Deep Check", default=False, description="Check object materials for emitter layer. Might be very slow on Mac OS X..", )
     
-    # custom_alphas_use = EnumProperty(name="Custom Alphas", items=[('OBJECT_GROUPS', "Object Groups", ""), ('MANUAL_SELECTION', "Manual Selection", ""), ], default='OBJECT_GROUPS', description="", )
     custom_alphas_use_groups = BoolProperty(name="Use Object Groups", default=False, description="", )
     custom_alphas_manual = PointerProperty(name="Manual Custom Alphas", type=ManualCustomAlphas, )
     
@@ -876,7 +828,6 @@ class EnvironmentProperties(PropertyGroup):
     dome_horizon = FloatVectorProperty(name="Horizon Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     dome_mid_point = FloatProperty(name="Mid Point", default=math.radians(45.000), min=math.radians(0.000), max=math.radians(90.000), precision=1, subtype='ANGLE', )
     
-    # sun_lamp_priority = BoolProperty(name="Sun Lamp Priority", default=False, description="When enabled, existing sun lamp will be used for direction. There should be one sun lamp in scene, otherwise one will be selected.", )
     use_sun_lamp = BoolProperty(name="Use Sun Lamp", default=False, description="Use specific Sun lamp.", )
     sun_lamp = StringProperty(name="Sun Lamp", default="", )
     
@@ -885,7 +836,6 @@ class EnvironmentProperties(PropertyGroup):
     sun_radius_factor = FloatProperty(name="Radius Factor (x)", default=1.0, min=0.01, max=100.00, precision=2, )
     sun_temp = FloatProperty(name="Temperature (K)", default=5776.0, min=1.0, max=10000.0, precision=1, update=update_sun_color, )
     sun_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', update=update_sun_color, )
-    # sun_location_type = EnumProperty(name="Location", items=[('LATLONG', "Latitude / Longitude", ""), ('ANGLES', "Angles", ""), ('DIRECTION', "Direction", "")], default='DIRECTION', )
     sun_location_type = EnumProperty(name="Location", items=[('LATLONG', "Lat / Long", ""), ('ANGLES', "Angles", ""), ('DIRECTION', "Direction", "")], default='DIRECTION', )
     sun_latlong_lat = FloatProperty(name="Lat", default=40.000, min=-90.000, max=90.000, precision=3, )
     sun_latlong_lon = FloatProperty(name="Lon", default=-3.000, min=-180.000, max=180.000, precision=3, update=_gmt_auto, )
@@ -1027,7 +977,6 @@ class CameraProperties(PropertyGroup):
         self.lock = False
     
     # optics
-    # lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""), ('TYPE_PINHOLE_1', "Pin Hole", ""), ('TYPE_ORTHO_2', "Ortho", ""), ('TYPE_FISHEYE_3', "Fish Eye", ""), ('TYPE_SPHERICAL_4', "Spherical", ""), ('TYPE_CYLINDRICAL_5', "Cylindical", "")], default='TYPE_THIN_LENS_0', )
     lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""),
                                             ('TYPE_PINHOLE_1', "Pin Hole", ""),
                                             ('TYPE_ORTHO_2', "Ortho", ""),
@@ -1036,12 +985,6 @@ class CameraProperties(PropertyGroup):
                                             ('TYPE_CYLINDRICAL_5', "Cylindical", ""),
                                             ('TYPE_LAT_LONG_STEREO_6', "Lat-Long Stereo", ""),
                                             ('TYPE_FISH_STEREO_7', "Fish Stereo", ""), ], default='TYPE_THIN_LENS_0', update=_update_camera_projection, )
-    # lens = EnumProperty(name="Lens", items=[('TYPE_THIN_LENS_0', "Thin Lens", ""),
-    #                                         ('TYPE_PINHOLE_1', "Pin Hole", ""),
-    #                                         ('TYPE_ORTHO_2', "Ortho", ""),
-    #                                         ('TYPE_FISHEYE_3', "Fish Eye", ""),
-    #                                         ('TYPE_SPHERICAL_4', "Spherical", ""),
-    #                                         ('TYPE_CYLINDRICAL_5', "Cylindical", ""), ], default='TYPE_THIN_LENS_0', update=_update_camera_projection, )
     
     shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", update=_lock_exposure_update_shutter, )
     fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_lock_exposure_update_fstop, )
@@ -1097,7 +1040,6 @@ class CameraProperties(PropertyGroup):
     # z-clip planes
     zclip = BoolProperty(name="Z-cLip", default=False, )
     # # just for info, it is hardcoded somewhere else..
-    # projection_type = StringProperty(name="Projection Type", default='TYPE_PERSPECTIVE', options={'HIDDEN'}, )
     hide = BoolProperty(name="Hide (in Maxwell Studio)", default=False, )
     response = EnumProperty(name="Response", items=[('Maxwell', 'Maxwell', "", ), ('Advantix 100', 'Advantix 100', "", ), ('Advantix 200', 'Advantix 200', "", ),
                                                     ('Advantix 400', 'Advantix 400', "", ), ('Agfachrome CTPrecisa 200', 'Agfachrome CTPrecisa 200', "", ),
@@ -1152,14 +1094,6 @@ class ReferenceProperties(PropertyGroup):
     
     material = StringProperty(name="Material", default="", )
     backface_material = StringProperty(name="Backface Material", default="", )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.Object.maxwell_render_reference = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.Object.maxwell_render_reference
 
 
 class ExtGrassProperties(PropertyGroup):
@@ -1212,14 +1146,6 @@ class ExtGrassProperties(PropertyGroup):
     
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max_blades = IntProperty(name="Display Max. Blades", default=1000, min=0, max=100000, )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.Object.maxwell_grass_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.Object.maxwell_grass_extension
 
 
 class ExtScatterProperties(PropertyGroup):
@@ -1271,14 +1197,6 @@ class ExtScatterProperties(PropertyGroup):
     
     # new, something to investigate
     # 29: ('TRIANGLES_WITH_CLONES', [0], 0, 0, '8 BYTEARRAY', 1, 1, True)
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.Object.maxwell_scatter_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.Object.maxwell_scatter_extension
 
 
 class ExtSubdivisionProperties(PropertyGroup):
@@ -1288,20 +1206,11 @@ class ExtSubdivisionProperties(PropertyGroup):
     interpolation = EnumProperty(name="UV Interpolation", items=[('0', "None", ""), ('1', "Edges", ""), ('2', "Edges And Corners", ""), ('3', "Sharp", "")], default='2', )
     crease = FloatProperty(name="Edge Crease (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     smooth = FloatProperty(name="Smooth Angle", default=math.radians(90.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.Object.maxwell_subdivision_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.Object.maxwell_subdivision_extension
 
 
 class ExtSeaProperties(PropertyGroup):
     enabled = BoolProperty(name="Maxwell Sea", default=False, )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
-    # hide_parent = BoolProperty(name="Hide Container Object", default=True, )
     
     material = StringProperty(name="Material", default="", )
     backface_material = StringProperty(name="Backface Material", default="", )
@@ -1322,14 +1231,6 @@ class ExtSeaProperties(PropertyGroup):
     enable_choppyness = BoolProperty(name="Enable Choppyness", default=False, )
     choppy_factor = FloatProperty(name="Choppy Factor", default=0.0, min=0.0, max=100000.0, precision=2, )
     enable_white_caps = BoolProperty(name="Enable White Caps", default=False, )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.Object.maxwell_sea_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.Object.maxwell_sea_extension
 
 
 class ExtVolumetricsProperties(PropertyGroup):
@@ -1347,14 +1248,6 @@ class ExtVolumetricsProperties(PropertyGroup):
     
     material = StringProperty(name="Material", default="", )
     backface_material = StringProperty(name="Backface Material", default="", )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.Object.maxwell_volumetrics_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.Object.maxwell_volumetrics_extension
 
 
 class ObjectProperties(PropertyGroup):
@@ -1364,7 +1257,6 @@ class ObjectProperties(PropertyGroup):
     hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
     hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
-    # object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     object_id = FloatVectorProperty(name="Object ID", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
     backface_material = StringProperty(name="Backface Material", default="", )
@@ -1609,11 +1501,9 @@ class ExtParticlesProperties(PropertyGroup):
     hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
     hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
-    # object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     object_id = FloatVectorProperty(name="Object ID", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
-    # hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
     source = EnumProperty(name="Source", items=[('BLENDER_PARTICLES', "Blender Particles", ""), ('EXTERNAL_BIN', "External Bin", "")], default='BLENDER_PARTICLES', )
     bin_directory = StringProperty(name=".bin Output Directory", default="//", subtype='DIR_PATH', description="Output directory for .bin file(s)", )
@@ -1680,14 +1570,6 @@ class ExtParticlesProperties(PropertyGroup):
     bin_max_velocity = FloatProperty(name="Max Velocity Modulus", default=1.0, min=0.0, max=1000000.0, step=3, )
     
     uv_layer = StringProperty(name="UV Layer", default="", )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.ParticleSettings.maxwell_particles_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.ParticleSettings.maxwell_particles_extension
 
 
 class ExtHairProperties(PropertyGroup):
@@ -1700,10 +1582,8 @@ class ExtHairProperties(PropertyGroup):
     hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
     hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
     hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
-    # object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     object_id = FloatVectorProperty(name="Object ID", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     hide = BoolProperty(name="Export as Hidden Object", default=False, description="Object will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
-    # hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
     
     hair_type = EnumProperty(name="Hair Type", items=[('HAIR', "Hair", ""), ('GRASS', "Grass", ""), ], default='HAIR', )
     
@@ -1717,14 +1597,6 @@ class ExtHairProperties(PropertyGroup):
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max_blades = IntProperty(name="Display Max. Blades", default=1000, min=0, max=100000, )
     display_max_hairs = IntProperty(name="Display Max. Hairs", default=1000, min=0, max=100000, )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.ParticleSettings.maxwell_hair_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.ParticleSettings.maxwell_hair_extension
 
 
 class ExtClonerProperties(PropertyGroup):
@@ -1751,49 +1623,15 @@ class ExtClonerProperties(PropertyGroup):
     
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max = IntProperty(name="Display Max. Particles", default=1000, min=0, max=100000, )
-    
-    # axis_system = EnumProperty(name="PRT & ABC Axis System", items=[('YZX_0', "YZX (xsi maya houdini)", ""), ('ZXY_1', "ZXY (3dsmax maya)", ""), ('YXZ_2', "YXZ (lw c4d rf)", "")], default='YZX_0', )
-    # frame = IntProperty(name="Frame Number", default=0, min=-100000000, max=100000000, )
-    # fps = FloatProperty(name="FPS", default=1.0, min=0.0, max=1000000.0, )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.ParticleSettings.maxwell_cloner_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.ParticleSettings.maxwell_cloner_extension
 
 
 class ParticleInstancesProperties(PropertyGroup):
-    # inherit_objectid = BoolProperty(name="Inherit Object ID From Emitter", default=False, )
-    
-    # override_material = StringProperty(name="Override Material", default="", )
-    # override_backface_material = StringProperty(name="Override Backface Material", default="", )
-    
-    # opacity = FloatProperty(name="Opacity", default=100.0, min=0.0, max=100.0, subtype='PERCENTAGE', )
-    # hidden_camera = BoolProperty(name="Camera", default=False, )
-    # hidden_camera_in_shadow_channel = BoolProperty(name="Camera In Shadow Channel", default=False, )
-    # hidden_global_illumination = BoolProperty(name="Global Illumination", default=False, )
-    # hidden_reflections_refractions = BoolProperty(name="Reflections/Refractions", default=False, )
-    # hidden_zclip_planes = BoolProperty(name="Z-clip Planes", default=False, )
-    # object_id = FloatVectorProperty(name="Object ID", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', )
     hide = BoolProperty(name="Export Instances as Hidden Objects", default=False, description="Objects will be exported, but with visibility set to Hidden. Useful for finishing scene in Studio")
-    # hide_parent = BoolProperty(name="Hide Parent Object (Emitter)", default=False, )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.ParticleSettings.maxwell_particle_instances = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.ParticleSettings.maxwell_particle_instances
 
 
 class ParticlesProperties(PropertyGroup):
     use = EnumProperty(name="Type", items=[('HAIR', "Hair", ""),
                                            ('PARTICLES', "Particles", ""),
-                                           # ('MESHER', "Mesher", ""),
                                            ('CLONER', "Cloner", ""),
                                            ('PARTICLE_INSTANCES', "Instances", ""),
                                            ('NONE', "None", "")], default='NONE', )
@@ -1855,9 +1693,7 @@ class MaterialBSDFProperties(PropertyGroup):
     bump = FloatProperty(name="Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, )
     bump_map_enabled = BoolProperty(name="Bump Map Enabled", default=False, )
     bump_map = StringProperty(name="Bump Map", default="", get=MaterialEditorCallbacks.bsdf_bump_map_get, set=MaterialEditorCallbacks.bsdf_bump_map_set, )
-    # bump_map_use_normal = BoolProperty(name="Bump Map Use Normal", default=False, get=MaterialEditorCallbacks.bsdf_bump_normal_get, set=MaterialEditorCallbacks.bsdf_bump_normal_set, )
     bump_map_use_normal = BoolProperty(name="Bump Map Use Normal", default=False, )
-    # bump_abnormal_value = FloatProperty(name="Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, options={'HIDDEN'}, )
     bump_normal = FloatProperty(name="Bump", default=100.0, min=-2000.0, max=2000.0, precision=2, )
     
     anisotropy = FloatProperty(name="Anisotropy", default=0.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
@@ -1882,7 +1718,6 @@ class MaterialBSDFProperties(PropertyGroup):
 class MaterialCoatingProperties(PropertyGroup):
     expanded = BoolProperty(name="Expanded", default=False, )
     enabled = BoolProperty(name="Enabled", default=False, )
-    # visible = BoolProperty(name="Visible", default=True, )
     
     thickness = FloatProperty(name="Thickness (nm)", default=500.0, min=1.0, max=1000000.0, precision=3, )
     thickness_map_enabled = BoolProperty(name="Thickness Map Enabled", default=False, )
@@ -1910,7 +1745,6 @@ class MaterialCoatingProperties(PropertyGroup):
 class MaterialDisplacementProperties(PropertyGroup):
     expanded = BoolProperty(name="Expanded", default=False, )
     enabled = BoolProperty(name="Enabled", default=False, )
-    # visible = BoolProperty(name="Visible", default=True, )
     
     map = StringProperty(name="Map", default="", )
     type = EnumProperty(name="Type", items=[('0', "On The Fly", ""), ('1', "Pretessellated", ""), ('2', "Vector", ""), ], default='1', )
@@ -1933,7 +1767,6 @@ class MaterialDisplacementProperties(PropertyGroup):
 class MaterialEmitterProperties(PropertyGroup):
     expanded = BoolProperty(name="Expanded", default=False, )
     enabled = BoolProperty(name="Enabled", default=False, )
-    # visible = BoolProperty(name="Visible", default=True, )
     
     lock_color = BoolProperty(default=False, options={'HIDDEN'}, )
     
@@ -2124,18 +1957,9 @@ class ExtMaterialProperties(PropertyGroup):
     hair_secondary_highlight_tint = FloatVectorProperty(name="Tint", default=(255 / 255, 255 / 255, 255 / 255), min=0.0, max=1.0, subtype='COLOR', )
     
     displacement = PointerProperty(name="Displacement", type=MaterialDisplacementProperties, )
-    
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.Material.maxwell_material_extension = PointerProperty(type=cls)
-    #
-    # @classmethod
-    # def unregister(cls):
-    #     del bpy.types.Material.maxwell_material_extension
 
 
 class MaterialWizards(PropertyGroup):
-    # types = EnumProperty(name="Wizard", items=[('NONE', "Choose material wizard", ""), ('GREASY', "Greasy", ""), ('PLASTIC', "Plastic", ""), ('TEXTURED', "Textured", ""), ('VELVET', "Velvet", ""), ], default='NONE', )
     types = EnumProperty(name="Wizard", items=[('NONE', "Choose material wizard", ""), ('GREASY', "Greasy", ""), ('TEXTURED', "Textured", ""), ('VELVET', "Velvet", ""), ], default='NONE', )
     
     greasy_color = FloatVectorProperty(name="Color", default=(0.0008046585621626175, 0.0008046585621626175, 0.0008046585621626175), min=0.0, max=1.0, precision=2, subtype='COLOR', )
@@ -2175,9 +1999,7 @@ class MaterialProperties(PropertyGroup):
     global_bump = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, )
     global_bump_map_enabled = BoolProperty(name="Global Bump Map Enabled", default=False, )
     global_bump_map = StringProperty(name="Global Bump Map", default="", get=MaterialEditorCallbacks.global_bump_map_get, set=MaterialEditorCallbacks.global_bump_map_set, )
-    # global_bump_map_use_normal = BoolProperty(name="Global Bump Map Use Normal", default=False, get=MaterialEditorCallbacks.global_bump_normal_get, set=MaterialEditorCallbacks.global_bump_normal_set, )
     global_bump_map_use_normal = BoolProperty(name="Global Bump Map Use Normal", default=False, )
-    # global_bump_abnormal_value = FloatProperty(name="Global Bump", default=30.0, min=-2000.0, max=2000.0, precision=2, options={'HIDDEN'}, )
     global_bump_normal = FloatProperty(name="Global Bump", default=100.0, min=-2000.0, max=2000.0, precision=2, )
     
     global_dispersion = BoolProperty(name="Dispersion", default=False, )
@@ -2185,8 +2007,6 @@ class MaterialProperties(PropertyGroup):
     global_matte = BoolProperty(name="Matte", default=False, )
     global_priority = IntProperty(name="Nested Priority", default=0, min=0, max=1000, )
     global_id = FloatVectorProperty(name="Material Id", default=(0.0, 0.0, 0.0), min=0.0, max=1.0, subtype='COLOR', )
-    
-    # flag = BoolProperty(name="Flag", default=False, description="True - redraw preview, False - skip", options={'HIDDEN'}, )
     
     force_preview = BoolProperty(name="Force Preview", default=True, description="Force preview rendering when opened in Mxed", )
     force_preview_scene = EnumProperty(name="Force Preview Scene", items=_get_material_preview_scenes, description="Force preview Mxed scene", )

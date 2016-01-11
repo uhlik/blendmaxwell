@@ -849,17 +849,11 @@ class ManualCustomAlphasList(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         icon = 'IMAGE_ALPHA'
         if(self.layout_type in {'DEFAULT', 'COMPACT'}):
-            # layout.prop(item, "name", text="", emboss=False, icon=icon, )
-            # layout.prop(item, "opaque")
-            
-            # s = layout.split(percentage=0.7)
             c = layout.column()
             c.prop(item, "name", text="", emboss=False, icon=icon, )
             c = layout.column()
             r = c.row()
             r.alignment = 'RIGHT'
-            # r.label("Opaque")
-            # r.prop(item, "opaque", text="", )
             r.prop(item, "opaque")
         elif(self.layout_type in {'GRID'}):
             layout.alignment = 'CENTER'
@@ -1046,7 +1040,6 @@ class WorldContextPanel(WorldButtonsPanel, Panel):
         
         split = layout.split(percentage=0.85)
         if scene:
-            # split.template_ID(scene, "world", new="world.new")
             split.template_ID(scene, "world", new="maxwell_render.world_new_override")
         elif world:
             split.template_ID(space, "pin_id")
@@ -1131,9 +1124,6 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
         sub = l.column()
         m = context.world.maxwell_render
         
-        # sub.prop(m, 'sun_lamp_priority')
-        # sub.separator()
-        
         sub.prop(m, 'sun_type')
         if(m.sun_type != 'DISABLED'):
             sub.prop(m, 'sun_power')
@@ -1147,7 +1137,6 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
             r.prop(m, 'sun_color')
             if(m.sun_type == 'PHYSICAL'):
                 r.enabled = False
-            # sub.separator()
             
             sub.label("Location:")
             r = sub.row()
@@ -1297,7 +1286,6 @@ class SunLampPanel(DataButtonsPanel, Panel):
         sub = l.column()
         m = context.object.data.maxwell_render
         
-        # sub.prop(m, 'override')
         sub.label("See Sun Panel in World Settings")
 
 
@@ -1647,9 +1635,7 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         o = context.active_object
         ts = ['EMPTY']
         vol = context.object.maxwell_render.volumetrics.enabled
-        # aref = context.object.maxwell_assetref_extension.enabled
         if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
-            # if(vol or aref):
             if(vol):
                 return False
             return True
@@ -1709,9 +1695,7 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
         o = context.active_object
         ts = ['EMPTY']
         ref = context.object.maxwell_render.reference.enabled
-        # aref = context.object.maxwell_assetref_extension.enabled
         if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
-            # if(ref or aref):
             if(ref):
                 return False
             return True
@@ -1899,7 +1883,6 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
         sub.separator()
         
         sub.prop(m, 'hide')
-        # sub.prop(m, 'hide_parent')
         o = context.object
         sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object", )
         
@@ -2061,7 +2044,6 @@ class MaterialContextPanel(MaterialButtonsPanel, Panel):
                 row.operator("object.material_slot_deselect", text="Deselect")
         split = layout.split(percentage=0.7)
         if(ob):
-            # split.template_ID(ob, "active_material", new="material.new")
             split.template_ID(ob, "active_material", new="maxwell_render.material_new_override")
             row = split.row()
             if(slot):
@@ -2084,8 +2066,6 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         m = mat.maxwell_render
         
         l.template_preview(mat, show_buttons=False, )
-        # l.prop(m, 'flag', toggle=True, text="Refresh Preview", )
-        # l.prop(bpy.context.scene.maxwell_render_private, 'material')
 
 
 class MaterialTypePanel(MaterialButtonsPanel, Panel):
@@ -2234,38 +2214,6 @@ class MaterialPanel(BMPanel, MaterialButtonsPanel, Panel):
         return (m or o) and (e in cls.COMPAT_ENGINES) and (m.maxwell_render.use != 'CUSTOM')
     
     def draw(self, context):
-        '''
-        def tab_single(l, t, o, pn):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn, text="", )
-        
-        def tab_double(l, t, o, pn0, pn1):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, pn0, text="", )
-            r.prop(o, pn1, text="", )
-        
-        def tab_color_and_map(l, t, o, p, pe, pm, ):
-            r = l.row()
-            s = r.split(percentage=0.333)
-            c = s.column()
-            c.label(t)
-            c = s.column()
-            r = c.row()
-            r.prop(o, p, text="", )
-            r.prop(o, pe, text="", )
-            r.prop_search(o, pm, mat, 'texture_slots', icon='TEXTURE', text="", )
-        '''
-        
         l = self.layout
         sub = l.column()
         m = context.material.maxwell_render
@@ -2506,22 +2454,8 @@ class MaterialPanel(BMPanel, MaterialButtonsPanel, Panel):
             sub.prop_search(mx, 'hair_root_tip_map', mat, 'texture_slots', icon='TEXTURE', )
             self.tab_value_and_map(sub, mx, self.prop_name(mx, 'hair_root_tip_weight', colon=True, ), 'hair_root_tip_weight', 'hair_root_tip_weight_type', 'hair_root_tip_weight_map', mat, )
             
-            # sub.label('Primary Highlight:')
-            # r = sub.row(align=True)
-            # r.prop(mx, 'hair_primary_highlight_strength')
-            # r.prop(mx, 'hair_primary_highlight_spread')
-            # r = sub.row()
-            # r.prop(mx, 'hair_primary_highlight_tint')
-            
             self.tab_double_half_split(sub, mx, 'Primary Highlight', ['hair_primary_highlight_strength', 'hair_primary_highlight_spread', ], align=True, label=True, text=True, )
             self.tab_single(sub, mx, 'hair_primary_highlight_tint', label=False, text=True, )
-            
-            # sub.label('Secondary Highlight:')
-            # r = sub.row(align=True)
-            # r.prop(mx, 'hair_secondary_highlight_strength')
-            # r.prop(mx, 'hair_secondary_highlight_spread')
-            # r = sub.row()
-            # r.prop(mx, 'hair_secondary_highlight_tint')
             
             self.tab_double_half_split(sub, mx, 'Secondary Highlight', ['hair_secondary_highlight_strength', 'hair_secondary_highlight_spread', ], align=True, label=True, text=True, )
             self.tab_single(sub, mx, 'hair_secondary_highlight_tint', label=False, text=True, )
@@ -2572,7 +2506,6 @@ class MaterialPanel(BMPanel, MaterialButtonsPanel, Panel):
                 sub.operator('maxwell_render.load_material_from_mxm')
         
         if(m.use == 'REFERENCE'):
-            # sub.separator()
             sub.operator('maxwell_render.browse_material')
             sub.operator('maxwell_render.load_material_from_mxm')
         
@@ -3082,7 +3015,6 @@ class MaterialPanelCustomEditorLayers(UIList):
             s = r.split(percentage=0.333, )
             c = s.column()
             r = c.row()
-            # r.prop(l, 'opacity', text="", )
             r.prop(l, 'blending', expand=True, )
             
             c = s.column()
@@ -3091,7 +3023,6 @@ class MaterialPanelCustomEditorLayers(UIList):
                 r.label('T')
             else:
                 r.prop(l, 'opacity', text="", )
-            # r.prop(l, 'visible', text="", )
             r.prop(l, 'visible', text="", icon='RESTRICT_VIEW_OFF' if l.visible else 'RESTRICT_VIEW_ON', emboss=False, )
             
             if(not l.visible):
@@ -3108,7 +3039,6 @@ class MaterialPanelCustomEditorLayerBSDFs(UIList):
         
         icon = 'FCURVE'
         if(self.layout_type in {'DEFAULT', 'COMPACT'}):
-            # layout.prop(item, "name", text="", emboss=False, icon=icon, )
             l = item.bsdf
             
             s = layout.split(percentage=0.4, )
@@ -3120,15 +3050,12 @@ class MaterialPanelCustomEditorLayerBSDFs(UIList):
             s = r.split(percentage=0.333, )
             c = s.column()
             r = c.row()
-            # r.prop(l, 'weight', text="", )
             c = s.column()
             r = c.row()
             if(l.weight_map_enabled):
                 r.label('T')
             else:
                 r.prop(l, 'weight', text="", )
-            # r.prop(l, 'blending', expand=True, )
-            # r.prop(l, 'visible', text="", )
             r.prop(l, 'visible', text="", icon='RESTRICT_VIEW_OFF' if l.visible else 'RESTRICT_VIEW_ON', emboss=False, )
             
             if(not l.visible):
@@ -3870,8 +3797,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
     
     def draw(self, context):
         l = self.layout
-        # m = context.texture.maxwell_render
-        # ts = context.texture_slot
         
         tex = context.texture
         m = tex.maxwell_render
@@ -3882,27 +3807,6 @@ class TexturePanel(TextureButtonsPanel, Panel):
                     l.label("Load an image", icon='ERROR', )
             else:
                 l.active = False
-        
-        # if(m.use == 'IMAGE'):
-        #     tex = None
-        #     if(ts.texture is not None):
-        #         if(ts.texture.type == 'IMAGE'):
-        #             tex = ts.texture
-        #     if(tex is None):
-        #         l.active = False
-        #
-        #     # c = l.column()
-        #     if(tex is not None and tex.image):
-        #         # image = tex.image
-        #         # c.active = False
-        #         # c.enabled = False
-        #         # c.prop(image, 'filepath', text="Path:")
-        #         # c.prop(tex, 'image')
-        #         pass
-        #     else:
-        #         # c = l.column()
-        #         # c.label("Load an image", icon='ERROR', )
-        #         l.label("Load an image", icon='ERROR', )
         
         l.label("Projection Properties:")
         
@@ -4234,7 +4138,6 @@ class ParticleContextPanel(ParticleButtonsPanel, Panel):
                               ob.particle_systems, "active_index", rows=1)
             
             col = row.column(align=True)
-            # col.operator("object.particle_system_add", icon='ZOOMIN', text="")
             col.operator("maxwell_render.particle_system_add_override", icon='ZOOMIN', text="")
             col.operator("object.particle_system_remove", icon='ZOOMOUT', text="")
             col.menu("PARTICLE_MT_specials", icon='DOWNARROW_HLT', text="")
@@ -4242,7 +4145,6 @@ class ParticleContextPanel(ParticleButtonsPanel, Panel):
         if psys is None:
             part = particle_get_settings(context)
             
-            # layout.operator("object.particle_system_add", icon='ZOOMIN', text="New")
             layout.operator("maxwell_render.particle_system_add_override", icon='ZOOMIN', text="New")
             
             if part is None:
@@ -4377,8 +4279,6 @@ class ExtParticlesObjectPanel(ParticleButtonsPanel, Panel):
         
         sub.prop(context.particle_system.settings, 'use_render_emitter', text="Render Emitter", )
         sub.prop(m, 'hide')
-        # sub.prop(m, 'hide_parent')
-        # sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object (Emitter)", )
         sub.prop(m, 'opacity')
         sub.separator()
         r = sub.row()
@@ -4451,12 +4351,6 @@ class ExtHairPanel(ParticleButtonsPanel, Panel):
             r.label("No UV Maps", icon='ERROR', )
         else:
             r.prop_search(m, "uv_layer", o.data, "uv_textures", )
-        
-        # if(m.uv_layer != "" and p.settings.child_type != 'NONE'):
-        #     # NOT TO DO: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
-        #     sub.label("Particle hair with children + UVs!", icon='ERROR', )
-        #     sub.label("Blender may crash during .mxs export!", icon='ERROR', )
-        #     sub.label("Save your work before hitting F12!", icon='ERROR', )
         
         sub.separator()
         c = sub.column(align=True)
@@ -4544,7 +4438,6 @@ class ExtParticlesPanel(ParticleButtonsPanel, Panel):
         if(m.source == 'EXTERNAL_BIN'):
             pass
         else:
-            # sub.separator()
             r = sub.row()
             if(len(o.data.uv_textures) == 0):
                 r.label("No UV Maps", icon='ERROR', )
@@ -4755,40 +4648,13 @@ class ParticlesInstancePanel(ParticleButtonsPanel, Panel):
         
         m = context.particle_system.settings.maxwell_render.instances
         
-        # sub.label("See 'Render' panel for settings.")
-        # sub.label("'Object' and 'Group' types are supported.")
-        
-        # sub.prop(m, 'inherit_objectid')
-        
         if(p.settings.render_type not in ['OBJECT', 'GROUP', ]):
             sub.label("See 'Render' panel for settings.", icon='ERROR', )
             sub.label("'Object' and 'Group' types are supported.", icon='ERROR', )
             return
         
-        # sub.prop_search(m, 'override_material', bpy.data, 'materials', icon='MATERIAL')
-        # sub.prop_search(m, 'override_backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
-        #
-        # sub.separator()
-        
         sub.prop(m, 'hide')
         sub.prop(o.maxwell_render, 'hide', text="Hide Parent Object (Emitter)", )
-        
-        # sub.prop(m, 'hide_parent')
-        # sub.prop(m, 'opacity')
-        # sub.separator()
-        # r = sub.row()
-        # r.prop(m, 'object_id')
-        # sub.separator()
-        # sub.label("Hidden from:")
-        # s = sub.split(percentage=0.5)
-        # c = s.column()
-        # c.prop(m, 'hidden_camera')
-        # c.prop(m, 'hidden_camera_in_shadow_channel')
-        # c.prop(m, 'hidden_global_illumination')
-        # c = s.column()
-        # c.prop(m, 'hidden_reflections_refractions')
-        # c.prop(m, 'hidden_zclip_planes')
-        # sub.separator()
 
 
 class ObjectPanelBlockedEmitters(UIList):
@@ -4796,7 +4662,6 @@ class ObjectPanelBlockedEmitters(UIList):
         custom_icon = 'RADIO'
         if(self.layout_type in {'DEFAULT', 'COMPACT'}):
             layout.label(item.name, icon=custom_icon, )
-            # layout.label(item.name)
         elif(self.layout_type in {'GRID'}):
             layout.alignment = 'CENTER'
             layout.label("", icon=custom_icon, )
@@ -4814,7 +4679,6 @@ class ObjectPanelBlockedEmittersMenu(Menu):
         l = self.layout
         
         ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
-        # es = set([o.name for o in context.scene.objects if o.type in ts])
         es = set()
         for o in context.scene.objects:
             # skip non-mesh objects

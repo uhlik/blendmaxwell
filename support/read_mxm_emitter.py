@@ -35,7 +35,6 @@ def main(args):
     p = args.mxm_path
     s = Cmaxwell(mwcallback)
     m = s.readMaterial(p)
-    # m = s.addMaterial(m)
     for i in range(m.getNumLayers()[0]):
         l = m.getLayer(i)
         e = l.getEmitter()

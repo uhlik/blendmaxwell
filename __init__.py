@@ -869,8 +869,5 @@ def unregister():
 if __name__ == "__main__":
     register()
     
-    # from . import system
-    # system.verify_installation()
-    
     # oh, btw, run this from time to time..
     # pep8 --ignore=W293,E501 .
