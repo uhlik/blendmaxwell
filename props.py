@@ -1755,7 +1755,7 @@ class MaterialDisplacementProperties(PropertyGroup):
     smoothing = BoolProperty(name="Smoothing", default=True, )
     uv_interpolation = EnumProperty(name="UV Interpolation", items=[('0', "None", ""), ('1', "Edges", ""), ('2', "Edges And Corners", ""), ('3', "Sharp", ""), ], default='2', )
     
-    height = FloatProperty(name="Height", default=2.0, min=-1000.0, max=1000.0, precision=1, )
+    height = FloatProperty(name="Height", default=2.0, min=-1000.0, max=1000.0, precision=3, )
     height_units = EnumProperty(name="Height Units", items=[('0', "%", ""), ('1', "cm", ""), ], default='0', )
     
     v3d_preset = EnumProperty(name="Preset", items=[('0', "Custom", ""), ('1', "Zbrush Tangent", ""), ('2', "Zbrush World", ""), ('3', "Mudbox Absolute Tangent", ""), ('4', "Mudbox Object", ""), ('5', "Mudbox World", ""), ('6', "Realflow", ""), ('7', "Modo", ""), ], default='0', )
