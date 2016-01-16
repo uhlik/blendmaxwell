@@ -67,6 +67,9 @@ import bpy
 from bpy.props import StringProperty, EnumProperty
 
 
+# TODO: verify installation during addon activation
+
+
 class MaxwellRenderPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     
@@ -345,7 +348,7 @@ def get_default_presets():
             'subdirs': False,
             'defines': [
                 "import bpy",
-                "m = bpy.context.object.maxwell_grass_extension",
+                "m = bpy.context.object.maxwell_render.grass",
             ],
             'presets': {
                 'wild_grass': {
@@ -382,7 +385,7 @@ def get_default_presets():
             'subdirs': True,
             'defines': [
                 "import bpy",
-                "m = bpy.context.object.active_material.maxwell_material_extension",
+                "m = bpy.context.object.active_material.maxwell_render.extension",
                 "    ",
                 "def texture(d):",
                 "    mat = bpy.context.object.active_material",
@@ -865,9 +868,6 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-    
-    # from . import system
-    # system.verify_installation()
     
     # oh, btw, run this from time to time..
     # pep8 --ignore=W293,E501 .

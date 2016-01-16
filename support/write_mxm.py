@@ -26,8 +26,6 @@ import textwrap
 import json
 import os
 
-# from pymaxwell import *
-
 
 LOG_FILE_PATH = None
 
@@ -42,7 +40,6 @@ def log(msg, indent=0):
 
 def material_placeholder(s, n=None, ):
     if(n is not None):
-        # n = '{}_{}'.format(n, 'MATERIAL_PLACEHOLDER')
         pass
     else:
         n = 'MATERIAL_PLACEHOLDER'
@@ -138,9 +135,6 @@ def material_custom(d, s, ):
         bp = d['bsdf_props']
         # weight
         if(bp['weight_map_enabled']):
-            # t = texture(bp['weight_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['weight_map'], s, )
@@ -163,15 +157,11 @@ def material_custom(d, s, ):
             r.setComplexIor(bp['complex_ior'])
         else:
             if(bp['reflectance_0_map_enabled']):
-                # t = texture(bp['reflectance_0_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(bp['reflectance_0_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                # a.value = bp['weight']
                 a.rgb.assign(*bp['reflectance_0'])
             else:
                 a = Cattribute()
@@ -180,16 +170,11 @@ def material_custom(d, s, ):
             r.setAttribute('color', a)
             
             if(bp['reflectance_90_map_enabled']):
-                # # a = texture(bp['reflectance_90_map'], s, )
-                # t = texture(bp['reflectance_90_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(bp['reflectance_90_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                # a.value = bp['weight']
                 a.rgb.assign(*bp['reflectance_90'])
             else:
                 a = Cattribute()
@@ -198,16 +183,11 @@ def material_custom(d, s, ):
             r.setAttribute('color.tangential', a)
             
             if(bp['transmittance_map_enabled']):
-                # # a = texture(bp['transmittance_map'], s, )
-                # t = texture(bp['transmittance_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(bp['transmittance_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                # a.value = bp['weight']
                 a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
@@ -224,17 +204,12 @@ def material_custom(d, s, ):
                 r.setFresnelCustom(bp['r2_falloff_angle'], bp['r2_influence'], True, )
         # surface
         if(bp['roughness_map_enabled']):
-            # # a = texture(bp['roughness_map'], s, )
-            # t = texture(bp['roughness_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['roughness_map'], s, )
             if(t is not None):
                 a.textureMap = t
             a.value = bp['roughness']
-            # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
@@ -242,10 +217,6 @@ def material_custom(d, s, ):
         b.setAttribute('roughness', a)
         
         if(bp['bump_map_enabled']):
-            # # a = texture(bp['bump_map'], s, )
-            # t = texture(bp['bump_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['bump_map'], s, )
@@ -255,7 +226,6 @@ def material_custom(d, s, ):
                 a.value = bp['bump_normal']
             else:
                 a.value = bp['bump']
-            # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
@@ -267,17 +237,12 @@ def material_custom(d, s, ):
         b.setNormalMapState(bp['bump_map_use_normal'])
         
         if(bp['anisotropy_map_enabled']):
-            # # a = texture(bp['anisotropy_map'], s, )
-            # t = texture(bp['anisotropy_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['anisotropy_map'], s, )
             if(t is not None):
                 a.textureMap = t
             a.value = bp['anisotropy']
-            # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
@@ -285,17 +250,12 @@ def material_custom(d, s, ):
         b.setAttribute('anisotropy', a)
         
         if(bp['anisotropy_angle_map_enabled']):
-            # # a = texture(bp['anisotropy_angle_map'], s, )
-            # t = texture(bp['anisotropy_angle_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['anisotropy_angle_map'], s, )
             if(t is not None):
                 a.textureMap = t
             a.value = bp['anisotropy_angle']
-            # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
@@ -310,17 +270,12 @@ def material_custom(d, s, ):
         r.setScatteringParameters(bp['coef'], bp['asymmetry'], bp['single_sided'])
         if(bp['single_sided']):
             if(bp['single_sided_map_enabled']):
-                # # a = texture(bp['single_sided_map'], s, )
-                # t = texture(bp['single_sided_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(bp['single_sided_map'], s, )
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['single_sided_value']
-                # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
@@ -334,17 +289,12 @@ def material_custom(d, s, ):
             c = b.addCoating()
             
             if(cp['thickness_map_enabled']):
-                # # a = texture(cp['thickness_map'], s, )
-                # t = texture(cp['thickness_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(cp['thickness_map'], s, )
                 if(t is not None):
                     a.textureMap = t
                 a.value = cp['thickness']
-                # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
@@ -359,16 +309,11 @@ def material_custom(d, s, ):
                 r.setComplexIor(cp['complex_ior'])
             else:
                 if(cp['reflectance_0_map_enabled']):
-                    # # a = texture(cp['reflectance_0_map'], s, )
-                    # t = texture(cp['reflectance_0_map'], s, )
-                    # a = Cattribute()
-                    # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
                     t = texture(cp['reflectance_0_map'], s, )
                     if(t is not None):
                         a.textureMap = t
-                    # a.value = bp['thickness']
                     a.rgb.assign(*cp['reflectance_0'])
                 else:
                     a = Cattribute()
@@ -377,16 +322,11 @@ def material_custom(d, s, ):
                 r.setAttribute('color', a)
                 
                 if(cp['reflectance_90_map_enabled']):
-                    # # a = texture(cp['reflectance_90_map'], s, )
-                    # t = texture(cp['reflectance_90_map'], s, )
-                    # a = Cattribute()
-                    # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
                     t = texture(cp['reflectance_90_map'], s, )
                     if(t is not None):
                         a.textureMap = t
-                    # a.value = bp['thickness']
                     a.rgb.assign(*cp['reflectance_90'])
                 else:
                     a = Cattribute()
@@ -474,7 +414,6 @@ def material_custom(d, s, ):
         if(lpd['blending'] == 1):
             l.setStackedBlendingMode(1)
         if(lpd['opacity_map_enabled']):
-            # a = texture(lpd['opacity_map'], s, )
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(lpd['opacity_map'], s, )
@@ -506,7 +445,6 @@ def material(d, s, ):
     """create material by type"""
     if(d['subtype'] == 'EXTERNAL'):
         if(d['path'] == ''):
-            # m = material_default(d, s)
             m = material_placeholder(s, d['name'])
         else:
             m = material_external(d, s)
@@ -553,7 +491,6 @@ def material(d, s, ):
                 e.setLobeIES(d['emitter_ies_data'])
                 e.setIESLobeIntensity(d['emitter_ies_intensity'])
             elif(d['emitter_type'] == 2):
-                # e.setLobeType(EMISSION_LOBE_BITMAP)
                 e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
                 if(d['emitter_spot_map'] is not None):
                     t = texture(d['emitter_spot_map'], s)
@@ -915,7 +852,6 @@ def texture_data_to_mxparams(d, mp, name, ):
     if(d is None):
         return
     
-    # t = mp.getTextureMap(name)[0]
     t = CtextureMap()
     t.setPath(d['path'])
     v = Cvector2D()

@@ -486,6 +486,39 @@ def python34_run_mxm_is_emitter(mxm_path):
         raise OSError("Unknown platform: {}.".format(PLATFORM))
 
 
+def python34_run_read_mxs_reference(mxs_path):
+    if(PLATFORM == 'Darwin'):
+        script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxs_ref.py", )
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        n = os.path.split(mxs_path)[1]
+        scene_data_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "{}.json".format(n), )
+        
+        command_line = "{} {} {} {} {} {}".format(shlex.quote(PY),
+                                                  shlex.quote(script_path),
+                                                  shlex.quote(PYMAXWELL_PATH),
+                                                  shlex.quote(LOG_FILE_PATH),
+                                                  shlex.quote(mxs_path),
+                                                  shlex.quote(scene_data_path), )
+        
+        log("read vertices from: {}".format(mxs_path), 1)
+        args = shlex.split(command_line, )
+        o = subprocess.call(args, )
+        if(o != 0):
+            log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
+            raise Exception("error in {0}".format(script_path))
+        
+        with open(scene_data_path, 'r') as f:
+            data = json.load(f)
+        
+        if(os.path.exists(scene_data_path)):
+            os.remove(scene_data_path)
+        
+        return data
+    else:
+        raise OSError("Unknown platform: {}.".format(PLATFORM))
+
+
 def python34_run_script_helper_import_mxm(script_path, mxm_path, data_path, ):
     if(PLATFORM == 'Darwin'):
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))

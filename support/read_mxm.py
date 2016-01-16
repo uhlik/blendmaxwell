@@ -115,24 +115,16 @@ def material(s, m):
     
     # structure
     structure = []
-    # d, _ = m.isDisplacementEnabled()
     nl, _ = m.getNumLayers()
     for i in range(nl):
         l = m.getLayer(i)
         ln, _ = l.getName()
         nb, _ = l.getNumBSDFs()
-        # e = l.getEmitter()
-        # e = e.isNull()
         bs = []
         for j in range(nb):
             b = l.getBSDF(j)
             bn = b.getName()
             bs.append([bn, b])
-            # nc, _ = b.getNumCoatings()
-            # c = False
-            # for k in range(nc):
-            #     c = True
-            #     break
         ls = [ln, l, bs]
         structure.append(ls)
     
@@ -160,7 +152,6 @@ def material(s, m):
         a, _ = m.getAttribute('bump')
         if(a.activeType == MAP_TYPE_BITMAP):
             d['bump_map_enabled'] = True
-            # d['bump'] = a.value
             d['bump_map'] = texture(a.textureMap)
             d['bump_map_use_normal'] = m.getNormalMapState()[0]
             if(d['bump_map_use_normal']):
@@ -169,7 +160,6 @@ def material(s, m):
                 d['bump'] = a.value
         else:
             d['bump_map_enabled'] = False
-            # d['bump'] = a.value
             d['bump_map'] = None
             d['bump_map_use_normal'] = m.getNormalMapState()[0]
             if(d['bump_map_use_normal']):
@@ -491,7 +481,6 @@ if __name__ == "__main__":
         if(not os.path.exists(PYMAXWELL_PATH)):
             raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
         sys.path.insert(0, PYMAXWELL_PATH)
-        # sys.path.append(PYMAXWELL_PATH)
         from pymaxwell import *
     
     LOG_FILE_PATH = args.log_file

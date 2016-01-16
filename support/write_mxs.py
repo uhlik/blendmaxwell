@@ -30,10 +30,7 @@ import math
 import datetime
 import os
 
-# from pymaxwell import *
 
-
-# logger = None
 quiet = False
 LOG_FILE_PATH = None
 
@@ -41,8 +38,6 @@ LOG_FILE_PATH = None
 def log(msg, indent=0):
     if(quiet):
         return
-    # print("{0}> {1}".format("    " * indent, msg))
-    # logger.info("{0}> {1}".format("    " * indent, msg))
     m = "{0}> {1}".format("    " * indent, msg)
     print(m)
     if(LOG_FILE_PATH is not None):
@@ -323,8 +318,6 @@ class PercentDone():
             self.last = self.percent
         if(self.percent >= 100 or self.total == self.current):
             sys.stdout.write(self.r)
-            # sys.stdout.write("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n))
-            # logger.info("{0}{1}{2}%".format(self.t * self.indent, self.prefix, 100))
             sys.stdout.write("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n))
             if(LOG_FILE_PATH is not None):
                 with open(LOG_FILE_PATH, mode='a', encoding='utf-8', ) as f:
@@ -333,7 +326,6 @@ class PercentDone():
 
 def material_placeholder(s, n=None, ):
     if(n is not None):
-        # n = '{}_{}'.format(n, 'MATERIAL_PLACEHOLDER')
         pass
     else:
         n = 'MATERIAL_PLACEHOLDER'
@@ -429,9 +421,6 @@ def material_custom(d, s, ):
         bp = d['bsdf_props']
         # weight
         if(bp['weight_map_enabled']):
-            # t = texture(bp['weight_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['weight_map'], s, )
@@ -454,15 +443,11 @@ def material_custom(d, s, ):
             r.setComplexIor(bp['complex_ior'])
         else:
             if(bp['reflectance_0_map_enabled']):
-                # t = texture(bp['reflectance_0_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(bp['reflectance_0_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                # a.value = bp['weight']
                 a.rgb.assign(*bp['reflectance_0'])
             else:
                 a = Cattribute()
@@ -471,16 +456,11 @@ def material_custom(d, s, ):
             r.setAttribute('color', a)
             
             if(bp['reflectance_90_map_enabled']):
-                # # a = texture(bp['reflectance_90_map'], s, )
-                # t = texture(bp['reflectance_90_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(bp['reflectance_90_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                # a.value = bp['weight']
                 a.rgb.assign(*bp['reflectance_90'])
             else:
                 a = Cattribute()
@@ -489,16 +469,11 @@ def material_custom(d, s, ):
             r.setAttribute('color.tangential', a)
             
             if(bp['transmittance_map_enabled']):
-                # # a = texture(bp['transmittance_map'], s, )
-                # t = texture(bp['transmittance_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(bp['transmittance_map'], s, )
                 if(t is not None):
                     a.textureMap = t
-                # a.value = bp['weight']
                 a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
@@ -515,17 +490,12 @@ def material_custom(d, s, ):
                 r.setFresnelCustom(bp['r2_falloff_angle'], bp['r2_influence'], True, )
         # surface
         if(bp['roughness_map_enabled']):
-            # # a = texture(bp['roughness_map'], s, )
-            # t = texture(bp['roughness_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['roughness_map'], s, )
             if(t is not None):
                 a.textureMap = t
             a.value = bp['roughness']
-            # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
@@ -533,10 +503,6 @@ def material_custom(d, s, ):
         b.setAttribute('roughness', a)
         
         if(bp['bump_map_enabled']):
-            # # a = texture(bp['bump_map'], s, )
-            # t = texture(bp['bump_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['bump_map'], s, )
@@ -546,7 +512,6 @@ def material_custom(d, s, ):
                 a.value = bp['bump_normal']
             else:
                 a.value = bp['bump']
-            # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
@@ -558,17 +523,12 @@ def material_custom(d, s, ):
         b.setNormalMapState(bp['bump_map_use_normal'])
         
         if(bp['anisotropy_map_enabled']):
-            # # a = texture(bp['anisotropy_map'], s, )
-            # t = texture(bp['anisotropy_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['anisotropy_map'], s, )
             if(t is not None):
                 a.textureMap = t
             a.value = bp['anisotropy']
-            # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
@@ -576,17 +536,12 @@ def material_custom(d, s, ):
         b.setAttribute('anisotropy', a)
         
         if(bp['anisotropy_angle_map_enabled']):
-            # # a = texture(bp['anisotropy_angle_map'], s, )
-            # t = texture(bp['anisotropy_angle_map'], s, )
-            # a = Cattribute()
-            # a.textureMap = t
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(bp['anisotropy_angle_map'], s, )
             if(t is not None):
                 a.textureMap = t
             a.value = bp['anisotropy_angle']
-            # a.rgb.assign(*bp['transmittance'])
         else:
             a = Cattribute()
             a.activeType = MAP_TYPE_VALUE
@@ -601,17 +556,12 @@ def material_custom(d, s, ):
         r.setScatteringParameters(bp['coef'], bp['asymmetry'], bp['single_sided'])
         if(bp['single_sided']):
             if(bp['single_sided_map_enabled']):
-                # # a = texture(bp['single_sided_map'], s, )
-                # t = texture(bp['single_sided_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(bp['single_sided_map'], s, )
                 if(t is not None):
                     a.textureMap = t
                 a.value = bp['single_sided_value']
-                # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
@@ -625,17 +575,12 @@ def material_custom(d, s, ):
             c = b.addCoating()
             
             if(cp['thickness_map_enabled']):
-                # # a = texture(cp['thickness_map'], s, )
-                # t = texture(cp['thickness_map'], s, )
-                # a = Cattribute()
-                # a.textureMap = t
                 a = Cattribute()
                 a.activeType = MAP_TYPE_BITMAP
                 t = texture(cp['thickness_map'], s, )
                 if(t is not None):
                     a.textureMap = t
                 a.value = cp['thickness']
-                # a.rgb.assign(*bp['transmittance'])
             else:
                 a = Cattribute()
                 a.activeType = MAP_TYPE_VALUE
@@ -650,16 +595,11 @@ def material_custom(d, s, ):
                 r.setComplexIor(cp['complex_ior'])
             else:
                 if(cp['reflectance_0_map_enabled']):
-                    # # a = texture(cp['reflectance_0_map'], s, )
-                    # t = texture(cp['reflectance_0_map'], s, )
-                    # a = Cattribute()
-                    # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
                     t = texture(cp['reflectance_0_map'], s, )
                     if(t is not None):
                         a.textureMap = t
-                    # a.value = bp['thickness']
                     a.rgb.assign(*cp['reflectance_0'])
                 else:
                     a = Cattribute()
@@ -668,16 +608,11 @@ def material_custom(d, s, ):
                 r.setAttribute('color', a)
                 
                 if(cp['reflectance_90_map_enabled']):
-                    # # a = texture(cp['reflectance_90_map'], s, )
-                    # t = texture(cp['reflectance_90_map'], s, )
-                    # a = Cattribute()
-                    # a.textureMap = t
                     a = Cattribute()
                     a.activeType = MAP_TYPE_BITMAP
                     t = texture(cp['reflectance_90_map'], s, )
                     if(t is not None):
                         a.textureMap = t
-                    # a.value = bp['thickness']
                     a.rgb.assign(*cp['reflectance_90'])
                 else:
                     a = Cattribute()
@@ -765,7 +700,6 @@ def material_custom(d, s, ):
         if(lpd['blending'] == 1):
             l.setStackedBlendingMode(1)
         if(lpd['opacity_map_enabled']):
-            # a = texture(lpd['opacity_map'], s, )
             a = Cattribute()
             a.activeType = MAP_TYPE_BITMAP
             t = texture(lpd['opacity_map'], s, )
@@ -797,7 +731,6 @@ def material(d, s, ):
     """create material by type"""
     if(d['subtype'] == 'EXTERNAL'):
         if(d['path'] == ''):
-            # m = material_default(d, s)
             m = material_placeholder(s, d['name'])
         else:
             m = material_external(d, s)
@@ -844,7 +777,6 @@ def material(d, s, ):
                 e.setLobeIES(d['emitter_ies_data'])
                 e.setIESLobeIntensity(d['emitter_ies_intensity'])
             elif(d['emitter_type'] == 2):
-                # e.setLobeType(EMISSION_LOBE_BITMAP)
                 e.setLobeType(EMISSION_LOBE_SPOTLIGHT)
                 if(d['emitter_spot_map'] is not None):
                     t = texture(d['emitter_spot_map'], s)
@@ -1279,10 +1211,6 @@ def camera(d, s, ):
                         d['aperture'], d['diaphragm_angle'], d['diaphragm_blades'], d['frame_rate'],
                         d['resolution_x'], d['resolution_y'], d['pixel_aspect'], d['lens'], )
     
-    # will crash, just set it without asking for the list
-    # l, _ = c.getCameraResponsePresetsList()
-    # if(d['response'] in l):
-    #     c.setCameraResponsePreset(d['response'])
     c.setCameraResponsePreset(d['response'])
     
     if(d['custom_bokeh']):
@@ -1296,15 +1224,6 @@ def camera(d, s, ):
         u = Cvector()
         u.assign(*s[3])
         c.setStep(s[0], o, f, u, s[4], s[5], s[6], s[7], )
-    
-    # o = Cvector()
-    # o.assign(*d['origin'])
-    # f = Cvector()
-    # f.assign(*d['focal_point'])
-    # u = Cvector()
-    # u.assign(*d['up'])
-    # # hard coded: (step: 0, _, _, _, _, _, stepTime: 1, focalLengthNeedCorrection: 1, )
-    # c.setStep(0, o, f, u, d['focal_length'], d['fstop'], 1, 1, )
     
     if(d['lens'] == 3):
         c.setFishLensProperties(d['fov'])
@@ -1346,7 +1265,6 @@ def camera(d, s, ):
         texture_data_to_mxparams(d['fs_head_tilt_map'], p, 'Tilt Map')
         c.applyCameraLensExtension(p)
     
-    # c.setShutter(d['shutter'])
     c.setCutPlanes(d['set_cut_planes'][0], d['set_cut_planes'][1], d['set_cut_planes'][2], )
     c.setShiftLens(d['set_shift_lens'][0], d['set_shift_lens'][1], )
     if(d['screen_region'] != 'NONE'):
@@ -1393,9 +1311,6 @@ def mesh(d, s, ):
     if(d['num_materials'] > 1):
         # multi material
         mats = []
-        # for n in d['materials']:
-        #     mat = get_material(n, s, )
-        #     mats.append(mat)
         for i in range(d['num_materials']):
             try:
                 n = d['materials'][i]
@@ -1923,11 +1838,9 @@ def cloner(d, s, ):
     p.setUInt('Display Max. Particles', d['display_max'])
     
     if(not d['render_emitter']):
-        # o = s.getObject(d['object'])
         o = s.getObject(d['parent'])
         o.setHide(True)
     
-    # o = s.getObject(d['object'])
     o = s.getObject(d['cloned_object'])
     o.applyGeometryModifierExtension(p)
 
@@ -1939,39 +1852,16 @@ def hair(d, s, ):
     if(d['extension'] == 'MGrassP'):
         e = m.createDefaultGeometryProceduralExtension('MGrassP')
     
-    # print()
-    # n = e.getNumberOfUVGenerators()
-    # # 13
-    # for i in range(n):
-    #     print(i, ': ', e.getUVGeneratorName(i))
-    #     # 0 :  lengthwise U
-    #     # 1 :  hair root UV
-    #     # 2 :  radial U
-    #     # 3 :  HAIR_ROOT_UVS_1
-    #     # 4 :  HAIR_ROOT_UVS_2
-    #     # 5 :  HAIR_ROOT_UVS_3
-    #     # 6 :  HAIR_ROOT_UVS_4
-    #     # 7 :  HAIR_ROOT_UVS_5
-    #     # 8 :  HAIR_ROOT_UVS_6
-    #     # 9 :  HAIR_ROOT_UVS_7
-    #     # 10 :  HAIR_ROOT_UVS_8
-    #     # 11 :  HAIR_ROOT_UVS_9
-    #     # 12 :  HAIR_ROOT_UVS_10
-    # print()
-    
     p = e.getExtensionData()
     p.setByteArray('HAIR_MAJOR_VER', d['data']['HAIR_MAJOR_VER'])
     p.setByteArray('HAIR_MINOR_VER', d['data']['HAIR_MINOR_VER'])
     p.setByteArray('HAIR_FLAG_ROOT_UVS', d['data']['HAIR_FLAG_ROOT_UVS'])
     
-    # p.setByteArray('HAIR_GUIDES_COUNT', d['data']['HAIR_GUIDES_COUNT'])
     m = memoryview(struct.pack("I", d['data']['HAIR_GUIDES_COUNT'][0])).tolist()
     p.setByteArray('HAIR_GUIDES_COUNT', m)
     
-    # p.setByteArray('HAIR_GUIDES_POINT_COUNT', d['data']['HAIR_GUIDES_POINT_COUNT'])
     m = memoryview(struct.pack("I", d['data']['HAIR_GUIDES_POINT_COUNT'][0])).tolist()
     p.setByteArray('HAIR_GUIDES_POINT_COUNT', m)
-    # p.setByteArray('HAIR_GUIDES_POINT_COUNT', m * d['data']['HAIR_GUIDES_COUNT'][0])
     
     c = Cbase()
     c.origin = Cvector(0.0, 0.0, 0.0)
@@ -1983,13 +1873,10 @@ def hair(d, s, ):
     r = MXSBinHairReader(bhp)
     p.setFloatArray('HAIR_POINTS', list(r.data), c)
     
-    # p.setFloatArray('HAIR_POINTS', d['data']['HAIR_POINTS'], c)
     p.setFloatArray('HAIR_NORMALS', d['data']['HAIR_NORMALS'], c)
     
-    # '''
     if(d['data']['HAIR_FLAG_ROOT_UVS'][0] == 1):
         p.setFloatArray('HAIR_ROOT_UVS', list(d['data']['HAIR_ROOT_UVS']), c)
-    # '''
     
     p.setUInt('Display Percent', d['display_percent'])
     if(d['extension'] == 'MaxwellHair'):
@@ -2080,15 +1967,6 @@ def volumetrics(d, s, ):
 
 
 def subdivision(d, s, ):
-    # 0: ('Subdivision Level', [2], 0, 99, '1 UINT', 4, 1, True)
-    # 1: ('Subdivision Scheme', [0], 0, 2, '1 UINT', 4, 1, True)
-    # 2: ('Interpolation', [2], 0, 3, '1 UINT', 4, 1, True)
-    # 3: ('Crease', [0.0], 0.0, 100.0, '3 FLOAT', 4, 1, True)
-    # 4: ('Smooth Angle', [90.0], 0.0, 360.0, '3 FLOAT', 4, 1, True)
-    # 5: ('EXTENSION_NAME', 'SubdivisionModifier', '', '', '5 STRING', 1, 20, True)
-    # 6: ('EXTENSION_VERSION', [1], 0, 1000000, '1 UINT', 4, 1, True)
-    # 7: ('EXTENSION_ISENABLED', [1], 0, 1, '0 UCHAR', 1, 1, True)
-    
     m = CextensionManager.instance()
     e = m.createDefaultGeometryModifierExtension('SubdivisionModifier')
     p = e.getExtensionData()
@@ -2160,11 +2038,9 @@ def grass(d, s, ):
     
     if(d['material'] != ''):
         mat = get_material(d['material'], s, )
-        # o.setMaterial(mat)
         p.setString('Material', mat.getName())
     if(d['backface_material'] != ''):
         mat = get_material(d['backface_material'], s, )
-        # o.setBackfaceMaterial(mat)
         p.setString('Double Sided Material', mat.getName())
     
     p.setUInt('Density', d['density'])
@@ -2261,14 +2137,6 @@ def hierarchy(d, s, ):
                 ch = s.getObject(d[i]['name'])
                 p = s.getObject(d[i]['parent'])
                 ch.setParent(p)
-    
-    # object_types = ['PARTICLES', 'HAIR', 'SEA', ]
-    # for i in range(len(d)):
-    #     if(d[i]['type'] in object_types):
-    #         if(d[i]['parent'] is not None):
-    #             if(d[i]['hide_parent']):
-    #                 p = s.getObject(d[i]['parent'])
-    #                 p.setHide(True)
 
 
 def wireframe(d, s, ):
@@ -2288,9 +2156,6 @@ def wireframe(d, s, ):
         base_and_pivot(o, bp)
         object_props(o, d)
         r.append(o)
-        
-        # mat = get_material(d['materials'][0], s, )
-        # o.setMaterial(mat)
     return r
 
 
@@ -2298,7 +2163,6 @@ def texture_data_to_mxparams(d, mp, name, ):
     if(d is None):
         return
     
-    # t = mp.getTextureMap(name)[0]
     t = CtextureMap()
     t.setPath(d['path'])
     v = Cvector2D()
@@ -2370,11 +2234,6 @@ def main(args):
             empty(d, mxs)
         elif(d['type'] == 'MESH'):
             mesh(d, mxs)
-            # if(args.instancer):
-            #     # there should be just one mesh which is base, scale it to zero to be invisible..
-            #     name = d['name']
-            #     ob = mxs.getObject(d['name'])
-            #     ob.setScale(Cvector(0.0, 0.0, 0.0))
         elif(d['type'] == 'MESH_INSTANCE'):
             try:
                 if(d['base']):
@@ -2513,7 +2372,6 @@ if __name__ == "__main__":
         if(not os.path.exists(PYMAXWELL_PATH)):
             raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
         sys.path.insert(0, PYMAXWELL_PATH)
-        # sys.path.append(PYMAXWELL_PATH)
         from pymaxwell import *
     
     LOG_FILE_PATH = args.log_file

@@ -24,8 +24,6 @@ import traceback
 import argparse
 import textwrap
 import os
-# import numpy
-# from pymaxwell import *
 
 
 def log(msg, indent=0):
@@ -65,7 +63,6 @@ if __name__ == "__main__":
         if(not os.path.exists(PYMAXWELL_PATH)):
             raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
         sys.path.insert(0, PYMAXWELL_PATH)
-        # sys.path.append(PYMAXWELL_PATH)
         from pymaxwell import *
     
     try:

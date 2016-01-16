@@ -49,24 +49,16 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
-# NOTE: restore instancer support for my personal use (python only)
+# TODO: restore instancer support for my personal use (python only)
 # NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
 # NOTE: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
 # TODO: do something with sharp edges, auto smooth and custom normals..
 # NOTE: check hair children particles again, seems to be crashing when exporting with uvs. put there warning at least
-# TODO: move all properties to 'maxwell_render', leave no other property groups on objects, change prefixed properties to dedicated groups with pointers. currently it's a mess.. - this is first priority for 0.4.0 refactoring
 # TODO: more standardized setting render file type and bit depth, this will require change in render workflow and that is dangerous..
-# TODO: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works. at least try to remove that texture from texture drop down. but i think it is not possible to filter prop_search results, have to be enum with custom items function
-# NOTE: better orphan mesh removing. instead of removing them all at the end, remove each individually when is no longer needed. - should be ok now, but better to check it more thoroughly
 # TODO: check if in case of some error during exporting, everything is cleaned up and won't cause problems during next export
-# TODO: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version. or check version and then decide. this will require version.py to return version number instead of true/false.
+# NOTE: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version. or check version and then decide. this will require version.py to return version number instead of true/false.
 # NOTE: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
-# NOTE: maybe remove wireframe export completely, or only as export operator, also prepare wireframe scene before actual scene write, so the mostly unused switches and functions can be removed
-# TODO: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred) - seems like it will not work. texture preview might be usable when together with maxwell material basic blender material is created, then it can be used for preview in viewport
-# TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender)
-# TODO: verify installation during addon activation
-# TODO: material preview: export material to mxm, load preview scene, swap material named 'preview', save to /tmp and render required size. load image afterwards with CmaxwellMxi.getPreview > numpy array
-# TODO: procedural textures, but without preview are a bit useless. how to preview them? don't see anything usable in pymaxwell for it. create special scene a render it? some kind of light tent?
+# TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
 
 
 class MXSExport():
@@ -353,9 +345,9 @@ class MXSExport():
                     #     t = 'EMPTY'
             elif(o.type == 'EMPTY'):
                 # t = 'EMPTY'
-                if(o.maxwell_render_reference.enabled):
+                if(o.maxwell_render.reference.enabled):
                     t = 'REFERENCE'
-                elif(o.maxwell_volumetrics_extension.enabled):
+                elif(o.maxwell_render.volumetrics.enabled):
                     t = 'VOLUMETRICS'
                 else:
                     pass
@@ -728,7 +720,7 @@ class MXSExport():
                     pset = ps.settings
                     if(pset.maxwell_render.use == 'PARTICLE_INSTANCES'):
                         if(pset.render_type in ['OBJECT', 'GROUP', ]):
-                            mpi = pset.maxwell_particle_instances
+                            mpi = pset.maxwell_render.instances
                             
                             def process_dupli_list(ob):
                                 ob.dupli_list_create(self.context.scene, settings='RENDER')
@@ -832,16 +824,16 @@ class MXSExport():
                         else:
                             # in case of cloner..
                             modifiers.append(p)
-                if(ob.maxwell_scatter_extension.enabled):
+                if(ob.maxwell_render.scatter.enabled):
                     p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'SCATTER', }
                     modifiers.append(p)
-                if(ob.maxwell_subdivision_extension.enabled):
+                if(ob.maxwell_render.subdivision.enabled):
                     p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'SUBDIVISION', }
                     modifiers.append(p)
-                if(ob.maxwell_sea_extension.enabled):
+                if(ob.maxwell_render.sea.enabled):
                     p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'SEA', }
                     modifiers.append(p)
-                if(ob.maxwell_grass_extension.enabled):
+                if(ob.maxwell_render.grass.enabled):
                     p = {'object': ob, 'children': [], 'export': True, 'parent': ob, 'type': None, 'export_type': 'GRASS', }
                     modifiers.append(p)
         
@@ -1041,36 +1033,36 @@ class MXSExport():
                 if(d['object'].maxwell_render.backface_material == mat.name):
                     u += 1
             for d in self._references:
-                if(d['object'].maxwell_render_reference.material == mat.name):
+                if(d['object'].maxwell_render.reference.material == mat.name):
                     u += 1
-                if(d['object'].maxwell_render_reference.backface_material == mat.name):
+                if(d['object'].maxwell_render.reference.backface_material == mat.name):
                     u += 1
             for d in self._particles:
                 if(d['export_type'] == 'HAIR'):
-                    if(d['psys'].settings.maxwell_hair_extension.material == mat.name):
+                    if(d['psys'].settings.maxwell_render.hair.material == mat.name):
                         u += 1
-                    if(d['psys'].settings.maxwell_hair_extension.backface_material == mat.name):
+                    if(d['psys'].settings.maxwell_render.hair.backface_material == mat.name):
                         u += 1
                 if(d['export_type'] == 'PARTICLES'):
-                    if(d['psys'].settings.maxwell_particles_extension.material == mat.name):
+                    if(d['psys'].settings.maxwell_render.particles.material == mat.name):
                         u += 1
-                    if(d['psys'].settings.maxwell_particles_extension.backface_material == mat.name):
+                    if(d['psys'].settings.maxwell_render.particles.backface_material == mat.name):
                         u += 1
             for d in self._volumetrics:
-                if(d['object'].maxwell_volumetrics_extension.material == mat.name):
+                if(d['object'].maxwell_render.volumetrics.material == mat.name):
                     u += 1
-                if(d['object'].maxwell_volumetrics_extension.backface_material == mat.name):
+                if(d['object'].maxwell_render.volumetrics.backface_material == mat.name):
                     u += 1
             for d in self._modifiers:
                 if(d['export_type'] == 'GRASS'):
-                    if(d['object'].maxwell_grass_extension.material == mat.name):
+                    if(d['object'].maxwell_render.grass.material == mat.name):
                         u += 1
-                    if(d['object'].maxwell_grass_extension.backface_material == mat.name):
+                    if(d['object'].maxwell_render.grass.backface_material == mat.name):
                         u += 1
                 if(d['export_type'] == 'SEA'):
-                    if(d['object'].maxwell_sea_extension.material == mat.name):
+                    if(d['object'].maxwell_render.sea.material == mat.name):
                         u += 1
-                    if(d['object'].maxwell_sea_extension.backface_material == mat.name):
+                    if(d['object'].maxwell_render.sea.backface_material == mat.name):
                         u += 1
             
             if(u > 0):
@@ -2657,7 +2649,7 @@ class MXSMesh(MXSObject):
         bm = bmesh.new()
         bm.from_mesh(me)
         # store quads if needed
-        subd = ob.maxwell_subdivision_extension
+        subd = ob.maxwell_render.subdivision
         # do this only when subdivision is enabled and set to catmull-clark scheme
         if((subd.enabled and subd.scheme == '0') or extra_subdiv):
             # make list if vertex indices lists, only for quads, for other polygons put empty list
@@ -2707,7 +2699,7 @@ class MXSMesh(MXSObject):
         
         self.subdivision_modifier = None
         if(extra_subdiv):
-            sd = self.b_object.maxwell_subdivision_extension
+            sd = self.b_object.maxwell_render.subdivision
             # store old settings
             old = (sd.enabled, sd.level, sd.scheme, sd.interpolation, sd.crease, sd.smooth, )
             # set modifier settings
@@ -2834,13 +2826,13 @@ class MXSMeshInstance(MXSObject):
 
 class MXSReference(MXSObject):
     def __init__(self, o, ):
-        log("'{}' > '{}'".format(o['object'].name, bpy.path.abspath(o['object'].maxwell_render_reference.path), ), 2)
+        log("'{}' > '{}'".format(o['object'].name, bpy.path.abspath(o['object'].maxwell_render.reference.path), ), 2)
         
         super().__init__(o)
         self.m_type = 'REFERENCE'
         
         ob = self.b_object
-        mx = ob.maxwell_render_reference
+        mx = ob.maxwell_render.reference
         
         self.ref = mx
         
@@ -2897,7 +2889,7 @@ class MXSParticles(MXSObject):
         self.mx = self.b_object.maxwell_render
         
         self.ps = self.o['object']
-        self.mxex = self.ps.settings.maxwell_particles_extension
+        self.mxex = self.ps.settings.maxwell_render.particles
         
         self._object_properties()
         if(not self.mxex.hide):
@@ -3219,7 +3211,7 @@ class MXSHair(MXSObject):
         self.mx = self.b_object.maxwell_render
         
         self.ps = self.o['object']
-        self.mxex = self.ps.settings.maxwell_hair_extension
+        self.mxex = self.ps.settings.maxwell_render.hair
         
         self._object_properties()
         if(not self.mxex.hide):
@@ -3421,7 +3413,7 @@ class MXSVolumetrics(MXSObject):
         super().__init__(o)
         self.m_type = 'VOLUMETRICS'
         
-        mxex = self.b_object.maxwell_volumetrics_extension
+        mxex = self.b_object.maxwell_render.volumetrics
         self.mxex = mxex
         self.m_vtype = int(mxex.vtype[-1:])
         self.m_density = mxex.density
@@ -3483,7 +3475,7 @@ class MXSGrass(MXSModifier):
         
         super().__init__(o)
         self.m_type = 'GRASS'
-        self.mxex = self.b_object.maxwell_grass_extension
+        self.mxex = self.b_object.maxwell_render.grass
         
         mxex = self.mxex
         
@@ -3546,7 +3538,7 @@ class MXSCloner(MXSModifier):
         
         self.b_object = self.o['parent']
         self.ps = self.o['object']
-        self.mxex = self.ps.settings.maxwell_cloner_extension
+        self.mxex = self.ps.settings.maxwell_render.cloner
         
         # parent is object with particle system (emitter) even when cloned object is not child of it.
         # cloner is excluded from hierarchy and parent property is only used when use_render_emitter is False
@@ -3715,7 +3707,7 @@ class MXSScatter(MXSModifier):
         
         super().__init__(o)
         self.m_type = 'SCATTER'
-        self.mxex = self.b_object.maxwell_scatter_extension
+        self.mxex = self.b_object.maxwell_render.scatter
         
         mxex = self.mxex
         
@@ -3777,7 +3769,7 @@ class MXSSubdivision(MXSModifier):
         
         super().__init__(o)
         self.m_type = 'SUBDIVISION'
-        self.mxex = self.b_object.maxwell_subdivision_extension
+        self.mxex = self.b_object.maxwell_render.subdivision
         
         mxex = self.mxex
         self.m_level = int(mxex.level)
@@ -3853,7 +3845,7 @@ class MXSSea(MXSObject):
         self.m_name = MXSDatabase.object_name(self.b_object, "{}-{}".format(self.m_parent, 'MaxwellSea', ))
         
         self.mx = self.b_object.maxwell_render
-        self.mxex = self.b_object.maxwell_sea_extension
+        self.mxex = self.b_object.maxwell_render.sea
         
         self._object_properties()
         if(not self.mxex.hide):
@@ -3961,7 +3953,7 @@ class MXSMaterialExtension(MXSMaterial):
         
         mat = bpy.data.materials[name]
         m = mat.maxwell_render
-        mx = mat.maxwell_material_extension
+        mx = mat.maxwell_render.extension
         
         self.m = m
         self.mx = mx
