@@ -1684,6 +1684,69 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'flag_override_hide_to_gi')
 
 
+class ObjectReferenceViewportPanel(Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell MXS Reference Object"
+    bl_space_type = 'VIEW_3D'
+    bl_context = "scene"
+    bl_region_type = 'UI'
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['EMPTY']
+        if((o and o.type in ts) and (e in cls.COMPAT_ENGINES)):
+            m = o.maxwell_render.reference
+            if(m.enabled):
+                return True
+        return False
+    
+    def draw(self, context):
+        m = context.object.maxwell_render.reference
+        layout = self.layout
+        l = layout.column()
+        
+        r = l.row(align=True)
+        r.prop(m, 'draw', toggle=True, icon='GROUP_VERTEX', )
+        r.prop(m, 'refresh', text='', icon='FILE_REFRESH', )
+        l.separator()
+        
+        ll = l
+        l = l.column()
+        l.prop(m, 'display_percent')
+        l.prop(m, 'display_max_points')
+        
+        l.separator()
+        l.prop(m, 'draw_options')
+        if(m.draw_options):
+            c = l.column()
+            c.label("Points:")
+            c.prop(m, 'point_size')
+            r = c.row()
+            r.prop(m, 'point_color')
+            r = c.row()
+            r.prop(m, 'point_color_active')
+            r = c.row()
+            r.prop(m, 'point_color_selected')
+        
+            l.separator()
+            c = l.column()
+            c.label("Bounds:")
+            c.prop(m, 'bbox_line_width')
+            c.prop(m, 'bbox_line_stipple')
+            r = c.row()
+            r.prop(m, 'bbox_color')
+            r = c.row()
+            r.prop(m, 'bbox_color_active')
+            r = c.row()
+            r.prop(m, 'bbox_color_selected')
+        
+        if(not m.draw):
+            l.active = False
+
+
 class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Volumetrics"

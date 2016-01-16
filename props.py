@@ -25,6 +25,7 @@ from bpy.types import PropertyGroup
 from mathutils import Vector
 
 from . import utils
+from . import ops
 
 
 class MaterialEditorCallbacks():
@@ -778,6 +779,8 @@ class SceneProperties(PropertyGroup):
     custom_alphas_use_groups = BoolProperty(name="Use Object Groups", default=False, description="", )
     custom_alphas_manual = PointerProperty(name="Manual Custom Alphas", type=ManualCustomAlphas, )
     
+    private_draw_references = bpy.props.IntProperty(name="Draw MXS References in Viewport", default=0, )
+    
     @classmethod
     def register(cls):
         bpy.types.Scene.maxwell_render = PointerProperty(type=cls)
@@ -1094,6 +1097,47 @@ class ReferenceProperties(PropertyGroup):
     
     material = StringProperty(name="Material", default="", )
     backface_material = StringProperty(name="Backface Material", default="", )
+    
+    def _draw_update(self, context):
+        p = os.path.realpath(bpy.path.abspath(self.path))
+        r = self.refresh
+        ops.MXSReferenceCache.draw(p, self.draw, context, r, )
+    
+    draw = BoolProperty(name="Draw in Viewport", default=False, update=_draw_update, description="", )
+    refresh = BoolProperty(name="Refresh", default=False, description="Force loading vertices from MXS when enabling drawing", )
+    
+    draw_options = BoolProperty(name="Show Options", default=False, )
+    
+    current_theme = bpy.context.user_preferences.themes.items()[0][0]
+    point_color = FloatVectorProperty(name="Color",
+                                      default=tuple(bpy.context.user_preferences.themes[current_theme].view_3d.wire),
+                                      min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    point_color_selected = FloatVectorProperty(name="Selected",
+                                               default=tuple(bpy.context.user_preferences.themes[current_theme].view_3d.object_selected),
+                                               min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    point_color_active = FloatVectorProperty(name="Active",
+                                             default=tuple(bpy.context.user_preferences.themes[current_theme].view_3d.object_active),
+                                             min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    point_size = IntProperty(name="Size",
+                             default=bpy.context.user_preferences.themes[current_theme].view_3d.vertex_size,
+                             min=1, max=10, )
+    bbox_color = FloatVectorProperty(name="Color",
+                                     default=tuple(bpy.context.user_preferences.themes[current_theme].view_3d.wire),
+                                     min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    bbox_color_selected = FloatVectorProperty(name="Selected",
+                                              default=tuple(bpy.context.user_preferences.themes[current_theme].view_3d.object_selected),
+                                              min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    bbox_color_active = FloatVectorProperty(name="Active",
+                                            default=tuple(bpy.context.user_preferences.themes[current_theme].view_3d.object_active),
+                                            min=0.0, max=1.0, precision=2, subtype='COLOR', )
+    bbox_line_width = IntProperty(name="Width",
+                                  default=bpy.context.user_preferences.themes[current_theme].view_3d.outline_width,
+                                  min=1, max=10, )
+    
+    bbox_line_stipple = BoolProperty(name="Dashed", default=True, )
+    
+    display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
+    display_max_points = IntProperty(name="Display Max. Points", default=10000, min=0, max=1000000, )
 
 
 class ExtGrassProperties(PropertyGroup):

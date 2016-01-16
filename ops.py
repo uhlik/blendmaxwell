@@ -20,13 +20,15 @@ import os
 import shlex
 import subprocess
 import math
+import random
 
 import bpy
 from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty, StringProperty, EnumProperty, FloatVectorProperty, IntVectorProperty
 from bpy.types import Operator
-from mathutils import Vector, Color
+from mathutils import Vector, Color, Matrix
 from bl_operators.presets import AddPresetBase
 from bpy_extras.io_utils import ImportHelper, ExportHelper
+import bgl
 
 from . import maths
 from . import system
@@ -2309,6 +2311,301 @@ class MaterialWizardTextured(Operator):
     
     # def invoke(self, context, event):
     #     return context.window_manager.invoke_props_dialog(self)
+
+
+class MXSReferenceCache():
+    __cache = {}
+    
+    @classmethod
+    def add(cls, path, data, ):
+        cls.__cache[path] = data
+    
+    @classmethod
+    def get(cls, path, ):
+        if(path in cls.__cache):
+            return cls.__cache[path]
+        return None
+    
+    @classmethod
+    def set(cls, path, data, ):
+        cls.__cache[path] = data
+    
+    @classmethod
+    def draw(cls, path, value, context, refresh=False, ):
+        r = None
+        if(refresh and value):
+            c = bpy.context.copy()
+            bpy.ops.maxwell_render.read_mxs_reference(c, refresh=True, )
+            r = cls.get(path)
+        else:
+            r = cls.get(path)
+            if(r is None):
+                c = bpy.context.copy()
+                bpy.ops.maxwell_render.read_mxs_reference(c)
+                r = cls.get(path)
+        
+        if(r is None):
+            return
+        
+        r['draw'] = value
+        cls.set(path, r, )
+        
+        if(value):
+            cls.start()
+        else:
+            cls.stop()
+    
+    @classmethod
+    def all(cls):
+        d = {}
+        for k, v in cls.__cache.items():
+            d[k] = v
+        return d
+    
+    @classmethod
+    def start(cls):
+        a = cls.all()
+        b = [r['draw'] for p, r in a.items()]
+        display = bpy.context.scene.maxwell_render.private_draw_references
+        if(sum(b) > 0 and display < 1):
+            bpy.ops.maxwell_render.modal_draw_mxs_references('INVOKE_DEFAULT')
+    
+    @classmethod
+    def stop(cls):
+        a = cls.all()
+        b = [r['draw'] for p, r in a.items()]
+        display = bpy.context.scene.maxwell_render.private_draw_references
+        if(sum(b) == 0 and display == 1):
+            bpy.ops.maxwell_render.modal_draw_mxs_references('INVOKE_DEFAULT')
+
+
+class ReadMXSReference(Operator):
+    bl_idname = "maxwell_render.read_mxs_reference"
+    bl_label = 'Read MXS Reference'
+    bl_description = ''
+    
+    refresh = BoolProperty(name="Refresh", default=False, )
+    
+    def _base_and_pivot_to_matrix(self, base, pivot, ):
+        from bpy_extras import io_utils
+        am = io_utils.axis_conversion(from_forward='-Z', from_up='Y', to_forward='Y', to_up='Z', ).to_4x4()
+        
+        def cbase_to_matrix4(cbase):
+            o = cbase[0]
+            x = cbase[1]
+            y = cbase[2]
+            z = cbase[3]
+            m = Matrix([(x[0], y[0], z[0], o[0]),
+                        (x[1], y[1], z[1], o[1]),
+                        (x[2], y[2], z[2], o[2]),
+                        (0.0, 0.0, 0.0, 1.0)])
+            return m
+        
+        bm = cbase_to_matrix4(base)
+        pm = cbase_to_matrix4(pivot)
+        m = am * bm * pm
+        return m
+    
+    def _process_data(self, context, data):
+        vertices = []
+        for ob in data:
+            vs = [Vector(v) for v in ob['vertices']]
+            m = self._base_and_pivot_to_matrix(ob['base'], ob['pivot'])
+            mvs = [m * v for v in vs]
+            vertices.extend(mvs)
+        # shuffle point to get random points when limiting visibility
+        vertices = [v.to_tuple() for v in vertices]
+        random.shuffle(vertices)
+        
+        blocs = vertices[:]
+        a = list(map(min, zip(*blocs)))
+        b = list(map(max, zip(*blocs)))
+        
+        d = {'vertices': vertices,
+             'bound_box': [[a[0], a[1], a[2]],
+                           [a[0], a[1], b[2]],
+                           [a[0], b[1], b[2]],
+                           [a[0], b[1], a[2]],
+                           [b[0], a[1], a[2]],
+                           [b[0], a[1], b[2]],
+                           [b[0], b[1], b[2]],
+                           [b[0], b[1], a[2]], ],
+             'object': context.active_object,
+             'draw': False, }
+        return d
+    
+    def execute(self, context):
+        o = context.active_object
+        if(o is None):
+            return {'CANCELLED'}
+        m = o.maxwell_render.reference
+        if(not m.enabled):
+            return {'CANCELLED'}
+        
+        p = os.path.realpath(bpy.path.abspath(m.path))
+        
+        if(system.PLATFORM == 'Darwin'):
+            if(self.refresh):
+                data = system.python34_run_read_mxs_reference(p)
+                d = self._process_data(context, data)
+                MXSReferenceCache.add(p, d)
+            else:
+                if(MXSReferenceCache.get(p)):
+                    pass
+                else:
+                    data = system.python34_run_read_mxs_reference(p)
+                    d = self._process_data(context, data)
+                    MXSReferenceCache.add(p, d)
+        elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+            # TODO: windows/linux vertex data retrieveing
+            pass
+        else:
+            pass
+        
+        return {'FINISHED'}
+
+
+def mxs_reference_draw_callback(self, context):
+    ao = bpy.context.active_object
+    sel = [o for o in bpy.context.scene.objects if o.select]
+    
+    def check_visibility(o):
+        if(o.hide):
+            return False
+        
+        layers = context.scene.layers
+        # if(o.hide_render is True):
+        #     return False
+        s = None
+        r = None
+        for i, l in enumerate(o.layers):
+            if(layers[i] is True and l is True):
+                s = True
+                break
+        # for i, l in enumerate(o.layers):
+        #     if(render_layers[i] is True and l is True):
+        #         r = True
+        #         break
+        # if(s and r):
+        #     return True
+        if(s):
+            return True
+        return False
+    
+    d = MXSReferenceCache.all()
+    for k, v in d.items():
+        if(not v['draw']):
+            continue
+        
+        ob = v['object']
+        if(not check_visibility(ob)):
+            continue
+        
+        active = False
+        selected = False
+        if(ao == ob):
+            active = True
+        if(ob in sel):
+            selected = True
+        
+        mx = ob.maxwell_render.reference
+        mat = ob.matrix_world
+        
+        points = v['vertices']
+        bound_box = v['bound_box']
+        
+        percent = int((len(points) / 100) * mx.display_percent)
+        if(percent > mx.display_max_points):
+            points = points[:mx.display_max_points]
+        else:
+            points = points[:percent]
+        
+        locs = [mat * Vector(p) for p in points]
+        bbox = [mat * Vector(b) for b in bound_box]
+        
+        # point cloud
+        bgl.glPointSize(mx.point_size)
+        if(active):
+            bgl.glColor3f(*mx.point_color_active)
+        elif(selected):
+            bgl.glColor3f(*mx.point_color_selected)
+        else:
+            bgl.glColor3f(*mx.point_color)
+        bgl.glBegin(bgl.GL_POINTS)
+        for l in locs:
+            bgl.glVertex3f(*l)
+        bgl.glEnd()
+        
+        # bounding box
+        if(active):
+            bgl.glColor3f(*mx.bbox_color_active)
+        elif(selected):
+            bgl.glColor3f(*mx.bbox_color_selected)
+        else:
+            bgl.glColor3f(*mx.bbox_color)
+        bgl.glLineWidth(mx.bbox_line_width)
+        if(mx.bbox_line_stipple):
+            bgl.glEnable(bgl.GL_LINE_STIPPLE)
+            bgl.glLineStipple(4, 0xAAAA)
+        
+        bgl.glBegin(bgl.GL_LINE_STRIP)
+        bgl.glVertex3f(*bbox[0])
+        bgl.glVertex3f(*bbox[1])
+        bgl.glVertex3f(*bbox[2])
+        bgl.glVertex3f(*bbox[3])
+        bgl.glVertex3f(*bbox[0])
+        bgl.glVertex3f(*bbox[4])
+        bgl.glVertex3f(*bbox[5])
+        bgl.glVertex3f(*bbox[6])
+        bgl.glVertex3f(*bbox[7])
+        bgl.glVertex3f(*bbox[4])
+        bgl.glEnd()
+        
+        bgl.glBegin(bgl.GL_LINES)
+        bgl.glVertex3f(*bbox[1])
+        bgl.glVertex3f(*bbox[5])
+        bgl.glVertex3f(*bbox[2])
+        bgl.glVertex3f(*bbox[6])
+        bgl.glVertex3f(*bbox[3])
+        bgl.glVertex3f(*bbox[7])
+        bgl.glEnd()
+        
+        # defaults..
+        bgl.glLineWidth(1)
+        bgl.glColor3f(0.0, 0.0, 0.0, )
+        bgl.glDisable(bgl.GL_LINE_STIPPLE)
+        bgl.glLineStipple(1, 0xAAAA)
+        bgl.glPointSize(1.0)
+
+
+class ModalDrawMXSReferences(Operator):
+    bl_idname = "maxwell_render.modal_draw_mxs_references"
+    bl_label = "Modal Draw MXS References"
+    
+    def modal(self, context, event):
+        m = context.scene.maxwell_render
+        if(context.area):
+            context.area.tag_redraw()
+        if(m.private_draw_references == -1):
+            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+            m.private_draw_references = 0
+            return {'CANCELLED'}
+        return {'PASS_THROUGH'}
+    
+    def invoke(self, context, event):
+        m = context.scene.maxwell_render
+        if(context.area.type == 'VIEW_3D'):
+            if(m.private_draw_references < 1):
+                m.private_draw_references = 1
+                self._handle = bpy.types.SpaceView3D.draw_handler_add(mxs_reference_draw_callback, (self, context, ), 'WINDOW', 'POST_VIEW')
+                context.window_manager.modal_handler_add(self)
+                return {'RUNNING_MODAL'}
+            else:
+                m.private_draw_references = -1
+                return {'RUNNING_MODAL'}
+        else:
+            self.report({'WARNING'}, "View3D not found, cannot run operator")
+            return {'CANCELLED'}
 
 
 class ExecuteMaxwellPreset(Operator):
