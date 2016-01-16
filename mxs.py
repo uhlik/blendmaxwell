@@ -4117,7 +4117,7 @@ class MXSReferenceReader():
         for n in nms:
             d = None
             o = scene.getObject(n)
-            d = object(o)
+            d = self.object(o)
             if(d is not None):
                 data.append(d)
         self.data = data

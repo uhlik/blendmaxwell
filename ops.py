@@ -2457,6 +2457,7 @@ class ReadMXSReference(Operator):
                     d = self._process_data(context, data)
                     MXSReferenceCache.add(p, d)
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
+            from . import mxs
             if(self.refresh):
                 r = mxs.MXSReferenceReader(p)
                 data = r.data
