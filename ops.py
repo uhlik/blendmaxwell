@@ -21,6 +21,7 @@ import shlex
 import subprocess
 import math
 import random
+import uuid
 
 import bpy
 from bpy.props import PointerProperty, FloatProperty, IntProperty, BoolProperty, StringProperty, EnumProperty, FloatVectorProperty, IntVectorProperty
@@ -2317,38 +2318,43 @@ class MXSReferenceCache():
     __cache = {}
     
     @classmethod
-    def add(cls, path, data, ):
-        cls.__cache[path] = data
+    def add(cls, data, ):
+        cls.__cache[uuid.uuid1()] = data
     
     @classmethod
-    def get(cls, path, ):
-        if(path in cls.__cache):
-            return cls.__cache[path]
+    def get(cls, path, ob, ):
+        for k, v in cls.__cache.items():
+            if(v['path'] == path and v['object'] == ob):
+                return v
         return None
     
     @classmethod
-    def set(cls, path, data, ):
-        cls.__cache[path] = data
+    def set(cls, path, ob, data, ):
+        for k, v in cls.__cache.items():
+            if(v['path'] == path and v['object'] == ob):
+                break
+        cls.__cache[k] = data
     
     @classmethod
     def draw(cls, path, value, context, refresh=False, ):
         r = None
+        ob = context.active_object
         if(refresh and value):
             c = bpy.context.copy()
             bpy.ops.maxwell_render.read_mxs_reference(c, refresh=True, )
-            r = cls.get(path)
+            r = cls.get(path, ob)
         else:
-            r = cls.get(path)
+            r = cls.get(path, ob)
             if(r is None):
                 c = bpy.context.copy()
                 bpy.ops.maxwell_render.read_mxs_reference(c)
-                r = cls.get(path)
+                r = cls.get(path, ob)
         
         if(r is None):
             return
         
         r['draw'] = value
-        cls.set(path, r, )
+        cls.set(path, ob, r)
         
         if(value):
             cls.start()
@@ -2406,7 +2412,7 @@ class ReadMXSReference(Operator):
         m = am * bm * pm
         return m
     
-    def _process_data(self, context, data):
+    def _process_data(self, context, data, path):
         vertices = []
         for ob in data:
             vs = [Vector(v) for v in ob['vertices']]
@@ -2431,6 +2437,7 @@ class ReadMXSReference(Operator):
                            [b[0], b[1], b[2]],
                            [b[0], b[1], a[2]], ],
              'object': context.active_object,
+             'path': path,
              'draw': False, }
         return d
     
@@ -2447,30 +2454,30 @@ class ReadMXSReference(Operator):
         if(system.PLATFORM == 'Darwin'):
             if(self.refresh):
                 data = system.python34_run_read_mxs_reference(p)
-                d = self._process_data(context, data)
-                MXSReferenceCache.add(p, d)
+                d = self._process_data(context, data, p)
+                MXSReferenceCache.add(d)
             else:
-                if(MXSReferenceCache.get(p)):
+                if(MXSReferenceCache.get(p, o)):
                     pass
                 else:
                     data = system.python34_run_read_mxs_reference(p)
-                    d = self._process_data(context, data)
-                    MXSReferenceCache.add(p, d)
+                    d = self._process_data(context, data, p)
+                    MXSReferenceCache.add(d)
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
             from . import mxs
             if(self.refresh):
                 r = mxs.MXSReferenceReader(p)
                 data = r.data
-                d = self._process_data(context, data)
-                MXSReferenceCache.add(p, d)
+                d = self._process_data(context, data, p)
+                MXSReferenceCache.add(d)
             else:
-                if(MXSReferenceCache.get(p)):
+                if(MXSReferenceCache.get(p, o)):
                     pass
                 else:
                     r = mxs.MXSReferenceReader(p)
                     data = r.data
-                    d = self._process_data(context, data)
-                    MXSReferenceCache.add(p, d)
+                    d = self._process_data(context, data, p)
+                    MXSReferenceCache.add(d)
         else:
             pass
         

@@ -1711,6 +1711,26 @@ class ObjectReferenceViewportPanel(Panel):
         r = l.row(align=True)
         r.prop(m, 'draw', toggle=True, icon='GROUP_VERTEX', )
         r.prop(m, 'refresh', text='', icon='FILE_REFRESH', )
+        
+        ok = False
+        p = os.path.realpath(bpy.path.abspath(m.path))
+        if(p != ""):
+            if(os.path.exists(p)):
+                if(not os.path.isdir(p)):
+                    h, t = os.path.split(p)
+                    n, e = os.path.splitext(t)
+                    if(e == '.mxs'):
+                        ok = True
+                    else:
+                        l.label("Not a MXS file.", icon='ERROR', )
+                else:
+                    l.label("Not a MXS file.", icon='ERROR', )
+            else:
+                l.label("File does not exist.", icon='ERROR', )
+        else:
+            l.label("Path is empty.", icon='ERROR', )
+        r.enabled = ok
+        
         l.separator()
         
         ll = l
