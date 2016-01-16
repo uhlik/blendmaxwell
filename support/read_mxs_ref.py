@@ -82,30 +82,6 @@ def get_objects_names(scene):
     return l
 
 
-def base_and_pivot(obj):
-    b, p, _ = obj.getBaseAndPivot()
-    o = b.origin
-    x = b.xAxis
-    y = b.yAxis
-    z = b.zAxis
-    rb = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
-    
-    o = p.origin
-    x = p.xAxis
-    y = p.yAxis
-    z = p.zAxis
-    rp = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
-    
-    l, _ = obj.getPosition()
-    rl = (l.x(), l.y(), l.z())
-    r, _ = obj.getRotation()
-    rr = (r.x(), r.y(), r.z())
-    s, _ = obj.getScale()
-    rs = (s.x(), s.y(), s.z())
-    
-    return rb, rp, rl, rr, rs
-
-
 def object(o):
     is_instance, _ = o.isInstance()
     is_mesh, _ = o.isMesh()

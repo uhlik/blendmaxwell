@@ -4101,3 +4101,72 @@ class MXMReader():
         self.data = material(s, m)
         if(m.hasMaterialModifier()):
             self.data['extension'] = extension(s, m)
+
+
+class MXSReferenceReader():
+    def __init__(self, path, ):
+        log("maxwell meshes to data:", 1)
+        log("reading mxs scene from: {0}".format(path), 2)
+        scene = Cmaxwell(mwcallback)
+        ok = scene.readMXS(path)
+        if(not ok):
+            raise RuntimeError("Error during reading scene {}".format(path))
+        nms = self.get_objects_names(scene)
+        data = []
+        log("converting empties, objects and instances..", 2)
+        for n in nms:
+            d = None
+            o = scene.getObject(n)
+            d = object(o)
+            if(d is not None):
+                data.append(d)
+        self.data = data
+        log("done.", 2)
+    
+    def get_objects_names(self, scene):
+        it = CmaxwellObjectIterator()
+        o = it.first(scene)
+        l = []
+        while not o.isNull():
+            name, _ = o.getName()
+            l.append(name)
+            o = it.next()
+        return l
+    
+    def object(self, o):
+        is_instance, _ = o.isInstance()
+        is_mesh, _ = o.isMesh()
+        if(is_instance == 0 and is_mesh == 0):
+            # log("WARNING: only empties, meshes and instances are supported..", 2)
+            return None
+        
+        def get_verts(o):
+            vs = []
+            nv, _ = o.getVerticesCount()
+            for i in range(nv):
+                v, _ = o.getVertex(i, 0)
+                vs.append((v.x(), v.y(), v.z()))
+            return vs
+        
+        b, p = self.global_transform(o)
+        r = {'name': o.getName()[0],
+             'base': b,
+             'pivot': p,
+             'vertices': [], }
+        if(is_instance == 1):
+            io = o.getInstanced()
+            # TODO: this is called once for each instance, better to process all meshes and then instances just copy vertex data
+            r['vertices'] = get_verts(io)
+        else:
+            r['vertices'] = get_verts(o)
+        return r
+    
+    def global_transform(self, o):
+        cb, _ = o.getWorldTransform()
+        o = cb.origin
+        x = cb.xAxis
+        y = cb.yAxis
+        z = cb.zAxis
+        rb = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
+        rp = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), )
+        return rb, rp

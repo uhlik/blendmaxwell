@@ -2457,8 +2457,19 @@ class ReadMXSReference(Operator):
                     d = self._process_data(context, data)
                     MXSReferenceCache.add(p, d)
         elif(system.PLATFORM == 'Linux' or system.PLATFORM == 'Windows'):
-            # TODO: windows/linux vertex data retrieveing
-            pass
+            if(self.refresh):
+                r = mxs.MXSReferenceReader(p)
+                data = r.data
+                d = self._process_data(context, data)
+                MXSReferenceCache.add(p, d)
+            else:
+                if(MXSReferenceCache.get(p)):
+                    pass
+                else:
+                    r = mxs.MXSReferenceReader(p)
+                    data = r.data
+                    d = self._process_data(context, data)
+                    MXSReferenceCache.add(p, d)
         else:
             pass
         
