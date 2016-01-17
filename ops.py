@@ -2383,6 +2383,14 @@ class MXSReferenceCache():
         display = bpy.context.scene.maxwell_render.private_draw_references
         if(sum(b) == 0 and display == 1):
             bpy.ops.maxwell_render.modal_draw_mxs_references('INVOKE_DEFAULT')
+    
+    @classmethod
+    def quit(cls):
+        for k, r in cls.__cache.items():
+            cls.__cache[k]['draw'] = False
+        display = bpy.context.scene.maxwell_render.private_draw_references
+        if(display == 1):
+            bpy.ops.maxwell_render.modal_draw_mxs_references('INVOKE_DEFAULT')
 
 
 class ReadMXSReference(Operator):
@@ -2625,6 +2633,19 @@ class ModalDrawMXSReferences(Operator):
         else:
             self.report({'WARNING'}, "View3D not found, cannot run operator")
             return {'CANCELLED'}
+
+
+if(True):
+    # strange, isn't it. but i want to have this piece of code folded in Textmate..
+    from bpy.app.handlers import persistent
+    
+    @persistent
+    def load_handler(dummy):
+        MXSReferenceCache.quit()
+    
+    # pre load handler to stop drawing mxs references. loading new blend while displaying reference in viewport will crash blender
+    # according to documentation, handler are removed when loading new files (https://www.blender.org/api/blender_python_api_current/bpy.app.handlers.html)
+    bpy.app.handlers.load_pre.append(load_handler)
 
 
 class ExecuteMaxwellPreset(Operator):
