@@ -140,6 +140,23 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=
         h, t = os.path.split(path)
         n, e = os.path.splitext(t)
         tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, uid))
+        
+        if(prefs().osx_tmp_use == 'SPECIFIC_DIRECTORY'):
+            tmpd = os.path.realpath(bpy.path.abspath(prefs().osx_tmp_use_directory))
+            if(os.path.exists(tmpd)):
+                if(os.path.isdir(tmpd)):
+                    if(os.access(tmpd, os.W_OK)):
+                        tmp_dir = os.path.join(tmpd, "{0}-tmp-{1}".format(n, uid))
+                    else:
+                        log("tmp directory ('{}') is not writeable, using default".format(tmpd), 2, LogStyles.WARNING)
+                else:
+                    log("tmp directory ('{}') is not a directory, using default".format(tmpd), 2, LogStyles.WARNING)
+            else:
+                log("tmp directory ('{}') does not exist, using default".format(tmpd), 2, LogStyles.WARNING)
+        else:
+            pass
+        
+        log("creating temp directory.. ({})".format(self.tmp_dir), 2, LogStyles.MESSAGE, )
         if(os.path.exists(tmp_dir) is False):
             os.makedirs(tmp_dir)
         
@@ -221,6 +238,24 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
         h, t = os.path.split(path)
         n, e = os.path.splitext(t)
         tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, uid))
+        
+        if(prefs().osx_tmp_use == 'SPECIFIC_DIRECTORY'):
+            tmpd = os.path.realpath(bpy.path.abspath(prefs().osx_tmp_use_directory))
+            if(os.path.exists(tmpd)):
+                if(os.path.isdir(tmpd)):
+                    if(os.access(tmpd, os.W_OK)):
+                        tmp_dir = os.path.join(tmpd, "{0}-tmp-{1}".format(n, uid))
+                    else:
+                        log("tmp directory ('{}') is not writeable, using default".format(tmpd), 2, LogStyles.WARNING)
+                else:
+                    log("tmp directory ('{}') is not a directory, using default".format(tmpd), 2, LogStyles.WARNING)
+            else:
+                log("tmp directory ('{}') does not exist, using default".format(tmpd), 2, LogStyles.WARNING)
+        else:
+            pass
+        
+        log("creating temp directory.. ({})".format(self.tmp_dir), 2, LogStyles.MESSAGE, )
+        
         if(os.path.exists(tmp_dir) is False):
             os.makedirs(tmp_dir)
         

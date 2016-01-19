@@ -64,7 +64,7 @@ import platform
 import math
 
 import bpy
-from bpy.props import StringProperty, EnumProperty
+from bpy.props import StringProperty, EnumProperty, BoolProperty
 
 
 # TODO: verify installation during addon activation
@@ -75,6 +75,10 @@ class MaxwellRenderPreferences(bpy.types.AddonPreferences):
     
     python34_path = StringProperty(name="Python 3.4 Directory", default="", subtype='DIR_PATH', description="", )
     maxwell_path = StringProperty(name="Maxwell Render Directory", default="", subtype='DIR_PATH', description="", )
+    
+    advanced = BoolProperty(name="Advanced Settings", default=False, )
+    osx_tmp_use = EnumProperty(name="Temp Files", items=[('BLEND_DIRECTORY', "Current Blend File (Default)", ""), ('SPECIFIC_DIRECTORY', "Specific Directory", ""), ], default='BLEND_DIRECTORY', description="", )
+    osx_tmp_use_directory = StringProperty(name="Temp Files Directory", default="//", subtype='DIR_PATH', description="", )
     
     default_new_world_type = EnumProperty(name="Default World Type", items=[('NONE', "None", ""), ('PHYSICAL_SKY', "Physical Sky", ""), ('IMAGE_BASED', "Image Based", "")], default='PHYSICAL_SKY', )
     default_new_material_type = EnumProperty(name="Default Material Type", items=[('REFERENCE', "Reference", ""), ('CUSTOM', "Custom", ""), ('EMITTER', "Emitter", ""), ('AGS', "AGS", ""), ('OPAQUE', "Opaque", ""), ('TRANSPARENT', "Transparent", ""), ('METAL', "Metal", ""), ('TRANSLUCENT', "Translucent", ""), ('CARPAINT', "Carpaint", ""), ('HAIR', "Hair", ""), ], default='CUSTOM', )
@@ -92,6 +96,17 @@ class MaxwellRenderPreferences(bpy.types.AddonPreferences):
         r.prop(self, "default_new_world_type", text="Environment", )
         r.prop(self, "default_new_material_type", text="Material", )
         r.prop(self, "default_new_particles_type", text="Particles", )
+        
+        if(s == 'Darwin'):
+            l.prop(self, 'advanced')
+            if(self.advanced):
+                r = l.row()
+                s = r.split(percentage=0.333)
+                s.prop(self, "osx_tmp_use", )
+                s = s.split(percentage=1.0)
+                s.prop(self, "osx_tmp_use_directory", )
+                if(self.osx_tmp_use != 'SPECIFIC_DIRECTORY'):
+                    s.enabled = False
 
 
 def get_selected_panels():

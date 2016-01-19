@@ -133,6 +133,21 @@ class MXSExport():
             n, e = os.path.splitext(t)
             self.tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, self.uuid))
             
+            if(system.prefs().osx_tmp_use == 'SPECIFIC_DIRECTORY'):
+                tmpd = os.path.realpath(bpy.path.abspath(system.prefs().osx_tmp_use_directory))
+                if(os.path.exists(tmpd)):
+                    if(os.path.isdir(tmpd)):
+                        if(os.access(tmpd, os.W_OK)):
+                            self.tmp_dir = os.path.join(tmpd, "{0}-tmp-{1}".format(n, self.uuid))
+                        else:
+                            log("tmp directory ('{}') is not writeable, using default".format(tmpd), 1, LogStyles.WARNING)
+                    else:
+                        log("tmp directory ('{}') is not a directory, using default".format(tmpd), 1, LogStyles.WARNING)
+                else:
+                    log("tmp directory ('{}') does not exist, using default".format(tmpd), 1, LogStyles.WARNING)
+            else:
+                pass
+            
             log("creating temp directory.. ({})".format(self.tmp_dir), 1, LogStyles.MESSAGE, )
             
             if(os.path.exists(self.tmp_dir) is False):
