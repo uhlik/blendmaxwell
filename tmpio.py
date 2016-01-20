@@ -426,3 +426,99 @@ class MXSBinWireReader():
         e = r(o + "?")
         if(self.offset != len(self.bindata)):
             raise RuntimeError("expected EOF")
+
+
+class MXSBinRefVertsWriter():
+    def __init__(self, path, data, ):
+        o = "@"
+        with open("{0}.tmp".format(path), 'wb') as f:
+            p = struct.pack
+            fw = f.write
+            # header
+            fw(p(o + "7s", 'BINREFV'.encode('utf-8')))
+            fw(p(o + "?", False))
+            # number of objects
+            fw(p(o + "i", len(data)))
+            for i in range(len(data)):
+                d = data[i]
+                name = d['name']
+                base = d['base']
+                pivot = d['pivot']
+                vertices = d['vertices']
+                # name
+                fw(p(o + "250s", name.encode('utf-8')))
+                # base and pivot
+                fw(p(o + "12d", *[a for b in base for a in b]))
+                fw(p(o + "12d", *[a for b in pivot for a in b]))
+                # number of vertices
+                fw(p(o + "i", len(vertices) * 3))
+                # vertices
+                lv = len(vertices)
+                fw(p(o + "{}d".format(lv * 3), *[f for v in vertices for f in v]))
+            fw(p(o + "?", False))
+        # swap files
+        if(os.path.exists(path)):
+            os.remove(path)
+        shutil.move("{0}.tmp".format(path), path)
+        self.path = path
+
+
+class MXSBinRefVertsReader():
+    def __init__(self, path):
+        def r(f, b, o):
+            d = struct.unpack_from(f, b, o)
+            o += struct.calcsize(f)
+            return d, o
+        
+        def r0(f, b, o):
+            d = struct.unpack_from(f, b, o)[0]
+            o += struct.calcsize(f)
+            return d, o
+        
+        offset = 0
+        with open(path, "rb") as bf:
+            buff = bf.read()
+        # endianness?
+        signature = 24284111544666434
+        l, _ = r0("<q", buff, 0)
+        b, _ = r0(">q", buff, 0)
+        if(l == signature):
+            if(sys.byteorder != "little"):
+                raise RuntimeError()
+            order = "<"
+        elif(b == signature):
+            if(sys.byteorder != "big"):
+                raise RuntimeError()
+            order = ">"
+        else:
+            raise AssertionError("{}: not a MXSBinRefVerts file".format(self.__class__.__name__))
+        o = order
+        # magic
+        magic, offset = r0(o + "7s", buff, offset)
+        magic = magic.decode(encoding="utf-8")
+        if(magic != 'BINREFV'):
+            raise RuntimeError()
+        # throwaway
+        _, offset = r(o + "?", buff, offset)
+        # number of objects
+        num_objects, offset = r0(o + "i", buff, offset)
+        self.data = []
+        for i in range(num_objects):
+            name, offset = r0(o + "250s", buff, offset)
+            name = name.decode(encoding="utf-8").replace('\x00', '')
+            b, offset = r(o + "12d", buff, offset)
+            base = [b[i:i + 3] for i in range(0, len(b), 3)]
+            p, offset = r(o + "12d", buff, offset)
+            pivot = [p[i:i + 3] for i in range(0, len(p), 3)]
+            lv, offset = r0(o + "i", buff, offset)
+            vs, offset = r(o + "{}d".format(lv), buff, offset)
+            vertices = [vs[i:i + 3] for i in range(0, len(vs), 3)]
+            self.data.append({'name': name,
+                              'base': base,
+                              'pivot': pivot,
+                              'vertices': vertices, })
+        # throwaway
+        _, offset = r(o + "?", buff, offset)
+        # and now.. eof
+        if(offset != len(buff)):
+            raise RuntimeError("expected EOF")

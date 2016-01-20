@@ -28,6 +28,7 @@ import bpy
 
 from .log import log, LogStyles, LOG_FILE_PATH
 from . import mxs
+from . import tmpio
 
 
 PLATFORM = platform.system()
@@ -527,7 +528,7 @@ def python34_run_read_mxs_reference(mxs_path):
         PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
         PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
         n = os.path.split(mxs_path)[1]
-        scene_data_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "{}.json".format(n), )
+        scene_data_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "{}.binrefv".format(n), )
         
         command_line = "{} {} {} {} {} {}".format(shlex.quote(PY),
                                                   shlex.quote(script_path),
@@ -543,8 +544,8 @@ def python34_run_read_mxs_reference(mxs_path):
             log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
             raise Exception("error in {0}".format(script_path))
         
-        with open(scene_data_path, 'r') as f:
-            data = json.load(f)
+        r = tmpio.MXSBinRefVertsReader(scene_data_path)
+        data = r.data
         
         if(os.path.exists(scene_data_path)):
             os.remove(scene_data_path)

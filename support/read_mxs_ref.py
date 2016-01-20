@@ -26,6 +26,7 @@ import shutil
 import argparse
 import textwrap
 import os
+import struct
 
 
 quiet = False
@@ -71,6 +72,41 @@ class PercentDone():
                     f.write("{}".format("{0}{1}{2}%{3}".format(self.t * self.indent, self.prefix, 100, self.n)))
 
 
+class MXSBinRefVertsWriter():
+    def __init__(self, path, data, ):
+        o = "@"
+        with open("{0}.tmp".format(path), 'wb') as f:
+            p = struct.pack
+            fw = f.write
+            # header
+            fw(p(o + "7s", 'BINREFV'.encode('utf-8')))
+            fw(p(o + "?", False))
+            # number of objects
+            fw(p(o + "i", len(data)))
+            for i in range(len(data)):
+                d = data[i]
+                name = d['name']
+                base = d['base']
+                pivot = d['pivot']
+                vertices = d['vertices']
+                # name
+                fw(p(o + "250s", name.encode('utf-8')))
+                # base and pivot
+                fw(p(o + "12d", *[a for b in base for a in b]))
+                fw(p(o + "12d", *[a for b in pivot for a in b]))
+                # number of vertices
+                fw(p(o + "i", len(vertices) * 3))
+                # vertices
+                lv = len(vertices)
+                fw(p(o + "{}d".format(lv * 3), *[f for v in vertices for f in v]))
+            fw(p(o + "?", False))
+        # swap files
+        if(os.path.exists(path)):
+            os.remove(path)
+        shutil.move("{0}.tmp".format(path), path)
+        self.path = path
+
+
 def get_objects_names(scene):
     it = CmaxwellObjectIterator()
     o = it.first(scene)
@@ -86,7 +122,6 @@ def object(o):
     is_instance, _ = o.isInstance()
     is_mesh, _ = o.isMesh()
     if(is_instance == 0 and is_mesh == 0):
-        # log("WARNING: only empties, meshes and instances are supported..", 2)
         return None
     
     def get_verts(o):
@@ -169,13 +204,8 @@ def main(args):
         progress.step()
     # save data
     log("serializing..", 2)
-    # TODO: some binary format would be better and faster for long lists of vertices
     p = args.scene_data_path
-    with open("{0}.tmp".format(p), 'w', encoding='utf-8', ) as f:
-        json.dump(data, f, skipkeys=False, ensure_ascii=False, indent=4, )
-    if(os.path.exists(p)):
-        os.remove(p)
-    shutil.move("{0}.tmp".format(p), p)
+    w = MXSBinRefVertsWriter(p, data)
     log("done.", 2)
 
 
