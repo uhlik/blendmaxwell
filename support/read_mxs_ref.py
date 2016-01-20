@@ -104,7 +104,6 @@ def object(o):
          'vertices': [], }
     if(is_instance == 1):
         io = o.getInstanced()
-        # TODO: this is called once for each instance, better to process all meshes and then instances just copy vertex data
         r['vertices'] = get_verts(io)
     else:
         r['vertices'] = get_verts(o)
@@ -133,22 +132,44 @@ def main(args):
         if(not os.path.exists(mp)):
             raise RuntimeError("Error during reading scene {}, file not found..".format(mp))
         raise RuntimeError("Error during reading scene {}".format(mp))
-    # if(scene.isProtectionEnabled()):
-    #     raise RuntimeError("Protected MXS ({})".format(mp))
-    # objects
+    # read meshes and instances
     nms = get_objects_names(scene)
     data = []
-    log("converting empties, objects and instances..", 2)
+    log("reading meshes..", 2)
     progress = PercentDone(len(nms), prefix="> ", indent=2, )
     for n in nms:
         d = None
         o = scene.getObject(n)
-        d = object(o)
+        if(not o.isNull()):
+            if(o.isMesh()[0] == 1 and o.isInstance()[0] == 0):
+                # is mesh, read its vertices
+                d = object(o)
+        if(d is not None):
+            data.append(d)
+        progress.step()
+    log("reading instances..", 2)
+    progress = PercentDone(len(nms), prefix="> ", indent=2, )
+    for n in nms:
+        d = None
+        o = scene.getObject(n)
+        if(not o.isNull()):
+            if(o.isMesh()[0] == 0 and o.isInstance()[0] == 1):
+                # is instance, find instanced mesh and just copy vertices
+                io = o.getInstanced()
+                ion = io.getName()[0]
+                for a in data:
+                    if(a['name'] == ion):
+                        b, p = global_transform(o)
+                        d = {'name': o.getName()[0],
+                             'base': b,
+                             'pivot': p,
+                             'vertices': a['vertices'][:], }
         if(d is not None):
             data.append(d)
         progress.step()
     # save data
     log("serializing..", 2)
+    # TODO: some binary format would be better and faster for long lists of vertices
     p = args.scene_data_path
     with open("{0}.tmp".format(p), 'w', encoding='utf-8', ) as f:
         json.dump(data, f, skipkeys=False, ensure_ascii=False, indent=4, )
