@@ -73,7 +73,7 @@ from bpy.props import StringProperty, EnumProperty, BoolProperty
 class MaxwellRenderPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     
-    python34_path = StringProperty(name="Python 3.4 Directory", default="", subtype='DIR_PATH', description="", )
+    python_path = StringProperty(name="Python Path", default="", subtype='DIR_PATH', description="", )
     maxwell_path = StringProperty(name="Maxwell Render Directory", default="", subtype='DIR_PATH', description="", )
     
     advanced = BoolProperty(name="Advanced Settings", default=False, )
@@ -88,7 +88,7 @@ class MaxwellRenderPreferences(bpy.types.AddonPreferences):
         l = self.layout
         s = platform.system()
         if(s == 'Darwin'):
-            l.prop(self, "python34_path")
+            l.prop(self, "python_path")
         l.prop(self, "maxwell_path")
         
         l.label("Default Types:")
@@ -839,7 +839,7 @@ def register():
     a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
     p = bpy.context.user_preferences.addons[a].preferences
     s = platform.system()
-    if(p.python34_path == ''):
+    if(p.python_path == ''):
         if(s == 'Darwin'):
             py = '/Library/Frameworks/Python.framework/Versions/3.4/'
         elif(s == 'Linux'):
@@ -848,7 +848,7 @@ def register():
             py = ""
         else:
             raise OSError("Unknown platform: {}.".format(s))
-        p.python34_path = py
+        p.python_path = py
     else:
         # user set something, leave it as it is
         pass

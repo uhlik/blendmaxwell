@@ -187,7 +187,7 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=
         
         PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
         
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
                                                         shlex.quote(script_path),
                                                         shlex.quote(PYMAXWELL_PATH),
@@ -286,7 +286,7 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
         
         PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
         
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
                                                         shlex.quote(script_path),
                                                         shlex.quote(PYMAXWELL_PATH),
@@ -393,9 +393,9 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, w
         
         PY = ""
         if(PLATFORM == 'Darwin'):
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+            PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         if(PLATFORM == 'Linux'):
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'python3.4', ))
+            PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'python3.4', ))
         if(PY == ""):
             raise Exception("huh?")
         
@@ -432,7 +432,7 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, w
 
 def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, import_emitters, import_objects, import_cameras, import_sun, ):
     if(PLATFORM == 'Darwin'):
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         if(PY == ""):
             raise Exception("huh?")
         
@@ -476,7 +476,7 @@ def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, im
 def python34_run_mxm_preview(mxm_path):
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm_preview.py", )
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
         import numpy
         NUMPY_PATH = os.path.split(os.path.split(numpy.__file__)[0])[0]
@@ -503,7 +503,7 @@ def python34_run_mxm_preview(mxm_path):
 def python34_run_mxm_is_emitter(mxm_path):
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm_emitter.py", )
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
         command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
                                                 shlex.quote(script_path),
@@ -525,7 +525,7 @@ def python34_run_mxm_is_emitter(mxm_path):
 def python34_run_read_mxs_reference(mxs_path):
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxs_ref.py", )
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
         n = os.path.split(mxs_path)[1]
         scene_data_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "{}.binrefv".format(n), )
@@ -557,7 +557,7 @@ def python34_run_read_mxs_reference(mxs_path):
 
 def python34_run_script_helper_import_mxm(script_path, mxm_path, data_path, ):
     if(PLATFORM == 'Darwin'):
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         if(PY == ""):
             raise Exception("huh?")
         
@@ -584,7 +584,7 @@ def python34_run_script_helper_import_mxm(script_path, mxm_path, data_path, ):
 def check_pymaxwell_version():
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "version.py", )
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python34_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
         req = ".".join(str(i) for i in REQUIRED)
         PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
         command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
@@ -679,7 +679,7 @@ def verify_installation():
         if(not os.path.exists(mp)):
             raise OSError("Maxwell instalation not found at '{}'".format(mp))
         # python 3.4 is installed
-        upp = prefs().python34_path
+        upp = prefs().python_path
         dpp = '/Library/Frameworks/Python.framework/Versions/3.4/'
         pp = ''
         if(upp == ''):
