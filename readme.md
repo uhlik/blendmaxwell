@@ -11,13 +11,14 @@
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
 * Mesh objects using the same mesh data (and renderable Curves) are exported as instances (optional)
-* MXS references
+* MXS references with viewport preview
 * Dupli verts, faces and group
 * Multiple UV channels
 * Custom and Extension Material creation and editing inside Blender or with Mxed
 * Save and load Custom and Extension Materials from or to Blender material editor
 * Material assignment (including backface materials) and multiple materials per object
 * Extension Materials creation and editing inside Blender
+* Maxwell procedural textures
 * Cameras
 * Render parameters
 * All render channels including Custom Alphas
@@ -59,6 +60,7 @@
 
 **changelog:**
 
+* 0.4.1 procedural textures, faster reading of mxs references
 * 0.4.0 heavy refactoring, added mxs reference viewport preview
 * 0.3.9 colors exported in 32 bits and as shown in blender (gamma correction), added grass modifier presets, added displacement in extension materials, added stereo cameras (maxwell 3.2), added realflow particles bin export operator (file > export menu), updated material presets (maxwell 3.2.1.0), fixed cleaning of mesh datablocks created during export, fixed exporting of fake user materials, fixed export of particles on meshes without polygons (and a lot of small fixes and ui tweaks)
 * 0.3.8 custom alphas for objects and materials, many ui improvements, particle object/group instances now exports correctly when base objects are hidden, addon preferences for automatic type selection for new material, environment and particles, changed preset location, setting camera to ortho now changes viewport to ortho
