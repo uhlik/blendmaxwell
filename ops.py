@@ -1188,6 +1188,278 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         
         return {'FINISHED'}
     
+    def texture(self, mat, d, n, ):
+        if(d is None):
+            return ""
+        
+        ts = mat.texture_slots
+        slot = ts.add()
+        tex = bpy.data.textures.new(n, 'IMAGE')
+        slot.texture = tex
+        image = None
+        if(os.path.exists(d['path'])):
+            image = bpy.data.images.load(d['path'])
+        else:
+            if('procedural' in d):
+                if(len(d['procedural']) > 0):
+                    pass
+            else:
+                self.report({'ERROR'}, "File '{}' does not exist.".format(d['path']))
+        tex.image = image
+        mx = tex.maxwell_render
+        
+        mx.path = d['path']
+        mx.use_global_map = d['use_global_map']
+        mx.channel = d['channel']
+        
+        tm = d['tiling_method']
+        if(not tm[0] and not tm[1]):
+            mx.tiling_method = 'NO_TILING'
+        elif(tm[0] and not tm[1]):
+            mx.tiling_method = 'TILE_X'
+        elif(not tm[0] and tm[1]):
+            mx.tiling_method = 'TILE_Y'
+        else:
+            mx.tiling_method = 'TILE_XY'
+        
+        mx.tiling_units = str(d['tiling_units'])
+        mx.repeat = d['repeat']
+        mx.mirror_x = d['mirror'][0]
+        mx.mirror_y = d['mirror'][1]
+        mx.offset = d['offset']
+        mx.rotation = math.radians(d['rotation'])
+        mx.invert = d['invert']
+        mx.use_alpha = d['use_alpha']
+        mx.interpolation = bool(d['interpolation'])
+        mx.brightness = d['brightness']
+        mx.contrast = d['contrast']
+        mx.saturation = d['saturation']
+        mx.hue = d['hue']
+        mx.clamp = d['clamp']
+        
+        mx.normal_mapping_flip_red = bool(d['normal_mapping_flip_red'])
+        mx.normal_mapping_flip_green = bool(d['normal_mapping_flip_green'])
+        mx.normal_mapping_full_range_blue = bool(d['normal_mapping_full_range_blue'])
+        
+        def gamma_correct(c):
+            g = 2.2
+            c = [v ** g for v in c]
+            return c
+        
+        if('procedural' in d):
+            if(len(d['procedural']) > 0):
+                mx.procedural
+                mx.procedural.textures
+                for i in range(len(d['procedural'])):
+                    pd = d['procedural'][i]
+                    if(pd['EXTENSION_NAME'] == 'Brick'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Brick', use='BRICK', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.brick_brick_width = pd['Brick width']
+                        td.brick_brick_height = pd['Brick height']
+                        td.brick_brick_offset = pd['Brick offset']
+                        td.brick_random_offset = pd['Random offset']
+                        td.brick_double_brick = pd['Double brick']
+                        td.brick_small_brick_width = pd['Small brick width']
+                        td.brick_round_corners = pd['Round corners']
+                        td.brick_boundary_sharpness_u = pd['Boundary sharpness U']
+                        td.brick_boundary_sharpness_v = pd['Boundary sharpness V']
+                        td.brick_boundary_noise_detail = pd['Boundary noise detail']
+                        td.brick_boundary_noise_region_u = pd['Boundary noise region U']
+                        td.brick_boundary_noise_region_v = pd['Boundary noise region V']
+                        td.brick_seed = pd['Seed']
+                        td.brick_random_rotation = pd['Random rotation']
+                        td.brick_color_variation = pd['Color variation']
+                        td.brick_brick_color_0 = gamma_correct(pd['Brick color 0'])
+                        td.brick_brick_texture_0 = self.texture(mat, pd['Brick texture 0'], 'Brick texture 0', )
+                        td.brick_sampling_factor_0 = pd['Sampling factor 0']
+                        td.brick_weight_0 = pd['Weight 0']
+                        td.brick_brick_color_1 = gamma_correct(pd['Brick color 1'])
+                        td.brick_brick_texture_1 = self.texture(mat, pd['Brick texture 1'], 'Brick texture 1', )
+                        td.brick_sampling_factor_1 = pd['Sampling factor 1']
+                        td.brick_weight_1 = pd['Weight 1']
+                        td.brick_brick_color_2 = gamma_correct(pd['Brick color 2'])
+                        td.brick_brick_texture_2 = self.texture(mat, pd['Brick texture 2'], 'Brick texture 2', )
+                        td.brick_sampling_factor_2 = pd['Sampling factor 2']
+                        td.brick_weight_2 = pd['Weight 2']
+                        td.brick_mortar_thickness = pd['Mortar thickness']
+                        td.brick_mortar_color = gamma_correct(pd['Mortar color'])
+                        td.brick_mortar_texture = self.texture(mat, pd['Mortar texture'], 'Mortar texture', )
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'Checker'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Checker', use='CHECKER', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.checker_number_of_elements_u = pd['Number of elements U']
+                        td.checker_number_of_elements_v = pd['Number of elements V']
+                        td.checker_color_0 = gamma_correct(pd['Color0'])
+                        td.checker_color_1 = gamma_correct(pd['Color1'])
+                        td.checker_transition_sharpness = pd['Transition sharpness']
+                        td.checker_falloff = str(pd['Fall-off'])
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'Circle'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Circle', use='CIRCLE', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.circle_background_color = gamma_correct(pd['Background color'])
+                        td.circle_circle_color = gamma_correct(pd['Circle color'])
+                        td.circle_radius_u = pd['RadiusU']
+                        td.circle_radius_v = pd['RadiusV']
+                        td.circle_transition_factor = pd['Transition factor']
+                        td.circle_falloff = str(pd['Fall-off'])
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'Gradient3'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Gradient3', use='GRADIENT3', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.gradient3_gradient_u = pd['Gradient U']
+                        td.gradient3_color0_u = gamma_correct(pd['Color0 U'])
+                        td.gradient3_color1_u = gamma_correct(pd['Color1 U'])
+                        td.gradient3_color2_u = gamma_correct(pd['Color2 U'])
+                        td.gradient3_gradient_type_u = str(pd['Gradient type U'])
+                        td.gradient3_color1_u_position = pd['Color1 U position']
+                        td.gradient3_gradient_v = pd['Gradient V']
+                        td.gradient3_color0_v = gamma_correct(pd['Color0 V'])
+                        td.gradient3_color1_v = gamma_correct(pd['Color1 V'])
+                        td.gradient3_color2_v = gamma_correct(pd['Color2 V'])
+                        td.gradient3_gradient_type_v = str(pd['Gradient type V'])
+                        td.gradient3_color1_v_position = pd['Color1 V position']
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'Gradient'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Gradient', use='GRADIENT', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.gradient_gradient_u = pd['Gradient U']
+                        td.gradient_color0_u = gamma_correct(pd['Color0 U'])
+                        td.gradient_color1_u = gamma_correct(pd['Color1 U'])
+                        td.gradient_gradient_type_u = str(pd['Gradient type U'])
+                        td.gradient_transition_factor_u = pd['Transition factor U']
+                        td.gradient_gradient_v = pd['Gradient V']
+                        td.gradient_color0_v = gamma_correct(pd['Color0 V'])
+                        td.gradient_color1_v = gamma_correct(pd['Color1 V'])
+                        td.gradient_gradient_type_v = str(pd['Gradient type V'])
+                        td.gradient_transition_factor_v = pd['Transition factor V']
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'Grid'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Grid', use='GRID', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.grid_cell_width = pd['Cell width']
+                        td.grid_cell_height = pd['Cell height']
+                        td.grid_boundary_thickness_u = pd['Boundary thickness U']
+                        td.grid_boundary_thickness_v = pd['Boundary thickness V']
+                        td.grid_transition_sharpness = pd['Transition sharpness']
+                        td.grid_cell_color = gamma_correct(pd['Cell color'])
+                        td.grid_boundary_color = gamma_correct(pd['Boundary color'])
+                        td.grid_falloff = str(pd['Fall-off'])
+                        
+                        td.grid_horizontal_lines = True
+                        if(td.grid_boundary_thickness_u == 0.0):
+                            td.grid_horizontal_lines = False
+                        td.grid_vertical_lines = True
+                        if(td.grid_boundary_thickness_v == 0.0):
+                            td.grid_vertical_lines = False
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'Marble'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Marble', use='MARBLE', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.marble_coordinates_type = str(pd['Coordinates type'])
+                        td.marble_color0 = gamma_correct(pd['Color0'])
+                        td.marble_color1 = gamma_correct(pd['Color1'])
+                        td.marble_color2 = gamma_correct(pd['Color2'])
+                        td.marble_frequency = pd['Frequency']
+                        td.marble_detail = pd['Detail']
+                        td.marble_octaves = pd['Octaves']
+                        td.marble_seed = pd['Seed']
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'Noise'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Noise', use='NOISE', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.noise_coordinates_type = str(pd['Coordinates type'])
+                        td.noise_noise_color = gamma_correct(pd['Noise color'])
+                        td.noise_background_color = gamma_correct(pd['Background color'])
+                        td.noise_detail = pd['Detail']
+                        td.noise_persistance = pd['Persistance']
+                        td.noise_octaves = pd['Octaves']
+                        td.noise_low_value = pd['Low value']
+                        td.noise_high_value = pd['High value']
+                        td.noise_seed = pd['Seed']
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'Voronoi'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Voronoi', use='VORONOI', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.voronoi_coordinates_type = str(pd['Coordinates type'])
+                        td.voronoi_color0 = gamma_correct(pd['Color0'])
+                        td.voronoi_color1 = gamma_correct(pd['Color1'])
+                        td.voronoi_detail = pd['Detail']
+                        td.voronoi_distance = str(pd['Distance'])
+                        td.voronoi_combination = str(pd['Combination'])
+                        td.voronoi_low_value = pd['Low value']
+                        td.voronoi_high_value = pd['High value']
+                        td.voronoi_seed = pd['Seed']
+                        
+                        td.blending_factor = pd['Blend procedural']
+                    elif(pd['EXTENSION_NAME'] == 'TiledTexture'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Tiled', use='TILED', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.tiled_filename = pd['FileName']
+                        td.tiled_token_mask = pd['Filename_mask']
+                        td.tiled_base_color = gamma_correct(pd['Base Color'])
+                        td.tiled_use_base_color = pd['Use base color']
+                        
+                        td.blending_factor = pd['Blend factor']
+                    elif(pd['EXTENSION_NAME'] == 'WireframeTexture'):
+                        override_context = bpy.context.copy()
+                        override_context['texture'] = tex
+                        bpy.ops.maxwell_render.texture_procedural_add(override_context, name='Wireframe', use='WIREFRAME', )
+                        td = mx.procedural.textures[len(mx.procedural.textures) - 1]
+                        
+                        td.wireframe_fill_color = gamma_correct(pd['Fill Color'])
+                        td.wireframe_edge_color = gamma_correct(pd['Edge Color'])
+                        td.wireframe_coplanar_edge_color = gamma_correct(pd['Coplanar Edge Color'])
+                        td.wireframe_edge_width = pd['Edge Width']
+                        td.wireframe_coplanar_edge_width = pd['Coplanar Edge Width']
+                        td.wireframe_coplanar_threshold = pd['Coplanar Threshold']
+                        
+                        # td.blending_factor = pd['Blend procedural']
+                    else:
+                        raise TypeError("{} is unknown procedural texture type".format(pd['EXTENSION_NAME']))
+        
+        return tex.name
+    
     def extension(self, material, slot, data, ):
         def gamma_correct(c):
             g = 2.2
@@ -1220,66 +1492,15 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         else:
             raise TypeError("{}: Unsupported extension material type: {}".format(material.name, enm, ))
         
-        def texture(mat, d, n, ):
-            if(d is None):
-                return ""
-            
-            ts = mat.texture_slots
-            slot = ts.add()
-            tex = bpy.data.textures.new(n, 'IMAGE')
-            slot.texture = tex
-            image = None
-            if(os.path.exists(d['path'])):
-                image = bpy.data.images.load(d['path'])
-            else:
-                self.report({'ERROR'}, "File '{}' does not exist.".format(d['path']))
-            tex.image = image
-            mx = tex.maxwell_render
-            
-            mx.path = d['path']
-            mx.use_global_map = d['use_global_map']
-            mx.channel = d['channel']
-            
-            tm = d['tiling_method']
-            if(not tm[0] and not tm[1]):
-                mx.tiling_method = 'NO_TILING'
-            elif(tm[0] and not tm[1]):
-                mx.tiling_method = 'TILE_X'
-            elif(not tm[0] and tm[1]):
-                mx.tiling_method = 'TILE_Y'
-            else:
-                mx.tiling_method = 'TILE_XY'
-            
-            mx.tiling_units = str(d['tiling_units'])
-            mx.repeat = d['repeat']
-            mx.mirror_x = d['mirror'][0]
-            mx.mirror_y = d['mirror'][1]
-            mx.offset = d['offset']
-            mx.rotation = math.radians(d['rotation'])
-            mx.invert = d['invert']
-            mx.use_alpha = d['use_alpha']
-            mx.interpolation = bool(d['interpolation'])
-            mx.brightness = d['brightness']
-            mx.contrast = d['contrast']
-            mx.saturation = d['saturation']
-            mx.hue = d['hue']
-            mx.clamp = d['clamp']
-            
-            mx.normal_mapping_flip_red = bool(d['normal_mapping_flip_red'])
-            mx.normal_mapping_flip_green = bool(d['normal_mapping_flip_green'])
-            mx.normal_mapping_full_range_blue = bool(d['normal_mapping_full_range_blue'])
-            
-            return tex.name
-        
         # globals
         gp = d['global_props']
         if(gp['override_map'] is not None):
-            mx.global_override_map = texture(material, gp['override_map'], 'override map')
+            mx.global_override_map = self.texture(material, gp['override_map'], 'override map')
         
         if(gp['bump_map'] is not None):
             mx.global_bump_map_enabled = True
             mx.global_bump = gp['bump']
-            mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
+            mx.global_bump_map = self.texture(material, gp['bump_map'], 'global bump map')
             mx.global_bump_map_use_normal = gp['bump_map_use_normal']
             mx.global_bump_normal = gp['bump_normal']
         else:
@@ -1302,7 +1523,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         def displacement(dp, cd):
             cd.enabled = dp['enabled']
             if(dp['map'] is not None):
-                cd.map = texture(material, dp['map'], 'displacement map')
+                cd.map = self.texture(material, dp['map'], 'displacement map')
             cd.type = str(dp['type'])
             cd.subdivision = dp['subdivision']
             cd.adaptive = dp['adaptive']
@@ -1331,23 +1552,23 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         elif(mx.use == 'OPAQUE'):
             mxe.opaque_color_type = bool(e['Color Type'])
             mxe.opaque_color = gamma_correct(e['Color'])
-            mxe.opaque_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.opaque_color_map = self.texture(material, e['Color Map'], 'color map')
             mxe.opaque_shininess_type = bool(e['Shininess Type'])
             mxe.opaque_shininess = e['Shininess']
-            mxe.opaque_shininess_map = texture(material, e['Shininess Map'], 'shininess map')
+            mxe.opaque_shininess_map = self.texture(material, e['Shininess Map'], 'shininess map')
             mxe.opaque_roughness_type = bool(e['Roughness Type'])
             mxe.opaque_roughness = e['Roughness']
-            mxe.opaque_roughness_map = texture(material, e['Roughness Map'], 'roughness map')
+            mxe.opaque_roughness_map = self.texture(material, e['Roughness Map'], 'roughness map')
             mxe.opaque_clearcoat = bool(e['Clearcoat'])
         elif(mx.use == 'TRANSPARENT'):
             mxe.transparent_color_type = bool(e['Color Type'])
             mxe.transparent_color = gamma_correct(e['Color'])
-            mxe.transparent_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.transparent_color_map = self.texture(material, e['Color Map'], 'color map')
             mxe.transparent_ior = e['Ior']
             mxe.transparent_transparency = e['Transparency']
             mxe.transparent_roughness_type = bool(e['Roughness Type'])
             mxe.transparent_roughness = e['Roughness']
-            mxe.transparent_roughness_map = texture(material, e['Roughness Map'], 'roughness map')
+            mxe.transparent_roughness_map = self.texture(material, e['Roughness Map'], 'roughness map')
             mxe.transparent_specular_tint = e['Specular Tint']
             mxe.transparent_dispersion = e['Dispersion']
             mxe.transparent_clearcoat = bool(e['Clearcoat'])
@@ -1356,27 +1577,27 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             mxe.metal_tint = e['Tint']
             mxe.metal_color_type = bool(e['Color Type'])
             mxe.metal_color = gamma_correct(e['Color'])
-            mxe.metal_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.metal_color_map = self.texture(material, e['Color Map'], 'color map')
             mxe.metal_roughness_type = bool(e['Roughness Type'])
             mxe.metal_roughness = e['Roughness']
-            mxe.metal_roughness_map = texture(material, e['Roughness Map'], 'roughness map')
+            mxe.metal_roughness_map = self.texture(material, e['Roughness Map'], 'roughness map')
             mxe.metal_anisotropy_type = bool(e['Anisotropy Type'])
             mxe.metal_anisotropy = e['Anisotropy']
-            mxe.metal_anisotropy_map = texture(material, e['Anisotropy Map'], 'anisotropy map')
+            mxe.metal_anisotropy_map = self.texture(material, e['Anisotropy Map'], 'anisotropy map')
             mxe.metal_angle_type = bool(e['Angle Type'])
             mxe.metal_angle = e['Angle']
-            mxe.metal_angle_map = texture(material, e['Angle Map'], 'angle map')
+            mxe.metal_angle_map = self.texture(material, e['Angle Map'], 'angle map')
             mxe.metal_dust_type = bool(e['Dust Type'])
             mxe.metal_dust = e['Dust']
-            mxe.metal_dust_map = texture(material, e['Dust Map'], 'dust map')
+            mxe.metal_dust_map = self.texture(material, e['Dust Map'], 'dust map')
             mxe.metal_perforation_enabled = bool(e['Perforation Enabled'])
-            mxe.metal_perforation_map = texture(material, e['Perforation Map'], 'perforation map')
+            mxe.metal_perforation_map = self.texture(material, e['Perforation Map'], 'perforation map')
         elif(mx.use == 'TRANSLUCENT'):
             mxe.translucent_scale = e['Scale']
             mxe.translucent_ior = e['Ior']
             mxe.translucent_color_type = bool(e['Color Type'])
             mxe.translucent_color = gamma_correct(e['Color'])
-            mxe.translucent_color_map = texture(material, e['Color Map'], 'color map')
+            mxe.translucent_color_map = self.texture(material, e['Color Map'], 'color map')
             mxe.translucent_hue_shift = e['Hue Shift']
             mxe.translucent_invert_hue = bool(e['Invert Hue'])
             mxe.translucent_vibrance = e['Vibrance']
@@ -1384,7 +1605,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             mxe.translucent_opacity = e['Opacity']
             mxe.translucent_roughness_type = bool(e['Roughness Type'])
             mxe.translucent_roughness = e['Roughness']
-            mxe.translucent_roughness_map = texture(material, e['Roughness Map'], 'roughness map')
+            mxe.translucent_roughness_map = self.texture(material, e['Roughness Map'], 'roughness map')
             mxe.translucent_specular_tint = e['Specular Tint']
             mxe.translucent_clearcoat = bool(e['Clearcoat'])
             mxe.translucent_clearcoat_ior = e['Clearcoat Ior']
@@ -1395,11 +1616,11 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         elif(mx.use == 'HAIR'):
             mxe.hair_color_type = bool(e['Color Type'])
             mxe.hair_color = gamma_correct(e['Color'])
-            mxe.hair_color_map = texture(material, e['Color Map'], 'color map')
-            mxe.hair_root_tip_map = texture(material, e['Root-Tip Map'], 'root-tip map')
+            mxe.hair_color_map = self.texture(material, e['Color Map'], 'color map')
+            mxe.hair_root_tip_map = self.texture(material, e['Root-Tip Map'], 'root-tip map')
             mxe.hair_root_tip_weight_type = bool(e['Root-Tip Weight Type'])
             mxe.hair_root_tip_weight = e['Root-Tip Weight']
-            mxe.hair_root_tip_weight_map = texture(material, e['Root-Tip Weight Map'], 'root-tip weight map')
+            mxe.hair_root_tip_weight_map = self.texture(material, e['Root-Tip Weight Map'], 'root-tip weight map')
             mxe.hair_primary_highlight_strength = e['Primary Highlight Strength']
             mxe.hair_primary_highlight_spread = e['Primary Highlight Spread']
             mxe.hair_primary_highlight_tint = gamma_correct(e['Primary Highlight Tint'])
@@ -1424,64 +1645,16 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         mx = material.maxwell_render
         mx.use = 'CUSTOM'
         
-        def texture(mat, d, n, ):
-            ts = mat.texture_slots
-            slot = ts.add()
-            tex = bpy.data.textures.new(n, 'IMAGE')
-            slot.texture = tex
-            image = None
-            if(os.path.exists(d['path'])):
-                image = bpy.data.images.load(d['path'])
-            else:
-                self.report({'ERROR'}, "File '{}' does not exist.".format(d['path']))
-            tex.image = image
-            mx = tex.maxwell_render
-            
-            mx.path = d['path']
-            mx.use_global_map = d['use_global_map']
-            mx.channel = d['channel']
-            
-            tm = d['tiling_method']
-            if(not tm[0] and not tm[1]):
-                mx.tiling_method = 'NO_TILING'
-            elif(tm[0] and not tm[1]):
-                mx.tiling_method = 'TILE_X'
-            elif(not tm[0] and tm[1]):
-                mx.tiling_method = 'TILE_Y'
-            else:
-                mx.tiling_method = 'TILE_XY'
-            
-            mx.tiling_units = str(d['tiling_units'])
-            mx.repeat = d['repeat']
-            mx.mirror_x = d['mirror'][0]
-            mx.mirror_y = d['mirror'][1]
-            mx.offset = d['offset']
-            mx.rotation = math.radians(d['rotation'])
-            mx.invert = d['invert']
-            mx.use_alpha = d['use_alpha']
-            mx.interpolation = bool(d['interpolation'])
-            mx.brightness = d['brightness']
-            mx.contrast = d['contrast']
-            mx.saturation = d['saturation']
-            mx.hue = d['hue']
-            mx.clamp = d['clamp']
-            
-            mx.normal_mapping_flip_red = bool(d['normal_mapping_flip_red'])
-            mx.normal_mapping_flip_green = bool(d['normal_mapping_flip_green'])
-            mx.normal_mapping_full_range_blue = bool(d['normal_mapping_full_range_blue'])
-            
-            return tex.name
-        
         # globals
         gp = d['global_props']
         if(gp['override_map'] is not None):
-            mx.global_override_map = texture(material, gp['override_map'], 'override map')
+            mx.global_override_map = self.texture(material, gp['override_map'], 'override map')
         
         if(gp['bump_map'] is not None):
             mx.global_bump_map_enabled = True
             # mx.global_bump_abnormal_value = gp['bump']
             mx.global_bump = gp['bump']
-            mx.global_bump_map = texture(material, gp['bump_map'], 'global bump map')
+            mx.global_bump_map = self.texture(material, gp['bump_map'], 'global bump map')
             mx.global_bump_map_use_normal = gp['bump_map_use_normal']
             mx.global_bump_normal = gp['bump_normal']
         else:
@@ -1503,7 +1676,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
         if(dp['enabled']):
             cd.enabled = True
             if(dp['map'] is not None):
-                cd.map = texture(material, dp['map'], 'displacement map')
+                cd.map = self.texture(material, dp['map'], 'displacement map')
             cd.type = str(dp['type'])
             cd.subdivision = dp['subdivision']
             cd.adaptive = dp['adaptive']
@@ -1534,7 +1707,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             l.opacity = lp['opacity']
             if(lp['opacity_map'] is not None):
                 l.opacity_map_enabled = True
-                l.opacity_map = texture(material, lp['opacity_map'], 'opacity map')
+                l.opacity_map = self.texture(material, lp['opacity_map'], 'opacity map')
             else:
                 l.opacity_map_enabled = False
                 l.opacity_map = ""
@@ -1550,7 +1723,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 ex.ies_intensity = ep['ies_intensity']
                 ex.spot_map_enabled = ep['spot_map_enabled']
                 if(ep['spot_map'] is not None):
-                    ex.spot_map = texture(material, ep['spot_map'], 'spot map')
+                    ex.spot_map = self.texture(material, ep['spot_map'], 'spot map')
                 ex.spot_cone_angle = math.radians(ep['spot_cone_angle'])
                 ex.spot_falloff_angle = math.radians(ep['spot_falloff_angle'])
                 ex.spot_falloff_type = str(ep['spot_falloff_type'])
@@ -1565,7 +1738,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 ex.luminance_output = ep['luminance_output']
                 ex.temperature_value = ep['temperature_value']
                 if(ep['hdr_map'] is not None):
-                    ex.hdr_map = texture(material, ep['hdr_map'], 'hdr map')
+                    ex.hdr_map = self.texture(material, ep['hdr_map'], 'hdr map')
                 ex.hdr_intensity = ep['hdr_intensity']
             
             # bsdfs
@@ -1582,7 +1755,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['weight_map'] is not None):
                     b.weight_map_enabled = True
-                    b.weight_map = texture(material, bd['weight_map'], 'weight map')
+                    b.weight_map = self.texture(material, bd['weight_map'], 'weight map')
                 else:
                     b.weight_map_enabled = False
                     b.weight_map = ""
@@ -1593,7 +1766,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['reflectance_0_map'] is not None):
                     b.reflectance_0_map_enabled = True
-                    b.reflectance_0_map = texture(material, bd['reflectance_0_map'], 'reflectance 0 map')
+                    b.reflectance_0_map = self.texture(material, bd['reflectance_0_map'], 'reflectance 0 map')
                 else:
                     b.reflectance_0_map_enabled = False
                     b.reflectance_0_map = ""
@@ -1602,7 +1775,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['reflectance_90_map'] is not None):
                     b.reflectance_90_map_enabled = True
-                    b.reflectance_90_map = texture(material, bd['reflectance_90_map'], 'reflectance 90 map')
+                    b.reflectance_90_map = self.texture(material, bd['reflectance_90_map'], 'reflectance 90 map')
                 else:
                     b.reflectance_90_map_enabled = False
                     b.reflectance_90_map = ""
@@ -1611,7 +1784,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['transmittance_map'] is not None):
                     b.transmittance_map_enabled = True
-                    b.transmittance_map = texture(material, bd['transmittance_map'], 'transmittance map')
+                    b.transmittance_map = self.texture(material, bd['transmittance_map'], 'transmittance map')
                 else:
                     b.transmittance_map_enabled = False
                     b.transmittance_map = ""
@@ -1629,7 +1802,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['roughness_map'] is not None):
                     b.roughness_map_enabled = True
-                    b.roughness_map = texture(material, bd['roughness_map'], 'roughness map')
+                    b.roughness_map = self.texture(material, bd['roughness_map'], 'roughness map')
                 else:
                     b.roughness_map_enabled = False
                     b.roughness_map = ""
@@ -1639,7 +1812,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['bump_map'] is not None):
                     b.bump_map_enabled = True
-                    b.bump_map = texture(material, bd['bump_map'], 'bump map')
+                    b.bump_map = self.texture(material, bd['bump_map'], 'bump map')
                 else:
                     b.bump_map_enabled = False
                     b.bump_map = ""
@@ -1651,7 +1824,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['anisotropy_map'] is not None):
                     b.anisotropy_map_enabled = True
-                    b.anisotropy_map = texture(material, bd['anisotropy_map'], 'anisotropy map')
+                    b.anisotropy_map = self.texture(material, bd['anisotropy_map'], 'anisotropy map')
                 else:
                     b.anisotropy_map_enabled = False
                     b.anisotropy_map = ""
@@ -1660,7 +1833,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['anisotropy_angle_map'] is not None):
                     b.anisotropy_angle_map_enabled = True
-                    b.anisotropy_angle_map = texture(material, bd['anisotropy_angle_map'], 'anisotropy angle map')
+                    b.anisotropy_angle_map = self.texture(material, bd['anisotropy_angle_map'], 'anisotropy angle map')
                 else:
                     b.anisotropy_angle_map_enabled = False
                     b.anisotropy_angle_map = ""
@@ -1673,7 +1846,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(bd['single_sided_map'] is not None):
                     b.single_sided_map_enabled = True
-                    b.single_sided_map = texture(material, bd['single_sided_map'], 'single sided map')
+                    b.single_sided_map = self.texture(material, bd['single_sided_map'], 'single sided map')
                 else:
                     b.single_sided_map_enabled = False
                     b.single_sided_map = ""
@@ -1690,7 +1863,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(cd['thickness_map'] is not None):
                     c.thickness_map_enabled = True
-                    c.thickness_map = texture(material, cd['thickness_map'], 'coating thickness map')
+                    c.thickness_map = self.texture(material, cd['thickness_map'], 'coating thickness map')
                 else:
                     c.thickness_map_enabled = False
                     c.thickness_map = ""
@@ -1703,7 +1876,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(cd['reflectance_0_map'] is not None):
                     c.reflectance_0_map_enabled = True
-                    c.reflectance_0_map = texture(material, cd['reflectance_0_map'], 'coating reflectance 0 map')
+                    c.reflectance_0_map = self.texture(material, cd['reflectance_0_map'], 'coating reflectance 0 map')
                 else:
                     c.reflectance_0_map_enabled = False
                     c.reflectance_0_map = ""
@@ -1712,7 +1885,7 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
                 
                 if(cd['reflectance_90_map'] is not None):
                     c.reflectance_90_map_enabled = True
-                    c.reflectance_90_map = texture(material, cd['reflectance_90_map'], 'coating reflectance 90 map')
+                    c.reflectance_90_map = self.texture(material, cd['reflectance_90_map'], 'coating reflectance 90 map')
                 else:
                     c.reflectance_90_map_enabled = False
                     c.reflectance_90_map = ""
@@ -2743,3 +2916,111 @@ class Camera_preset_add(AddPresetBase, Operator):
                      
                      "r.resolution_x", "r.resolution_y", "r.resolution_percentage", "r.pixel_aspect_x", "r.pixel_aspect_y",
                      "r.fps", "r.fps_base", ]
+
+
+class TextureProceduralAdd(Operator):
+    bl_idname = "maxwell_render.texture_procedural_add"
+    bl_label = "Add Procedural Texture"
+    bl_description = "Add Procedural Texture"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    name = StringProperty(name="Name", )
+    use = EnumProperty(name="Type", items=[('BRICK', "Brick", ""), ('CHECKER', "Checker", ""), ('CIRCLE', "Circle", ""), ('GRADIENT3', "Gradient3", ""),
+                                           ('GRADIENT', "Gradient", ""), ('GRID', "Grid", ""), ('MARBLE', "Marble", ""), ('NOISE', "Noise", ""),
+                                           ('VORONOI', "Voronoi", ""), ('TILED', "Tiled", ""), ('WIREFRAME', "Wireframe", ""), ], default='NOISE', )
+    
+    def execute(self, context):
+        mx = context.texture.maxwell_render
+        pt = mx.procedural.textures
+        item = pt.add()
+        item.name = self.name
+        item.use = self.use
+        mx.procedural.index = (len(pt) - 1)
+        return {'FINISHED'}
+
+
+class TextureProceduralRemove(Operator):
+    bl_idname = "maxwell_render.texture_procedural_remove"
+    bl_label = "Remove Procedural Texture"
+    bl_description = "Remove Procedural Texture"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.texture.maxwell_render
+        pt = mx.procedural.textures
+        idx = mx.procedural.index
+        try:
+            item = pt[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        mx.procedural.index -= 1
+        pt.remove(idx)
+        if(idx == 0):
+            mx.procedural.index = idx
+        if(len(pt) == 0):
+            mx.procedural.index = -1
+        return {'FINISHED'}
+
+
+class TextureProceduralClear(Operator):
+    bl_idname = "maxwell_render.texture_procedural_clear"
+    bl_label = "Remove All Procedural Textures"
+    bl_description = "Remove All Procedural Textures"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.texture.maxwell_render
+        pt = mx.procedural.textures
+        while(len(pt) > 0):
+            pt.remove(0)
+        mx.procedural.index = -1
+        return {'FINISHED'}
+
+
+class TextureProceduralMoveUp(Operator):
+    bl_idname = "maxwell_render.texture_procedural_move_up"
+    bl_label = "Move Selected Procedural Texture Up"
+    bl_description = "Move selected procedural texture up"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.texture.maxwell_render
+        pt = mx.procedural.textures
+        idx = mx.procedural.index
+        
+        try:
+            item = pt[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        if(idx >= 1):
+            mv = idx - 1
+            pt.move(mv, idx, )
+            mx.procedural.index = mv
+            return {'FINISHED'}
+        
+        return {'PASS_THROUGH'}
+
+
+class TextureProceduralMoveDown(Operator):
+    bl_idname = "maxwell_render.texture_procedural_move_down"
+    bl_label = "Move Selected Procedural Texture Down"
+    bl_description = "Move selected procedural texture down"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        mx = context.texture.maxwell_render
+        pt = mx.procedural.textures
+        idx = mx.procedural.index
+        try:
+            item = pt[idx]
+        except IndexError:
+            return {'CANCELLED'}
+        
+        if(idx < len(pt) - 1):
+            mv = idx + 1
+            pt.move(idx, mv, )
+            mx.procedural.index = mv
+            return {'FINISHED'}
+        
+        return {'PASS_THROUGH'}

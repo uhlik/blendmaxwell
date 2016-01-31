@@ -74,6 +74,13 @@ def texture(t):
     # t.sinA
     # t.theTextureExtensions
     
+    d['procedural'] = []
+    if(t.hasProceduralTextures()):
+        n = t.getProceduralTexturesCount()
+        for i in range(n):
+            pd = extension(None, None, t, i)
+            d['procedural'].append(pd)
+    
     return d
 
 
@@ -378,7 +385,7 @@ def material(s, m):
     return data
 
 
-def extension(s, m):
+def extension(s, m, pt=None, pi=None, ):
     def texture(t):
         if(t is None):
             return None
@@ -412,7 +419,10 @@ def extension(s, m):
     def rgb(v):
         return (v.r(), v.g(), v.b())
     
-    params, _ = m.getMaterialModifierExtensionParams()
+    if(pt is not None and pi is not None):
+        params = pt.getProceduralTexture(pi)
+    else:
+        params, _ = m.getMaterialModifierExtensionParams()
     types = [(0, 'UCHAR', params.getByte, ),
              (1, 'UINT', params.getUInt, ),
              (2, 'INT', params.getInt, ),

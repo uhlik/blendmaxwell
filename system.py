@@ -157,7 +157,7 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=
         else:
             pass
         
-        log("creating temp directory.. ({})".format(self.tmp_dir), 2, LogStyles.MESSAGE, )
+        log("creating temp directory.. ({})".format(tmp_dir), 2, LogStyles.MESSAGE, )
         if(os.path.exists(tmp_dir) is False):
             os.makedirs(tmp_dir)
         
@@ -255,7 +255,7 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
         else:
             pass
         
-        log("creating temp directory.. ({})".format(self.tmp_dir), 2, LogStyles.MESSAGE, )
+        log("creating temp directory.. ({})".format(tmp_dir), 2, LogStyles.MESSAGE, )
         
         if(os.path.exists(tmp_dir) is False):
             os.makedirs(tmp_dir)

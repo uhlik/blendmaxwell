@@ -285,6 +285,275 @@ class MXSWriter():
         t.normalMappingFlipGreen = d['normal_mapping_flip_green']
         t.normalMappingFullRangeBlue = d['normal_mapping_full_range_blue']
         
+        for i, pt in enumerate(d['procedural']):
+            if(pt['use'] == 'BRICK'):
+                e = self.mgr.createDefaultTextureExtension('Brick')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setFloat('Brick width', pt['brick_brick_width'])
+                p.setFloat('Brick height', pt['brick_brick_height'])
+                p.setInt('Brick offset', pt['brick_brick_offset'])
+                p.setInt('Random offset', pt['brick_random_offset'])
+                p.setByte('Double brick', pt['brick_double_brick'])
+                p.setFloat('Small brick width', pt['brick_small_brick_width'])
+                p.setByte('Round corners', pt['brick_round_corners'])
+                p.setFloat('Boundary sharpness U', pt['brick_boundary_sharpness_u'])
+                p.setFloat('Boundary sharpness V', pt['brick_boundary_sharpness_v'])
+                p.setInt('Boundary noise detail', pt['brick_boundary_noise_detail'])
+                p.setFloat('Boundary noise region U', pt['brick_boundary_noise_region_u'])
+                p.setFloat('Boundary noise region V', pt['brick_boundary_noise_region_v'])
+                p.setUInt('Seed', pt['brick_seed'])
+                p.setByte('Random rotation', pt['brick_random_rotation'])
+                p.setInt('Color variation', pt['brick_color_variation'])
+                c = Crgb()
+                c.assign(*pt['brick_brick_color_0'])
+                p.setRgb('Brick color 0', c)
+                self.texture_data_to_mxparams('Brick texture 0', pt['brick_brick_texture_0'], p, )
+                p.setInt('Sampling factor 0', pt['brick_sampling_factor_0'])
+                p.setInt('Weight 0', pt['brick_weight_0'])
+                c = Crgb()
+                c.assign(*pt['brick_brick_color_1'])
+                p.setRgb('Brick color 1', c)
+                self.texture_data_to_mxparams('Brick texture 1', pt['brick_brick_texture_1'], p, )
+                p.setInt('Sampling factor 1', pt['brick_sampling_factor_1'])
+                p.setInt('Weight 1', pt['brick_weight_1'])
+                c = Crgb()
+                c.assign(*pt['brick_brick_color_2'])
+                p.setRgb('Brick color 2', c)
+                self.texture_data_to_mxparams('Brick texture 2', pt['brick_brick_texture_2'], p, )
+                p.setInt('Sampling factor 2', pt['brick_sampling_factor_2'])
+                p.setInt('Weight 2', pt['brick_weight_2'])
+                p.setFloat('Mortar thickness', pt['brick_mortar_thickness'])
+                c = Crgb()
+                c.assign(*pt['brick_mortar_color'])
+                p.setRgb('Mortar color', c)
+                self.texture_data_to_mxparams('Mortar texture', pt['brick_mortar_texture'], p, )
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'CHECKER'):
+                e = self.mgr.createDefaultTextureExtension('Checker')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                c = Crgb()
+                c.assign(*pt['checker_color_0'])
+                p.setRgb('Color0', c)
+                c = Crgb()
+                c.assign(*pt['checker_color_1'])
+                p.setRgb('Color1', c)
+                p.setUInt('Number of elements U', pt['checker_number_of_elements_u'])
+                p.setUInt('Number of elements V', pt['checker_number_of_elements_v'])
+                p.setFloat('Transition sharpness', pt['checker_transition_sharpness'])
+                p.setUInt('Fall-off', pt['checker_falloff'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'CIRCLE'):
+                e = self.mgr.createDefaultTextureExtension('Circle')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                c = Crgb()
+                c.assign(*pt['circle_background_color'])
+                p.setRgb('Background color', c)
+                c = Crgb()
+                c.assign(*pt['circle_circle_color'])
+                p.setRgb('Circle color', c)
+                p.setFloat('RadiusU', pt['circle_radius_u'])
+                p.setFloat('RadiusV', pt['circle_radius_v'])
+                p.setFloat('Transition factor', pt['circle_transition_factor'])
+                p.setUInt('Fall-off', pt['circle_falloff'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'GRADIENT3'):
+                e = self.mgr.createDefaultTextureExtension('Gradient3')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setByte('Gradient U', pt['gradient3_gradient_u'])
+                c = Crgb()
+                c.assign(*pt['gradient3_color0_u'])
+                p.setRgb('Color0 U', c)
+                c = Crgb()
+                c.assign(*pt['gradient3_color1_u'])
+                p.setRgb('Color1 U', c)
+                c = Crgb()
+                c.assign(*pt['gradient3_color2_u'])
+                p.setRgb('Color2 U', c)
+                p.setUInt('Gradient type U', pt['gradient3_gradient_type_u'])
+                p.setFloat('Color1 U position', pt['gradient3_color1_u_position'])
+                p.setByte('Gradient V', pt['gradient3_gradient_v'])
+                c = Crgb()
+                c.assign(*pt['gradient3_color0_v'])
+                p.setRgb('Color0 V', c)
+                c = Crgb()
+                c.assign(*pt['gradient3_color1_v'])
+                p.setRgb('Color1 V', c)
+                c = Crgb()
+                c.assign(*pt['gradient3_color2_v'])
+                p.setRgb('Color2 V', c)
+                p.setUInt('Gradient type V', pt['gradient3_gradient_type_v'])
+                p.setFloat('Color1 V position', pt['gradient3_color1_v_position'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'GRADIENT'):
+                e = self.mgr.createDefaultTextureExtension('Gradient')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setByte('Gradient U', pt['gradient_gradient_u'])
+                c = Crgb()
+                c.assign(*pt['gradient_color0_u'])
+                p.setRgb('Color0 U', c)
+                c = Crgb()
+                c.assign(*pt['gradient_color1_u'])
+                p.setRgb('Color1 U', c)
+                p.setUInt('Gradient type U', pt['gradient_gradient_type_u'])
+                p.setFloat('Transition factor U', pt['gradient_transition_factor_u'])
+                p.setByte('Gradient V', pt['gradient_gradient_v'])
+                c = Crgb()
+                c.assign(*pt['gradient_color0_v'])
+                p.setRgb('Color0 V', c)
+                c = Crgb()
+                c.assign(*pt['gradient_color1_v'])
+                p.setRgb('Color1 V', c)
+                p.setUInt('Gradient type V', pt['gradient_gradient_type_v'])
+                p.setFloat('Transition factor V', pt['gradient_transition_factor_v'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'GRID'):
+                e = self.mgr.createDefaultTextureExtension('Grid')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                c = Crgb()
+                c.assign(*pt['grid_boundary_color'])
+                p.setRgb('Boundary color', c)
+                c = Crgb()
+                c.assign(*pt['grid_cell_color'])
+                p.setRgb('Cell color', c)
+                
+                p.setFloat('Cell width', pt['grid_cell_width'])
+                p.setFloat('Cell height', pt['grid_cell_height'])
+                if(pt['grid_horizontal_lines']):
+                    p.setFloat('Boundary thickness U', pt['grid_boundary_thickness_u'])
+                else:
+                    p.setFloat('Boundary thickness U', 0.0)
+                if(pt['grid_vertical_lines']):
+                    p.setFloat('Boundary thickness V', pt['grid_boundary_thickness_v'])
+                else:
+                    p.setFloat('Boundary thickness V', 0.0)
+                p.setFloat('Transition sharpness', pt['grid_transition_sharpness'])
+                p.setUInt('Fall-off', pt['grid_falloff'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'MARBLE'):
+                e = self.mgr.createDefaultTextureExtension('Marble')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setUInt('Coordinates type', pt['marble_coordinates_type'])
+                c = Crgb()
+                c.assign(*pt['marble_color0'])
+                p.setRgb('Color0', c)
+                c = Crgb()
+                c.assign(*pt['marble_color1'])
+                p.setRgb('Color1', c)
+                c = Crgb()
+                c.assign(*pt['marble_color2'])
+                p.setRgb('Color2', c)
+                p.setFloat('Frequency', pt['marble_frequency'])
+                p.setFloat('Detail', pt['marble_detail'])
+                p.setInt('Octaves', pt['marble_octaves'])
+                p.setUInt('Seed', pt['marble_seed'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'NOISE'):
+                e = self.mgr.createDefaultTextureExtension('Noise')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setUInt('Coordinates type', pt['noise_coordinates_type'])
+                c = Crgb()
+                c.assign(*pt['noise_noise_color'])
+                p.setRgb('Noise color', c)
+                c = Crgb()
+                c.assign(*pt['noise_background_color'])
+                p.setRgb('Background color', c)
+                p.setFloat('Detail', pt['noise_detail'])
+                p.setFloat('Persistance', pt['noise_persistance'])
+                p.setInt('Octaves', pt['noise_octaves'])
+                p.setFloat('Low value', pt['noise_low_value'])
+                p.setFloat('High value', pt['noise_high_value'])
+                p.setUInt('Seed', pt['noise_seed'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'VORONOI'):
+                e = self.mgr.createDefaultTextureExtension('Voronoi')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setUInt('Coordinates type', pt['voronoi_coordinates_type'])
+                c = Crgb()
+                c.assign(*pt['voronoi_color0'])
+                p.setRgb('Color0', c)
+                c = Crgb()
+                c.assign(*pt['voronoi_color1'])
+                p.setRgb('Color1', c)
+                p.setInt('Detail', pt['voronoi_detail'])
+                p.setUInt('Distance', pt['voronoi_distance'])
+                p.setUInt('Combination', pt['voronoi_combination'])
+                p.setFloat('Low value', pt['voronoi_low_value'])
+                p.setFloat('High value', pt['voronoi_high_value'])
+                p.setUInt('Seed', pt['voronoi_seed'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'TILED'):
+                e = self.mgr.createDefaultTextureExtension('TiledTexture')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend factor', pt['blending_factor'])
+                
+                c = Crgb()
+                c.assign(*pt['tiled_base_color'])
+                p.setRgb('Base Color', c)
+                p.setByte('Use base color', pt['tiled_use_base_color'])
+                p.setString('Filename_mask', pt['tiled_token_mask'])
+                p.setString('Filename', pt['tiled_filename'])
+                # 'Map U tile range' UCHAR
+                # 'Map V tile range' UCHAR
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'WIREFRAME'):
+                e = self.mgr.createDefaultTextureExtension('WireframeTexture')
+                p = e.getExtensionData()
+                
+                c = Crgb()
+                c.assign(*pt['wireframe_fill_color'])
+                p.setRgb('Fill Color', c)
+                c = Crgb()
+                c.assign(*pt['wireframe_edge_color'])
+                p.setRgb('Edge Color', c)
+                c = Crgb()
+                c.assign(*pt['wireframe_coplanar_edge_color'])
+                p.setRgb('Coplanar Edge Color', c)
+                p.setFloat('Edge Width', pt['wireframe_edge_width'])
+                p.setFloat('Coplanar Edge Width', pt['wireframe_coplanar_edge_width'])
+                p.setFloat('Coplanar Threshold', pt['wireframe_coplanar_threshold'])
+                
+                t.addProceduralTexture(p)
+            else:
+                raise TypeError("{0} is unknown procedural texture type".format(pt['use']))
+        
         return t
     
     def material_placeholder(self, n=None, ):
@@ -1021,7 +1290,7 @@ class MXSWriter():
                 m.setColorID(c)
                 
                 if(d['active_display_map']):
-                    t = texture(d['active_display_map'], s, )
+                    t = self.texture(d['active_display_map'])
                     m.setActiveDisplayMap(t)
                 
                 def displacement(d, m):
@@ -2501,6 +2770,275 @@ class MXMWriter():
         t.normalMappingFlipGreen = d['normal_mapping_flip_green']
         t.normalMappingFullRangeBlue = d['normal_mapping_full_range_blue']
         
+        for i, pt in enumerate(d['procedural']):
+            if(pt['use'] == 'BRICK'):
+                e = self.mgr.createDefaultTextureExtension('Brick')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setFloat('Brick width', pt['brick_brick_width'])
+                p.setFloat('Brick height', pt['brick_brick_height'])
+                p.setInt('Brick offset', pt['brick_brick_offset'])
+                p.setInt('Random offset', pt['brick_random_offset'])
+                p.setByte('Double brick', pt['brick_double_brick'])
+                p.setFloat('Small brick width', pt['brick_small_brick_width'])
+                p.setByte('Round corners', pt['brick_round_corners'])
+                p.setFloat('Boundary sharpness U', pt['brick_boundary_sharpness_u'])
+                p.setFloat('Boundary sharpness V', pt['brick_boundary_sharpness_v'])
+                p.setInt('Boundary noise detail', pt['brick_boundary_noise_detail'])
+                p.setFloat('Boundary noise region U', pt['brick_boundary_noise_region_u'])
+                p.setFloat('Boundary noise region V', pt['brick_boundary_noise_region_v'])
+                p.setUInt('Seed', pt['brick_seed'])
+                p.setByte('Random rotation', pt['brick_random_rotation'])
+                p.setInt('Color variation', pt['brick_color_variation'])
+                c = Crgb()
+                c.assign(*pt['brick_brick_color_0'])
+                p.setRgb('Brick color 0', c)
+                self.texture_data_to_mxparams('Brick texture 0', pt['brick_brick_texture_0'], p, )
+                p.setInt('Sampling factor 0', pt['brick_sampling_factor_0'])
+                p.setInt('Weight 0', pt['brick_weight_0'])
+                c = Crgb()
+                c.assign(*pt['brick_brick_color_1'])
+                p.setRgb('Brick color 1', c)
+                self.texture_data_to_mxparams('Brick texture 1', pt['brick_brick_texture_1'], p, )
+                p.setInt('Sampling factor 1', pt['brick_sampling_factor_1'])
+                p.setInt('Weight 1', pt['brick_weight_1'])
+                c = Crgb()
+                c.assign(*pt['brick_brick_color_2'])
+                p.setRgb('Brick color 2', c)
+                self.texture_data_to_mxparams('Brick texture 2', pt['brick_brick_texture_2'], p, )
+                p.setInt('Sampling factor 2', pt['brick_sampling_factor_2'])
+                p.setInt('Weight 2', pt['brick_weight_2'])
+                p.setFloat('Mortar thickness', pt['brick_mortar_thickness'])
+                c = Crgb()
+                c.assign(*pt['brick_mortar_color'])
+                p.setRgb('Mortar color', c)
+                self.texture_data_to_mxparams('Mortar texture', pt['brick_mortar_texture'], p, )
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'CHECKER'):
+                e = self.mgr.createDefaultTextureExtension('Checker')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                c = Crgb()
+                c.assign(*pt['checker_color_0'])
+                p.setRgb('Color0', c)
+                c = Crgb()
+                c.assign(*pt['checker_color_1'])
+                p.setRgb('Color1', c)
+                p.setUInt('Number of elements U', pt['checker_number_of_elements_u'])
+                p.setUInt('Number of elements V', pt['checker_number_of_elements_v'])
+                p.setFloat('Transition sharpness', pt['checker_transition_sharpness'])
+                p.setUInt('Fall-off', pt['checker_falloff'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'CIRCLE'):
+                e = self.mgr.createDefaultTextureExtension('Circle')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                c = Crgb()
+                c.assign(*pt['circle_background_color'])
+                p.setRgb('Background color', c)
+                c = Crgb()
+                c.assign(*pt['circle_circle_color'])
+                p.setRgb('Circle color', c)
+                p.setFloat('RadiusU', pt['circle_radius_u'])
+                p.setFloat('RadiusV', pt['circle_radius_v'])
+                p.setFloat('Transition factor', pt['circle_transition_factor'])
+                p.setUInt('Fall-off', pt['circle_falloff'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'GRADIENT3'):
+                e = self.mgr.createDefaultTextureExtension('Gradient3')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setByte('Gradient U', pt['gradient3_gradient_u'])
+                c = Crgb()
+                c.assign(*pt['gradient3_color0_u'])
+                p.setRgb('Color0 U', c)
+                c = Crgb()
+                c.assign(*pt['gradient3_color1_u'])
+                p.setRgb('Color1 U', c)
+                c = Crgb()
+                c.assign(*pt['gradient3_color2_u'])
+                p.setRgb('Color2 U', c)
+                p.setUInt('Gradient type U', pt['gradient3_gradient_type_u'])
+                p.setFloat('Color1 U position', pt['gradient3_color1_u_position'])
+                p.setByte('Gradient V', pt['gradient3_gradient_v'])
+                c = Crgb()
+                c.assign(*pt['gradient3_color0_v'])
+                p.setRgb('Color0 V', c)
+                c = Crgb()
+                c.assign(*pt['gradient3_color1_v'])
+                p.setRgb('Color1 V', c)
+                c = Crgb()
+                c.assign(*pt['gradient3_color2_v'])
+                p.setRgb('Color2 V', c)
+                p.setUInt('Gradient type V', pt['gradient3_gradient_type_v'])
+                p.setFloat('Color1 V position', pt['gradient3_color1_v_position'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'GRADIENT'):
+                e = self.mgr.createDefaultTextureExtension('Gradient')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setByte('Gradient U', pt['gradient_gradient_u'])
+                c = Crgb()
+                c.assign(*pt['gradient_color0_u'])
+                p.setRgb('Color0 U', c)
+                c = Crgb()
+                c.assign(*pt['gradient_color1_u'])
+                p.setRgb('Color1 U', c)
+                p.setUInt('Gradient type U', pt['gradient_gradient_type_u'])
+                p.setFloat('Transition factor U', pt['gradient_transition_factor_u'])
+                p.setByte('Gradient V', pt['gradient_gradient_v'])
+                c = Crgb()
+                c.assign(*pt['gradient_color0_v'])
+                p.setRgb('Color0 V', c)
+                c = Crgb()
+                c.assign(*pt['gradient_color1_v'])
+                p.setRgb('Color1 V', c)
+                p.setUInt('Gradient type V', pt['gradient_gradient_type_v'])
+                p.setFloat('Transition factor V', pt['gradient_transition_factor_v'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'GRID'):
+                e = self.mgr.createDefaultTextureExtension('Grid')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                c = Crgb()
+                c.assign(*pt['grid_boundary_color'])
+                p.setRgb('Boundary color', c)
+                c = Crgb()
+                c.assign(*pt['grid_cell_color'])
+                p.setRgb('Cell color', c)
+                
+                p.setFloat('Cell width', pt['grid_cell_width'])
+                p.setFloat('Cell height', pt['grid_cell_height'])
+                if(pt['grid_horizontal_lines']):
+                    p.setFloat('Boundary thickness U', pt['grid_boundary_thickness_u'])
+                else:
+                    p.setFloat('Boundary thickness U', 0.0)
+                if(pt['grid_vertical_lines']):
+                    p.setFloat('Boundary thickness V', pt['grid_boundary_thickness_v'])
+                else:
+                    p.setFloat('Boundary thickness V', 0.0)
+                p.setFloat('Transition sharpness', pt['grid_transition_sharpness'])
+                p.setUInt('Fall-off', pt['grid_falloff'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'MARBLE'):
+                e = self.mgr.createDefaultTextureExtension('Marble')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setUInt('Coordinates type', pt['marble_coordinates_type'])
+                c = Crgb()
+                c.assign(*pt['marble_color0'])
+                p.setRgb('Color0', c)
+                c = Crgb()
+                c.assign(*pt['marble_color1'])
+                p.setRgb('Color1', c)
+                c = Crgb()
+                c.assign(*pt['marble_color2'])
+                p.setRgb('Color2', c)
+                p.setFloat('Frequency', pt['marble_frequency'])
+                p.setFloat('Detail', pt['marble_detail'])
+                p.setInt('Octaves', pt['marble_octaves'])
+                p.setUInt('Seed', pt['marble_seed'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'NOISE'):
+                e = self.mgr.createDefaultTextureExtension('Noise')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setUInt('Coordinates type', pt['noise_coordinates_type'])
+                c = Crgb()
+                c.assign(*pt['noise_noise_color'])
+                p.setRgb('Noise color', c)
+                c = Crgb()
+                c.assign(*pt['noise_background_color'])
+                p.setRgb('Background color', c)
+                p.setFloat('Detail', pt['noise_detail'])
+                p.setFloat('Persistance', pt['noise_persistance'])
+                p.setInt('Octaves', pt['noise_octaves'])
+                p.setFloat('Low value', pt['noise_low_value'])
+                p.setFloat('High value', pt['noise_high_value'])
+                p.setUInt('Seed', pt['noise_seed'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'VORONOI'):
+                e = self.mgr.createDefaultTextureExtension('Voronoi')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend procedural', pt['blending_factor'])
+                
+                p.setUInt('Coordinates type', pt['voronoi_coordinates_type'])
+                c = Crgb()
+                c.assign(*pt['voronoi_color0'])
+                p.setRgb('Color0', c)
+                c = Crgb()
+                c.assign(*pt['voronoi_color1'])
+                p.setRgb('Color1', c)
+                p.setInt('Detail', pt['voronoi_detail'])
+                p.setUInt('Distance', pt['voronoi_distance'])
+                p.setUInt('Combination', pt['voronoi_combination'])
+                p.setFloat('Low value', pt['voronoi_low_value'])
+                p.setFloat('High value', pt['voronoi_high_value'])
+                p.setUInt('Seed', pt['voronoi_seed'])
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'TILED'):
+                e = self.mgr.createDefaultTextureExtension('TiledTexture')
+                p = e.getExtensionData()
+                
+                p.setFloat('Blend factor', pt['blending_factor'])
+                
+                c = Crgb()
+                c.assign(*pt['tiled_base_color'])
+                p.setRgb('Base Color', c)
+                p.setByte('Use base color', pt['tiled_use_base_color'])
+                p.setString('Filename_mask', pt['tiled_token_mask'])
+                p.setString('Filename', pt['tiled_filename'])
+                # 'Map U tile range' UCHAR
+                # 'Map V tile range' UCHAR
+                
+                t.addProceduralTexture(p)
+            elif(pt['use'] == 'WIREFRAME'):
+                e = self.mgr.createDefaultTextureExtension('WireframeTexture')
+                p = e.getExtensionData()
+                
+                c = Crgb()
+                c.assign(*pt['wireframe_fill_color'])
+                p.setRgb('Fill Color', c)
+                c = Crgb()
+                c.assign(*pt['wireframe_edge_color'])
+                p.setRgb('Edge Color', c)
+                c = Crgb()
+                c.assign(*pt['wireframe_coplanar_edge_color'])
+                p.setRgb('Coplanar Edge Color', c)
+                p.setFloat('Edge Width', pt['wireframe_edge_width'])
+                p.setFloat('Coplanar Edge Width', pt['wireframe_coplanar_edge_width'])
+                p.setFloat('Coplanar Threshold', pt['wireframe_coplanar_threshold'])
+                
+                t.addProceduralTexture(p)
+            else:
+                raise TypeError("{0} is unknown procedural texture type".format(pt['use']))
+        
         return t
     
     def material_placeholder(self, n=None, ):
@@ -3726,6 +4264,13 @@ class MXMReader():
             # t.sinA
             # t.theTextureExtensions
             
+            d['procedural'] = []
+            if(t.hasProceduralTextures()):
+                n = t.getProceduralTexturesCount()
+                for i in range(n):
+                    pd = extension(None, None, t, i)
+                    d['procedural'].append(pd)
+            
             return d
         
         def material(s, m):
@@ -4028,7 +4573,7 @@ class MXMReader():
             
             return data
         
-        def extension(s, m):
+        def extension(s, m, pt=None, pi=None, ):
             def texture(t):
                 if(t is None):
                     return None
@@ -4062,7 +4607,10 @@ class MXMReader():
             def rgb(v):
                 return (v.r(), v.g(), v.b())
             
-            params, _ = m.getMaterialModifierExtensionParams()
+            if(pt is not None and pi is not None):
+                params = pt.getProceduralTexture(pi)
+            else:
+                params, _ = m.getMaterialModifierExtensionParams()
             types = [(0, 'UCHAR', params.getByte, ),
                      (1, 'UINT', params.getUInt, ),
                      (2, 'INT', params.getInt, ),

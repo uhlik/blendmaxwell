@@ -41,7 +41,7 @@ from . import mxs
 # NOTE: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works. at least try to remove that texture from texture drop down. but i think it is not possible to filter prop_search results, have to be enum with custom items function. update: leaving this as it is. there might be some solution for this, but it will rewuire rewrite of all texture selectors everywhere. to much work for small profit..
 # NOTE: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred) - seems like it will not work. texture preview might be usable when together with maxwell material basic blender material is created, then it can be used for preview in viewport
 # TODO: material preview: export material to mxm, load preview scene, swap material named 'preview', save to /tmp and render required size. load image afterwards with CmaxwellMxi.getPreview > numpy array
-# TODO: procedural textures, but without preview are a bit useless. how to preview them? don't see anything usable in pymaxwell for it. create special scene a render it? some kind of light tent?
+# TODO: presets for procedural textures to compensate a bit absence of preview..
 
 
 class BMPanel():
@@ -3866,317 +3866,6 @@ class MaterialWizardPanel(BMPanel, MaterialButtonsPanel, Panel):
             pass
 
 
-class TexturePanel(TextureButtonsPanel, Panel):
-    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Texture"
-    
-    @classmethod
-    def poll(cls, context):
-        if(not super().poll(context)):
-            return False
-        if(context.space_data.texture_context not in ['MATERIAL', 'PARTICLES']):
-            return False
-        return True
-    
-    def draw(self, context):
-        l = self.layout
-        
-        tex = context.texture
-        m = tex.maxwell_render
-        
-        if(m.use == 'IMAGE'):
-            if(tex.type == 'IMAGE'):
-                if(not tex.image):
-                    l.label("Load an image", icon='ERROR', )
-            else:
-                l.active = False
-        
-        l.label("Projection Properties:")
-        
-        def is_override_map(tex, mat):
-            try:
-                mmx = mat.maxwell_render
-                if(mmx.global_override_map is not ""):
-                    if(mmx.global_override_map == tex.name):
-                        return True
-            except AttributeError:
-                return False
-            return False
-        
-        if(not is_override_map(tex, context.material)):
-            l.prop(m, 'use_global_map')
-        
-        sub = l.column()
-        sub.active = not m.use_global_map
-        
-        tex = context.texture
-        ob = context.object
-        
-        sub.prop(m, 'channel')
-        sub.separator()
-        
-        r = sub.row()
-        r.prop(m, 'tiling_method', expand=True, )
-        r = sub.row()
-        r.prop(m, 'tiling_units', expand=True, )
-        
-        r = sub.row()
-        r.label("Mirror:")
-        r.prop(m, 'mirror_x', text="X", )
-        r.prop(m, 'mirror_y', text="Y", )
-        
-        r = sub.row()
-        r.prop(m, 'repeat')
-        
-        r = sub.row()
-        r.prop(m, 'offset')
-        
-        sub.prop(m, 'rotation')
-        
-        l.label("Image Properties:")
-        
-        sub = l.column()
-        r = sub.row()
-        r.prop(m, 'invert')
-        r.prop(m, 'use_alpha')
-        r.prop(m, 'interpolation')
-        
-        sub = l.column()
-        sub.prop(m, 'brightness')
-        sub.prop(m, 'contrast')
-        sub.prop(m, 'saturation')
-        sub.prop(m, 'hue')
-        
-        r = sub.row()
-        r.prop(m, 'clamp')
-        
-        l.label("Normal Mapping:")
-        sub = l.column()
-        r = sub.row()
-        r.prop(m, 'normal_mapping_flip_red')
-        r.prop(m, 'normal_mapping_flip_green')
-        r.prop(m, 'normal_mapping_full_range_blue')
-
-
-class TextureProceduralPanel(TextureButtonsPanel, Panel):
-    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Procedural Texture"
-    
-    @classmethod
-    def poll(cls, context):
-        if(not super().poll(context)):
-            return False
-        if(context.space_data.texture_context not in ['MATERIAL', 'PARTICLES']):
-            return False
-        m = context.texture.maxwell_render
-        if(m.use == 'IMAGE'):
-            return False
-        return True
-    
-    def draw(self, context):
-        l = self.layout
-        m = context.texture.maxwell_render
-        
-        use = [('IMAGE', "Image"), ('BRICK', "Brick"), ('CHECKER', "Checker"), ('CIRCLE', "Circle"), ('GRADIENT3', "Gradient3"),
-               ('GRADIENT', "Gradient"), ('GRID', "Grid"), ('MARBLE', "Marble"), ('NOISE', "Noise"), ('VORONOI', "Voronoi"),
-               ('TILEDTEXTURE', "Tiled"), ('WIREFRAMETEXTURE', "Wireframe"), ]
-        for i, t in enumerate(use):
-            if(t[0] == m.use):
-                self.bl_label = "Maxwell {} Texture".format(t[1])
-                break
-        
-        if(m.use == 'BRICK'):
-            sub = l.column()
-            sub.prop(m, 'brick_blend_procedural')
-            sub.label("Brick:")
-            sub.prop(m, 'brick_brick_width')
-            sub.prop(m, 'brick_brick_height')
-            sub.prop(m, 'brick_brick_offset')
-            sub.prop(m, 'brick_random_offset')
-            sub.prop(m, 'brick_double_brick')
-            sub.prop(m, 'brick_small_brick_width')
-            sub.prop(m, 'brick_round_corners')
-            r = sub.row(align=True)
-            r.prop(m, 'brick_boundary_sharpness_u')
-            r.prop(m, 'brick_boundary_sharpness_v')
-            sub.prop(m, 'brick_boundary_noise_detail')
-            r = sub.row(align=True)
-            r.prop(m, 'brick_boundary_noise_region_u')
-            r.prop(m, 'brick_boundary_noise_region_v')
-            sub.prop(m, 'brick_seed')
-            sub.prop(m, 'brick_random_rotation')
-            sub.prop(m, 'brick_color_variation')
-            r = sub.row()
-            r.prop(m, 'brick_brick_color_0')
-            sub.prop_search(m, 'brick_brick_texture_0', bpy.data, 'textures', icon='TEXTURE')
-            sub.prop(m, 'brick_sampling_factor_0')
-            sub.prop(m, 'brick_weight_0')
-            r = sub.row()
-            r.prop(m, 'brick_brick_color_1')
-            sub.prop_search(m, 'brick_brick_texture_1', bpy.data, 'textures', icon='TEXTURE')
-            sub.prop(m, 'brick_sampling_factor_1')
-            sub.prop(m, 'brick_weight_1')
-            r = sub.row()
-            r.prop(m, 'brick_brick_color_2')
-            sub.prop_search(m, 'brick_brick_texture_2', bpy.data, 'textures', icon='TEXTURE')
-            sub.prop(m, 'brick_sampling_factor_2')
-            sub.prop(m, 'brick_weight_2')
-            sub.label("Mortar:")
-            sub.prop(m, 'brick_mortar_thickness')
-            r = sub.row()
-            r.prop(m, 'brick_mortar_color')
-            sub.prop_search(m, 'brick_mortar_texture', bpy.data, 'textures', icon='TEXTURE')
-        elif(m.use == 'CHECKER'):
-            sub = l.column()
-            sub.prop(m, 'checker_blend_procedural')
-            sub.prop(m, 'checker_number_of_elements_u')
-            sub.prop(m, 'checker_number_of_elements_v')
-            r = sub.row()
-            r.prop(m, 'checker_color_0')
-            r = sub.row()
-            r.prop(m, 'checker_color_1')
-            sub.prop(m, 'checker_transition_sharpness')
-            sub.prop(m, 'checker_falloff')
-        elif(m.use == 'CIRCLE'):
-            sub = l.column()
-            sub.prop(m, 'circle_blend_procedural')
-            r = sub.row()
-            r.prop(m, 'circle_background_color')
-            r = sub.row()
-            r.prop(m, 'circle_circle_color')
-            sub.prop(m, 'circle_radius_u')
-            sub.prop(m, 'circle_radius_v')
-            sub.prop(m, 'circle_transition_factor')
-            sub.prop(m, 'circle_falloff')
-        elif(m.use == 'GRADIENT3'):
-            sub = l.column()
-            sub.prop(m, 'gradient3_blend_procedural')
-            sub.prop(m, 'gradient3_gradient_u', text="U Direction")
-            sc = sub.column()
-            sc.active = m.gradient3_gradient_u
-            r = sc.row()
-            r.prop(m, 'gradient3_color0_u')
-            r = sc.row()
-            r.prop(m, 'gradient3_color1_u')
-            r = sc.row()
-            r.prop(m, 'gradient3_color2_u')
-            sc.prop(m, 'gradient3_gradient_type_u')
-            sc.prop(m, 'gradient3_color1_u_position')
-            sub.prop(m, 'gradient3_gradient_v', text="V Direction")
-            sc = sub.column()
-            sc.active = m.gradient3_gradient_v
-            r = sc.row()
-            r.prop(m, 'gradient3_color0_v')
-            r = sc.row()
-            r.prop(m, 'gradient3_color1_v')
-            r = sc.row()
-            r.prop(m, 'gradient3_color2_v')
-            sc.prop(m, 'gradient3_gradient_type_v')
-            sc.prop(m, 'gradient3_color1_v_position')
-        elif(m.use == 'GRADIENT'):
-            sub = l.column()
-            sub.prop(m, 'gradient_blend_procedural')
-            sub.prop(m, 'gradient_gradient_u', text="U Direction")
-            sc = sub.column()
-            sc.active = m.gradient_gradient_u
-            r = sc.row()
-            r.prop(m, 'gradient_color0_u')
-            r = sc.row()
-            r.prop(m, 'gradient_color1_u')
-            sc.prop(m, 'gradient_gradient_type_u')
-            sc.prop(m, 'gradient_transition_factor_u')
-            sub.prop(m, 'gradient_gradient_v', text="V Direction")
-            sc = sub.column()
-            sc.active = m.gradient_gradient_v
-            r = sc.row()
-            r.prop(m, 'gradient_color0_v')
-            r = sc.row()
-            r.prop(m, 'gradient_color1_v')
-            sc.prop(m, 'gradient_gradient_type_v')
-            sc.prop(m, 'gradient_transition_factor_v')
-        elif(m.use == 'GRID'):
-            sub = l.column()
-            sub.prop(m, 'grid_blend_procedural')
-            r = sub.row()
-            r.prop(m, 'grid_cell_color')
-            r = sub.row()
-            r.prop(m, 'grid_boundary_color')
-            # r = sub.row()
-            # r.prop(m, 'grid_horizontal_lines')
-            # r.prop(m, 'grid_vertical_lines')
-            c = sub.column(align=True)
-            c.prop(m, 'grid_cell_width')
-            c.prop(m, 'grid_cell_height')
-            c = sub.column(align=True)
-            c.prop(m, 'grid_boundary_thickness_u')
-            c.prop(m, 'grid_boundary_thickness_v')
-            sub.prop(m, 'grid_transition_sharpness')
-            sub.prop(m, 'grid_falloff')
-        elif(m.use == 'MARBLE'):
-            sub = l.column()
-            sub.prop(m, 'marble_blend_procedural')
-            sub.prop(m, 'marble_coordinates_type')
-            r = sub.row()
-            r.prop(m, 'marble_color0')
-            r = sub.row()
-            r.prop(m, 'marble_color1')
-            r = sub.row()
-            r.prop(m, 'marble_color2')
-            sub.prop(m, 'marble_frequency')
-            sub.prop(m, 'marble_detail')
-            sub.prop(m, 'marble_octaves')
-            sub.prop(m, 'marble_seed')
-        elif(m.use == 'NOISE'):
-            sub = l.column()
-            sub.prop(m, 'noise_blend_procedural')
-            sub.prop(m, 'noise_coordinates_type')
-            r = sub.row()
-            r.prop(m, 'noise_noise_color')
-            r = sub.row()
-            r.prop(m, 'noise_background_color')
-            sub.prop(m, 'noise_detail')
-            sub.prop(m, 'noise_persistance')
-            sub.prop(m, 'noise_octaves')
-            c = sub.column(align=True)
-            c.prop(m, 'noise_low_value')
-            c.prop(m, 'noise_high_value')
-            sub.prop(m, 'noise_seed')
-        elif(m.use == 'VORONOI'):
-            sub = l.column()
-            sub.prop(m, 'voronoi_blend_procedural')
-            sub.prop(m, 'voronoi_coordinates_type')
-            r = sub.row()
-            r.prop(m, 'voronoi_color0')
-            r = sub.row()
-            r.prop(m, 'voronoi_color1')
-            sub.prop(m, 'voronoi_detail')
-            sub.prop(m, 'voronoi_distance')
-            sub.prop(m, 'voronoi_combination')
-            c = sub.column(align=True)
-            c.prop(m, 'voronoi_low_value')
-            c.prop(m, 'voronoi_high_value')
-            sub.prop(m, 'voronoi_seed')
-        elif(m.use == 'TILEDTEXTURE'):
-            sub = l.column()
-            sub.prop(m, 'tiled_blend_procedural')
-            sub.prop(m, 'tiled_filename')
-            sub.prop(m, 'tiled_token_mask')
-            r = sub.row()
-            r.prop(m, 'tiled_base_color')
-            sub.prop(m, 'tiled_use_base_color')
-        elif(m.use == 'WIREFRAMETEXTURE'):
-            sub = l.column()
-            r = sub.row()
-            r.prop(m, 'wireframe_fill_color')
-            r = sub.row()
-            r.prop(m, 'wireframe_edge_color')
-            r = sub.row()
-            r.prop(m, 'wireframe_coplanar_edge_color')
-            sub.prop(m, 'wireframe_edge_width')
-            sub.prop(m, 'wireframe_coplanar_edge_width')
-            sub.prop(m, 'wireframe_coplanar_threshold')
-
-
 class ParticleContextPanel(ParticleButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_options = {'HIDE_HEADER'}
@@ -4808,6 +4497,339 @@ class ObjectPanelBlockedEmittersMenu(Menu):
             op = l.operator("maxwell_render.blocked_emitter_add", text=n, )
             op.name = n
             op.remove = False
+
+
+class TexturePanel(TextureButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Texture"
+    
+    @classmethod
+    def poll(cls, context):
+        if(not super().poll(context)):
+            return False
+        if(context.space_data.texture_context not in ['MATERIAL', 'PARTICLES']):
+            return False
+        return True
+    
+    def draw(self, context):
+        l = self.layout
+        
+        tex = context.texture
+        m = tex.maxwell_render
+        
+        if(m.use == 'IMAGE'):
+            if(tex.type == 'IMAGE'):
+                if(not tex.image):
+                    l.label("Load an image", icon='ERROR', )
+            else:
+                l.active = False
+        
+        l.label("Projection Properties:")
+        
+        def is_override_map(tex, mat):
+            try:
+                mmx = mat.maxwell_render
+                if(mmx.global_override_map is not ""):
+                    if(mmx.global_override_map == tex.name):
+                        return True
+            except AttributeError:
+                return False
+            return False
+        
+        if(not is_override_map(tex, context.material)):
+            l.prop(m, 'use_global_map')
+        
+        sub = l.column()
+        sub.active = not m.use_global_map
+        
+        tex = context.texture
+        ob = context.object
+        
+        sub.prop(m, 'channel')
+        sub.separator()
+        
+        r = sub.row()
+        r.prop(m, 'tiling_method', expand=True, )
+        r = sub.row()
+        r.prop(m, 'tiling_units', expand=True, )
+        
+        r = sub.row()
+        r.label("Mirror:")
+        r.prop(m, 'mirror_x', text="X", )
+        r.prop(m, 'mirror_y', text="Y", )
+        
+        r = sub.row()
+        r.prop(m, 'repeat')
+        
+        r = sub.row()
+        r.prop(m, 'offset')
+        
+        sub.prop(m, 'rotation')
+        
+        l.label("Image Properties:")
+        
+        sub = l.column()
+        r = sub.row()
+        r.prop(m, 'invert')
+        r.prop(m, 'use_alpha')
+        r.prop(m, 'interpolation')
+        
+        sub = l.column()
+        sub.prop(m, 'brightness')
+        sub.prop(m, 'contrast')
+        sub.prop(m, 'saturation')
+        sub.prop(m, 'hue')
+        
+        r = sub.row()
+        r.prop(m, 'clamp')
+        
+        l.label("Normal Mapping:")
+        sub = l.column()
+        r = sub.row()
+        r.prop(m, 'normal_mapping_flip_red')
+        r.prop(m, 'normal_mapping_flip_green')
+        r.prop(m, 'normal_mapping_full_range_blue')
+
+
+class TextureProceduralList(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        icon = 'TEXTURE'
+        if(self.layout_type in {'DEFAULT', 'COMPACT'}):
+            r = layout.row()
+            r.prop(item, 'enabled', text="", )
+            r.prop(item, 'name', text="", emboss=False, icon=icon, )
+            c = r.column()
+            c.prop(item, 'blending_factor')
+            if(item.use == 'WIREFRAME'):
+                c.enabled = False
+        
+        elif(self.layout_type in {'GRID'}):
+            layout.alignment = 'CENTER'
+            layout.prop(item, "name", text="", emboss=False, icon=icon, )
+
+
+class TextureProceduralMenuAdd(Menu):
+    bl_label = "Add Procedural Texture"
+    bl_idname = "TextureProceduralMenuAdd"
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def draw(self, context):
+        l = self.layout
+        
+        types = [('BRICK', "Brick", ""), ('CHECKER', "Checker", ""), ('CIRCLE', "Circle", ""), ('GRADIENT3', "Gradient3", ""),
+                 ('GRADIENT', "Gradient", ""), ('GRID', "Grid", ""), ('MARBLE', "Marble", ""), ('NOISE', "Noise", ""),
+                 ('VORONOI', "Voronoi", ""), ('TILED', "Tiled", ""), ('WIREFRAME', "Wireframe", ""), ]
+        
+        for t, n, _ in types:
+            op = l.operator("maxwell_render.texture_procedural_add", text=n, )
+            op.name = n
+            op.use = t
+
+
+class TextureProceduralPanel(BMPanel, TextureButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Procedural Textures"
+    
+    @classmethod
+    def poll(cls, context):
+        # if(not super().poll(context)):
+        #     return False
+        # if(context.space_data.texture_context not in ['MATERIAL', 'PARTICLES']):
+        #     return False
+        # # m = context.texture.maxwell_render
+        # # if(m.use == 'IMAGE'):
+        # #     return False
+        # return True
+        if(not super().poll(context)):
+            return False
+        if(context.space_data.texture_context not in ['MATERIAL', 'PARTICLES']):
+            return False
+        return True
+    
+    def draw(self, context):
+        l = self.layout
+        m = context.texture.maxwell_render
+        p = m.procedural
+        
+        sub = l.column()
+        
+        r = sub.row()
+        r.template_list("TextureProceduralList", "", p, "textures", p, "index", rows=3, maxrows=6, )
+        c = r.column(align=True)
+        c.menu("TextureProceduralMenuAdd", text="", icon='ZOOMIN', )
+        c.operator("maxwell_render.texture_procedural_remove", icon='ZOOMOUT', text="", )
+        c.separator()
+        c.operator("maxwell_render.texture_procedural_move_up", icon='TRIA_UP', text="", )
+        c.operator("maxwell_render.texture_procedural_move_down", icon='TRIA_DOWN', text="", )
+        c.separator()
+        c.operator("maxwell_render.texture_procedural_clear", icon='X', text="", )
+        
+        pt = None
+        try:
+            pt = p.textures[p.index]
+        except IndexError:
+            return
+        
+        m = pt
+        
+        sub = l.column()
+        sub.separator()
+        
+        if(pt.use == 'BRICK'):
+            sub.label("Brick:")
+            r = sub.row(align=True)
+            r.prop(m, 'brick_brick_width')
+            r.prop(m, 'brick_brick_height')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_brick_offset')
+            r.prop(m, 'brick_random_offset')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_double_brick')
+            r.prop(m, 'brick_small_brick_width')
+            sub.prop(m, 'brick_round_corners')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_boundary_sharpness_u')
+            r.prop(m, 'brick_boundary_sharpness_v')
+            sub.prop(m, 'brick_boundary_noise_detail')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_boundary_noise_region_u')
+            r.prop(m, 'brick_boundary_noise_region_v')
+            sub.prop(m, 'brick_seed')
+            sub.prop(m, 'brick_random_rotation')
+            sub.prop(m, 'brick_color_variation')
+            r = sub.row()
+            self.tab_single(sub, m, 'brick_brick_color_0')
+            sub.prop_search(m, 'brick_brick_texture_0', bpy.data, 'textures', icon='TEXTURE')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_sampling_factor_0')
+            r.prop(m, 'brick_weight_0')
+            r = sub.row()
+            self.tab_single(sub, m, 'brick_brick_color_1')
+            sub.prop_search(m, 'brick_brick_texture_1', bpy.data, 'textures', icon='TEXTURE')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_sampling_factor_1')
+            r.prop(m, 'brick_weight_1')
+            r = sub.row()
+            self.tab_single(sub, m, 'brick_brick_color_2')
+            sub.prop_search(m, 'brick_brick_texture_2', bpy.data, 'textures', icon='TEXTURE')
+            r = sub.row(align=True)
+            r.prop(m, 'brick_sampling_factor_2')
+            r.prop(m, 'brick_weight_2')
+            
+            sub.separator()
+            sub.label("Mortar:")
+            sub.prop(m, 'brick_mortar_thickness')
+            r = sub.row()
+            self.tab_single(sub, m, 'brick_mortar_color')
+            sub.prop_search(m, 'brick_mortar_texture', bpy.data, 'textures', icon='TEXTURE')
+        elif(pt.use == 'CHECKER'):
+            r = sub.row(align=True)
+            r.prop(m, 'checker_number_of_elements_u')
+            r.prop(m, 'checker_number_of_elements_v')
+            self.tab_single(sub, m, 'checker_color_0')
+            self.tab_single(sub, m, 'checker_color_1')
+            sub.prop(m, 'checker_transition_sharpness')
+            sub.prop(m, 'checker_falloff')
+        elif(pt.use == 'CIRCLE'):
+            self.tab_single(sub, m, 'circle_background_color')
+            self.tab_single(sub, m, 'circle_circle_color')
+            r = sub.row(align=True)
+            r.prop(m, 'circle_radius_u')
+            r.prop(m, 'circle_radius_v')
+            sub.prop(m, 'circle_transition_factor')
+            sub.prop(m, 'circle_falloff')
+        elif(pt.use == 'GRADIENT3'):
+            sub.prop(m, 'gradient3_gradient_u', text="U Direction")
+            sc = sub.column()
+            sc.enabled = m.gradient3_gradient_u
+            self.tab_single(sc, m, 'gradient3_color0_u')
+            self.tab_single(sc, m, 'gradient3_color1_u')
+            self.tab_single(sc, m, 'gradient3_color2_u')
+            sc.prop(m, 'gradient3_gradient_type_u')
+            sc.prop(m, 'gradient3_color1_u_position')
+            sub.prop(m, 'gradient3_gradient_v', text="V Direction")
+            sc = sub.column()
+            sc.enabled = m.gradient3_gradient_v
+            self.tab_single(sc, m, 'gradient3_color0_v')
+            self.tab_single(sc, m, 'gradient3_color1_v')
+            self.tab_single(sc, m, 'gradient3_color2_v')
+            sc.prop(m, 'gradient3_gradient_type_v')
+            sc.prop(m, 'gradient3_color1_v_position')
+        elif(pt.use == 'GRADIENT'):
+            sub.prop(m, 'gradient_gradient_u', text="U Direction")
+            sc = sub.column()
+            sc.enabled = m.gradient_gradient_u
+            self.tab_single(sc, m, 'gradient_color0_u')
+            self.tab_single(sc, m, 'gradient_color1_u')
+            sc.prop(m, 'gradient_gradient_type_u')
+            sc.prop(m, 'gradient_transition_factor_u')
+            sub.prop(m, 'gradient_gradient_v', text="V Direction")
+            sc = sub.column()
+            sc.enabled = m.gradient_gradient_v
+            self.tab_single(sc, m, 'gradient_color0_v')
+            self.tab_single(sc, m, 'gradient_color1_v')
+            sc.prop(m, 'gradient_gradient_type_v')
+            sc.prop(m, 'gradient_transition_factor_v')
+        elif(pt.use == 'GRID'):
+            self.tab_single(sub, m, 'grid_cell_color')
+            self.tab_single(sub, m, 'grid_boundary_color')
+            # r = sub.row(align=True)
+            # r.prop(m, 'grid_horizontal_lines')
+            # r.prop(m, 'grid_vertical_lines')
+            r = sub.row(align=True)
+            r.prop(m, 'grid_cell_width')
+            r.prop(m, 'grid_cell_height')
+            r = sub.row(align=True)
+            r.prop(m, 'grid_boundary_thickness_u')
+            r.prop(m, 'grid_boundary_thickness_v')
+            sub.prop(m, 'grid_transition_sharpness')
+            sub.prop(m, 'grid_falloff')
+        elif(pt.use == 'MARBLE'):
+            sub.prop(m, 'marble_coordinates_type')
+            self.tab_single(sub, m, 'marble_color0')
+            self.tab_single(sub, m, 'marble_color1')
+            self.tab_single(sub, m, 'marble_color2')
+            sub.prop(m, 'marble_frequency')
+            sub.prop(m, 'marble_detail')
+            sub.prop(m, 'marble_octaves')
+            sub.prop(m, 'marble_seed')
+        elif(pt.use == 'NOISE'):
+            sub.prop(m, 'noise_coordinates_type')
+            self.tab_single(sub, m, 'noise_noise_color')
+            self.tab_single(sub, m, 'noise_background_color')
+            sub.prop(m, 'noise_detail')
+            sub.prop(m, 'noise_persistance')
+            sub.prop(m, 'noise_octaves')
+            r = sub.row(align=True)
+            r.prop(m, 'noise_low_value')
+            r.prop(m, 'noise_high_value')
+            sub.prop(m, 'noise_seed')
+        elif(pt.use == 'VORONOI'):
+            sub.prop(m, 'voronoi_coordinates_type')
+            self.tab_single(sub, m, 'voronoi_color0')
+            self.tab_single(sub, m, 'voronoi_color1')
+            sub.prop(m, 'voronoi_detail')
+            sub.prop(m, 'voronoi_distance')
+            sub.prop(m, 'voronoi_combination')
+            r = sub.row(align=True)
+            r.prop(m, 'voronoi_low_value')
+            r.prop(m, 'voronoi_high_value')
+            sub.prop(m, 'voronoi_seed')
+        elif(pt.use == 'TILED'):
+            sub.prop(m, 'tiled_filename')
+            sub.prop(m, 'tiled_token_mask')
+            self.tab_single(sub, m, 'tiled_base_color')
+            sub.prop(m, 'tiled_use_base_color')
+        elif(pt.use == 'WIREFRAME'):
+            self.tab_single(sub, m, 'wireframe_fill_color')
+            self.tab_single(sub, m, 'wireframe_edge_color')
+            self.tab_single(sub, m, 'wireframe_coplanar_edge_color')
+            sub.prop(m, 'wireframe_edge_width')
+            sub.prop(m, 'wireframe_coplanar_edge_width')
+            sub.prop(m, 'wireframe_coplanar_threshold')
 
 
 class Render_presets(Menu):

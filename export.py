@@ -4162,8 +4162,152 @@ class MXSMaterialExtension(MXSMaterial):
             self.m_displacement = displacementd.copy()
 
 
+class MXSProceduralTexture(Serializable):
+    def __init__(self, p, ):
+        self.m_brick_brick_width = p.brick_brick_width
+        self.m_brick_brick_height = p.brick_brick_height
+        self.m_brick_brick_offset = p.brick_brick_offset
+        self.m_brick_random_offset = p.brick_random_offset
+        self.m_brick_double_brick = p.brick_double_brick
+        self.m_brick_small_brick_width = p.brick_small_brick_width
+        self.m_brick_round_corners = p.brick_round_corners
+        self.m_brick_boundary_sharpness_u = p.brick_boundary_sharpness_u
+        self.m_brick_boundary_sharpness_v = p.brick_boundary_sharpness_v
+        self.m_brick_boundary_noise_detail = p.brick_boundary_noise_detail
+        self.m_brick_boundary_noise_region_u = p.brick_boundary_noise_region_u
+        self.m_brick_boundary_noise_region_v = p.brick_boundary_noise_region_v
+        self.m_brick_seed = p.brick_seed
+        self.m_brick_random_rotation = p.brick_random_rotation
+        self.m_brick_color_variation = p.brick_color_variation
+        self.m_brick_brick_color_0 = self._gamma_uncorrect(p.brick_brick_color_0)
+        self.m_brick_brick_texture_0 = self._texture_to_data(p.brick_brick_texture_0)
+        self.m_brick_sampling_factor_0 = p.brick_sampling_factor_0
+        self.m_brick_weight_0 = p.brick_weight_0
+        self.m_brick_brick_color_1 = self._gamma_uncorrect(p.brick_brick_color_1)
+        self.m_brick_brick_texture_1 = self._texture_to_data(p.brick_brick_texture_1)
+        self.m_brick_sampling_factor_1 = p.brick_sampling_factor_1
+        self.m_brick_weight_1 = p.brick_weight_1
+        self.m_brick_brick_color_2 = self._gamma_uncorrect(p.brick_brick_color_2)
+        self.m_brick_brick_texture_2 = self._texture_to_data(p.brick_brick_texture_2)
+        self.m_brick_sampling_factor_2 = p.brick_sampling_factor_2
+        self.m_brick_weight_2 = p.brick_weight_2
+        self.m_brick_mortar_thickness = p.brick_mortar_thickness
+        self.m_brick_mortar_color = self._gamma_uncorrect(p.brick_mortar_color)
+        self.m_brick_mortar_texture = self._texture_to_data(p.brick_mortar_texture)
+        
+        self.m_checker_number_of_elements_u = p.checker_number_of_elements_u
+        self.m_checker_number_of_elements_v = p.checker_number_of_elements_v
+        self.m_checker_color_0 = self._gamma_uncorrect(p.checker_color_0)
+        self.m_checker_color_1 = self._gamma_uncorrect(p.checker_color_1)
+        self.m_checker_transition_sharpness = p.checker_transition_sharpness
+        self.m_checker_falloff = int(p.checker_falloff)
+        
+        self.m_circle_background_color = self._gamma_uncorrect(p.circle_background_color)
+        self.m_circle_circle_color = self._gamma_uncorrect(p.circle_circle_color)
+        self.m_circle_radius_u = p.circle_radius_u
+        self.m_circle_radius_v = p.circle_radius_v
+        self.m_circle_transition_factor = p.circle_transition_factor
+        self.m_circle_falloff = int(p.circle_falloff)
+        
+        self.m_gradient3_gradient_u = p.gradient3_gradient_u
+        self.m_gradient3_color0_u = self._gamma_uncorrect(p.gradient3_color0_u)
+        self.m_gradient3_color1_u = self._gamma_uncorrect(p.gradient3_color1_u)
+        self.m_gradient3_color2_u = self._gamma_uncorrect(p.gradient3_color2_u)
+        self.m_gradient3_gradient_type_u = int(p.gradient3_gradient_type_u)
+        self.m_gradient3_color1_u_position = p.gradient3_color1_u_position
+        self.m_gradient3_gradient_v = p.gradient3_gradient_v
+        self.m_gradient3_color0_v = self._gamma_uncorrect(p.gradient3_color0_v)
+        self.m_gradient3_color1_v = self._gamma_uncorrect(p.gradient3_color1_v)
+        self.m_gradient3_color2_v = self._gamma_uncorrect(p.gradient3_color2_v)
+        self.m_gradient3_gradient_type_v = int(p.gradient3_gradient_type_v)
+        self.m_gradient3_color1_v_position = p.gradient3_color1_v_position
+        
+        self.m_gradient_gradient_u = p.gradient_gradient_u
+        self.m_gradient_color0_u = self._gamma_uncorrect(p.gradient_color0_u)
+        self.m_gradient_color1_u = self._gamma_uncorrect(p.gradient_color1_u)
+        self.m_gradient_gradient_type_u = int(p.gradient_gradient_type_u)
+        self.m_gradient_transition_factor_u = p.gradient_transition_factor_u
+        self.m_gradient_gradient_v = p.gradient_gradient_v
+        self.m_gradient_color0_v = self._gamma_uncorrect(p.gradient_color0_v)
+        self.m_gradient_color1_v = self._gamma_uncorrect(p.gradient_color1_v)
+        self.m_gradient_gradient_type_v = int(p.gradient_gradient_type_v)
+        self.m_gradient_transition_factor_v = p.gradient_transition_factor_v
+        
+        self.m_grid_horizontal_lines = p.grid_horizontal_lines
+        self.m_grid_vertical_lines = p.grid_vertical_lines
+        self.m_grid_cell_width = p.grid_cell_width
+        self.m_grid_cell_height = p.grid_cell_height
+        self.m_grid_boundary_thickness_u = p.grid_boundary_thickness_u
+        self.m_grid_boundary_thickness_v = p.grid_boundary_thickness_v
+        self.m_grid_transition_sharpness = p.grid_transition_sharpness
+        self.m_grid_cell_color = self._gamma_uncorrect(p.grid_cell_color)
+        self.m_grid_boundary_color = self._gamma_uncorrect(p.grid_boundary_color)
+        self.m_grid_falloff = int(p.grid_falloff)
+        
+        self.m_marble_coordinates_type = int(p.marble_coordinates_type)
+        self.m_marble_color0 = self._gamma_uncorrect(p.marble_color0)
+        self.m_marble_color1 = self._gamma_uncorrect(p.marble_color1)
+        self.m_marble_color2 = self._gamma_uncorrect(p.marble_color2)
+        self.m_marble_frequency = p.marble_frequency
+        self.m_marble_detail = p.marble_detail
+        self.m_marble_octaves = p.marble_octaves
+        self.m_marble_seed = p.marble_seed
+        
+        self.m_noise_coordinates_type = int(p.noise_coordinates_type)
+        self.m_noise_noise_color = self._gamma_uncorrect(p.noise_noise_color)
+        self.m_noise_background_color = self._gamma_uncorrect(p.noise_background_color)
+        self.m_noise_detail = p.noise_detail
+        self.m_noise_persistance = p.noise_persistance
+        self.m_noise_octaves = p.noise_octaves
+        self.m_noise_low_value = p.noise_low_value
+        self.m_noise_high_value = p.noise_high_value
+        self.m_noise_seed = p.noise_seed
+        
+        self.m_voronoi_coordinates_type = int(p.voronoi_coordinates_type)
+        self.m_voronoi_color0 = self._gamma_uncorrect(p.voronoi_color0)
+        self.m_voronoi_color1 = self._gamma_uncorrect(p.voronoi_color1)
+        self.m_voronoi_detail = p.voronoi_detail
+        self.m_voronoi_distance = int(p.voronoi_distance)
+        self.m_voronoi_combination = int(p.voronoi_combination)
+        self.m_voronoi_low_value = p.voronoi_low_value
+        self.m_voronoi_high_value = p.voronoi_high_value
+        self.m_voronoi_seed = p.voronoi_seed
+        
+        self.m_tiled_filename = os.path.realpath(bpy.path.abspath(p.tiled_filename))
+        self.m_tiled_token_mask = p.tiled_token_mask
+        self.m_tiled_base_color = self._gamma_uncorrect(p.tiled_base_color)
+        self.m_tiled_use_base_color = p.tiled_use_base_color
+        
+        self.m_wireframe_fill_color = self._gamma_uncorrect(p.wireframe_fill_color)
+        self.m_wireframe_edge_color = self._gamma_uncorrect(p.wireframe_edge_color)
+        self.m_wireframe_coplanar_edge_color = self._gamma_uncorrect(p.wireframe_coplanar_edge_color)
+        self.m_wireframe_edge_width = p.wireframe_edge_width
+        self.m_wireframe_coplanar_edge_width = p.wireframe_coplanar_edge_width
+        self.m_wireframe_coplanar_threshold = p.wireframe_coplanar_threshold
+        
+        self.m_enabled = p.enabled
+        self.m_blending_factor = p.blending_factor
+        self.m_name = p.name
+        self.m_index = p.index
+        self.m_use = p.use
+    
+    def _texture_to_data(self, name, ):
+        if(name == ''):
+            return None
+        t = MXSTexture(name)
+        a = t._repr()
+        return a
+    
+    def _gamma_uncorrect(self, c, ):
+        g = 1 / 2.2
+        c = [v ** g for v in c]
+        return c
+
+
 class MXSTexture(Serializable):
     def __init__(self, name, ):
+        self.invalid = False
+        self.procedural_only = False
         try:
             # KeyError if not such texture
             tex = bpy.data.textures[name]
@@ -4177,28 +4321,32 @@ class MXSTexture(Serializable):
             self.invalid = True
             return
         except AttributeError:
-            log("'{}' ({}: {}) image not loaded!".format(name, 'TEXTURE', 'IMAGE', ), 3, LogStyles.WARNING, )
-            self.invalid = True
-            return
+            if(len(tex.maxwell_render.procedural.textures) > 0):
+                # when procedural textures are present, image don't have to be loaded
+                self.procedural_only = True
+            else:
+                log("'{}' ({}: {}) image not loaded!".format(name, 'TEXTURE', 'IMAGE', ), 3, LogStyles.WARNING, )
+                self.invalid = True
+                return
         
         self.m_name = name
         self.m_type = 'TEXTURE'
         self.m_subtype = 'IMAGE'
         
-        # tex = bpy.data.textures[name]
         if(tex.type != 'IMAGE'):
             raise TypeError("{}: Unsupported texture type: {}".format(self.m_name, tex.type, ))
         m = tex.maxwell_render
         
-        # self.m_type = 'IMAGE'
-        self.m_path = bpy.path.abspath(tex.image.filepath)
-        
-        if(self.m_path == ""):
-            log("image path is empty..", 4, LogStyles.WARNING, )
-            self.invalid = True
-        elif(not os.path.exists(self.m_path)):
-            log("image file '{}' does not exist..".format(self.m_path), 4, LogStyles.WARNING, )
-            self.invalid = True
+        self.m_path = ""
+        if(not self.procedural_only):
+            self.m_path = bpy.path.abspath(tex.image.filepath)
+            
+            if(self.m_path == ""):
+                log("image path is empty..", 4, LogStyles.WARNING, )
+                self.invalid = True
+            elif(not os.path.exists(self.m_path)):
+                log("image file '{}' does not exist..".format(self.m_path), 4, LogStyles.WARNING, )
+                self.invalid = True
         
         self.m_use_global_map = m.use_global_map
         self.m_channel = m.channel
@@ -4229,6 +4377,15 @@ class MXSTexture(Serializable):
         else:
             tm = (True, True, )
         self.m_tile_method_type = tm
+        
+        self.m_procedural = []
+        
+        pt = m.procedural.textures
+        if(len(pt) > 0):
+            for p in pt:
+                if(p.enabled):
+                    t = MXSProceduralTexture(p)
+                    self.m_procedural.append(t._repr())
     
     def _repr(self):
         if(self.invalid):
