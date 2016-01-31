@@ -144,6 +144,11 @@ def get_default_presets():
         return p
     
     presets = {
+        'procedural_textures': {
+            'subdirs': False,
+            'defines': [],
+            'presets': {},
+        },
         'exposure': {
             'subdirs': False,
             'defines': [

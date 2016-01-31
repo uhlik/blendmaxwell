@@ -4678,6 +4678,12 @@ class TextureProceduralPanel(BMPanel, TextureButtonsPanel, Panel):
         sub = l.column()
         sub.separator()
         
+        c = sub.column_flow(align=True)
+        r = c.row(align=True)
+        r.menu("ProceduralTextures_presets", text=bpy.types.ProceduralTextures_presets.bl_label)
+        r.operator("maxwell_render.procedural_textures_preset_add", text="", icon='ZOOMIN')
+        r.operator("maxwell_render.procedural_textures_preset_add", text="", icon='ZOOMOUT').remove_active = True
+        
         if(pt.use == 'BRICK'):
             sub.label("Brick:")
             r = sub.row(align=True)
@@ -4958,5 +4964,14 @@ class Grass_Modifier_presets(Menu):
     bl_label = "Grass Modifier Presets"
     bl_idname = "Grass_Modifier_presets"
     preset_subdir = "blendmaxwell/grass_modifier"
+    preset_operator = "maxwell_render.execute_preset"
+    draw = bpy.types.Menu.draw_preset
+
+
+class ProceduralTextures_presets(Menu):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Procedural Textures Presets"
+    bl_idname = "ProceduralTextures_presets"
+    preset_subdir = "blendmaxwell/procedural_textures"
     preset_operator = "maxwell_render.execute_preset"
     draw = bpy.types.Menu.draw_preset

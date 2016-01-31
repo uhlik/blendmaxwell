@@ -3024,3 +3024,35 @@ class TextureProceduralMoveDown(Operator):
             return {'FINISHED'}
         
         return {'PASS_THROUGH'}
+
+
+class ProceduralTextures_preset_add(AddPresetBase, Operator):
+    """Add a new procedural texture preset."""
+    bl_idname = 'maxwell_render.procedural_textures_preset_add'
+    bl_label = 'Add/Remove Procedural Texture Preset'
+    preset_menu = 'ProceduralTextures_presets'
+    preset_subdir = 'blendmaxwell/procedural_textures'
+    preset_defines = ["m = bpy.context.texture.maxwell_render.procedural.textures[bpy.context.texture.maxwell_render.procedural.index]", ]
+    preset_values = ["m.brick_brick_width", "m.brick_brick_height", "m.brick_brick_offset", "m.brick_random_offset", "m.brick_double_brick", "m.brick_small_brick_width",
+                     "m.brick_round_corners", "m.brick_boundary_sharpness_u", "m.brick_boundary_sharpness_v", "m.brick_boundary_noise_detail", "m.brick_boundary_noise_region_u",
+                     "m.brick_boundary_noise_region_v", "m.brick_seed", "m.brick_random_rotation", "m.brick_color_variation", "m.brick_brick_color_0", "m.brick_brick_texture_0",
+                     "m.brick_sampling_factor_0", "m.brick_weight_0", "m.brick_brick_color_1", "m.brick_brick_texture_1", "m.brick_sampling_factor_1", "m.brick_weight_1",
+                     "m.brick_brick_color_2", "m.brick_brick_texture_2", "m.brick_sampling_factor_2", "m.brick_weight_2", "m.brick_mortar_thickness", "m.brick_mortar_color",
+                     "m.brick_mortar_texture",
+                     "m.checker_number_of_elements_u", "m.checker_number_of_elements_v", "m.checker_color_0", "m.checker_color_1", "m.checker_transition_sharpness", "m.checker_falloff",
+                     "m.circle_background_color", "m.circle_circle_color", "m.circle_radius_u", "m.circle_radius_v", "m.circle_transition_factor", "m.circle_falloff",
+                     "m.gradient3_gradient_u", "m.gradient3_color0_u", "m.gradient3_color1_u", "m.gradient3_color2_u", "m.gradient3_gradient_type_u", "m.gradient3_color1_u_position",
+                     "m.gradient3_gradient_v", "m.gradient3_color0_v", "m.gradient3_color1_v", "m.gradient3_color2_v", "m.gradient3_gradient_type_v", "m.gradient3_color1_v_position",
+                     "m.gradient_gradient_u", "m.gradient_color0_u", "m.gradient_color1_u", "m.gradient_gradient_type_u", "m.gradient_transition_factor_u", "m.gradient_gradient_v",
+                     "m.gradient_color0_v", "m.gradient_color1_v", "m.gradient_gradient_type_v", "m.gradient_transition_factor_v",
+                     "m.grid_horizontal_lines", "m.grid_vertical_lines", "m.grid_cell_width", "m.grid_cell_height", "m.grid_boundary_thickness_u", "m.grid_boundary_thickness_v",
+                     "m.grid_transition_sharpness", "m.grid_cell_color", "m.grid_boundary_color", "m.grid_falloff",
+                     "m.marble_coordinates_type", "m.marble_color0", "m.marble_color1", "m.marble_color2", "m.marble_frequency", "m.marble_detail", "m.marble_octaves", "m.marble_seed",
+                     "m.noise_coordinates_type", "m.noise_noise_color", "m.noise_background_color", "m.noise_detail", "m.noise_persistance", "m.noise_octaves", "m.noise_low_value",
+                     "m.noise_high_value", "m.noise_seed",
+                     "m.voronoi_coordinates_type", "m.voronoi_color0", "m.voronoi_color1", "m.voronoi_detail", "m.voronoi_distance", "m.voronoi_combination", "m.voronoi_low_value",
+                     "m.voronoi_high_value", "m.voronoi_seed",
+                     "m.tiled_filename", "m.tiled_token_mask", "m.tiled_base_color", "m.tiled_use_base_color",
+                     "m.wireframe_fill_color", "m.wireframe_edge_color", "m.wireframe_coplanar_edge_color", "m.wireframe_edge_width", "m.wireframe_coplanar_edge_width",
+                     "m.wireframe_coplanar_threshold",
+                     "m.enabled", "m.blending_factor", "m.use", ]
