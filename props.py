@@ -633,7 +633,7 @@ class SceneProperties(PropertyGroup):
     
     materials_directory = StringProperty(name="Default Material Directory", default="//", subtype='DIR_PATH', description="Default directory where new materials are created upon running operator 'Create Material'", )
     
-    globals_motion_blur = BoolProperty(name="Motion Blur", default=True, description="Global enable/disable motion blur", )
+    globals_motion_blur = BoolProperty(name="Motion Blur", default=False, description="Global enable/disable motion blur", )
     globals_motion_blur_num_substeps = IntProperty(name="Substeps", default=0, min=0, max=1000, description="", )
     
     globals_diplacement = BoolProperty(name="Displacement", default=True, description="Global enable/disable displacement", )
