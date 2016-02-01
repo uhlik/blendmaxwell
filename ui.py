@@ -651,7 +651,13 @@ class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
         sub = l.column()
         m = context.scene.maxwell_render
         
-        sub.prop(m, 'globals_motion_blur')
+        r = sub.row()
+        r.prop(m, 'globals_motion_blur')
+        c = r.column()
+        c.prop(m, 'globals_motion_blur_num_substeps')
+        if(not m.globals_motion_blur):
+            c.enabled = False
+        
         sub.prop(m, 'globals_diplacement')
         sub.prop(m, 'globals_dispersion')
 

@@ -2364,7 +2364,21 @@ class MXSCamera(Serializable):
         
         # add current automatically
         self.m_steps = []
-        self.set_step()
+        
+        sc = bpy.context.scene
+        smx = sc.maxwell_render
+        mb = smx.globals_motion_blur
+        sub = smx.globals_motion_blur_num_substeps
+        
+        if(mb and sub != 0):
+            cf = sc.frame_current
+            ts = [(1 / sub) * i for i in range(sub + 1)]
+            for i, n in enumerate(ts):
+                sc.frame_set(cf, subframe=n, )
+                self.set_step(step_number=i, step_time=n, )
+            sc.frame_set(cf, subframe=0.0, )
+        else:
+            self.set_step()
     
     def set_step(self, step_number=0, step_time=0.0, ):
         ob = self.b_object
