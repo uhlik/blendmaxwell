@@ -636,6 +636,7 @@ class SceneProperties(PropertyGroup):
     globals_motion_blur = BoolProperty(name="Motion Blur", default=False, description="Global enable/disable motion blur", )
     globals_motion_blur_num_substeps = IntProperty(name="Substeps", default=0, min=0, max=1000, description="", )
     globals_motion_blur_shutter_open_offset = FloatProperty(name="Shutter Open Offset", default=0.5, min=0.0, max=1.0, precision=2, subtype='PERCENTAGE', )
+    globals_motion_blur_export = EnumProperty(name="Type", items=[('MOVEMENT_DEFORMATION', "Movement and Deformation", ""), ('MOVEMENT', "Movement", ""), ('NONE', "None", ""), ], default='MOVEMENT', )
     
     globals_diplacement = BoolProperty(name="Displacement", default=True, description="Global enable/disable displacement", )
     globals_dispersion = BoolProperty(name="Dispersion", default=True, description="Global enable/disable dispaersion", )
@@ -1319,6 +1320,9 @@ class ObjectProperties(PropertyGroup):
     subdivision = PointerProperty(name="Subdivision", type=ExtSubdivisionProperties, )
     sea = PointerProperty(name="Sea", type=ExtSeaProperties, )
     volumetrics = PointerProperty(name="Volumetrics", type=ExtVolumetricsProperties, )
+    
+    movement = BoolProperty(name="Movement", default=True, description="Export for movement motion blur", )
+    deformation = BoolProperty(name="Deformation", default=False, description="Export for deformation motion blur", )
     
     @classmethod
     def register(cls):

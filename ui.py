@@ -652,15 +652,20 @@ class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
         m = context.scene.maxwell_render
         
         r = sub.row()
-        r.prop(m, 'globals_motion_blur')
+        s = r.split(percentage=0.333)
+        s.prop(m, 'globals_motion_blur')
+        s = s.split(percentage=1.0)
+        s.prop(m, 'globals_motion_blur_export', text="", )
+        if(not m.globals_motion_blur):
+            s.enabled = False
         
-        # FIXME: motion blur
-        # c = r.column()
-        # c.prop(m, 'globals_motion_blur_num_substeps')
-        # c.prop(m, 'globals_motion_blur_shutter_open_offset')
-        # if(not m.globals_motion_blur):
-        #     c.enabled = False
+        r = sub.row(align=True)
+        r.prop(m, 'globals_motion_blur_num_substeps')
+        r.prop(m, 'globals_motion_blur_shutter_open_offset')
+        if(not m.globals_motion_blur):
+            r.enabled = False
         
+        sub.separator()
         sub.prop(m, 'globals_diplacement')
         sub.prop(m, 'globals_dispersion')
 
@@ -1586,6 +1591,13 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
                 pset = ps.settings
                 if((pset.use_render_emitter is True and m.hide is True) or (pset.use_render_emitter is False and m.hide is False)):
                     sub.label("Overrided by particle system ('{}') settings".format(ps.name), icon='ERROR', )
+        sub.separator()
+        
+        r = sub.row(align=True)
+        r.label("Motion Blur:")
+        r.prop(m, 'movement', toggle=True)
+        r.prop(m, 'deformation', toggle=True)
+        
         sub.separator()
         
         sub.prop(m, 'opacity')
