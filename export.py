@@ -60,6 +60,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # NOTE: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
 # TODO: mesh motion blur
+# FIXME: motion blur: calculate substeps with offset, then export transfromations for each subset for cameras and objects. currently exporting transfromations for objects is not possible, for cameras it is.. after this is done, somehow solve deformation blur, vertex positions are possible to export, but maybe add it as an extra option, checkbox in object propertis to skip writing large meshes that are not deformed and even checking if mesh is deformed would be complicated. by this responsibility is moved to user..
 
 
 class MXSExport():
