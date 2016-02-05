@@ -942,7 +942,10 @@ class CameraProperties(PropertyGroup):
         else:
             ev = math.log2((fstop ** 2) / t)
             self.ev = ev
-            
+        
+        fps = bpy.context.scene.render.fps
+        self.shutter_angle = math.radians(360 * (fps / self.shutter))
+        
         self.lock = False
     
     def _lock_exposure_update_fstop(self, context):
@@ -959,6 +962,9 @@ class CameraProperties(PropertyGroup):
             ev = self.ev
             shutter = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
             self.shutter = shutter
+            
+            fps = bpy.context.scene.render.fps
+            self.shutter_angle = math.radians(360 * (fps / self.shutter))
         else:
             ev = math.log2((fstop ** 2) / t)
             self.ev = ev
@@ -981,6 +987,35 @@ class CameraProperties(PropertyGroup):
         shutter = 1 / (1 / ((2 ** ev) / (fstop ** 2)))
         self.shutter = shutter
         
+        fps = bpy.context.scene.render.fps
+        self.shutter_angle = math.radians(360 * (fps / self.shutter))
+        
+        self.lock = False
+    
+    def _lock_exposure_update_angle(self, context):
+        if(self.lock):
+            return
+        self.lock = True
+        
+        fps = bpy.context.scene.render.fps
+        
+        fstop = self.fstop
+        shutter = self.shutter
+        t = 1 / shutter
+        
+        try:
+            self.shutter = fps / (math.degrees(self.shutter_angle) / 360)
+        except ZeroDivisionError:
+            self.shutter = 16000.0
+        
+        if(self.lock_exposure):
+            ev = self.ev
+            fstop = math.sqrt((2 ** ev) * t)
+            self.fstop = fstop
+        else:
+            ev = math.log2((fstop ** 2) / t)
+            self.ev = ev
+        
         self.lock = False
     
     # optics
@@ -994,8 +1029,10 @@ class CameraProperties(PropertyGroup):
                                             ('TYPE_FISH_STEREO_7', "Fish Stereo", ""), ], default='TYPE_THIN_LENS_0', update=_update_camera_projection, )
     
     shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", update=_lock_exposure_update_shutter, )
-    fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_lock_exposure_update_fstop, )
-    ev = FloatProperty(name="EV Number", default=14.885, min=1.0, max=100000.0, precision=3, update=_lock_exposure_update_ev, )
+    # fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_lock_exposure_update_fstop, )
+    fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=math.sqrt(2**24), update=_lock_exposure_update_fstop, )
+    # ev = FloatProperty(name="EV Number", default=14.885, min=1.0, max=100000.0, precision=3, update=_lock_exposure_update_ev, )
+    ev = FloatProperty(name="EV Number", default=14.885, min=1.0, max=1000.0, precision=3, update=_lock_exposure_update_ev, )
     lock_exposure = BoolProperty(name="Lock Exposure", default=False, )
     
     lock = BoolProperty(default=False, options={'HIDDEN'}, )
@@ -1042,7 +1079,8 @@ class CameraProperties(PropertyGroup):
     bokeh_ratio = FloatProperty(name="Bokeh Ratio", default=1.0, min=0.0, max=10000.0, )
     bokeh_angle = FloatProperty(name="Bokeh Angle", default=math.radians(0.0), min=math.radians(0.0), max=math.radians(20520.0), subtype='ANGLE', )
     # rotary disc shutter
-    shutter_angle = FloatProperty(name="Shutter Angle", default=math.radians(17.280), min=math.radians(0.0), max=math.radians(5000.000), subtype='ANGLE', description="WARNING: currently unused..", )
+    # shutter_angle = FloatProperty(name="Shutter Angle", default=math.radians(17.280), min=math.radians(0.0), max=math.radians(5000.000), subtype='ANGLE', )
+    shutter_angle = FloatProperty(name="Shutter Angle", default=math.radians(34.56), min=math.radians(0.0), max=math.radians(5000.000), subtype='ANGLE', update=_lock_exposure_update_angle, )
     frame_rate = IntProperty(name="Frame Rate", default=24, min=1, max=10000, )
     # z-clip planes
     zclip = BoolProperty(name="Z-cLip", default=False, )
