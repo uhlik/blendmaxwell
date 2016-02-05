@@ -2363,23 +2363,55 @@ class MXSCamera(Serializable):
         self.m_film_width = film_width
         self.m_film_height = film_height
         
-        # add current automatically
         self.m_steps = []
         
         sc = bpy.context.scene
         smx = sc.maxwell_render
         mb = smx.globals_motion_blur
         sub = smx.globals_motion_blur_num_substeps
+        off = smx.globals_motion_blur_shutter_open_offset
         
+        # Movement Blur: the position and orientation of the objects are exported in two or more points in time, or substeps.
+        # The first sample is taken when the camera shutter opens and the last substep is taken when the shutter closes.
+        # The remaining samples, if any, are equally spaced during the exposure interval. Maxwell interpolates the movement
+        # between these points. This mode is very fast to render and supports arbitrarily complex movement, e.g. objects
+        # following sinuous paths, spinning propellers etc.
+        
+        # so, i have to calculete rotary shutter to know for how long the shutter is opened and then this interval split in steps?
+        # if so, all of this is wrong..
+        
+        # FIXME: motion blur
+        self.set_step()
+        
+        '''
         if(mb and sub != 0):
             cf = sc.frame_current
             ts = [(1 / sub) * i for i in range(sub + 1)]
+            tsn = ts[:]
+            tso = [i - 1.0 for i in ts]
+            ts = [i + off for i in tso]
+            #                                                           cf = 225
+            # offset 0, movement after frame:                           f, ..., f+1
+            #                                                           *225.0, 225.1, 225.2, ..., 226.0
+            # offset 0.5, movement half before and half after frame:    f-0.5, ..., f+0.5
+            #                                                           224.5, 224.6, ..., *225.0, ..., 225.4, 225.5
+            # offset 1, movement before frame:                          f-1, ..., f
+            #                                                           224.0, 224.1, 224.2, ..., *225.0
             for i, n in enumerate(ts):
-                sc.frame_set(cf, subframe=n, )
-                self.set_step(step_number=i, step_time=n, )
+                if(n < 0.0):
+                    # print('<', cf - 1, n + 1.0)
+                    sc.frame_set(cf - 1, subframe=n + 1.0, )
+                elif(n >= 1.0):
+                    # print('>', cf + 1, n - 1.0)
+                    sc.frame_set(cf + 1, subframe=n - 1.0, )
+                else:
+                    # print('|', cf, n)
+                    sc.frame_set(cf, subframe=n, )
+                self.set_step(step_number=i, step_time=tsn[i], )
             sc.frame_set(cf, subframe=0.0, )
         else:
             self.set_step()
+        '''
     
     def set_step(self, step_number=0, step_time=0.0, ):
         ob = self.b_object

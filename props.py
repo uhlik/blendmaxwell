@@ -635,6 +635,7 @@ class SceneProperties(PropertyGroup):
     
     globals_motion_blur = BoolProperty(name="Motion Blur", default=False, description="Global enable/disable motion blur", )
     globals_motion_blur_num_substeps = IntProperty(name="Substeps", default=0, min=0, max=1000, description="", )
+    globals_motion_blur_shutter_open_offset = FloatProperty(name="Shutter Open Offset", default=0.5, min=0.0, max=1.0, precision=2, subtype='PERCENTAGE', )
     
     globals_diplacement = BoolProperty(name="Displacement", default=True, description="Global enable/disable displacement", )
     globals_dispersion = BoolProperty(name="Dispersion", default=True, description="Global enable/disable dispaersion", )

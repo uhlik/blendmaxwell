@@ -653,10 +653,13 @@ class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
         
         r = sub.row()
         r.prop(m, 'globals_motion_blur')
-        c = r.column()
-        c.prop(m, 'globals_motion_blur_num_substeps')
-        if(not m.globals_motion_blur):
-            c.enabled = False
+        
+        # FIXME: motion blur
+        # c = r.column()
+        # c.prop(m, 'globals_motion_blur_num_substeps')
+        # c.prop(m, 'globals_motion_blur_shutter_open_offset')
+        # if(not m.globals_motion_blur):
+        #     c.enabled = False
         
         sub.prop(m, 'globals_diplacement')
         sub.prop(m, 'globals_dispersion')
