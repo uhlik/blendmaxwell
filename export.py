@@ -2380,8 +2380,18 @@ class MXSCamera(Serializable):
         # so, i have to calculete rotary shutter to know for how long the shutter is opened and then this interval split in steps?
         # if so, all of this is wrong..
         
-        # FIXME: motion blur
+        # FIXME: motion blur, calculate substeps globally and then export for cameras and objects
         self.set_step()
+        
+        fps = bpy.context.scene.render.fps
+        # shutter angle for display in ui (but maybe only as info for now..)
+        shutter_angle = 360 * (fps / mx.shutter)
+        # interesting part of frame, this part have to be substepped
+        # so for 24 fps and shutter 96 it is 0.25 of frame
+        frame_time = fps / mx.shutter
+        # substeps should be from cf - 0.25 to cf + 0.25 with offset 0.5
+        # substeps should be from cf - 0.5 to cf + 0.0 with offset 0.0
+        # substeps should be from cf - 0.0 to cf + 0.5 with offset 1.0
         
         '''
         if(mb and sub != 0):
@@ -2501,6 +2511,9 @@ class MXSObject(Serializable):
     
     def _matrix_to_base_and_pivot(self, m, ):
         """Convert Matrix to Base and Pivot and Position, Rotation and Scale for Studio"""
+        
+        # FIXME: motion blur, export base and pivot for substeps
+        
         cm = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).to_4x4()
         mm = m.copy()
         
