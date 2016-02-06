@@ -343,6 +343,45 @@ class BMPanel():
         if(not enabled_ref):
             c.active = False
     
+    def tab_double_enable_and_value(self, layout, cls, name, enabled, value, enabled_ref, align=False, label=True, text=False, ):
+        if(name is None):
+            name = self.prop_name(cls, value, True, )
+        r = layout.row()
+        elm = r
+        s = r.split(percentage=0.333)
+        if(type(label) is bool):
+            if(label):
+                s.label("{}:".format(name))
+            else:
+                s.label("")
+        else:
+            s.label("{}:".format(label))
+        # s = s.split(percentage=0.15, align=align, )
+        s = s.split(percentage=0.1, align=align, )
+        if(text):
+            s.prop(cls, enabled, )
+        else:
+            s.prop(cls, enabled, text="", )
+        s = s.split(percentage=1.0, align=align, )
+        if(text):
+            s.prop(cls, value, )
+        else:
+            s.prop(cls, value, text="", )
+        if(not enabled_ref):
+            s.enabled = False
+        return elm
+    
+    def tab_single_with_enable(self, layout, cls, enabled, enabled_ref, value, split=0.33, ):
+        r = layout.row()
+        s = r.split(percentage=split)
+        c = s.column()
+        c.prop(cls, enabled)
+        c = s.column()
+        c.prop(cls, value, text="", )
+        if(not enabled_ref):
+            c.active = False
+        return r
+    
     '''
     def draw(self, context):
         l = self.layout
@@ -1389,7 +1428,7 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
             sub.prop_search(m, 'fs_head_tilt_map', bpy.data, 'textures', icon='TEXTURE')
 
 
-class CameraExposurePanel(CameraButtonsPanel, Panel):
+class CameraExposurePanel(BMPanel, CameraButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Exposure"
     
@@ -1448,7 +1487,7 @@ class CameraExposurePanel(CameraButtonsPanel, Panel):
         sub.label(text="Frame Range:")
         sub.prop(scene, "frame_start")
         sub.prop(scene, "frame_end")
-        sub.prop(scene, "frame_step")
+        # sub.prop(scene, "frame_step")
         
         col = split.column()
         sub = col.column(align=True)
@@ -1473,6 +1512,14 @@ class CameraExposurePanel(CameraButtonsPanel, Panel):
         sub.prop(m, 'shutter_angle')
         
         self.draw_blender_part(context, sub, )
+        
+        sub.separator()
+        r = sub.row()
+        r.prop(m, 'movement', text="Motion Blur")
+        # e = self.tab_double_enable_and_value(sub, m, "Custom Substeps", 'custom_substeps', 'substeps', m.custom_substeps, align=False, label=True, text=False, )
+        e = self.tab_single_with_enable(sub, m, 'custom_substeps', m.custom_substeps, 'substeps', split=0.5, )
+        if(not m.movement):
+            e.enabled = False
 
 
 class CameraSensorPanel(CameraButtonsPanel, Panel):
@@ -1662,7 +1709,7 @@ class CameraOptionsPanel(CameraButtonsPanel, Panel):
         sub.prop(m, 'hide')
 
 
-class ObjectPanel(ObjectButtonsPanel, Panel):
+class ObjectPanel(BMPanel, ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Object"
     
@@ -1691,11 +1738,12 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         
         b = base(context.object)
         r = sub.row()
-        r.prop(m, 'override_instance', text="Override Instancing{}".format(" of '{}'".format(b) if b is not None else ""), )
+        c = r.column()
+        c.prop(m, 'override_instance', text="Override Instancing{}".format(" of '{}'".format(b) if b is not None else ""), )
         if(b is None):
-            r.active = False
+            c.active = False
+        r.prop(m, 'hide')
         
-        sub.prop(m, 'hide')
         # warn user when particles have render emitter False
         ob = context.active_object
         if(len(ob.particle_systems) > 0):
@@ -1709,13 +1757,19 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         r.label("Motion Blur:")
         r.prop(m, 'movement', toggle=True)
         r.prop(m, 'deformation', toggle=True)
+        # e = self.tab_double_enable_and_value(sub, m, "Custom Substeps", 'custom_substeps', 'substeps', m.custom_substeps, align=False, label=True, text=False, )
+        e = self.tab_single_with_enable(sub, m, 'custom_substeps', m.custom_substeps, 'substeps', split=0.33, )
+        if(not m.movement and not m.deformation):
+            e.enabled = False
         
         sub.separator()
         
         sub.prop(m, 'opacity')
         sub.separator()
-        r = sub.row()
-        r.prop(m, 'object_id')
+        
+        # r = sub.row()
+        # r.prop(m, 'object_id')
+        self.tab_single(sub, m, 'object_id', label=True, text=False, )
         
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface Material', )
         
@@ -1741,8 +1795,6 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         
         l.separator()
         
-        l.label("Set object properties to multiple objects:")
-        l.operator('maxwell_render.copy_active_object_properties_to_selected')
         l.label("Set Object ID color to multiple objects:")
         r = l.row(align=True)
         p = r.operator('maxwell_render.set_object_id_color', text="R", )
@@ -1755,6 +1807,9 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         p.color = '3'
         p = r.operator('maxwell_render.set_object_id_color', text="Black", )
         p.color = '4'
+        
+        # l.label("Set object properties to multiple objects:")
+        l.operator('maxwell_render.copy_active_object_properties_to_selected')
 
 
 class ObjectReferencePanel(ObjectButtonsPanel, Panel):

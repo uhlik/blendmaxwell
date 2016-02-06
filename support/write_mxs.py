@@ -1443,6 +1443,7 @@ def base_and_pivot(o, d, ):
     pp.yAxis = Cvector(*p[2])
     pp.zAxis = Cvector(*p[3])
     o.setBaseAndPivot(bb, pp)
+    
     l = d['location']
     r = d['rotation']
     s = d['scale']
@@ -1451,6 +1452,19 @@ def base_and_pivot(o, d, ):
     o.setPosition(Cvector(*l))
     o.setRotation(Cvector(*r))
     o.setScale(Cvector(*s))
+    
+    for(t, _, b, p) in d['motion_blur']:
+        bb = Cbase()
+        bb.origin = Cvector(*b[0])
+        bb.xAxis = Cvector(*b[1])
+        bb.yAxis = Cvector(*b[2])
+        bb.zAxis = Cvector(*b[3])
+        pp = Cbase()
+        pp.origin = Cvector(*p[0])
+        pp.xAxis = Cvector(*p[1])
+        pp.yAxis = Cvector(*p[2])
+        pp.zAxis = Cvector(*p[3])
+        o.setBaseAndPivot(bb, pp, t, )
 
 
 def object_props(o, d, ):

@@ -59,14 +59,14 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # NOTE: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version. or check version and then decide. this will require version.py to return version number instead of true/false.
 # NOTE: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
-# TODO: mesh motion blur
-# FIXME: motion blur: calculate substeps with offset, then export transfromations for each subset for cameras and objects. currently exporting transfromations for objects is not possible, for cameras it is.. after this is done, somehow solve deformation blur, vertex positions are possible to export, but maybe add it as an extra option, checkbox in object propertis to skip writing large meshes that are not deformed and even checking if mesh is deformed would be complicated. by this responsibility is moved to user..
+# FIXME: motion blur: mesh deformation blur, ie calculate and export vertex positions
 
 
 class MXSExport():
     def __init__(self, mxs_path, engine=None, ):
         # clear db, before we start, previous error will cause more errors
         MXSDatabase.clear()
+        MXSMotionBlurHelper.clear()
         
         clear_log()
         log("{0} {1} {0}".format("-" * 30, self.__class__.__name__), 0, LogStyles.MESSAGE, prefix="", )
@@ -96,6 +96,7 @@ class MXSExport():
         self._finish()
         
         MXSDatabase.clear()
+        MXSMotionBlurHelper.clear()
         
         for me in bpy.data.meshes:
             if(me.users == 0):
@@ -989,6 +990,13 @@ class MXSExport():
             ls.append(o['object'])
         MXSDatabase.set_object_export_list(ls)
         
+        # find and set active camera
+        cam = None
+        for c in self._cameras:
+            if(bpy.context.scene.camera == c['object']):
+                cam = c['object']
+        MXSMotionBlurHelper.init(cam)
+        
         # count all objects, will be used for progress reporting.. not quite precise, but good for now.. better than nothing
         self.progress_current = 0
         c = 0
@@ -1418,6 +1426,8 @@ class MXSExport():
                      'scatter_ext': None,
                      'subdiv_ext': None,
                      
+                     'motion_blur': o.m_motion_blur,
+                     
                      # 'type': 'MESH',
                      'type': o.m_type, }
                 
@@ -1824,7 +1834,7 @@ class MXSDatabase():
     Also all extension which use some other object must use the final name.
     """
     
-    # TODO: MXSDatabase: use similar mechanism for materials to skip unused before actual export, this will requre to check al materials possible uses, like in extensions.
+    # TODO: MXSDatabase: use similar mechanism for materials to skip unused before actual export, this will requre to check all materials possible uses, like in extensions.
     
     __objects = []
     __valid_chars = "-_ {}{}".format(string.ascii_letters, string.digits)
@@ -1903,6 +1913,125 @@ class MXSDatabase():
     def clear(cls):
         cls.__objects = []
         cls.__objects_marked_to_export = []
+
+
+class MXSMotionBlurHelper():
+    sc = None
+    camera = None
+    motion_blur = False
+    sub = 0
+    off = 0.0
+    ang = 360
+    
+    @classmethod
+    def init(cls, camera, ):
+        cls.sc = bpy.context.scene
+        smx = cls.sc.maxwell_render
+        
+        cls.motion_blur = smx.globals_motion_blur
+        if(not cls.motion_blur):
+            # no motion blur at all, export only one step
+            return
+        
+        cls.sub = smx.globals_motion_blur_num_substeps
+        cls.off = smx.globals_motion_blur_shutter_open_offset
+        cls.camera = camera
+        try:
+            cls.ang = math.degrees(cls.camera.data.maxwell_render.shutter_angle)
+        except AttributeError:
+            # active camera was not set, i can't get shutter_angle, no motion blur, export only one step
+            cls.camera = None
+    
+    @classmethod
+    def default(cls):
+        return [(cls.sc.frame_current, 0.0), ]
+    
+    @classmethod
+    def object_steps(cls, obj, ):
+        if(not cls.motion_blur):
+            return cls.default()
+        if(cls.camera is None):
+            return cls.default()
+        
+        mx = obj.maxwell_render
+        if(not mx.movement):
+            return cls.default()
+        
+        sub = cls.sub
+        if(mx.custom_substeps):
+            sub = mx.substeps
+        
+        fl = 1 * (cls.ang / 360)
+        sl = fl / sub
+        steps = [i * sl for i in range(sub + 1)]
+        
+        ol = fl * cls.off
+        fs = []
+        for s in steps:
+            fs.append(s - ol)
+        
+        cf = cls.sc.frame_current
+        frames = []
+        for n in fs:
+            a = 0
+            if(n > 1.0):
+                a = int(n)
+            elif(n < 0.0):
+                a = int(n) - 1
+            # don't return step 1.0, move frame + 1 instead with step 0.0
+            if(n - a == 1.0):
+                a += 1
+            frames.append((cf + a, n - a))
+        
+        return frames
+    
+    @classmethod
+    def camera_steps(cls, cam, ):
+        if(not cls.motion_blur):
+            return cls.default(), [0.0, ]
+        if(cls.camera is None):
+            return cls.default(), [0.0, ]
+        
+        mx = cam.maxwell_render
+        if(not mx.movement):
+            return cls.default(), [0.0, ]
+        
+        sub = cls.sub
+        if(mx.custom_substeps):
+            sub = mx.substeps
+        
+        fl = 1 * (cls.ang / 360)
+        sl = fl / sub
+        steps = [i * sl for i in range(sub + 1)]
+        
+        ol = fl * cls.off
+        fs = []
+        for s in steps:
+            fs.append(s - ol)
+        
+        cf = cls.sc.frame_current
+        frames = []
+        for n in fs:
+            a = 0
+            if(n > 1.0):
+                a = int(n)
+            elif(n < 0.0):
+                a = int(n) - 1
+            # don't return step 1.0, move frame + 1 instead with step 0.0
+            if(n - a == 1.0):
+                a += 1
+            frames.append((cf + a, n - a))
+        
+        return frames, fs
+    
+    @classmethod
+    def clear(cls):
+        cls.sc = None
+        cls.camera = None
+        cls.motion_blur = False
+        cls.sub = 0
+        cls.off = 0.0
+        cls.ang = 360
 
 
 class Serializable():
@@ -2366,63 +2495,26 @@ class MXSCamera(Serializable):
         
         self.m_steps = []
         
-        sc = bpy.context.scene
-        smx = sc.maxwell_render
-        mb = smx.globals_motion_blur
-        sub = smx.globals_motion_blur_num_substeps
-        off = smx.globals_motion_blur_shutter_open_offset
-        
-        # Movement Blur: the position and orientation of the objects are exported in two or more points in time, or substeps.
-        # The first sample is taken when the camera shutter opens and the last substep is taken when the shutter closes.
-        # The remaining samples, if any, are equally spaced during the exposure interval. Maxwell interpolates the movement
-        # between these points. This mode is very fast to render and supports arbitrarily complex movement, e.g. objects
-        # following sinuous paths, spinning propellers etc.
-        
-        # so, i have to calculete rotary shutter to know for how long the shutter is opened and then this interval split in steps?
-        # if so, all of this is wrong..
-        
-        # FIXME: motion blur, calculate substeps globally and then export for cameras and objects
-        self.set_step()
-        
-        fps = bpy.context.scene.render.fps
-        # shutter angle for display in ui (but maybe only as info for now..)
-        shutter_angle = 360 * (fps / mx.shutter)
-        # interesting part of frame, this part have to be substepped
-        # so for 24 fps and shutter 96 it is 0.25 of frame
-        frame_time = fps / mx.shutter
-        # substeps should be from cf - 0.25 to cf + 0.25 with offset 0.5
-        # substeps should be from cf - 0.5 to cf + 0.0 with offset 0.0
-        # substeps should be from cf - 0.0 to cf + 0.5 with offset 1.0
-        
-        '''
-        if(mb and sub != 0):
-            cf = sc.frame_current
-            ts = [(1 / sub) * i for i in range(sub + 1)]
-            tsn = ts[:]
-            tso = [i - 1.0 for i in ts]
-            ts = [i + off for i in tso]
-            #                                                           cf = 225
-            # offset 0, movement after frame:                           f, ..., f+1
-            #                                                           *225.0, 225.1, 225.2, ..., 226.0
-            # offset 0.5, movement half before and half after frame:    f-0.5, ..., f+0.5
-            #                                                           224.5, 224.6, ..., *225.0, ..., 225.4, 225.5
-            # offset 1, movement before frame:                          f-1, ..., f
-            #                                                           224.0, 224.1, 224.2, ..., *225.0
-            for i, n in enumerate(ts):
-                if(n < 0.0):
-                    # print('<', cf - 1, n + 1.0)
-                    sc.frame_set(cf - 1, subframe=n + 1.0, )
-                elif(n >= 1.0):
-                    # print('>', cf + 1, n - 1.0)
-                    sc.frame_set(cf + 1, subframe=n - 1.0, )
-                else:
-                    # print('|', cf, n)
-                    sc.frame_set(cf, subframe=n, )
-                self.set_step(step_number=i, step_time=tsn[i], )
-            sc.frame_set(cf, subframe=0.0, )
-        else:
+        if(not mx.movement):
             self.set_step()
-        '''
+        else:
+            sc = bpy.context.scene
+            cf = sc.frame_current
+            sf = sc.frame_subframe
+            
+            steps, times = MXSMotionBlurHelper.camera_steps(ob)
+            if(len(steps) == 1):
+                if(steps[0][0] == cf and steps[0][1] == sf):
+                    self.set_step(step_number=0, step_time=0.0, )
+                else:
+                    raise Exception("What's that? Something, somewhere is missing..")
+            else:
+                for i, (frame, sub) in enumerate(steps):
+                    # move timeline
+                    sc.frame_set(frame, subframe=sub, )
+                    self.set_step(step_number=i, step_time=times[i], )
+                # move timeline back where i started..
+                sc.frame_set(cf, subframe=sf, )
     
     def set_step(self, step_number=0, step_time=0.0, ):
         ob = self.b_object
@@ -2512,9 +2604,6 @@ class MXSObject(Serializable):
     
     def _matrix_to_base_and_pivot(self, m, ):
         """Convert Matrix to Base and Pivot and Position, Rotation and Scale for Studio"""
-        
-        # FIXME: motion blur, export base and pivot for substeps
-        
         cm = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).to_4x4()
         mm = m.copy()
         
@@ -2574,6 +2663,41 @@ class MXSObject(Serializable):
         self.m_location = l
         self.m_rotation = r
         self.m_scale = s
+        
+        sc = bpy.context.scene
+        cf = sc.frame_current
+        sf = sc.frame_subframe
+        
+        self.m_motion_blur = []
+        steps = MXSMotionBlurHelper.object_steps(self.b_object)
+        if(len(steps) == 1):
+            if(steps[0][0] == cf and steps[0][1] == sf):
+                # [(substep_time, position, base, pivot), ]
+                self.m_motion_blur = [(0.0, 0, self.m_base, self.m_pivot), ]
+            else:
+                raise Exception("What's that? Something, somewhere is missing..")
+        else:
+            # FIXME: deformation blur implementation
+            position = 0
+            
+            for i, (frame, sub) in enumerate(steps):
+                # move timeline
+                sc.frame_set(frame, subframe=sub, )
+                # base / pivot
+                # m = self.b_matrix_world.copy()
+                m = self.b_object.matrix_world.copy()
+                if(self.b_parent):
+                    # m = self.b_parent_matrix_world.copy().inverted() * m
+                    m = self.b_parent.matrix_world.copy().inverted() * m
+                m *= ROTATE_X_90
+                
+                # print(tuple(m))
+                
+                b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+                self.m_motion_blur.append((sub, position, b, p))
+                # print(b)
+            
+            sc.frame_set(cf, subframe=sf, )
     
     def _materials(self):
         self.m_num_materials = len(self.b_object.material_slots)
@@ -2853,7 +2977,6 @@ class MXSMesh(MXSObject):
         self.m_triangle_materials = triangle_materials
     
     def add_position(self):
-        # TODO: positions per vertex (animations? deformed mesh motion blur?)
         pass
 
 

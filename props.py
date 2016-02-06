@@ -634,9 +634,9 @@ class SceneProperties(PropertyGroup):
     materials_directory = StringProperty(name="Default Material Directory", default="//", subtype='DIR_PATH', description="Default directory where new materials are created upon running operator 'Create Material'", )
     
     globals_motion_blur = BoolProperty(name="Motion Blur", default=False, description="Global enable/disable motion blur", )
-    globals_motion_blur_num_substeps = IntProperty(name="Substeps", default=0, min=0, max=1000, description="", )
-    globals_motion_blur_shutter_open_offset = FloatProperty(name="Shutter Open Offset", default=0.5, min=0.0, max=1.0, precision=2, subtype='PERCENTAGE', )
-    globals_motion_blur_export = EnumProperty(name="Type", items=[('MOVEMENT_DEFORMATION', "Movement and Deformation", ""), ('MOVEMENT', "Movement", ""), ('NONE', "None", ""), ], default='MOVEMENT', )
+    globals_motion_blur_num_substeps = IntProperty(name="Substeps", default=2, min=0, max=1000, description="Number of frame substeps, always value + 1, ie value of 2 will be exported as step when shutter is opened, one at the middle, and one wjen shutter is closed.", )
+    globals_motion_blur_shutter_open_offset = FloatProperty(name="Shutter Open Offset", default=0.0, min=0.0, max=1.0, precision=2, subtype='PERCENTAGE', description="When set to 0, the shutter opens at the start of the frame, so the future movement is captured, while a value of 1 makes the shutter close at the start of the frame, so only the past movement is seen. A value of 0.5 centers the exposure interval on the current frame.", )
+    globals_motion_blur_export = EnumProperty(name="Type", items=[('MOVEMENT_DEFORMATION', "Movement and Deformation", ""), ('MOVEMENT', "Movement", ""), ('NONE', "None", ""), ], default='MOVEMENT_DEFORMATION', )
     
     globals_diplacement = BoolProperty(name="Displacement", default=True, description="Global enable/disable displacement", )
     globals_dispersion = BoolProperty(name="Dispersion", default=True, description="Global enable/disable dispaersion", )
@@ -1030,7 +1030,7 @@ class CameraProperties(PropertyGroup):
     
     shutter = FloatProperty(name="Shutter Speed", default=250.0, min=0.01, max=16000.0, precision=3, description="1 / shutter speed", update=_lock_exposure_update_shutter, )
     # fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=100000.0, update=_lock_exposure_update_fstop, )
-    fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=math.sqrt(2**24), update=_lock_exposure_update_fstop, )
+    fstop = FloatProperty(name="f-Stop", default=11.0, min=1.0, max=math.sqrt(2 ** 24), update=_lock_exposure_update_fstop, )
     # ev = FloatProperty(name="EV Number", default=14.885, min=1.0, max=100000.0, precision=3, update=_lock_exposure_update_ev, )
     ev = FloatProperty(name="EV Number", default=14.885, min=1.0, max=1000.0, precision=3, update=_lock_exposure_update_ev, )
     lock_exposure = BoolProperty(name="Lock Exposure", default=False, )
@@ -1084,7 +1084,11 @@ class CameraProperties(PropertyGroup):
     frame_rate = IntProperty(name="Frame Rate", default=24, min=1, max=10000, )
     # z-clip planes
     zclip = BoolProperty(name="Z-cLip", default=False, )
-    # # just for info, it is hardcoded somewhere else..
+    
+    movement = BoolProperty(name="Movement", default=True, description="Export for movement motion blur", )
+    custom_substeps = BoolProperty(name="Custom Substeps", default=False, )
+    substeps = IntProperty(name="Substeps", default=2, min=0, max=1000, )
+    
     hide = BoolProperty(name="Hide (in Maxwell Studio)", default=False, )
     response = EnumProperty(name="Response", items=[('Maxwell', 'Maxwell', "", ), ('Advantix 100', 'Advantix 100', "", ), ('Advantix 200', 'Advantix 200', "", ),
                                                     ('Advantix 400', 'Advantix 400', "", ), ('Agfachrome CTPrecisa 200', 'Agfachrome CTPrecisa 200', "", ),
@@ -1361,6 +1365,8 @@ class ObjectProperties(PropertyGroup):
     
     movement = BoolProperty(name="Movement", default=True, description="Export for movement motion blur", )
     deformation = BoolProperty(name="Deformation", default=False, description="Export for deformation motion blur", )
+    custom_substeps = BoolProperty(name="Custom Substeps", default=False, )
+    substeps = IntProperty(name="Substeps", default=2, min=0, max=1000, )
     
     @classmethod
     def register(cls):
