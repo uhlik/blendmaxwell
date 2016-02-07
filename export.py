@@ -2513,6 +2513,8 @@ class MXSCamera(Serializable):
                     # move timeline
                     sc.frame_set(frame, subframe=sub, )
                     self.set_step(step_number=i, step_time=times[i], )
+                    
+                    log("{}: frame: {}, step: {}".format(i, frame, round(sub, 6)), 3, )
                 # move timeline back where i started..
                 sc.frame_set(cf, subframe=sf, )
     
@@ -2684,18 +2686,14 @@ class MXSObject(Serializable):
                 # move timeline
                 sc.frame_set(frame, subframe=sub, )
                 # base / pivot
-                # m = self.b_matrix_world.copy()
                 m = self.b_object.matrix_world.copy()
                 if(self.b_parent):
-                    # m = self.b_parent_matrix_world.copy().inverted() * m
                     m = self.b_parent.matrix_world.copy().inverted() * m
                 m *= ROTATE_X_90
-                
-                # print(tuple(m))
-                
                 b, p, l, r, s = self._matrix_to_base_and_pivot(m)
                 self.m_motion_blur.append((sub, position, b, p))
-                # print(b)
+                
+                log("{}: frame: {}, step: {}, position: {}".format(i, frame, round(sub, 6), position), 3, )
             
             sc.frame_set(cf, subframe=sf, )
     
