@@ -785,6 +785,13 @@ class SceneProperties(PropertyGroup):
     
     private_draw_references = bpy.props.IntProperty(name="Draw MXS References in Viewport", default=0, )
     
+    material_preview_show = BoolProperty(name="Options", default=False, )
+    material_preview_sl = IntProperty(name="Sampling Level", default=10, min=1, max=25, )
+    material_preview_time = IntProperty(name="Time Limit (s)", default=10, min=1, max=999, )
+    material_preview_scale = IntProperty(name="Scale (%)", default=100, min=20, max=100, subtype='PERCENTAGE', )
+    material_preview_quality = EnumProperty(name="Quality", items=[('RS0', "Draft", ""), ('RS1', "Production", "")], default='RS0', )
+    material_preview_external = BoolProperty(name="Prefer Preview From External MXMs", default=True, )
+    
     @classmethod
     def register(cls):
         bpy.types.Scene.maxwell_render = PointerProperty(type=cls)
@@ -2120,6 +2127,10 @@ class MaterialProperties(PropertyGroup):
     
     extension = PointerProperty(name="Extension", type=ExtMaterialProperties, )
     wizards = PointerProperty(name="Material Wizards", type=MaterialWizards, )
+    
+    preview_scene = EnumProperty(name="Preview Scene", items=_get_material_preview_scenes, )
+    preview_size = EnumProperty(name="Size", items=[('25', "25%", ""), ('50', "50%", ""), ('100', "100%", ""), ('150', "150%", ""), ], default='100', )
+    preview_update = BoolProperty(name="Auto Update", default=False, )
     
     @classmethod
     def register(cls):

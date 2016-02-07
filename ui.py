@@ -2337,6 +2337,29 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         m = mat.maxwell_render
         
         l.template_preview(mat, show_buttons=False, )
+        
+        sc = context.scene
+        mx = sc.maxwell_render
+        
+        # TODO: finish material preview rendering
+        l.label("Not finished yet.", icon='ERROR', )
+        l = self.layout.column()
+        l.active = False
+        
+        r = l.row()
+        r2 = r.row(align=True)
+        r2.prop(m, 'preview_scene', text='', )
+        r2.prop(m, 'preview_size', text='', )
+        r.prop(mx, 'material_preview_show', )
+        
+        if(mx.material_preview_show):
+            l.separator()
+            c = l.column(align=True)
+            c.prop(mx, 'material_preview_sl')
+            c.prop(mx, 'material_preview_time')
+            # c.prop(mx, 'material_preview_scale')
+            l.prop(mx, 'material_preview_quality')
+            l.prop(mx, 'material_preview_external')
 
 
 class MaterialTypePanel(MaterialButtonsPanel, Panel):
