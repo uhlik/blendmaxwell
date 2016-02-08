@@ -2870,7 +2870,7 @@ class MXSMesh(MXSObject):
         # triangulate now in bmesh
         only_tris = True
         for f in bm.faces:
-            # determine if triangulating is needed first. 
+            # determine if triangulating is needed first.
             # look through polygons if they have more than 3 vertices and if, break and triangulate
             # shouldn't be as cpu expensive as triangulating everything even if not needed..
             if(len(f.verts) > 3):
@@ -3007,7 +3007,7 @@ class MXSMesh(MXSObject):
             ns = np.zeros((l * 3), dtype=np.float, )
             me.vertices.foreach_get('co', vs)
             me.vertices.foreach_get('normal', ns)
-            return (np.reshape(vs, (l, 3), ), 
+            return (np.reshape(vs, (l, 3), ),
                     np.reshape(ns, (l, 3), ), )
             
         def triangles(me):
