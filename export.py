@@ -2789,7 +2789,21 @@ class MXSMesh(MXSObject):
         
         me = self._prepare_mesh()
         
-        self._mesh_to_data(me)
+        # t = utils.benchmark()
+        # self._mesh_to_data(me)
+        
+        # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
+        # NOTE: the slowest operation now is triangulating, mesh have to be bmeshed, triangulated and then put back to mesh.. slow..
+        # self._mesh_to_data2(me)
+        # t = utils.benchmark(t)
+        
+        try:
+            import numpy
+            self._mesh_to_data2(me)
+        except ImportError:
+            log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
+            self._mesh_to_data(me)
+        
         self._materials()
         # cleanup
         bpy.data.meshes.remove(me)
@@ -2853,6 +2867,7 @@ class MXSMesh(MXSObject):
             # make list if vertex indices lists, only for quads, for other polygons put empty list
             fvixs = [[v.index for v in f.verts] if len(f.verts) == 4 else [] for f in bm.faces]
         
+        # TODO: determine if triangulating is needed first. maybe look through polygons if they have 3 vertices and if not, break and triangulate, shouldn't be as cpu expensive as triangulating everything even if not needed..
         # triangulate now in bmesh
         bmesh.ops.triangulate(bm, faces=bm.faces)
         
@@ -2971,6 +2986,75 @@ class MXSMesh(MXSObject):
         self.m_normals = normals
         self.m_triangles = triangles
         self.m_triangle_normals = triangle_normals
+        self.m_uv_channels = uv_channels
+        self.m_triangle_materials = triangle_materials
+    
+    def _mesh_to_data2(self, me, ):
+        import numpy as np
+        
+        def verts(me):
+            l = len(me.vertices)
+            vs = np.zeros((l * 3), dtype=np.float, )
+            ns = np.zeros((l * 3), dtype=np.float, )
+            me.vertices.foreach_get('co', vs)
+            me.vertices.foreach_get('normal', ns)
+            return (np.reshape(vs, (l, 3), ), 
+                    np.reshape(ns, (l, 3), ), )
+            
+        def triangles(me):
+            l = len(me.polygons)
+            ts = np.zeros((l * 3), dtype=np.int, )
+            ns = np.zeros((l * 3), dtype=np.float, )
+            ms = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('vertices', ts)
+            me.polygons.foreach_get('normal', ns)
+            me.polygons.foreach_get('material_index', ms)
+            
+            vl = len(me.vertices)
+            ni = np.arange(vl, vl + l, dtype=np.int, )
+            ni = np.reshape(ni, (-1, 1))
+            ni = np.concatenate((ni, ni, ni), axis=1)
+            ts = np.reshape(ts, (l, 3))
+            ts = np.concatenate((ts, ni), axis=1)
+            
+            ti = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('index', ti)
+            ti = np.reshape(ti, (-1, 1))
+            ms = np.reshape(ms, (-1, 1))
+            ms = np.concatenate((ti, ms), axis=1)
+            
+            return (ts,
+                    np.reshape(ns, (l, 3)),
+                    ms, )
+        
+        def tess_uvs(tuv):
+            l = len(tuv.data)
+            e = 6
+            uv = np.zeros((l * e), dtype=np.float, )
+            tuv.data.foreach_get('uv', uv)
+            uv = np.reshape(uv, (l * 3, 2), )
+            z = np.zeros((l * 3, 1), dtype=uv.dtype)
+            uv = np.c_[uv, z]
+            uv = np.reshape(uv, (l * 9), )
+            a = np.zeros(uv.shape, dtype=uv.dtype)
+            a[2 - 1::3] = 1.0
+            uv[2 - 1::3] = a[2 - 1::3] - uv[2 - 1::3]
+            r = np.reshape(uv, (l, 9), )
+            return r
+        
+        vertices, normals = verts(me)
+        triangles, triangle_normals, triangle_materials = triangles(me)
+        
+        uv_channels = []
+        for tix, uvtex in enumerate(me.tessface_uv_textures):
+            uv = tess_uvs(me.tessface_uv_textures.active)
+            uv_channels.append(uv)
+        
+        self.m_num_positions = 1
+        self.m_vertices = [vertices, ]
+        self.m_normals = [normals, ]
+        self.m_triangles = triangles
+        self.m_triangle_normals = [triangle_normals, ]
         self.m_uv_channels = uv_channels
         self.m_triangle_materials = triangle_materials
     
