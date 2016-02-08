@@ -2867,9 +2867,18 @@ class MXSMesh(MXSObject):
             # make list if vertex indices lists, only for quads, for other polygons put empty list
             fvixs = [[v.index for v in f.verts] if len(f.verts) == 4 else [] for f in bm.faces]
         
-        # TODO: determine if triangulating is needed first. maybe look through polygons if they have 3 vertices and if not, break and triangulate, shouldn't be as cpu expensive as triangulating everything even if not needed..
         # triangulate now in bmesh
-        bmesh.ops.triangulate(bm, faces=bm.faces)
+        only_tris = True
+        for f in bm.faces:
+            # determine if triangulating is needed first. 
+            # look through polygons if they have more than 3 vertices and if, break and triangulate
+            # shouldn't be as cpu expensive as triangulating everything even if not needed..
+            if(len(f.verts) > 3):
+                only_tris = False
+                break
+        
+        if(not only_tris):
+            bmesh.ops.triangulate(bm, faces=bm.faces)
         
         # quads again: list of lists of triangle indices which were quads before
         quad_pairs = None
