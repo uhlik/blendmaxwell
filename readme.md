@@ -24,6 +24,7 @@
 * All render channels including Custom Alphas
 * Environment parameters (Sun can be optionally set by Sun lamp)
 * Object parameters
+* Export objects and cameras for movement and deformation blur
 * Maxwell Extensions: Particles, Grass, Hair, Scatter, Subdivision, Sea, Cloner, Volumetrics
 * Export Subdivision modifiers if their type is Catmull-Clark and they are at the end of modifier stack on regular mesh objects (optional)
 * Wireframe scene export (all edges are converted to instanced cylinder of user defined radius)
@@ -60,6 +61,7 @@
 
 **changelog:**
 
+* 0.4.2 movement and deformation blur, faster mesh export
 * 0.4.1 procedural textures, faster reading of mxs references
 * 0.4.0 heavy refactoring, added mxs reference viewport preview
 * 0.3.9 colors exported in 32 bits and as shown in blender (gamma correction), added grass modifier presets, added displacement in extension materials, added stereo cameras (maxwell 3.2), added realflow particles bin export operator (file > export menu), updated material presets (maxwell 3.2.1.0), fixed cleaning of mesh datablocks created during export, fixed exporting of fake user materials, fixed export of particles on meshes without polygons (and a lot of small fixes and ui tweaks)
