@@ -59,7 +59,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # NOTE: from Maxwell 3.2.0.4 beta changelog: Studio: Fixed when exporting MXMs material names were cropped if they contained dots. - remove dot changing mechanism whet this is out. maybe not.. not very importat and will work with older version. or check version and then decide. this will require version.py to return version number instead of true/false.
 # NOTE: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
-# FIXME: motion blur: mesh deformation blur, ie calculate and export vertex positions
 # TODO: particle data with foreach_get
 
 
@@ -2515,7 +2514,7 @@ class MXSCamera(Serializable):
                     sc.frame_set(frame, subframe=sub, )
                     self.set_step(step_number=i, step_time=times[i], )
                     
-                    log("{}: frame: {}, step: {}".format(i, frame, round(sub, 6)), 3, )
+                    log("movement: frame: {}, step: {}".format(frame, round(sub, 6)), 3, )
                 # move timeline back where i started..
                 sc.frame_set(cf, subframe=sf, )
     
@@ -2636,23 +2635,6 @@ class MXSObject(Serializable):
         return (b, p, l, r, s, )
     
     def _transformation(self):
-        # possible parent/child scenarios: object parent_type can be one of following: ['OBJECT', 'ARMATURE', 'LATTICE', 'VERTEX', 'VERTEX_3', 'BONE'] default 'OBJECT'
-        '''
-        if(self.b_parent_type == 'BONE'):
-            # seems like it works without any other modifications
-            m = self.b_matrix_world.copy()
-            if(self.b_parent):
-                m = self.b_parent_matrix_world.copy().inverted() * m
-            m *= ROTATE_X_90
-            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
-        else:
-            m = self.b_matrix_world.copy()
-            if(self.b_parent):
-                m = self.b_parent_matrix_world.copy().inverted() * m
-            m *= ROTATE_X_90
-            b, p, l, r, s = self._matrix_to_base_and_pivot(m)
-        '''
-        
         m = self.b_matrix_world.copy()
         if(self.b_parent):
             m = self.b_parent_matrix_world.copy().inverted() * m
@@ -2680,7 +2662,6 @@ class MXSObject(Serializable):
             else:
                 raise Exception("What's that? Something, somewhere is missing..")
         else:
-            # FIXME: deformation blur implementation
             position = 0
             
             for i, (frame, sub) in enumerate(steps):
@@ -2694,7 +2675,7 @@ class MXSObject(Serializable):
                 b, p, l, r, s = self._matrix_to_base_and_pivot(m)
                 self.m_motion_blur.append((sub, position, b, p))
                 
-                log("{}: frame: {}, step: {}, position: {}".format(i, frame, round(sub, 6), position), 3, )
+                log("movement: frame: {}, step: {}".format(frame, round(sub, 6)), 3, )
             
             sc.frame_set(cf, subframe=sf, )
     
@@ -2747,6 +2728,8 @@ class MXSMesh(MXSObject):
             self.dupli = True
         
         if(self.dupli):
+            # dupli overrides when self.use_instances = False
+            
             self.m_name = MXSDatabase.object_name(self.b_object, self.o['dupli_name'])
             
             mw = self.o['dupli_matrix'].copy()
@@ -2759,7 +2742,6 @@ class MXSMesh(MXSObject):
             self.m_location = l
             self.m_rotation = r
             self.m_scale = s
-        # dupli overrides when self.use_instances = False
         
         # handle hidden base objects for particle duplicators
         swap_parent = None
@@ -2788,40 +2770,75 @@ class MXSMesh(MXSObject):
                 #     self.m_hide = True
                 self.m_hide = self.o['extra_options']['hide']
         
-        me = self._prepare_mesh()
+        # deformation blur
+        self.m_num_positions = 0
+        self.m_vertices = []
+        self.m_normals = []
+        self.m_triangles = None
+        self.m_triangle_normals = []
+        self.m_uv_channels = None
+        self.m_triangle_materials = None
         
-        # t = utils.benchmark()
-        # self._mesh_to_data(me)
+        sc = bpy.context.scene
+        cf = sc.frame_current
+        sf = sc.frame_subframe
         
-        # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
-        # NOTE: the slowest operation now is triangulating, mesh have to be bmeshed, triangulated and then put back to mesh.. slow..
-        # self._mesh_to_data2(me)
-        # t = utils.benchmark(t)
+        steps = MXSMotionBlurHelper.object_steps(self.b_object)
         
-        try:
-            import numpy
-            self._mesh_to_data2(me)
-        except ImportError:
-            log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
-            self._mesh_to_data(me)
-        
-        self._materials()
-        # cleanup
-        bpy.data.meshes.remove(me)
-        
-        # if('extra_options' in self.o):
-        #     if('hidden_base' in self.o['extra_options']):
-        #         if(self.o['extra_options']['hidden_base'] is True):
-        #             # zero scale base object, when only hidden, instances will be hidden too
-        #             m = self.b_matrix_world * Matrix(((0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-        #             b, p, l, r, s = self._matrix_to_base_and_pivot(m)
-        #             self.m_base = b
-        #             self.m_pivot = p
-        #             self.m_location = l
-        #             self.m_rotation = r
-        #             self.m_scale = s
+        if(self.mx.deformation):
+            if(len(steps) == 1):
+                if(steps[0][0] == cf and steps[0][1] == sf):
+                    me = self._prepare_mesh()
+                    # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
+                    try:
+                        import numpy
+                        self._mesh_to_data2(me)
+                    except ImportError:
+                        log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
+                        self._mesh_to_data(me)
+                    
+                    self._materials()
+                    # cleanup
+                    bpy.data.meshes.remove(me)
+                else:
+                    raise Exception("What's that? Something, somewhere is missing..")
+            else:
+                for position, (frame, sub) in enumerate(steps):
+                    # move timeline
+                    sc.frame_set(frame, subframe=sub, )
+                    # mesh
+                    me = self._prepare_mesh(pos=position, )
+                    
+                    # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
+                    try:
+                        import numpy
+                        self._mesh_to_data2(me)
+                    except ImportError:
+                        log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
+                        self._mesh_to_data(me)
+                    
+                    log("deformation: frame: {}, step: {}, position: {}".format(frame, round(sub, 6), position), 3, )
+                    
+                    self._materials()
+                    
+                    bpy.data.meshes.remove(me)
+                
+                sc.frame_set(cf, subframe=sf, )
+        else:
+            me = self._prepare_mesh()
+            # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
+            try:
+                import numpy
+                self._mesh_to_data2(me)
+            except ImportError:
+                log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
+                self._mesh_to_data(me)
+            
+            self._materials()
+            # cleanup
+            bpy.data.meshes.remove(me)
     
-    def _prepare_mesh(self):
+    def _prepare_mesh(self, pos=0, ):
         ob = self.b_object
         mx = ob.maxwell_render
         o = self.o
@@ -2830,7 +2847,7 @@ class MXSMesh(MXSObject):
         
         extra_subdiv = False
         
-        if(o['converted'] is True):
+        if(o['converted'] is True and pos == 0):
             # get to-mesh-conversion result (curves, texts, etc..)
             me = o['mesh']
         else:
@@ -2991,11 +3008,11 @@ class MXSMesh(MXSObject):
         for fi, f in enumerate(me.tessfaces):
             triangle_materials.append((fi, f.material_index, ))
         
-        self.m_num_positions = 1
-        self.m_vertices = vertices
-        self.m_normals = normals
+        self.m_num_positions += 1
+        self.m_vertices.append(vertices)
+        self.m_normals.append(normals)
         self.m_triangles = triangles
-        self.m_triangle_normals = triangle_normals
+        self.m_triangle_normals.append(triangle_normals)
         self.m_uv_channels = uv_channels
         self.m_triangle_materials = triangle_materials
     
@@ -3010,7 +3027,7 @@ class MXSMesh(MXSObject):
             me.vertices.foreach_get('normal', ns)
             return (np.reshape(vs, (l, 3), ),
                     np.reshape(ns, (l, 3), ), )
-            
+        
         def triangles(me):
             l = len(me.polygons)
             ts = np.zeros((l * 3), dtype=np.int, )
@@ -3060,16 +3077,13 @@ class MXSMesh(MXSObject):
             uv = tess_uvs(me.tessface_uv_textures.active)
             uv_channels.append(uv)
         
-        self.m_num_positions = 1
-        self.m_vertices = [vertices, ]
-        self.m_normals = [normals, ]
+        self.m_num_positions += 1
+        self.m_vertices.append(vertices)
+        self.m_normals.append(normals)
         self.m_triangles = triangles
-        self.m_triangle_normals = [triangle_normals, ]
+        self.m_triangle_normals.append(triangle_normals)
         self.m_uv_channels = uv_channels
         self.m_triangle_materials = triangle_materials
-    
-    def add_position(self):
-        pass
 
 
 class MXSMeshInstance(MXSObject):

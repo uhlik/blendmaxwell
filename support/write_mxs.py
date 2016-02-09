@@ -1578,14 +1578,17 @@ def mesh(d, s, ):
     for i in range(len(m['uv_channels'])):
         o.addChannelUVW(i)
     
-    an = 0
+    # an = 0
     for ip in range(m['num_positions']):
+        # reset counter in each run, its value should be the same for each position anyway, it only used as offset for triangle normals
+        an = 0
         verts = m['vertices'][ip]
         norms = m['normals'][ip]
         for i, loc in enumerate(verts):
             o.setVertex(i, ip, Cvector(*loc), )
             o.setNormal(i, ip, Cvector(*norms[i]), )
             an += 1
+    
     for ip in range(m['num_positions']):
         trinorms = m['triangle_normals'][ip]
         for i, nor in enumerate(trinorms):
