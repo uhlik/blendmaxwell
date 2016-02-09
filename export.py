@@ -1954,7 +1954,7 @@ class MXSMotionBlurHelper():
             return cls.default()
         
         mx = obj.maxwell_render
-        if(not mx.movement):
+        if(not mx.movement and not mx.deformation):
             return cls.default()
         
         sub = cls.sub
@@ -2655,29 +2655,32 @@ class MXSObject(Serializable):
         
         self.m_motion_blur = []
         steps = MXSMotionBlurHelper.object_steps(self.b_object)
-        if(len(steps) == 1):
-            if(steps[0][0] == cf and steps[0][1] == sf):
-                # [(substep_time, position, base, pivot), ]
-                self.m_motion_blur = [(0.0, 0, self.m_base, self.m_pivot), ]
+        if(self.mx.movement):
+            if(len(steps) == 1):
+                if(steps[0][0] == cf and steps[0][1] == sf):
+                    # [(substep_time, position, base, pivot), ]
+                    self.m_motion_blur = [(0.0, 0, self.m_base, self.m_pivot), ]
+                else:
+                    raise Exception("What's that? Something, somewhere is missing..")
             else:
-                raise Exception("What's that? Something, somewhere is missing..")
-        else:
-            position = 0
+                position = 0
             
-            for i, (frame, sub) in enumerate(steps):
-                # move timeline
-                sc.frame_set(frame, subframe=sub, )
-                # base / pivot
-                m = self.b_object.matrix_world.copy()
-                if(self.b_parent):
-                    m = self.b_parent.matrix_world.copy().inverted() * m
-                m *= ROTATE_X_90
-                b, p, l, r, s = self._matrix_to_base_and_pivot(m)
-                self.m_motion_blur.append((sub, position, b, p))
+                for i, (frame, sub) in enumerate(steps):
+                    # move timeline
+                    sc.frame_set(frame, subframe=sub, )
+                    # base / pivot
+                    m = self.b_object.matrix_world.copy()
+                    if(self.b_parent):
+                        m = self.b_parent.matrix_world.copy().inverted() * m
+                    m *= ROTATE_X_90
+                    b, p, l, r, s = self._matrix_to_base_and_pivot(m)
+                    self.m_motion_blur.append((sub, position, b, p))
                 
-                log("movement: frame: {}, step: {}".format(frame, round(sub, 6)), 3, )
+                    log("movement: frame: {}, step: {}".format(frame, round(sub, 6)), 3, )
             
-            sc.frame_set(cf, subframe=sf, )
+                sc.frame_set(cf, subframe=sf, )
+        else:
+            self.m_motion_blur = []
     
     def _materials(self):
         self.m_num_materials = len(self.b_object.material_slots)
