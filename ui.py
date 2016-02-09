@@ -343,6 +343,45 @@ class BMPanel():
         if(not enabled_ref):
             c.active = False
     
+    def tab_double_enable_and_value(self, layout, cls, name, enabled, value, enabled_ref, align=False, label=True, text=False, ):
+        if(name is None):
+            name = self.prop_name(cls, value, True, )
+        r = layout.row()
+        elm = r
+        s = r.split(percentage=0.333)
+        if(type(label) is bool):
+            if(label):
+                s.label("{}:".format(name))
+            else:
+                s.label("")
+        else:
+            s.label("{}:".format(label))
+        # s = s.split(percentage=0.15, align=align, )
+        s = s.split(percentage=0.1, align=align, )
+        if(text):
+            s.prop(cls, enabled, )
+        else:
+            s.prop(cls, enabled, text="", )
+        s = s.split(percentage=1.0, align=align, )
+        if(text):
+            s.prop(cls, value, )
+        else:
+            s.prop(cls, value, text="", )
+        if(not enabled_ref):
+            s.enabled = False
+        return elm
+    
+    def tab_single_with_enable(self, layout, cls, enabled, enabled_ref, value, split=0.33, ):
+        r = layout.row()
+        s = r.split(percentage=split)
+        c = s.column()
+        c.prop(cls, enabled)
+        c = s.column()
+        c.prop(cls, value, text="", )
+        if(not enabled_ref):
+            c.active = False
+        return r
+    
     '''
     def draw(self, context):
         l = self.layout
@@ -652,15 +691,20 @@ class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
         m = context.scene.maxwell_render
         
         r = sub.row()
-        r.prop(m, 'globals_motion_blur')
+        s = r.split(percentage=0.333)
+        s.prop(m, 'globals_motion_blur')
+        s = s.split(percentage=1.0)
+        s.prop(m, 'globals_motion_blur_export', text="", )
+        if(not m.globals_motion_blur):
+            s.enabled = False
         
-        # FIXME: motion blur
-        # c = r.column()
-        # c.prop(m, 'globals_motion_blur_num_substeps')
-        # c.prop(m, 'globals_motion_blur_shutter_open_offset')
-        # if(not m.globals_motion_blur):
-        #     c.enabled = False
+        r = sub.row(align=True)
+        r.prop(m, 'globals_motion_blur_num_substeps')
+        r.prop(m, 'globals_motion_blur_shutter_open_offset')
+        if(not m.globals_motion_blur):
+            r.enabled = False
         
+        sub.separator()
         sub.prop(m, 'globals_diplacement')
         sub.prop(m, 'globals_dispersion')
 
@@ -1342,12 +1386,12 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
         if(m.lens == 'TYPE_ORTHO_2'):
             r.enabled = False
         
-        sub.menu("Exposure_presets", text=bpy.types.Exposure_presets.bl_label)
-        
-        sub.prop(m, 'lock_exposure')
-        sub.prop(m, 'shutter')
-        sub.prop(m, 'fstop')
-        sub.prop(m, 'ev')
+        # sub.menu("Exposure_presets", text=bpy.types.Exposure_presets.bl_label)
+        #
+        # sub.prop(m, 'lock_exposure')
+        # sub.prop(m, 'shutter')
+        # sub.prop(m, 'fstop')
+        # sub.prop(m, 'ev')
         
         if(m.lens == 'TYPE_FISHEYE_3'):
             sub.prop(m, 'fov')
@@ -1384,10 +1428,105 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
             sub.prop_search(m, 'fs_head_tilt_map', bpy.data, 'textures', icon='TEXTURE')
 
 
+class CameraExposurePanel(BMPanel, CameraButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Exposure"
+    
+    _frame_rate_args_prev = None
+    _preset_class = None
+    
+    @staticmethod
+    def _draw_framerate_label(*args):
+        # avoids re-creating text string each draw
+        if CameraExposurePanel._frame_rate_args_prev == args:
+            return CameraExposurePanel._frame_rate_ret
+        
+        fps, fps_base, preset_label = args
+        
+        if fps_base == 1.0:
+            fps_rate = round(fps)
+        else:
+            fps_rate = round(fps / fps_base, 2)
+        
+        custom_framerate = (fps_rate not in {23.98, 24, 25, 29.97, 30, 50, 59.94, 60})
+        
+        if custom_framerate is True:
+            fps_label_text = "Custom (%r fps)" % fps_rate
+            show_framerate = True
+        else:
+            fps_label_text = "%r fps" % fps_rate
+            show_framerate = (preset_label == "Custom")
+        
+        CameraExposurePanel._frame_rate_args_prev = args
+        CameraExposurePanel._frame_rate_ret = args = (fps_label_text, show_framerate)
+        return args
+    
+    @staticmethod
+    def draw_framerate(sub, rd):
+        if CameraExposurePanel._preset_class is None:
+            CameraExposurePanel._preset_class = bpy.types.RENDER_MT_framerate_presets
+        
+        args = rd.fps, rd.fps_base, CameraExposurePanel._preset_class.bl_label
+        fps_label_text, show_framerate = CameraExposurePanel._draw_framerate_label(*args)
+        
+        sub.menu("RENDER_MT_framerate_presets", text=fps_label_text)
+        
+        if show_framerate:
+            sub.prop(rd, "fps")
+            sub.prop(rd, "fps_base", text="/")
+    
+    @staticmethod
+    def draw_blender_part(context, layout):
+        scene = context.scene
+        rd = scene.render
+        
+        split = layout.split()
+        
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="Frame Range:")
+        sub.prop(scene, "frame_start")
+        sub.prop(scene, "frame_end")
+        # sub.prop(scene, "frame_step")
+        
+        col = split.column()
+        sub = col.column(align=True)
+        sub.label(text="Frame Rate:")
+
+        CameraExposurePanel.draw_framerate(sub, rd)
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        m = context.camera.maxwell_render
+        o = context.camera
+        r = context.scene.render
+        
+        sub.menu("Exposure_presets", text=bpy.types.Exposure_presets.bl_label)
+        
+        sub.prop(m, 'lock_exposure')
+        sub.prop(m, 'shutter')
+        sub.prop(m, 'fstop')
+        sub.prop(m, 'ev')
+        
+        sub.prop(m, 'shutter_angle')
+        
+        self.draw_blender_part(context, sub, )
+        
+        sub.separator()
+        r = sub.row()
+        r.prop(m, 'movement', text="Motion Blur")
+        # e = self.tab_double_enable_and_value(sub, m, "Custom Substeps", 'custom_substeps', 'substeps', m.custom_substeps, align=False, label=True, text=False, )
+        e = self.tab_single_with_enable(sub, m, 'custom_substeps', m.custom_substeps, 'substeps', split=0.5, )
+        if(not m.movement):
+            e.enabled = False
+
+
 class CameraSensorPanel(CameraButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Sensor"
     
+    '''
     _frame_rate_args_prev = None
     _preset_class = None
     
@@ -1436,29 +1575,42 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         scene = context.scene
         rd = scene.render
         
-        split = layout.split()
+        # split = layout.split()
+        #
+        # col = split.column()
+        # sub = col.column(align=True)
+        # sub.label(text="Resolution:")
+        # sub.prop(rd, "resolution_x", text="X")
+        # sub.prop(rd, "resolution_y", text="Y")
+        # sub.prop(rd, "resolution_percentage", text="")
+        #
+        # sub.label(text="Aspect Ratio:")
+        # sub.prop(rd, "pixel_aspect_x", text="X")
+        # sub.prop(rd, "pixel_aspect_y", text="Y")
         
-        col = split.column()
-        sub = col.column(align=True)
+        r = layout.row()
+        sub = r.column(align=True)
         sub.label(text="Resolution:")
         sub.prop(rd, "resolution_x", text="X")
         sub.prop(rd, "resolution_y", text="Y")
         sub.prop(rd, "resolution_percentage", text="")
         
+        sub = r.column(align=True)
         sub.label(text="Aspect Ratio:")
         sub.prop(rd, "pixel_aspect_x", text="X")
         sub.prop(rd, "pixel_aspect_y", text="Y")
         
-        col = split.column()
-        sub = col.column(align=True)
-        sub.label(text="Frame Range:")
-        sub.prop(scene, "frame_start")
-        sub.prop(scene, "frame_end")
-        sub.prop(scene, "frame_step")
-        
-        sub.label(text="Frame Rate:")
-        
-        CameraSensorPanel.draw_framerate(sub, rd)
+        # col = split.column()
+        # sub = col.column(align=True)
+        # sub.label(text="Frame Range:")
+        # sub.prop(scene, "frame_start")
+        # sub.prop(scene, "frame_end")
+        # sub.prop(scene, "frame_step")
+        #
+        # sub.label(text="Frame Rate:")
+        #
+        # CameraSensorPanel.draw_framerate(sub, rd)
+    '''
     
     def draw(self, context):
         l = self.layout
@@ -1470,7 +1622,19 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         r = sub.row(align=True)
         r.menu("CAMERA_MT_presets", text=bpy.types.CAMERA_MT_presets.bl_label)
         
-        self.draw_blender_part(context, sub)
+        # self.draw_blender_part(context, sub)
+        
+        r = sub.row()
+        c = r.column(align=True)
+        c.label(text="Resolution:")
+        c.prop(rp, "resolution_x", text="X")
+        c.prop(rp, "resolution_y", text="Y")
+        c.prop(rp, "resolution_percentage", text="")
+        
+        c = r.column(align=True)
+        c.label(text="Aspect Ratio:")
+        c.prop(rp, "pixel_aspect_x", text="X")
+        c.prop(rp, "pixel_aspect_y", text="Y")
         
         r = sub.row(align=True)
         r.label("Filmback (mm):")
@@ -1545,7 +1709,7 @@ class CameraOptionsPanel(CameraButtonsPanel, Panel):
         sub.prop(m, 'hide')
 
 
-class ObjectPanel(ObjectButtonsPanel, Panel):
+class ObjectPanel(BMPanel, ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Object"
     
@@ -1574,11 +1738,12 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         
         b = base(context.object)
         r = sub.row()
-        r.prop(m, 'override_instance', text="Override Instancing{}".format(" of '{}'".format(b) if b is not None else ""), )
+        c = r.column()
+        c.prop(m, 'override_instance', text="Override Instancing{}".format(" of '{}'".format(b) if b is not None else ""), )
         if(b is None):
-            r.active = False
+            c.active = False
+        r.prop(m, 'hide')
         
-        sub.prop(m, 'hide')
         # warn user when particles have render emitter False
         ob = context.active_object
         if(len(ob.particle_systems) > 0):
@@ -1588,10 +1753,23 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
                     sub.label("Overrided by particle system ('{}') settings".format(ps.name), icon='ERROR', )
         sub.separator()
         
+        r = sub.row(align=True)
+        r.label("Motion Blur:")
+        r.prop(m, 'movement', toggle=True)
+        r.prop(m, 'deformation', toggle=True)
+        # e = self.tab_double_enable_and_value(sub, m, "Custom Substeps", 'custom_substeps', 'substeps', m.custom_substeps, align=False, label=True, text=False, )
+        e = self.tab_single_with_enable(sub, m, 'custom_substeps', m.custom_substeps, 'substeps', split=0.33, )
+        if(not m.movement and not m.deformation):
+            e.enabled = False
+        
+        sub.separator()
+        
         sub.prop(m, 'opacity')
         sub.separator()
-        r = sub.row()
-        r.prop(m, 'object_id')
+        
+        # r = sub.row()
+        # r.prop(m, 'object_id')
+        self.tab_single(sub, m, 'object_id', label=True, text=False, )
         
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface Material', )
         
@@ -1617,8 +1795,6 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         
         l.separator()
         
-        l.label("Set object properties to multiple objects:")
-        l.operator('maxwell_render.copy_active_object_properties_to_selected')
         l.label("Set Object ID color to multiple objects:")
         r = l.row(align=True)
         p = r.operator('maxwell_render.set_object_id_color', text="R", )
@@ -1631,6 +1807,9 @@ class ObjectPanel(ObjectButtonsPanel, Panel):
         p.color = '3'
         p = r.operator('maxwell_render.set_object_id_color', text="Black", )
         p.color = '4'
+        
+        # l.label("Set object properties to multiple objects:")
+        l.operator('maxwell_render.copy_active_object_properties_to_selected')
 
 
 class ObjectReferencePanel(ObjectButtonsPanel, Panel):
@@ -2158,6 +2337,29 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         m = mat.maxwell_render
         
         l.template_preview(mat, show_buttons=False, )
+        
+        sc = context.scene
+        mx = sc.maxwell_render
+        
+        # TODO: finish material preview rendering
+        l.label("Not finished yet.", icon='ERROR', )
+        l = self.layout.column()
+        l.active = False
+        
+        r = l.row()
+        r2 = r.row(align=True)
+        r2.prop(m, 'preview_scene', text='', )
+        r2.prop(m, 'preview_size', text='', )
+        r.prop(mx, 'material_preview_show', )
+        
+        if(mx.material_preview_show):
+            l.separator()
+            c = l.column(align=True)
+            c.prop(mx, 'material_preview_sl')
+            c.prop(mx, 'material_preview_time')
+            # c.prop(mx, 'material_preview_scale')
+            l.prop(mx, 'material_preview_quality')
+            l.prop(mx, 'material_preview_external')
 
 
 class MaterialTypePanel(MaterialButtonsPanel, Panel):

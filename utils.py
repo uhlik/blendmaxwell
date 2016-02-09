@@ -19,6 +19,8 @@
 import math
 import sys
 import os
+import time
+import datetime
 
 import bpy
 from mathutils import Matrix, Vector
@@ -479,3 +481,11 @@ class CylinderMeshGenerator(InstanceMeshGenerator):
         
         # -------------------------------------------
         return dv, de, df
+
+
+def benchmark(t=None):
+    if(t is None):
+        return time.time()
+    d = datetime.timedelta(seconds=time.time() - t)
+    log("benchmark: {} {}".format(d, '-' * 50), 0, LogStyles.MESSAGE)
+    return time.time()
