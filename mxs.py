@@ -103,7 +103,7 @@ class MXSWriter():
     def erase_unused_materials(self):
         self.mxs.eraseUnusedMaterials()
     
-    def set_base_and_pivot(self, o, matrix=None, ):
+    def set_base_and_pivot(self, o, matrix=None, motion=None, ):
         """Convert float tuples to Cbases and set to object.
         o       CmaxwellObject
         base    ((3 float), (3 float), (3 float), (3 float)) or None
@@ -138,6 +138,20 @@ class MXSWriter():
         o.setPosition(Cvector(*l))
         o.setRotation(Cvector(*r))
         o.setScale(Cvector(*s))
+        
+        if(motion is not None):
+            for(t, _, b, p) in motion:
+                bb = Cbase()
+                bb.origin = Cvector(*b[0])
+                bb.xAxis = Cvector(*b[1])
+                bb.yAxis = Cvector(*b[2])
+                bb.zAxis = Cvector(*b[3])
+                pp = Cbase()
+                pp.origin = Cvector(*p[0])
+                pp.xAxis = Cvector(*p[1])
+                pp.yAxis = Cvector(*p[2])
+                pp.zAxis = Cvector(*p[3])
+                o.setBaseAndPivot(bb, pp, t, )
     
     def set_object_props(self, o, hide=False, opacity=100, cid=(1.0, 1.0, 1.0), hcam=False, hcamsc=False, hgi=False, hrr=False, hzcp=False, blocked_emitters=None, ):
         """Set common object properties.
@@ -1358,6 +1372,7 @@ class MXSWriter():
             c = s.addCamera(*props2)
         else:
             c = s.addCamera(*props)
+        
         for step in steps:
             l = list(step[:])
             l[1] = Cvector(*l[1])
@@ -1419,7 +1434,7 @@ class MXSWriter():
             c.setActive()
         return c
     
-    def empty(self, name, matrix, object_props=None, ):
+    def empty(self, name, matrix, motion, object_props=None, ):
         """Create empty object.
         name            string
         matrix          (((3 float), (3 float), (3 float), (3 float)), ((3 float), (3 float), (3 float), (3 float)), (3 float), (3 float), (3 float)) - base, pivot, location, rotation, scale
@@ -1427,12 +1442,12 @@ class MXSWriter():
         """
         s = self.mxs
         o = s.createMesh(name, 0, 0, 0, 0, )
-        self.set_base_and_pivot(o, matrix, )
+        self.set_base_and_pivot(o, matrix, motion, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         return o
     
-    def mesh(self, name, matrix, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, object_props=None, num_materials=0, materials=[], triangle_materials=None, backface_material=None, ):
+    def mesh(self, name, matrix, motion, num_positions, vertices, normals, triangles, triangle_normals, uv_channels, object_props=None, num_materials=0, materials=[], triangle_materials=None, backface_material=None, ):
         """Create mesh object.
         name                string
         base                ((3 float), (3 float), (3 float), (3 float))
@@ -1454,8 +1469,9 @@ class MXSWriter():
         if(uv_channels is not None):
             for i in range(len(uv_channels)):
                 o.addChannelUVW(i)
-        an = 0
+        # an = 0
         for ip in range(num_positions):
+            an = 0
             verts = vertices[ip]
             norms = normals[ip]
             for i, loc in enumerate(verts):
@@ -1466,6 +1482,9 @@ class MXSWriter():
             trinorms = triangle_normals[ip]
             for i, nor in enumerate(trinorms):
                 o.setNormal(an + i, ip, Cvector(*nor), )
+        if(type(triangles) is not list):
+            # pymaxwell does not like numpy arrays.. Cvectors has no problems, but setTriangle does..
+            triangles = triangles.tolist()
         for i, tri in enumerate(triangles):
             o.setTriangle(i, *tri)
         if(uv_channels is not None):
@@ -1473,7 +1492,7 @@ class MXSWriter():
                 for it, t in enumerate(uv):
                     o.setTriangleUVW(it, iuv, *t)
         
-        self.set_base_and_pivot(o, matrix, )
+        self.set_base_and_pivot(o, matrix, motion, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
@@ -1488,7 +1507,9 @@ class MXSWriter():
                     except:
                         mat = self.material_placeholder()
                     mats.append(mat)
-                
+                # pymaxwell does not like numpy arrays..
+                if(type(triangle_materials) is not list):
+                    triangle_materials = triangle_materials.tolist()
                 for tid, mid in triangle_materials:
                     o.setTriangleMaterial(tid, mats[mid])
             else:
@@ -1509,7 +1530,7 @@ class MXSWriter():
         
         return o
     
-    def instance(self, name, instanced_name, matrix, object_props=None, materials=None, backface_material=None, ):
+    def instance(self, name, instanced_name, matrix, motion=None, object_props=None, materials=None, backface_material=None, ):
         """Create instance of mesh object. Instanced object must exist in scene.
         name                string
         instanced_name      string
@@ -1523,7 +1544,7 @@ class MXSWriter():
         bo = s.getObject(instanced_name)
         o = s.createInstancement(name, bo)
         
-        self.set_base_and_pivot(o, matrix, )
+        self.set_base_and_pivot(o, matrix, motion, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
@@ -1545,7 +1566,7 @@ class MXSWriter():
         
         return o
     
-    def reference(self, name, path, flags, matrix, object_props=None, material=None, backface_material=None, ):
+    def reference(self, name, path, flags, matrix, motion=None, object_props=None, material=None, backface_material=None, ):
         """Create MXS reference object.
         name            string
         path            string (path)
@@ -1565,7 +1586,7 @@ class MXSWriter():
             o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_REFL_REFR)
         if(flags[3]):
             o.setReferencedOverrideFlags(FLAG_OVERRIDE_HIDE_TO_GI)
-        self.set_base_and_pivot(o, matrix, )
+        self.set_base_and_pivot(o, matrix, motion, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         if(material is not None):
@@ -2093,7 +2114,7 @@ class MXSWriter():
                     m = s.getMaterial(n)
                     m.addToCustomAlpha(a['name'])
     
-    def ext_particles(self, name, properties, matrix, object_props=None, material=None, backface_material=None, ):
+    def ext_particles(self, name, properties, matrix, motion=None, object_props=None, material=None, backface_material=None, ):
         """Create particles object.
         name                string
         properties          dict
@@ -2174,7 +2195,7 @@ class MXSWriter():
         a, _ = o.addChannelUVW()
         o.generateCustomUVW(0, a)
         
-        self.set_base_and_pivot(o, matrix, )
+        self.set_base_and_pivot(o, matrix, motion, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
@@ -2189,7 +2210,7 @@ class MXSWriter():
         
         return o
     
-    def ext_hair(self, name, extension, matrix, root_radius, tip_radius, data, object_props=None, display_percent=10, display_max=1000, material=None, backface_material=None, ):
+    def ext_hair(self, name, extension, matrix, motion, root_radius, tip_radius, data, object_props=None, display_percent=10, display_max=1000, material=None, backface_material=None, ):
         """Create hair/grass object.
         name                string
         extension           string ('MaxwellHair' ,'MGrassP')
@@ -2253,7 +2274,7 @@ class MXSWriter():
             b, _ = o.addChannelUVW()
             o.generateCustomUVW(1, b)
         
-        self.set_base_and_pivot(o, matrix, )
+        self.set_base_and_pivot(o, matrix, motion, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
@@ -2268,7 +2289,7 @@ class MXSWriter():
         
         return o
     
-    def ext_sea(self, name, matrix, object_props=None, geometry=None, wind=None, material=None, backface_material=None, ):
+    def ext_sea(self, name, matrix, motion=None, object_props=None, geometry=None, wind=None, material=None, backface_material=None, ):
         """Create sea extension object.
         name                string
         base                ((3 float), (3 float), (3 float), (3 float))
@@ -2312,7 +2333,7 @@ class MXSWriter():
         
         o = s.createGeometryLoaderObject(name, p)
         
-        self.set_base_and_pivot(o, matrix, )
+        self.set_base_and_pivot(o, matrix, motion, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         
@@ -2325,7 +2346,7 @@ class MXSWriter():
                 mat = self.get_material(backface_material)
                 o.setBackfaceMaterial(mat)
     
-    def ext_volumetrics(self, name, properties, matrix, object_props=None, material=None, backface_material=None, ):
+    def ext_volumetrics(self, name, properties, matrix, motion=None, object_props=None, material=None, backface_material=None, ):
         """Create Volumetrics Extension Object.
         name                string
         properties          (int type 1, float density) or (int type 2, float density, int seed, float low, float high, float detail, int octaves, float perssistence)
@@ -2352,7 +2373,7 @@ class MXSWriter():
         
         o = s.createGeometryProceduralObject(name, p)
         
-        self.set_base_and_pivot(o, matrix, )
+        self.set_base_and_pivot(o, matrix, motion, )
         if(object_props is not None):
             self.set_object_props(o, *object_props)
         

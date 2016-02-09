@@ -60,6 +60,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # NOTE: in some cases meshes with no polygons have to be exported, e.g. mesh with particle system (already fixed), look for other examples/uses, or maybe just swap it to empty at the end
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
 # TODO: particle data with foreach_get
+# TODO: when exporting motion blur, move timeline just once per step, eg. add each step to all objects at once per timeline move.
 
 
 class MXSExport():
@@ -1539,16 +1540,16 @@ class MXSExport():
                     shift_lens = o.m_set_shift_lens
                 self.mxs.camera(props, steps, o.m_active, lens_extra, o.m_response, screen_region, custom_bokeh, cut_planes, shift_lens, )
             elif(o.m_type == 'EMPTY'):
-                self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
+                self.mxs.empty(o.m_name, pack_matrix(o), o.m_motion_blur, pack_object_props(o), )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'MESH'):
-                self.mxs.mesh(o.m_name, pack_matrix(o), o.m_num_positions,
+                self.mxs.mesh(o.m_name, pack_matrix(o), o.m_motion_blur, o.m_num_positions,
                               o.m_vertices, o.m_normals, o.m_triangles, o.m_triangle_normals,
                               o.m_uv_channels, pack_object_props(o), o.m_num_materials,
                               o.m_materials, o.m_triangle_materials, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'MESH_INSTANCE'):
-                self.mxs.instance(o.m_name, o.m_instanced, pack_matrix(o), pack_object_props(o), o.m_materials, o.m_backface_material, )
+                self.mxs.instance(o.m_name, o.m_instanced, pack_matrix(o), o.m_motion_blur, pack_object_props(o), o.m_materials, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'SCENE'):
                 other = {'protect': o.m_export_protect_mxs,
@@ -1621,7 +1622,7 @@ class MXSExport():
                 properties = pack_prefix(o, 'bin_', )
                 properties['embed'] = o.m_embed
                 properties['pdata'] = o.m_pdata
-                self.mxs.ext_particles(o.m_name, properties, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
+                self.mxs.ext_particles(o.m_name, properties, pack_matrix(o), o.m_motion_blur, pack_object_props(o), o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'HAIR'):
                 if(o.m_extension == 'MGrassP'):
@@ -1636,17 +1637,17 @@ class MXSExport():
                 data = o.m_data
                 data['HAIR_POINTS'] = o.data_locs
                 
-                self.mxs.ext_hair(o.m_name, o.m_extension, pack_matrix(o), rr, tr,
-                                  o.m_data, pack_object_props(o), o.m_display_percent, dm,
-                                  o.m_material, o.m_backface_material, )
+                self.mxs.ext_hair(o.m_name, o.m_extension, pack_matrix(o), o.m_motion_blur,
+                                  rr, tr, o.m_data, pack_object_props(o), o.m_display_percent,
+                                  dm, o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'REFERENCE'):
                 flags = (o.m_flag_override_hide, o.m_flag_override_hide_to_camera, o.m_flag_override_hide_to_refl_refr, o.m_flag_override_hide_to_gi, )
-                self.mxs.reference(o.m_name, o.m_path, flags, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
+                self.mxs.reference(o.m_name, o.m_path, flags, pack_matrix(o), o.m_motion_blur, pack_object_props(o), o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'VOLUMETRICS'):
                 properties = (o.m_vtype, o.m_density, o.m_noise_seed, o.m_noise_low, o.m_noise_high, o.m_noise_detail, o.m_noise_octaves, o.m_noise_persistence)
-                self.mxs.ext_volumetrics(o.m_name, properties, pack_matrix(o), pack_object_props(o), o.m_material, o.m_backface_material, )
+                self.mxs.ext_volumetrics(o.m_name, properties, pack_matrix(o), o.m_motion_blur, pack_object_props(o), o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'SUBDIVISION'):
                 self.mxs.mod_subdivision(o.m_object, o.m_level, o.m_scheme, o.m_interpolation, o.m_crease, o.m_smooth, o.m_quad_pairs, )
@@ -1701,7 +1702,7 @@ class MXSExport():
                 geometry = (o.m_reference_time, o.m_resolution, o.m_ocean_depth, o.m_vertical_scale, o.m_ocean_dim, o.m_ocean_seed,
                             o.m_enable_choppyness, o.m_choppy_factor, o.m_enable_white_caps, )
                 wind = (o.m_ocean_wind_mod, o.m_ocean_wind_dir, o.m_ocean_wind_alignment, o.m_ocean_min_wave_length, o.m_damp_factor_against_wind, )
-                self.mxs.ext_sea(o.m_name, pack_matrix(o), pack_object_props(o), geometry, wind, o.m_material, o.m_backface_material, )
+                self.mxs.ext_sea(o.m_name, pack_matrix(o), o.m_motion_blur, pack_object_props(o), geometry, wind, o.m_material, o.m_backface_material, )
                 self.hierarchy.append((o.m_name, o.m_parent, o.m_type))
             elif(o.m_type == 'WIREFRAME_CONTAINER'):
                 self.mxs.empty(o.m_name, pack_matrix(o), pack_object_props(o), )
