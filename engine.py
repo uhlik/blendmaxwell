@@ -49,7 +49,7 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     lock = threading.Lock()
     tmp_dir = None
-    _t = None
+    t = None
     
     def _get_preview_material(self, scene):
         materials = {}
@@ -101,7 +101,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         w = self.resolution_x
         h = self.resolution_y
         a = np.array((0.0, 0.0, 0.0, 1.0) * (w * h))
-        a = a.reshape(w * h , 4)
+        a = a.reshape(w * h, 4)
         self._draw_array(a)
     
     def _fill_grid(self):
@@ -322,7 +322,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             
             abort = False
             
-            process = subprocess.Popen(args)
+            process = subprocess.Popen(args, cwd=self.tmp_dir, )
             while(process.poll() is None):
                 if(self.test_break()):
                     try:
@@ -393,7 +393,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(self.is_preview):
             return
         
-        self._t = time.time()
+        self.t = time.time()
         
         m = scene.maxwell_render
         
@@ -551,7 +551,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             self._reset_workflow(scene)
             self.report({'ERROR'}, m)
         
-        _d = datetime.timedelta(seconds=time.time() - self._t)
+        _d = datetime.timedelta(seconds=time.time() - self.t)
         log("export completed in {0}".format(_d), 1, LogStyles.MESSAGE)
     
     def _render_scene(self, scene):
@@ -735,8 +735,8 @@ class MaxwellRenderExportEngine(RenderEngine):
                     
                     if(not ok):
                         self._fill_grid()
-                
-                log("done.", 1)
+                    
+                    log("done.", 1)
             else:
                 # no direct rendering, better to use maxwell itself..
                 pass
