@@ -663,6 +663,10 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     def update(self, data, scene, ):
         if(self.is_preview):
+            # TODO: finish material preview for all platforms
+            if(not bpy.context.scene.maxwell_render.material_preview_enable):
+                return
+            
             mat = self._get_preview_material(scene)
             
             if(mat is not None):
@@ -696,6 +700,10 @@ class MaxwellRenderExportEngine(RenderEngine):
             abort = False
             
             if(self.is_preview):
+                # TODO: finish material preview for all platforms
+                if(not bpy.context.scene.maxwell_render.material_preview_enable):
+                    return
+                
                 mat = self._get_preview_material(scene)
                 
                 if(self.resolution_x <= 96):

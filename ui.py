@@ -2343,6 +2343,13 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         
         l = self.layout.column()
         
+        # TODO: finish material preview for all platforms
+        l.prop(mx, 'material_preview_enable')
+        c = l.column()
+        if(not mx.material_preview_enable):
+            c.enabled = False
+        l = c
+        
         if(bpy.data.filepath == ""):
             l.label("Save file first.", icon='ERROR', )
             l.active = False
