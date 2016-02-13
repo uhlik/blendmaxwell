@@ -61,6 +61,7 @@
 
 **changelog:**
 
+* 0.4.3 critical fix: smooth faces export, experimental feature: material preview rendering (currently Mac OS X only)
 * 0.4.2 movement and deformation blur, faster mesh export
 * 0.4.1 procedural textures, faster reading of mxs references
 * 0.4.0 heavy refactoring, added mxs reference viewport preview
