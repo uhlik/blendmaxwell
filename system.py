@@ -73,6 +73,14 @@ def check_for_import_mxm_template():
     return TEMPLATE
 
 
+def check_for_render_material_preview_template():
+    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "render_material_preview.py")
+    if(not os.path.exists(TEMPLATE)):
+        log("support directory is missing..", 1, LogStyles.ERROR, )
+        raise OSError("support directory is missing..")
+    return TEMPLATE
+
+
 def open_file_in_default_application(path):
     if(PLATFORM == 'Darwin'):
         os.system("open {}".format(shlex.quote(path)))
@@ -485,17 +493,12 @@ def python34_run_mxm_preview(mxm_path):
                                                shlex.quote(PYMAXWELL_PATH),
                                                shlex.quote(NUMPY_PATH),
                                                shlex.quote(mxm_path), )
-        
-        # log("read material preview from mxm:", 1)
-        # log("command:", 2)
-        # log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
         log("read material preview from: {}".format(mxm_path), 1)
         args = shlex.split(command_line, )
         o = subprocess.call(args, )
         if(o != 0):
             log("error in {0}".format(script_path), 0, LogStyles.ERROR, )
             raise Exception("error in {0}".format(script_path))
-        
     else:
         raise OSError("Unknown platform: {}.".format(PLATFORM))
 
@@ -639,7 +642,7 @@ def mxed_get_preview_scenes():
             # r.append((os.path.join(d, f), n.replace ("_", " ").capitalize(), ''))
             r.append((os.path.join(d, f), n, ''))
     r.sort()
-    r.insert(0, (' ', '(default)', ''))
+    r.insert(0, (os.path.join(d, "defaultpreview.mxs"), '(default)', ''))
     return r
 
 

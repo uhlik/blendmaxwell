@@ -21,11 +21,18 @@ import re
 import time
 import datetime
 import math
+import uuid
+import shutil
+import threading
+import traceback
+
+import shlex
+import subprocess
 
 import bpy
 from bpy.types import RenderEngine
 
-import numpy
+import numpy as np
 
 from .log import log, LogStyles, LOG_FILE_PATH, copy_paste_log
 from . import export
@@ -40,29 +47,350 @@ class MaxwellRenderExportEngine(RenderEngine):
     bl_label = 'Maxwell Render'
     bl_use_preview = True
     
+    lock = threading.Lock()
+    tmp_dir = None
     _t = None
     
-    def render(self, scene):
-        if(self.is_preview):
-            self._material_preview(scene)
-            return
+    def _get_preview_material(self, scene):
+        materials = {}
         
-        # # skip it completely..
-        # s = scene.render
-        # xr = int(s.resolution_x * s.resolution_percentage / 100.0)
-        # yr = int(s.resolution_y * s.resolution_percentage / 100.0)
-        # c = xr * yr
-        # b = [[0.0, 0.0, 0.0, 1.0]] * c
-        # r = self.begin_result(0, 0, xr, yr)
-        # l = r.layers[0]
-        # p = l.passes[0]
-        # p.rect = b
-        # self.end_result(r)
-        pass
+        def get_instance_materials(o):
+            oms = []
+            if hasattr(o, 'material_slots'):
+                for ms in o.material_slots:
+                    oms.append(ms.material)
+            if hasattr(o.data, 'materials'):
+                for m in o.data.materials:
+                    oms.append(m)
+            return oms
+        
+        for ob in [o for o in scene.objects if o.is_visible(scene) and not o.hide_render]:
+            for m in get_instance_materials(ob):
+                if m is not None:
+                    if ob.name not in materials.keys():
+                        materials[ob] = []
+                    materials[ob].append(m)
+        
+        preview_obs = [o for o in materials.keys() if o.name.startswith('preview')]
+        if len(preview_obs) < 1:
+            return None
+        
+        mats = materials[preview_obs[0]]
+        if(len(mats) < 1):
+            return None
+        
+        return mats[0]
     
-    def update(self, data, scene):
+    def _gamma_correct(self, a, ):
+        g = 2.2
+        a = a[:] ** g
+        return a
+    
+    def _draw_array(self, a, x=0, y=0, w=0, h=0, ):
+        if(w == 0):
+            w = self.resolution_x
+        if(h == 0):
+            h = self.resolution_y
+        r = self.begin_result(x, y, w, h)
+        l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
+        l.rect = a
+        self.end_result(r)
+        self.update_result(r)
+    
+    def _fill_black(self):
+        w = self.resolution_x
+        h = self.resolution_y
+        a = np.array((0.0, 0.0, 0.0, 1.0) * (w * h))
+        a = a.reshape(w * h , 4)
+        self._draw_array(a)
+    
+    def _fill_grid(self):
+        w = self.resolution_x
+        h = self.resolution_y
+        bg_col = (48 / 256, 48 / 256, 48 / 256, 1.0)
+        grid_col = (64 / 256, 64 / 256, 64 / 256, 1.0)
+        
+        pixels = np.array([bg_col] * (w * h))
+        pixels = np.reshape(pixels, (h, w, 4))
+        for i in range(0, w, 8):
+            pixels[:, i] = grid_col
+        for i in range(0, h, 8):
+            pixels[i] = grid_col
+        
+        def g(c):
+            r = []
+            for i, v in enumerate(c):
+                if(v <= 0.03928):
+                    r.append(v / 12.92)
+                else:
+                    r.append(math.pow((v + 0.055) / 1.055, 2.4))
+            return r
+        
+        a1 = np.reshape(pixels, (-1, 4))
+        a2 = []
+        for c in a1:
+            a2.append(g(c[:3]) + [1.0, ])
+        self._draw_array(a2)
+    
+    def _draw_square_array(self, a, w, h, ):
+        self._fill_black()
+        xr = self.resolution_x
+        yr = self.resolution_y
+        x = int((xr - w) / 2)
+        y = int((yr - h) / 2)
+        r = self.begin_result(x, y, w, h)
+        l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
+        l.rect = a
+        self.end_result(r)
+        self.update_result(r)
+    
+    def _draw_mxi_buffer(self, a, ):
+        rw = self.resolution_x
+        rh = self.resolution_y
+        w, h, _ = a.shape
+        
+        # TODO: fix material preview drawing. at least when image is bigger then view, slice centered rectangle
+        # if((rw, rh) == (32, 32)):
+        #     # icon > slice to 32x32
+        #     # works pretty well, unless material has 25% preview..
+        #     d = int(w / 32)
+        #     a = a[:32 * d:d, :32 * d:d]
+        # elif(w > rw):
+        #     a = a[:rw:, :rw:]
+        
+        a = a[:rw:, :rw:]
+        w, h, _ = a.shape
+        # flip
+        a = np.flipud(a)
+        # add alpha
+        a = np.reshape(a, (w * h, 3))
+        z = np.empty((w * h, 1))
+        z.fill(1.0)
+        a = np.append(a, z, axis=1, )
+        # draw
+        # xr = self.resolution_x
+        # yr = self.resolution_y
+        # x = int((xr - w) / 2)
+        # y = int((yr - h) / 2)
+        self._draw_square_array(a, w, h)
+    
+    def _read_mxm_preview(self, mat, ):
+        log("read mxm preview..", 1)
+        
+        m = mat.maxwell_render
+        p = m.mxm_file
+        if(p is ''):
+            return False
+        p = os.path.realpath(bpy.path.abspath(p))
+        if(not os.path.exists(p)):
+            return False
+        
+        a = None
+        if(system.PLATFORM == 'Darwin'):
+            system.python34_run_mxm_preview(p)
+            d = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", )
+            f = os.path.split(p)[1]
+            npy = os.path.join(d, "{}.npy".format(f))
+            if(os.path.exists(npy)):
+                a = np.load(npy)
+            # cleanup
+            if(os.path.exists(npy)):
+                os.remove(npy)
+        else:
+            # win / linux
+            a = mxs.read_mxm_preview(p)
+        
+        if(a is not None):
+            log("drawing..", 1)
+            rw = self.resolution_x
+            rh = self.resolution_y
+            # w, h, _ = a.shape
+            # TODO: fix material preview drawing. at least when image is bigger then view, slice centered rectangle
+            # if((rw, rh) == (32, 32)):
+            #     # icon > slice to 32x32
+            #     # works pretty well, unless material has 25% preview..
+            #     d = int(w / 32)
+            #     a = a[:32 * d:d, :32 * d:d]
+            # elif(w > rw):
+            #     a = a[:rw:, :rw:]
+            a = a[:rw:, :rw:]
+            w, h, _ = a.shape
+            # flip
+            a = np.flipud(a)
+            # gamma correct
+            a.astype(float)
+            a = a[:] / 255
+            a = self._gamma_correct(a)
+            # add alpha
+            a = np.reshape(a, (w * h, 3))
+            z = np.empty((w * h, 1))
+            z.fill(1.0)
+            a = np.append(a, z, axis=1, )
+            # draw
+            self._draw_square_array(a, w, h)
+            return True
+        
+        return False
+    
+    def _render_mat_preview(self, mat, ):
+        log("render preview..", 1)
+        
+        smx = bpy.context.scene.maxwell_render
+        render_sl = smx.material_preview_sl
+        render_t = smx.material_preview_time
+        render_s = smx.material_preview_scale
+        render_q = smx.material_preview_quality
+        render_v = smx.material_preview_verbosity
+        
+        m = mat.maxwell_render
+        render_sc = os.path.abspath(m.preview_scene)
+        render_sz = int(m.preview_size)
+        
+        # blend path, temp directory must be saved next to it
+        p = bpy.data.filepath
+        if(p == ""):
+            # if file is not saved, draw warning in ui and skip rendering
+            return False
+        
+        h, t = os.path.split(p)
+        n = mat.name
+        tmp_dir = os.path.join(h, "tmp-material_preview-{}-{}".format(n, self.uuid))
+        self.tmp_dir = tmp_dir
+        if(os.path.exists(tmp_dir) is False):
+            os.makedirs(tmp_dir)
+        
+        mxm = os.path.join(tmp_dir, "material.mxm")
+        
+        log("export mxm to: {}".format(mxm), 1, )
+        # save mxm to temp directory
+        if(m.use == 'CUSTOM'):
+            exmat = export.MXSMaterialCustom(mat.name)
+            d = exmat._repr()
+            system.mxed_create_and_edit_custom_material_helper(mxm, d, False, "", False, )
+        elif(m.use == 'REFERENCE'):
+            # when referenced mxm has no saved preview inside
+            shutil.copyfile(os.path.realpath(bpy.path.abspath(m.mxm_file)), mxm)
+        else:
+            exmat = export.MXSMaterialExtension(mat.name)
+            d = exmat._repr()
+            system.mxed_create_and_edit_custom_material_helper(mxm, d, False, "", False, )
+        
+        log("preview scene: {}".format(render_sc), 1, )
+        # copy preview scene mxs to temp directory
+        if(not os.path.exists(render_sc)):
+            # if missing, fill black and skip rendering
+            log("preview scene '{}' is missing..".format(render_sc), 0, LogStyles.ERROR, )
+            return False
+        
+        scene = os.path.join(tmp_dir, "scene.mxs")
+        result = os.path.join(tmp_dir, "render.mxi")
+        
+        # start rendering..
+        if(system.PLATFORM == 'Darwin'):
+            PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
+            PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+            TEMPLATE = system.check_for_render_material_preview_template()
+            NUMPY_PATH = os.path.split(os.path.split(np.__file__)[0])[0]
+            
+            # make script
+            script_path = os.path.join(tmp_dir, "run.py")
+            with open(script_path, mode='w', encoding='utf-8') as f:
+                # read template
+                with open(TEMPLATE, encoding='utf-8') as t:
+                    code = "".join(t.readlines())
+                # write template to a new file
+                f.write(code)
+            
+            command_line = "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(shlex.quote(PY),
+                                                                                 shlex.quote(script_path),
+                                                                                 shlex.quote(PYMAXWELL_PATH),
+                                                                                 shlex.quote(NUMPY_PATH),
+                                                                                 shlex.quote(LOG_FILE_PATH),
+                                                                                 shlex.quote(render_sc),
+                                                                                 shlex.quote(scene),
+                                                                                 shlex.quote(mxm),
+                                                                                 shlex.quote(str(render_sz)),
+                                                                                 shlex.quote(str(render_sl)),
+                                                                                 shlex.quote(str(render_t)),
+                                                                                 shlex.quote(str(render_s)),
+                                                                                 shlex.quote(render_q),
+                                                                                 shlex.quote(str(render_v)),
+                                                                                 shlex.quote(result), )
+            log("command:", 2)
+            log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
+            args = shlex.split(command_line, )
+            
+            abort = False
+            
+            process = subprocess.Popen(args)
+            while(process.poll() is None):
+                if(self.test_break()):
+                    try:
+                        process.terminate()
+                        abort = True
+                        log('aborting..', 1, )
+                    except Exception as e:
+                        log(traceback.format_exc(), 0, LogStyles.ERROR)
+                    break
+                
+                log('rendering..', 1, )
+                time.sleep(1)
+            
+            if(abort):
+                return False
+            
+            a = None
+            npy = os.path.join(tmp_dir, "preview.npy")
+            if(os.path.exists(npy)):
+                a = np.load(npy)
+            if(a is not None):
+                if(a.shape == (1, 1, 3)):
+                    # there was an error
+                    log('preview render failed..', 1, LogStyles.ERROR, )
+                    return False
+            else:
+                log('preview render pixels read failed..', 1, LogStyles.ERROR, )
+                return False
+            
+            log("drawing..", 1)
+            self._draw_mxi_buffer(a)
+            
+            return True
+        else:
+            # TODO: win/linux preview render
+            raise Exception('not implemented or permitted..')
+        
+        return False
+    
+    def _render_mat_preview_cleanup(self, finished=True, ):
+        log("cleanup.. (finished: {})".format(finished), 1)
+        if(self.tmp_dir is None):
+            return
+        tmp_dir = self.tmp_dir
+        
+        def rm(p, warn_if_missing=True, ):
+            if(os.path.exists(p)):
+                os.remove(p)
+            else:
+                if(warn_if_missing):
+                    log("cleanup: {} does not exist?".format(p), 1, LogStyles.WARNING, )
+        
+        rm(os.path.join(tmp_dir, 'material.mxm'))
+        rm(os.path.join(tmp_dir, 'preview.npy'), finished, )
+        rm(os.path.join(tmp_dir, 'render.mxi'), finished, )
+        rm(os.path.join(tmp_dir, 'render.exr'), False, )
+        rm(os.path.join(tmp_dir, 'run.py'))
+        rm(os.path.join(tmp_dir, 'scene.mxs'), finished, )
+        
+        if(os.path.exists(tmp_dir)):
+            os.rmdir(tmp_dir)
+        else:
+            log("cleanup: {} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
+        
+        self.tmp_dir = None
+    
+    def _update(self, data, scene, ):
         if(self.is_preview):
-            # self._material_preview(scene)
             return
         
         self._t = time.time()
@@ -116,7 +444,6 @@ class MaxwellRenderExportEngine(RenderEngine):
             mxs_suffix = ""
         
         def walk_dir(p):
-            """gets directory contents in format: {files:[...], dirs:[...]}"""
             r = {'files': [], 'dirs': [], }
             for (root, dirs, files) in os.walk(p):
                 r['files'].extend(files)
@@ -227,225 +554,6 @@ class MaxwellRenderExportEngine(RenderEngine):
         _d = datetime.timedelta(seconds=time.time() - self._t)
         log("export completed in {0}".format(_d), 1, LogStyles.MESSAGE)
     
-    def _material_preview(self, scene):
-        def get_material(scene):
-            objects_materials = {}
-            
-            def get_instance_materials(ob):
-                obmats = []
-                if hasattr(ob, 'material_slots'):
-                    for ms in ob.material_slots:
-                        obmats.append(ms.material)
-                if hasattr(ob.data, 'materials'):
-                    for m in ob.data.materials:
-                        obmats.append(m)
-                return obmats
-            
-            for object in [ob for ob in scene.objects if ob.is_visible(scene) and not ob.hide_render]:
-                for mat in get_instance_materials(object):
-                    if mat is not None:
-                        if object.name not in objects_materials.keys():
-                            objects_materials[object] = []
-                        objects_materials[object].append(mat)
-            
-            preview_objects = [o for o in objects_materials.keys() if o.name.startswith('preview')]
-            if len(preview_objects) < 1:
-                return
-            
-            mats = objects_materials[preview_objects[0]]
-            if(len(mats) < 1):
-                return None
-            return mats
-        
-        mats = get_material(scene)
-        
-        def fill_black():
-            xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-            yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-            c = xr * yr
-            b = [[0.0, 0.0, 0.0, 1.0]] * c
-            r = self.begin_result(0, 0, xr, yr)
-            l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
-            l.rect = b
-            self.end_result(r)
-        
-        def fill_grid():
-            xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-            yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-            c = xr * yr
-            
-            '''
-            current_theme = bpy.context.user_preferences.themes.items()[0][0]
-            theme_bg_col = bpy.context.user_preferences.themes[current_theme].image_editor.space.back
-            
-            def g(c):
-                r = []
-                for i, v in enumerate(c):
-                    if(v <= 0.03928):
-                        r.append(v / 12.92)
-                    else:
-                        r.append(math.pow((v + 0.055) / 1.055, 2.4))
-                return r
-            
-            bg_col = g(theme_bg_col) + [1.0, ]
-            
-            a = 1.0 * maths.remap(8, 0, 100, 0.0, 1.0)
-            grid_col = [bg_col[0] + a, bg_col[1] + a, bg_col[2] + a, 1.0]
-            
-            a = 1.0 * maths.remap(6, 0, 100, 0.0, 1.0)
-            grid_col2 = [bg_col[0] + a, bg_col[1] + a, bg_col[2] + a, 1.0]
-            '''
-            
-            bg_col = (48 / 256, 48 / 256, 48 / 256, 1.0)
-            grid_col = (64 / 256, 64 / 256, 64 / 256, 1.0)
-            
-            pixels = numpy.array([bg_col] * c)
-            pixels = numpy.reshape(pixels, (yr, xr, 4))
-            for i in range(0, xr, 8):
-                pixels[:, i] = grid_col
-            for i in range(0, yr, 8):
-                pixels[i] = grid_col
-            
-            def g(c):
-                r = []
-                for i, v in enumerate(c):
-                    if(v <= 0.03928):
-                        r.append(v / 12.92)
-                    else:
-                        r.append(math.pow((v + 0.055) / 1.055, 2.4))
-                return r
-            
-            a1 = numpy.reshape(pixels, (-1, 4))
-            a2 = []
-            for c in a1:
-                a2.append(g(c[:3]) + [1.0, ])
-            
-            r = self.begin_result(0, 0, xr, yr)
-            l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
-            l.rect = a2
-            self.end_result(r)
-        
-        if(mats is not None):
-            mat = mats[0]
-            m = mat.maxwell_render
-            
-            # if(bpy.context.scene.maxwell_render_private.material != mat.name):
-            #     bpy.context.scene.maxwell_render_private.material = mat.name
-            # else:
-            #     if(not m.flag):
-            #         fill_black()
-            #         return
-            
-            w = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-            h = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-            
-            fill_black()
-            
-            # if(w, h) == (32, 32):
-            #     # # skip icon rendering
-            #     # fill_black()
-            #     return
-            
-            # print(w, h)
-            
-            # bpy.data.materials[mat.name].maxwell_render.flag = False
-            
-            p = m.mxm_file
-            if(p is not ''):
-                p = os.path.realpath(bpy.path.abspath(p))
-                a = None
-                
-                if(system.PLATFORM == 'Darwin'):
-                    system.python34_run_mxm_preview(p)
-                    d = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", )
-                    f = os.path.split(p)[1]
-                    npy = os.path.join(d, "{}.npy".format(f))
-                    if(os.path.exists(npy)):
-                        a = numpy.load(npy)
-                    # cleanup
-                    if(os.path.exists(npy)):
-                        os.remove(npy)
-                else:
-                    a = mxs.read_mxm_preview(p)
-                
-                if(a is not None):
-                    rw = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-                    rh = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-                    w, h, _ = a.shape
-                    
-                    # TODO: fix material preview drawing. at least when image is bigger then view, slice centered rectangle
-                    
-                    if((rw, rh) == (32, 32)):
-                        # icon > slice to 32x32
-                        # works pretty well, unless material has 25% preview..
-                        d = int(w / 32)
-                        a = a[:32 * d:d, :32 * d:d]
-                    # elif(rw < w and rh < h):
-                    #     # wd = int(w / rw)
-                    #     # hd = int(h / rh)
-                    #     # if(wd > hd):
-                    #     #     d = wd
-                    #     # else:
-                    #     #     d = hd
-                    #     # a = a[:rw * d:d, :rh * d:d]
-                    #
-                    #     if(rw < rh):
-                    #         # wd = int(w / rw)
-                    #         # hd = int(h / rh)
-                    #         # a = a[:rw * wd:wd, :rh * hd:hd]
-                    #         pass
-                    #     else:
-                    #         # d = int(h / rh)
-                    #         d = int(w / rw)
-                    #         a = a[:rh * d:d, :rh * d:d]
-                    #
-                    # elif(rw == w and rh == h):
-                    #     pass
-                    # elif(rw > w and rh > h):
-                    #     pass
-                    elif(w > rw):
-                        # a = a[:rw:, :rw:]
-                        a = a[:rw:, :rw:]
-                    
-                    w, h, _ = a.shape
-                    # print(a.shape, rw, rh)
-                    
-                    # flip
-                    a = numpy.flipud(a)
-                    
-                    # gamma correct
-                    a.astype(float)
-                    g = 2.2
-                    a = (a[:] / 255) ** g
-                    a = numpy.reshape(a, (w * h, 3))
-                    z = numpy.empty((w * h, 1))
-                    z.fill(1.0)
-                    a = numpy.append(a, z, axis=1, )
-                    
-                    # draw
-                    xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-                    yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-                    x = int((xr - w) / 2)
-                    y = int((yr - h) / 2)
-                    
-                    r = self.begin_result(x, y, w, h)
-                    l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
-                    l.rect = a.tolist()
-                    self.end_result(r)
-                else:
-                    # xr = int(scene.render.resolution_x * scene.render.resolution_percentage / 100.0)
-                    # yr = int(scene.render.resolution_y * scene.render.resolution_percentage / 100.0)
-                    # c = xr * yr
-                    # b = [[0.0, 0.0, 0.0, 1.0]] * c
-                    # r = self.begin_result(0, 0, xr, yr)
-                    # l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
-                    # l.rect = b
-                    # self.end_result(r)
-                    fill_grid()
-            else:
-                # fill_black()
-                fill_grid()
-    
     def _render_scene(self, scene):
         m = scene.maxwell_render
         p = m.private_path
@@ -549,3 +657,102 @@ class MaxwellRenderExportEngine(RenderEngine):
         m.private_basepath = ""
         m.private_image = ""
         m.private_mxi = ""
+    
+    def __init__(self):
+        self.uuid = uuid.uuid1()
+    
+    def update(self, data, scene, ):
+        if(self.is_preview):
+            mat = self._get_preview_material(scene)
+            
+            if(mat is not None):
+                mx = mat.maxwell_render
+                if(not mx.preview_flag):
+                    # skip completelly..
+                    return
+                else:
+                    # HACK: force render of large preview when preview_flag is clicked, not just icon..
+                    obj = bpy.context.scene.objects.active
+                    for i, slot in enumerate(obj.material_slots):
+                        if(slot.material.name == mat.name):
+                            break
+                    slot.material = None
+                    slot.material = bpy.data.materials[mat.name]
+                    bpy.data.materials[mat.name].maxwell_render.preview_flag = False
+            
+            log("material preview (update): '{}'".format(mat.name), 0, )
+            
+            if(self.resolution_x <= 96):
+                # skip icon rendering..
+                log("skipping icon render..", 1, )
+            else:
+                # this is never called? material preview update with large resolution?
+                log("RenderEngine.update() unexpected call..", 1, LogStyles.WARNING)
+        else:
+            self._update(data, scene)
+    
+    def render(self, scene, ):
+        with self.lock:
+            abort = False
+            
+            if(self.is_preview):
+                mat = self._get_preview_material(scene)
+                
+                if(self.resolution_x <= 96):
+                    # skip icon rendering..
+                    pass
+                else:
+                    log("material preview (render): '{}'".format(mat.name), 0, )
+                    
+                    # fill with grid to indicate rendering..
+                    self._fill_grid()
+                    
+                    mx = mat.maxwell_render
+                    smx = bpy.context.scene.maxwell_render
+                    
+                    ref = False
+                    ok = False
+                    try:
+                        if(smx.material_preview_external and mx.use == 'REFERENCE'):
+                            ok = self._read_mxm_preview(mat)
+                            ref = True
+                            if(not ok):
+                                log("failed to get mxm preview..", 1)
+                                ok = self._render_mat_preview(mat)
+                                ref = False
+                        else:
+                            # always render new material preview
+                            ok = self._render_mat_preview(mat)
+                    except Exception as e:
+                        # log(traceback.format_exc())
+                        log(traceback.format_exc(), 0, LogStyles.ERROR, )
+                        ok = False
+                        # self.report({'ERROR'}, '{}'.format(e))
+                    
+                    if(not ref):
+                        # cleanup after loading preview from referenced material is done somewhere else. and on windows/linux is not even needed
+                        self._render_mat_preview_cleanup(ok)
+                    
+                    if(not ok):
+                        self._fill_grid()
+                
+                log("done.", 1)
+            else:
+                # no direct rendering, better to use maxwell itself..
+                pass
+                
+                # process = subprocess.Popen(shlex.split('sleep 10'))
+                # while(process.poll() is None):
+                #     if(self.test_break()):
+                #         try:
+                #             process.terminate()
+                #             abort = True
+                #             log('aborting..', 1, )
+                #         except Exception as e:
+                #             log(traceback.format_exc(), 0, LogStyles.ERROR)
+                #         break
+                #     log('rendering..', 1, )
+                #     time.sleep(1)
+    
+    def __del__(self):
+        pass

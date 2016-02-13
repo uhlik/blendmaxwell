@@ -1071,6 +1071,7 @@ class SaveMaterialAsMXM(Operator):
     force_preview = BoolProperty(name="Force Preview", default=True, )
     force_preview_scene = StringProperty(name="Force Preview Scene", default="", )
     open_in_mxed = BoolProperty(name="Open In Mxed", default=True, )
+    swap = BoolProperty(name="Swap Material Type To Reference", default=True, )
     
     @classmethod
     def poll(cls, context):
@@ -1151,8 +1152,9 @@ class SaveMaterialAsMXM(Operator):
         if(system.PLATFORM == 'Windows'):
             rp = os.path.abspath(self.filepath)
         
-        context.material.maxwell_render.use = 'REFERENCE'
-        context.material.maxwell_render.mxm_file = rp
+        if(self.swap):
+            context.material.maxwell_render.use = 'REFERENCE'
+            context.material.maxwell_render.mxm_file = rp
         
         return {'FINISHED'}
 
