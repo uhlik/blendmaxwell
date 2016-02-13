@@ -2341,10 +2341,24 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         sc = context.scene
         mx = sc.maxwell_render
         
-        # TODO: finish material preview rendering
-        l.label("Not finished yet.", icon='ERROR', )
         l = self.layout.column()
-        l.active = False
+        
+        # TODO: finish material preview for all platforms
+        l.prop(mx, 'material_preview_enable')
+        c = l.column()
+        if(not mx.material_preview_enable):
+            c.enabled = False
+        l = c
+        
+        if(bpy.data.filepath == ""):
+            l.label("Save file first.", icon='ERROR', )
+            l.active = False
+        
+        r = l.row()
+        r.prop(m, 'preview_flag', toggle=True, )
+        if(m.preview_flag):
+            # HACK: because ugly hacking in preview rendering, this being clicked, while rendering is in progress, result in instant crash
+            r.enabled = False
         
         r = l.row()
         r2 = r.row(align=True)
@@ -2360,6 +2374,7 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
             # c.prop(mx, 'material_preview_scale')
             l.prop(mx, 'material_preview_quality')
             l.prop(mx, 'material_preview_external')
+            l.prop(mx, 'material_preview_verbosity')
 
 
 class MaterialTypePanel(MaterialButtonsPanel, Panel):

@@ -2774,7 +2774,6 @@ class MXSMesh(MXSObject):
                 #     self.m_hide = True
                 self.m_hide = self.o['extra_options']['hide']
         
-        # deformation blur
         self.m_num_positions = 0
         self.m_vertices = []
         self.m_normals = []
@@ -2783,10 +2782,10 @@ class MXSMesh(MXSObject):
         self.m_uv_channels = None
         self.m_triangle_materials = None
         
+        # deformation blur
         sc = bpy.context.scene
         cf = sc.frame_current
         sf = sc.frame_subframe
-        
         steps = MXSMotionBlurHelper.object_steps(self.b_object)
         
         if(self.mx.deformation):
@@ -2976,9 +2975,9 @@ class MXSMesh(MXSObject):
     
     def _mesh_to_data(self, me, ):
         # vertices
-        vertices = [[v.co.to_tuple() for v in me.vertices], ]
+        vertices = [v.co.to_tuple() for v in me.vertices]
         # vertex normals
-        normals = [[v.normal.to_tuple() for v in me.vertices], ]
+        normals = [v.normal.to_tuple() for v in me.vertices]
         # triangles and triangle normals
         triangles = []
         triangle_normals = []
@@ -2998,7 +2997,7 @@ class MXSMesh(MXSObject):
             t = tuple(fv) + nix
             triangles.append(t)
         
-        triangle_normals.append(tns)
+        triangle_normals = tns
         # uv channels
         uv_channels = []
         for tix, uvtex in enumerate(me.tessface_uv_textures):
@@ -3037,15 +3036,24 @@ class MXSMesh(MXSObject):
             ts = np.zeros((l * 3), dtype=np.int, )
             ns = np.zeros((l * 3), dtype=np.float, )
             ms = np.zeros(l, dtype=np.int, )
+            fs = np.zeros(l, dtype=np.int, )
             me.polygons.foreach_get('vertices', ts)
             me.polygons.foreach_get('normal', ns)
             me.polygons.foreach_get('material_index', ms)
+            me.polygons.foreach_get('use_smooth', fs)
             
             vl = len(me.vertices)
             ni = np.arange(vl, vl + l, dtype=np.int, )
             ni = np.reshape(ni, (-1, 1))
             ni = np.concatenate((ni, ni, ni), axis=1)
+            
+            # smooth faces > use vertex normals
             ts = np.reshape(ts, (l, 3))
+            for i, b in enumerate(fs):
+                if(b):
+                    # same indices as vertex locations, so just copy that
+                    ni[i] = ts[i]
+            
             ts = np.concatenate((ts, ni), axis=1)
             
             ti = np.zeros(l, dtype=np.int, )

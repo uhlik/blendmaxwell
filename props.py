@@ -787,10 +787,13 @@ class SceneProperties(PropertyGroup):
     
     material_preview_show = BoolProperty(name="Options", default=False, )
     material_preview_sl = IntProperty(name="Sampling Level", default=10, min=1, max=25, )
-    material_preview_time = IntProperty(name="Time Limit (s)", default=10, min=1, max=999, )
+    material_preview_time = IntProperty(name="Time Limit (m)", default=1, min=1, max=10, )
     material_preview_scale = IntProperty(name="Scale (%)", default=100, min=20, max=100, subtype='PERCENTAGE', )
     material_preview_quality = EnumProperty(name="Quality", items=[('RS0', "Draft", ""), ('RS1', "Production", "")], default='RS0', )
     material_preview_external = BoolProperty(name="Prefer Preview From External MXMs", default=True, )
+    material_preview_verbosity = IntProperty(name="Verbosity Level", default=1, min=0, max=4, description="0: no information given, 1: errors, 2: warnings, 3: info, 4: all", )
+    # TODO: finish material preview for all platforms
+    material_preview_enable = BoolProperty(name="Enable Material Preview Rendering", default=False, description="Experimental, currently only for Mac OS X", )
     
     @classmethod
     def register(cls):
@@ -2129,8 +2132,8 @@ class MaterialProperties(PropertyGroup):
     wizards = PointerProperty(name="Material Wizards", type=MaterialWizards, )
     
     preview_scene = EnumProperty(name="Preview Scene", items=_get_material_preview_scenes, )
-    preview_size = EnumProperty(name="Size", items=[('25', "25%", ""), ('50', "50%", ""), ('100', "100%", ""), ('150', "150%", ""), ], default='100', )
-    preview_update = BoolProperty(name="Auto Update", default=False, )
+    preview_size = EnumProperty(name="Size", items=[('50', "25%", ""), ('100', "50%", ""), ('200', "100%", ""), ('305', "150%", ""), ], default='200', )
+    preview_flag = BoolProperty(name="Update", default=False, options={'SKIP_SAVE'}, )
     
     @classmethod
     def register(cls):
