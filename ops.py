@@ -1717,8 +1717,8 @@ class LoadMaterialFromMXM(Operator, ImportHelper):
             
             # emitter
             ep = ld['emitter']
+            ex = layer.emitter
             if(ep['enabled']):
-                ex = layer.emitter
                 ex.enabled = ep['enabled']
                 ex.type = str(ep['type'])
                 ex.ies_data = ep['ies_data']
