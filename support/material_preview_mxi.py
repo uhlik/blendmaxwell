@@ -29,6 +29,8 @@ import argparse
 import textwrap
 import json
 import os
+import shlex
+import subprocess
 
 
 LOG_FILE_PATH = None
@@ -43,78 +45,25 @@ def log(msg, indent=0):
 
 
 def main(args):
-    mgr = CextensionManager.instance()
-    mgr.loadAllExtensions()
-    
-    s = Cmaxwell(mwcallback)
-    ok = s.readMXS(args.scene)
-    
-    def get_material_names(s):
-        it = CmaxwellMaterialIterator()
-        o = it.first(s)
-        l = []
-        while not o.isNull():
-            name = o.getName()
-            l.append(name)
-            o = it.next()
-        return l
-    
-    names = get_material_names(s)
-    for n in names:
-        if(n.lower() == 'preview'):
-            break
-    
-    material = s.getMaterial(n)
-    material.read(args.mxm)
-    material.forceToWriteIntoScene()
-    
-    # if draft engine is selected, no mxi will be created.. now what..
-    s.setRenderParameter('ENGINE', args.quality)
-    
-    h, t = os.path.split(args.result)
-    n, e = os.path.splitext(t)
-    exr = os.path.join(h, "{}.exr".format(n))
-    
-    s.setPath('RENDER', exr, 32)
-    s.setRenderParameter('DO NOT SAVE MXI FILE', True)
-    s.setRenderParameter('DO NOT SAVE IMAGE FILE', True)
-    
-    src_dir, _ = os.path.split(args.scene)
-    ok = s.addSearchingPath(src_dir)
-    
-    ok = s.writeMXS(args.scene_render)
-    
-    p = []
-    p.append('-mxs:{}'.format(args.scene_render))
-    p.append('-mxi:{}'.format(args.result))
-    p.append('-o:{}'.format(exr))
-    p.append('-res:{0}x{0}'.format(args.size))
-    p.append('-time:{}'.format(args.time))
-    p.append('-sl:{}'.format(args.sl))
-    p.append('-dep:{}'.format(src_dir))
-    p.append('-nowait')
-    p.append('-nogui')
-    p.append('-hide')
-    p.append('-verbose:{}'.format(args.verbosity))
-    
-    runMaxwell(p)
-    
-    if(os.path.exists(args.result) or os.path.exists(exr)):
-        if(args.quality == 'RS0'):
-            # draft engine: render exr, load to mxi and then save
-            mxi = CmaxwellMxi()
-            mxi.readImage(exr)
-            mxi.write(args.result)
-            os.remove(exr)
-    
-        mxi = CmaxwellMxi()
-        mxi.read(args.result)
-        
-        a, _ = mxi.getRenderBuffer(32)
+    mp = os.path.join(args.directory, 'render.mxi')
+    ep = os.path.join(args.directory, 'render.exr')
+    a = numpy.zeros((1, 1, 3), dtype=numpy.float, )
+    if(os.path.exists(mp)):
+        log('reading mxi: {}'.format(mp), 2)
+        i = CmaxwellMxi()
+        i.read(mp)
+        a, _ = i.getRenderBuffer(32)
+    elif(os.path.exists(ep)):
+        log('reading exr: {}'.format(ep), 2)
+        i = CmaxwellMxi()
+        i.readImage(ep)
+        i.write(mp)
+        a, _ = i.getRenderBuffer(32)
     else:
-        a = numpy.zeros((1, 1, 3), dtype=numpy.float, )
+        log('image not found..', 2)
     
-    np = os.path.join(h, "preview.npy")
+    np = os.path.join(args.directory, "preview.npy")
+    log('writing numpy: {}'.format(np), 2)
     numpy.save(np, a)
 
 
@@ -124,16 +73,8 @@ if __name__ == "__main__":
     parser.add_argument('pymaxwell_path', type=str, help='path to directory containing pymaxwell')
     parser.add_argument('numpy_path', type=str, help='path to directory containing numpy')
     parser.add_argument('log_file', type=str, help='path to log file')
-    parser.add_argument('scene', type=str, help='path to source scene')
-    parser.add_argument('scene_render', type=str, help='path to scene.mxs')
-    parser.add_argument('mxm', type=str, help='path to material.mxs')
-    parser.add_argument('size', type=int, help='preview size in pixels')
-    parser.add_argument('sl', type=int, help='desired sl')
-    parser.add_argument('time', type=int, help='desired time in seconds')
-    parser.add_argument('scale', type=int, help='scale (currently unused)')
+    parser.add_argument('directory', type=str, help='path to temp directory')
     parser.add_argument('quality', type=str, help='quality')
-    parser.add_argument('verbosity', type=int, help='verbosity')
-    parser.add_argument('result', type=str, help='path to render.mxi')
     args = parser.parse_args()
     
     PYMAXWELL_PATH = args.pymaxwell_path

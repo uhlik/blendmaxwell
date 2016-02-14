@@ -81,6 +81,21 @@ def check_for_render_material_preview_template():
     return TEMPLATE
 
 
+def check_for_material_preview_scene_template():
+    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "material_preview_scene.py")
+    if(not os.path.exists(TEMPLATE)):
+        log("support directory is missing..", 1, LogStyles.ERROR, )
+        raise OSError("support directory is missing..")
+    return TEMPLATE
+
+def check_for_material_preview_mxi_template():
+    TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "material_preview_mxi.py")
+    if(not os.path.exists(TEMPLATE)):
+        log("support directory is missing..", 1, LogStyles.ERROR, )
+        raise OSError("support directory is missing..")
+    return TEMPLATE
+
+
 def open_file_in_default_application(path):
     if(PLATFORM == 'Darwin'):
         os.system("open {}".format(shlex.quote(path)))

@@ -289,44 +289,55 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(system.PLATFORM == 'Darwin'):
             PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
             PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
-            TEMPLATE = system.check_for_render_material_preview_template()
+            TEMPLATE_SCENE = system.check_for_material_preview_scene_template()
+            TEMPLATE_MXI = system.check_for_material_preview_mxi_template()
             NUMPY_PATH = os.path.split(os.path.split(np.__file__)[0])[0]
             
-            # make script
-            script_path = os.path.join(tmp_dir, "run.py")
+            log("make preview scene..", 1, )
+            script_path = os.path.join(tmp_dir, "scene.py")
             with open(script_path, mode='w', encoding='utf-8') as f:
                 # read template
-                with open(TEMPLATE, encoding='utf-8') as t:
+                with open(TEMPLATE_SCENE, encoding='utf-8') as t:
                     code = "".join(t.readlines())
                 # write template to a new file
                 f.write(code)
             
-            command_line = "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(shlex.quote(PY),
-                                                                                 shlex.quote(script_path),
-                                                                                 shlex.quote(PYMAXWELL_PATH),
-                                                                                 shlex.quote(NUMPY_PATH),
-                                                                                 shlex.quote(LOG_FILE_PATH),
-                                                                                 shlex.quote(render_sc),
-                                                                                 shlex.quote(scene),
-                                                                                 shlex.quote(mxm),
-                                                                                 shlex.quote(str(render_sz)),
-                                                                                 shlex.quote(str(render_sl)),
-                                                                                 shlex.quote(str(render_t)),
-                                                                                 shlex.quote(str(render_s)),
-                                                                                 shlex.quote(render_q),
-                                                                                 shlex.quote(str(render_v)),
-                                                                                 shlex.quote(result), )
+            q = shlex.quote
+            p = [q(PY), q(script_path), q(PYMAXWELL_PATH), q(LOG_FILE_PATH), q(render_sc), q(tmp_dir), q(render_q), ]
+            cmd = "{} {} {} {} {} {} {}".format(*p)
             log("command:", 2)
-            log("{0}".format(command_line), 0, LogStyles.MESSAGE, prefix="")
-            args = shlex.split(command_line, )
+            log("{0}".format(cmd), 0, LogStyles.MESSAGE, prefix="")
+            args = shlex.split(cmd)
+            process_scene = subprocess.Popen(args, cwd=tmp_dir, )
+            process_scene.wait()
+            if(process_scene.returncode != 0):
+                return False
+            
+            log("render preview scene..", 1, )
+            app = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Maxwell.app', ))
+            executable = os.path.join(app, "Contents/MacOS/Maxwell")
+            
+            q = shlex.quote
+            p = [q(executable),
+                 q(os.path.join(tmp_dir, 'scene.mxs')),
+                 q(os.path.join(tmp_dir, 'render.mxi')),
+                 q(os.path.join(tmp_dir, 'render.exr')),
+                 q(os.path.split(render_sc)[0]),
+                 q(str(render_sz)),
+                 q(str(render_sz)),
+                 q(str(render_t)),
+                 q(str(render_sl)),
+                 q(str(render_v)), ]
+            line = "{} -mxs:{} -mxi:{} -o:{} -dep:{} -res:{}x{} -time:{} -sl:{} -nowait -nogui -hide -verbose:{}".format(*p)
+            cmd = shlex.split(line)
             
             abort = False
-            
-            process = subprocess.Popen(args, cwd=self.tmp_dir, )
-            while(process.poll() is None):
+            process_render = subprocess.Popen(cmd, cwd=tmp_dir, )
+            while(process_render.poll() is None):
                 if(self.test_break()):
                     try:
-                        process.terminate()
+                        # process_render.terminate()
+                        process_render.kill()
                         abort = True
                         log('aborting..', 1, )
                     except Exception as e:
@@ -337,6 +348,26 @@ class MaxwellRenderExportEngine(RenderEngine):
                 time.sleep(1)
             
             if(abort):
+                return False
+            
+            log("read preview render..", 1, )
+            script_path = os.path.join(tmp_dir, "preview.py")
+            with open(script_path, mode='w', encoding='utf-8') as f:
+                # read template
+                with open(TEMPLATE_MXI, encoding='utf-8') as t:
+                    code = "".join(t.readlines())
+                # write template to a new file
+                f.write(code)
+            
+            q = shlex.quote
+            p = [q(PY), q(script_path), q(PYMAXWELL_PATH), q(NUMPY_PATH), q(LOG_FILE_PATH), q(tmp_dir), q(render_q), ]
+            cmd = "{} {} {} {} {} {} {}".format(*p)
+            log("command:", 2)
+            log("{0}".format(cmd), 0, LogStyles.MESSAGE, prefix="")
+            args = shlex.split(cmd)
+            process_scene = subprocess.Popen(args, cwd=tmp_dir, )
+            process_scene.wait()
+            if(process_scene.returncode != 0):
                 return False
             
             a = None
@@ -377,9 +408,10 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         rm(os.path.join(tmp_dir, 'material.mxm'))
         rm(os.path.join(tmp_dir, 'preview.npy'), finished, )
+        rm(os.path.join(tmp_dir, 'preview.py'), finished, )
         rm(os.path.join(tmp_dir, 'render.mxi'), finished, )
         rm(os.path.join(tmp_dir, 'render.exr'), False, )
-        rm(os.path.join(tmp_dir, 'run.py'))
+        rm(os.path.join(tmp_dir, 'scene.py'))
         rm(os.path.join(tmp_dir, 'scene.mxs'), finished, )
         
         if(os.path.exists(tmp_dir)):
