@@ -790,7 +790,7 @@ class SceneProperties(PropertyGroup):
     material_preview_time = IntProperty(name="Time Limit (m)", default=1, min=1, max=10, )
     material_preview_scale = IntProperty(name="Scale (%)", default=100, min=20, max=100, subtype='PERCENTAGE', )
     material_preview_quality = EnumProperty(name="Quality", items=[('RS0', "Draft", ""), ('RS1', "Production", "")], default='RS0', )
-    material_preview_external = BoolProperty(name="Prefer Preview From External MXMs", default=True, )
+    material_preview_external = BoolProperty(name="Load Preview From Referenced MXMs", default=True, description="Prefer loading preview from referenced MXMs, rendering will start only when MXM has no saved preview. Uncheck to always render preview.", )
     material_preview_verbosity = IntProperty(name="Verbosity Level", default=1, min=0, max=4, description="0: no information given, 1: errors, 2: warnings, 3: info, 4: all", )
     # TODO: finish material preview for all platforms
     material_preview_enable = BoolProperty(name="Enable Material Preview Rendering", default=False, description="Experimental, currently only for Mac OS X", )

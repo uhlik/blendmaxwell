@@ -81,28 +81,17 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         return mats[0]
     
-    def _gamma_correct(self, a, ):
-        g = 2.2
-        a = a[:] ** g
-        return a
-    
-    def _draw_array(self, a, x=0, y=0, w=0, h=0, ):
-        if(w == 0):
-            w = self.resolution_x
-        if(h == 0):
-            h = self.resolution_y
-        r = self.begin_result(x, y, w, h)
-        l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
-        l.rect = a
-        self.end_result(r)
-        self.update_result(r)
-    
     def _fill_black(self):
         w = self.resolution_x
         h = self.resolution_y
         a = np.array((0.0, 0.0, 0.0, 1.0) * (w * h))
         a = a.reshape(w * h, 4)
-        self._draw_array(a)
+        
+        r = self.begin_result(0, 0, w, h)
+        l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
+        l.rect = a
+        self.end_result(r)
+        self.update_result(r)
     
     def _fill_grid(self):
         w = self.resolution_x
@@ -130,49 +119,108 @@ class MaxwellRenderExportEngine(RenderEngine):
         a2 = []
         for c in a1:
             a2.append(g(c[:3]) + [1.0, ])
-        self._draw_array(a2)
-    
-    def _draw_square_array(self, a, w, h, ):
-        self._fill_black()
-        xr = self.resolution_x
-        yr = self.resolution_y
-        x = int((xr - w) / 2)
-        y = int((yr - h) / 2)
-        r = self.begin_result(x, y, w, h)
+        
+        a = a2
+        r = self.begin_result(0, 0, w, h)
         l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
         l.rect = a
         self.end_result(r)
         self.update_result(r)
     
-    def _draw_mxi_buffer(self, a, ):
+    def _draw_array2(self, a, mxi_buffer=True, ):
         rw = self.resolution_x
         rh = self.resolution_y
-        w, h, _ = a.shape
         
-        # TODO: fix material preview drawing. at least when image is bigger then view, slice centered rectangle
-        # if((rw, rh) == (32, 32)):
-        #     # icon > slice to 32x32
-        #     # works pretty well, unless material has 25% preview..
-        #     d = int(w / 32)
-        #     a = a[:32 * d:d, :32 * d:d]
-        # elif(w > rw):
-        #     a = a[:rw:, :rw:]
+        a.astype(float)
         
-        a = a[:rw:, :rw:]
+        # NOTE: fix the need of swapping of w/h and rw/rh..
+        # swap w with h and rw with rh, after padding and slicing put it back as it was.. now i am too lazy to rewrite it..
+        # w, h, _ = a.shape
+        
+        # ehm, swap it..
+        h, w, _ = a.shape
+        _ = rw
+        rw = rh
+        rh = _
+        
+        pw = int((rw - w) / 2)
+        ph = int((rh - h) / 2)
+        
+        # pad values
+        if(pw < 0):
+            # use absolute value or modulo will not work as expected
+            # and when result should be sliced, set it back to negative
+            pw2 = -(abs(int((rw - w) / 2)) + ((rw - w) % 2))
+        else:
+            pw2 = abs(int((rw - w) / 2)) + ((rw - w) % 2)
+        if(ph < 0):
+            ph2 = -(abs(int((rh - h) / 2)) + ((rh - h) % 2))
+        else:
+            ph2 = abs(int((rh - h) / 2)) + ((rh - h) % 2)
+        
+        # slice values
+        sw, sw2 = 0, 0
+        if(pw <= 0 or pw2 <= 0):
+            # padding can't be used with negative values, so zero it and set slicing instead
+            sw, sw2 = pw, pw2
+            pw, pw2 = 0, 0
+        sh, sh2 = 0, 0
+        if(ph <= 0 or ph2 <= 0):
+            sh, sh2 = ph, ph2
+            ph, ph2 = 0, 0
+        
+        # pad
+        a = np.pad(a, [(pw,pw2), (ph,ph2), (0,0)], mode='constant', constant_values=[0.0], )
+        
+        # slice
+        if(sw != 0 and sw2 == 0):
+            a = a[-sw:, :, :, ]
+        elif(sw == 0 and sw2 != 0):
+            a = a[:sw2, :, :, ]
+        elif(sw != 0 and sw2 != 0):
+            a = a[-sw:sw2, :, :, ]
+        if(sh != 0 and sh2 == 0):
+            a = a[:, -sh:, :, ]
+        elif(sh == 0 and sh2 != 0):
+            a = a[:, :sh2, :, ]
+        elif(sh != 0 and sh2 != 0):
+            a = a[:, -sh:sh2, :, ]
+        
+        # ehm, and swap it back again..
         w, h, _ = a.shape
+        _ = rw
+        rw = rh
+        rh = _
+        
+        if(not mxi_buffer):
+            # from 8bit to 32bit colors (mxm previews are stored in 8bit colors and gamma corrected)
+            a = a[:] / 255
+            # gamma uncorrect
+            g = 2.2
+            a = a[:] ** g
+        
+        # add alpha
+        w, h, _ = a.shape
+        b = np.ones((w, h, 1), dtype=np.float, )
+        a = np.append(a, b, axis=2, )
+        
         # flip
         a = np.flipud(a)
-        # add alpha
-        a = np.reshape(a, (w * h, 3))
-        z = np.empty((w * h, 1))
-        z.fill(1.0)
-        a = np.append(a, z, axis=1, )
-        # draw
-        # xr = self.resolution_x
-        # yr = self.resolution_y
-        # x = int((xr - w) / 2)
-        # y = int((yr - h) / 2)
-        self._draw_square_array(a, w, h)
+        
+        # flatten
+        a = np.reshape(a, (w * h, 4))
+        
+        try:
+            r = self.begin_result(0, 0, rw, rh)
+            l = r.layers[0] if bpy.app.version < (2, 74, 4) else r.layers[0].passes[0]
+            l.rect = a
+            self.end_result(r)
+            self.update_result(r)
+        except Exception as e:
+            log(traceback.format_exc(), 0, LogStyles.ERROR)
+            return False
+        
+        return True
     
     def _read_mxm_preview(self, mat, ):
         log("read mxm preview..", 1)
@@ -202,32 +250,10 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         if(a is not None):
             log("drawing..", 1)
-            rw = self.resolution_x
-            rh = self.resolution_y
-            # w, h, _ = a.shape
-            # TODO: fix material preview drawing. at least when image is bigger then view, slice centered rectangle
-            # if((rw, rh) == (32, 32)):
-            #     # icon > slice to 32x32
-            #     # works pretty well, unless material has 25% preview..
-            #     d = int(w / 32)
-            #     a = a[:32 * d:d, :32 * d:d]
-            # elif(w > rw):
-            #     a = a[:rw:, :rw:]
-            a = a[:rw:, :rw:]
-            w, h, _ = a.shape
-            # flip
-            a = np.flipud(a)
-            # gamma correct
-            a.astype(float)
-            a = a[:] / 255
-            a = self._gamma_correct(a)
-            # add alpha
-            a = np.reshape(a, (w * h, 3))
-            z = np.empty((w * h, 1))
-            z.fill(1.0)
-            a = np.append(a, z, axis=1, )
-            # draw
-            self._draw_square_array(a, w, h)
+            ok = self._draw_array2(a, mxi_buffer=False, )
+            if(not ok):
+                return False
+            
             return True
         
         return False
@@ -384,7 +410,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                 return False
             
             log("drawing..", 1)
-            self._draw_mxi_buffer(a)
+            self._draw_array2(a, mxi_buffer=True, )
             
             return True
         else:
