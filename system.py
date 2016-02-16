@@ -88,6 +88,7 @@ def check_for_material_preview_scene_template():
         raise OSError("support directory is missing..")
     return TEMPLATE
 
+
 def check_for_material_preview_mxi_template():
     TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "material_preview_mxi.py")
     if(not os.path.exists(TEMPLATE)):

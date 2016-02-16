@@ -170,7 +170,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             ph, ph2 = 0, 0
         
         # pad
-        a = np.pad(a, [(pw,pw2), (ph,ph2), (0,0)], mode='constant', constant_values=[0.0], )
+        a = np.pad(a, [(pw, pw2), (ph, ph2), (0, 0)], mode='constant', constant_values=[0.0], )
         
         # slice
         if(sw != 0 and sw2 == 0):
@@ -480,7 +480,7 @@ class MaxwellRenderExportEngine(RenderEngine):
                 while(process_render.poll() is None):
                     if(self.test_break()):
                         try:
-                            os.popen('taskkill /pid '+str(process_render.pid)+' /f')
+                            os.popen('taskkill /pid ' + str(process_render.pid) + ' /f')
                             time.sleep(1)
                             abort = True
                             log('aborting..', 1, )

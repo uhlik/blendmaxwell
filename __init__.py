@@ -77,6 +77,7 @@ class MaxwellRenderPreferences(bpy.types.AddonPreferences):
     maxwell_path = StringProperty(name="Maxwell Render Directory", default="", subtype='DIR_PATH', description="", )
     
     advanced = BoolProperty(name="Advanced Settings", default=False, )
+    # TODO: make this available on all platforms and use this directory everywhere, now only osx export uses it, but material preview temp files are saved next to blend (osx, win) and mxm preview numpy arrays are saved in support directory (osx)
     osx_tmp_use = EnumProperty(name="Temp Files", items=[('BLEND_DIRECTORY', "Current Blend File (Default)", ""), ('SPECIFIC_DIRECTORY', "Specific Directory", ""), ], default='BLEND_DIRECTORY', description="", )
     osx_tmp_use_directory = StringProperty(name="Temp Files Directory", default="//", subtype='DIR_PATH', description="", )
     
