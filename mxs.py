@@ -1,20 +1,27 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
+#!/Library/Frameworks/Python.framework/Versions/3.4/bin/python3
+# -*- coding: utf-8 -*-
+
+# The MIT License (MIT)
 #
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; either version 2
-#  of the License, or (at your option) any later version.
+# Copyright (c) 2015 Jakub Uhlík
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is furnished
+# to do so, subject to the following conditions:
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software Foundation,
-#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
 #
-# ##### END GPL LICENSE BLOCK #####
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
 import os
 import platform
@@ -56,9 +63,81 @@ def read_mxm_preview(path):
     import numpy
     s = Cmaxwell(mwcallback)
     m = s.readMaterial(path)
-    a = m.getPreview()[0]
+    a, _ = m.getPreview()
     r = numpy.copy(a)
     return r
+
+
+def material_preview_scene(scene, tmp_dir, quality, ):
+    s = Cmaxwell(mwcallback)
+    log('reading scene: {}'.format(scene), 2)
+    ok = s.readMXS(scene)
+    if(not ok):
+        log('error reading scene: {}'.format(scene), 2, LogStyles.ERROR, )
+        return None
+    
+    def get_material_names(s):
+        it = CmaxwellMaterialIterator()
+        o = it.first(s)
+        l = []
+        while not o.isNull():
+            name = o.getName()
+            l.append(name)
+            o = it.next()
+        return l
+    
+    names = get_material_names(s)
+    for n in names:
+        if(n.lower() == 'preview'):
+            break
+    
+    log('swapping material: {}'.format(n), 2)
+    material = s.getMaterial(n)
+    p = os.path.join(tmp_dir, 'material.mxm')
+    material.read(p)
+    material.forceToWriteIntoScene()
+    
+    log('setting parameters..', 2)
+    s.setRenderParameter('ENGINE', bytes(quality, encoding='UTF-8'))
+    
+    exr = os.path.join(tmp_dir, "render.exr")
+    s.setPath('RENDER', exr, 32)
+    
+    s.setRenderParameter('DO NOT SAVE MXI FILE', False)
+    s.setRenderParameter('DO NOT SAVE IMAGE FILE', False)
+    
+    src_dir, _ = os.path.split(scene)
+    ok = s.addSearchingPath(src_dir)
+    
+    sp = os.path.join(tmp_dir, "scene.mxs")
+    log('writing scene: {}'.format(sp), 2)
+    ok = s.writeMXS(sp)
+    if(not ok):
+        log('error writing scene: {}'.format(sp), 2, LogStyles.ERROR, )
+        return None
+    log('done.', 2)
+    return sp
+
+
+def material_preview_mxi(tmp_dir):
+    mp = os.path.join(tmp_dir, 'render.mxi')
+    ep = os.path.join(tmp_dir, 'render.exr')
+    import numpy
+    a = numpy.zeros((1, 1, 3), dtype=numpy.float, )
+    if(os.path.exists(mp)):
+        log('reading mxi: {}'.format(mp), 2)
+        i = CmaxwellMxi()
+        i.read(mp)
+        a, _ = i.getRenderBuffer(32)
+    elif(os.path.exists(ep)):
+        log('reading exr: {}'.format(ep), 2)
+        i = CmaxwellMxi()
+        i.readImage(ep)
+        i.write(mp)
+        a, _ = i.getRenderBuffer(32)
+    else:
+        log('image not found..', 2)
+    return a
 
 
 class MXSWriter():

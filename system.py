@@ -343,11 +343,13 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
         return path
     elif(PLATFORM == 'Linux'):
         w = mxs.MXMWriter(path, material_data)
-        mxed_edit_material_helper(path, force_preview, force_preview_scene, )
+        if(open_in_mxed):
+            mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
     elif(PLATFORM == 'Windows'):
         w = mxs.MXMWriter(path, material_data)
-        mxed_edit_material_helper(path, force_preview, force_preview_scene, )
+        if(open_in_mxed):
+            mxed_edit_material_helper(path, force_preview, force_preview_scene, )
         return path
 
 

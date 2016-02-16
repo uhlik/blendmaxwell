@@ -127,7 +127,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         self.end_result(r)
         self.update_result(r)
     
-    def _draw_array2(self, a, mxi_buffer=True, ):
+    def _draw_array(self, a, mxi_buffer=True, ):
         rw = self.resolution_x
         rh = self.resolution_y
         
@@ -248,9 +248,9 @@ class MaxwellRenderExportEngine(RenderEngine):
             # win / linux
             a = mxs.read_mxm_preview(p)
         
-        if(a is not None):
+        if(a is not None and np.count_nonzero(a) != 0):
             log("drawing..", 1)
-            ok = self._draw_array2(a, mxi_buffer=False, )
+            ok = self._draw_array(a, mxi_buffer=False, )
             if(not ok):
                 return False
             
@@ -410,12 +410,109 @@ class MaxwellRenderExportEngine(RenderEngine):
                 return False
             
             log("drawing..", 1)
-            self._draw_array2(a, mxi_buffer=True, )
+            self._draw_array(a, mxi_buffer=True, )
             
             return True
         else:
-            # TODO: win/linux preview render
-            raise Exception('not implemented or permitted..')
+            log("make preview scene..", 1, )
+            scene = mxs.material_preview_scene(render_sc, tmp_dir, render_q, )
+            
+            if(system.PLATFORM == 'Linux'):
+                # TODO: linux preview render
+                raise Exception('not implemented..')
+                
+                log("render preview scene..", 1, )
+                executable = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'maxwell', ))
+                
+                q = shlex.quote
+                p = [q(executable),
+                     q(os.path.join(tmp_dir, 'scene.mxs')),
+                     q(os.path.join(tmp_dir, 'render.mxi')),
+                     q(os.path.join(tmp_dir, 'render.exr')),
+                     q(os.path.split(render_sc)[0]),
+                     q(str(render_sz)),
+                     q(str(render_sz)),
+                     q(str(render_t)),
+                     q(str(render_sl)),
+                     q(str(render_v)), ]
+                line = "{} -mxs:{} -mxi:{} -o:{} -dep:{} -res:{}x{} -time:{} -sl:{} -nowait -nogui -hide -verbose:{}".format(*p)
+                cmd = shlex.split(line)
+                
+                abort = False
+                process_render = subprocess.Popen(cmd, cwd=tmp_dir, )
+                while(process_render.poll() is None):
+                    if(self.test_break()):
+                        try:
+                            # process_render.terminate()
+                            process_render.kill()
+                            abort = True
+                            log('aborting..', 1, )
+                        except Exception as e:
+                            log(traceback.format_exc(), 0, LogStyles.ERROR)
+                        break
+                    
+                    log('rendering..', 1, )
+                    time.sleep(1)
+                
+                if(abort):
+                    return False
+                
+            elif(system.PLATFORM == 'Windows'):
+                log("render preview scene..", 1, )
+                executable = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'maxwell.exe', ))
+                
+                q = shlex.quote
+                p = [q(executable),
+                     q(os.path.join(tmp_dir, 'scene.mxs')),
+                     q(os.path.join(tmp_dir, 'render.mxi')),
+                     q(os.path.join(tmp_dir, 'render.exr')),
+                     q(os.path.split(render_sc)[0]),
+                     q(str(render_sz)),
+                     q(str(render_sz)),
+                     q(str(render_t)),
+                     q(str(render_sl)),
+                     q(str(render_v)), ]
+                line = "{} -mxs:{} -mxi:{} -o:{} -dep:{} -res:{}x{} -time:{} -sl:{} -nowait -nogui -hide -verbose:{}".format(*p)
+                cmd = shlex.split(line)
+                
+                abort = False
+                process_render = subprocess.Popen(cmd, cwd=tmp_dir, )
+                while(process_render.poll() is None):
+                    if(self.test_break()):
+                        try:
+                            os.popen('taskkill /pid '+str(process_render.pid)+' /f')
+                            time.sleep(1)
+                            abort = True
+                            log('aborting..', 1, )
+                        except Exception as e:
+                            log(traceback.format_exc(), 0, LogStyles.ERROR)
+                        break
+                    
+                    log('rendering..', 1, )
+                    time.sleep(1)
+                
+                if(abort):
+                    return False
+                
+            else:
+                raise OSError("Unknown platform: {}.".format(system.platform))
+            
+            log("read preview render..", 1, )
+            a = mxs.material_preview_mxi(tmp_dir)
+            
+            if(a is not None):
+                if(a.shape == (1, 1, 3)):
+                    # there was an error
+                    log('preview render failed..', 1, LogStyles.ERROR, )
+                    return False
+            else:
+                log('preview render pixels read failed..', 1, LogStyles.ERROR, )
+                return False
+            
+            log("drawing..", 1)
+            self._draw_array(a, mxi_buffer=True, )
+            
+            return True
         
         return False
     
@@ -433,12 +530,13 @@ class MaxwellRenderExportEngine(RenderEngine):
                     log("cleanup: {} does not exist?".format(p), 1, LogStyles.WARNING, )
         
         rm(os.path.join(tmp_dir, 'material.mxm'))
-        rm(os.path.join(tmp_dir, 'preview.npy'), finished, )
-        rm(os.path.join(tmp_dir, 'preview.py'), finished, )
         rm(os.path.join(tmp_dir, 'render.mxi'), finished, )
         rm(os.path.join(tmp_dir, 'render.exr'), False, )
-        rm(os.path.join(tmp_dir, 'scene.py'))
         rm(os.path.join(tmp_dir, 'scene.mxs'), finished, )
+        if(system.PLATFORM == 'Darwin'):
+            rm(os.path.join(tmp_dir, 'scene.py'))
+            rm(os.path.join(tmp_dir, 'preview.npy'), finished, )
+            rm(os.path.join(tmp_dir, 'preview.py'), finished, )
         
         if(os.path.exists(tmp_dir)):
             os.rmdir(tmp_dir)
