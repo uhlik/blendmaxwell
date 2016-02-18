@@ -2443,7 +2443,9 @@ def wireframe(d, s, ):
               'pivot': m[1],
               'location': m[2],
               'rotation': m[3],
-              'scale': m[4], }
+              'scale': m[4],
+              # NOTE: wireframe quick fix, no real motion blur for wireframe..
+              'motion_blur': [], }
         base_and_pivot(o, bp)
         object_props(o, d)
         r.append(o)

@@ -362,7 +362,6 @@ class MaxwellRenderExportEngine(RenderEngine):
             while(process_render.poll() is None):
                 if(self.test_break()):
                     try:
-                        # process_render.terminate()
                         process_render.kill()
                         abort = True
                         log('aborting..', 1, )
@@ -417,11 +416,8 @@ class MaxwellRenderExportEngine(RenderEngine):
             log("make preview scene..", 1, )
             scene = mxs.material_preview_scene(render_sc, tmp_dir, render_q, )
             
+            log("render preview scene..", 1, )
             if(system.PLATFORM == 'Linux'):
-                # TODO: linux preview render
-                raise Exception('not implemented..')
-                
-                log("render preview scene..", 1, )
                 executable = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'maxwell', ))
                 
                 q = shlex.quote
@@ -443,7 +439,6 @@ class MaxwellRenderExportEngine(RenderEngine):
                 while(process_render.poll() is None):
                     if(self.test_break()):
                         try:
-                            # process_render.terminate()
                             process_render.kill()
                             abort = True
                             log('aborting..', 1, )
@@ -458,7 +453,6 @@ class MaxwellRenderExportEngine(RenderEngine):
                     return False
                 
             elif(system.PLATFORM == 'Windows'):
-                log("render preview scene..", 1, )
                 executable = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'maxwell.exe', ))
                 
                 q = shlex.quote
@@ -819,7 +813,6 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     def update(self, data, scene, ):
         if(self.is_preview):
-            # TODO: finish material preview for all platforms
             if(not bpy.context.scene.maxwell_render.material_preview_enable):
                 return
             
@@ -856,7 +849,6 @@ class MaxwellRenderExportEngine(RenderEngine):
             abort = False
             
             if(self.is_preview):
-                # TODO: finish material preview for all platforms
                 if(not bpy.context.scene.maxwell_render.material_preview_enable):
                     return
                 
