@@ -31,6 +31,7 @@ import subprocess
 
 import bpy
 from bpy.types import RenderEngine
+from mathutils import Matrix, Vector
 
 import numpy as np
 
@@ -40,6 +41,30 @@ from . import ops
 from . import system
 from . import mxs
 from . import maths
+from . import utils
+
+
+class ViewportRender():
+    __status = -1
+    __camera = None
+    
+    @classmethod
+    def status(cls, v=None):
+        if(v is not None):
+            ViewportRender.__status = v
+        return ViewportRender.__status
+    
+    @classmethod
+    def camera(cls, c=None):
+        if(c is not None):
+            ViewportRender.__camera = c
+        return ViewportRender.__camera
+    
+    @classmethod
+    def reset(cls):
+        ViewportRender.__status = -1
+        ViewportRender.__camera = None
+        
 
 
 class MaxwellRenderExportEngine(RenderEngine):
@@ -912,3 +937,127 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     def __del__(self):
         pass
+    
+    def view_update(self, context=None):
+        if(context is None):
+            return
+        
+        just_started = MaxwellRenderExportEngine.start_viewport_render(context, self.uuid)
+        
+        region = context.region
+        region_data = context.region_data
+        space_data = context.space_data
+        
+        cam = ViewportRender.camera()
+        
+        self._align_viewport_camera(context)
+        if(just_started):
+            # export scene, start render
+            pass
+        else:
+            # check if old camera is the same like current, and if not, reexport camera and start render again
+            pass
+        
+        # workflow:
+        # if just started
+        #     export scene to mxs
+        #     store camera (and relevant render) settings in a dict
+        #     start rendering each sl (is that possible?)
+        #     when something ready, draw to viewport (mxi > numpy array)
+        # if view is moved or camera/render settings is changed
+        #     stop rendering
+        #     export just camera
+        #     write new camera to scene
+        #     start rendering
+        #     when something ready, draw to viewport (mxi > numpy array)
+        # if stoped
+        #     stop rendering
+        #     remove temp files
+    
+    def view_draw(self, context=None):
+        if(context is None):
+            return
+    
+    def _align_viewport_camera(self, context):
+        region = context.region
+        region_data = context.region_data
+        space_data = context.space_data
+        
+        cam = ViewportRender.camera()
+        
+        # this should be set upon creating camera, not here, here just check if it is the same as before..
+        vm = Matrix(region_data.view_matrix)
+        cam.matrix_world = vm.inverted()
+        bpy.context.scene.render.resolution_x = region.width
+        bpy.context.scene.render.resolution_y = region.height
+        
+        # ratio = 1.0
+        # if(region.width > region.height):
+        #     ratio = region.width / region.height
+        # cam.data.sensor_width = 32.0 / ratio
+        
+        cam.data.lens = space_data.lens / 2
+    
+    @staticmethod
+    def start_viewport_render(context, uid):
+        if(ViewportRender.status() == -1):
+            def add_object(name, data):
+                so = bpy.context.scene.objects
+                for i in so:
+                    i.select = False
+                o = bpy.data.objects.new(name, data)
+                so.link(o)
+                o.select = True
+                if(so.active is None or so.active.mode == 'OBJECT'):
+                    so.active = o
+                return o
+            
+            cam_name = 'VIEWPORT_CAMERA_CLONE-{}'.format(uid)
+            cd = bpy.data.cameras.new(cam_name)
+            cam = add_object(cam_name, cd)
+            
+            ViewportRender.camera(cam)
+            
+            # region = context.region
+            # region_data = context.region_data
+            # space_data = context.space_data
+            #
+            # vm = Matrix(region_data.view_matrix)
+            # cam.matrix_world = vm.inverted()
+            # bpy.context.scene.render.resolution_x = region.width
+            # bpy.context.scene.render.resolution_y = region.height
+            # ratio = 1.0
+            # if(region.width > region.height):
+            #     ratio = region.width / region.height
+            # cam.data.lens = space_data.lens / 2
+            # cam.data.sensor_width = 32.0 / ratio
+            
+            ViewportRender.status(1)
+            return True
+        return False
+    
+    @staticmethod
+    def stop_viewport_render():
+        if(ViewportRender.status() == 1):
+            ViewportRender.status(0)
+            utils.wipe_out_object(ViewportRender.camera(), and_data=True, )
+            ViewportRender.reset()
+            return True
+        return False
+
+
+if(True):
+    # strange, isn't it. but i want to have this piece of code folded in Textmate..
+    from bpy.app.handlers import persistent
+    
+    @persistent
+    def stop_viewport_render(context):
+        if bpy.context.screen:
+            for area in bpy.context.screen.areas:
+                if area.type == 'VIEW_3D':
+                    for space in area.spaces:
+                        if space.type == 'VIEW_3D' and space.viewport_shade == 'RENDERED':
+                            return
+        MaxwellRenderExportEngine.stop_viewport_render()
+    
+    bpy.app.handlers.scene_update_post.append(stop_viewport_render)
