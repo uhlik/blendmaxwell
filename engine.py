@@ -1110,6 +1110,10 @@ class MaxwellRenderExportEngine(RenderEngine):
             self.update_stats("Disabled", "")
             return
         
+        if(system.PLATFORM != 'Darwin'):
+            self.update_stats("Currently Mac OS X only", "")
+            return
+        
         # called when started and when some parameters are updated, anything from buttons for example
         
         # when called for first time, export temp scene. then block all other calls. this won't be interactive engine session..
@@ -1355,6 +1359,10 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     def view_draw(self, context=None, ):
         if(not bpy.context.scene.maxwell_render.viewport_render_enabled):
+            return
+        
+        if(system.PLATFORM != 'Darwin'):
+            self.update_stats("Currently Mac OS X only", "")
             return
         
         if(not self.vr):
