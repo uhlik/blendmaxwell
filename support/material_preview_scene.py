@@ -91,7 +91,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=textwrap.dedent('''Make Maxwell Material from serialized data'''), epilog='',
+    parser = argparse.ArgumentParser(description=textwrap.dedent('''Modify material preview scene settings'''), epilog='',
                                      formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
     parser.add_argument('pymaxwell_path', type=str, help='path to directory containing pymaxwell')
     parser.add_argument('log_file', type=str, help='path to log file')

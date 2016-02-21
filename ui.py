@@ -675,6 +675,8 @@ class MaterialsOptionsPanel(RenderButtonsPanel, Panel):
             c.enabled = False
         
         sub.prop(m, 'materials_search_path')
+        sub.prop(m, 'materials_default_material')
+        
         sub.separator()
         sub.prop(m, 'materials_directory')
 
@@ -1952,6 +1954,31 @@ class ObjectReferenceViewportPanel(Panel):
         
         if(not m.draw):
             l.active = False
+
+
+class ViewportRenderPanel(Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Viewport Render"
+    bl_space_type = 'VIEW_3D'
+    bl_context = "scene"
+    bl_region_type = 'UI'
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        if((e in cls.COMPAT_ENGINES)):
+            return True
+        return False
+    
+    def draw(self, context):
+        m = context.scene.maxwell_render
+        l = self.layout.column()
+        l.prop(m, 'viewport_render_sl')
+        l.prop(m, 'viewport_render_time')
+        l.prop(m, 'viewport_render_quality')
+        l.prop(m, 'viewport_render_verbosity')
+        l.prop(m, 'viewport_render_autofocus')
 
 
 class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):

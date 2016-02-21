@@ -612,6 +612,24 @@ class SceneProperties(PropertyGroup):
             return [("0", "", ""), ]
         return r
     
+    def _get_default_material():
+        import platform
+        p = platform.system()
+        mp = ""
+        if(p == 'Darwin'):
+            # from . import system
+            # mp = bpy.path.abspath(system.prefs().maxwell_path)
+            mp = '/Applications/Maxwell 3/'
+        elif(p == 'Linux'):
+            mp = os.environ.get("MAXWELL3_ROOT")
+        elif(p == 'Windows'):
+            mp = os.environ.get("MAXWELL3_ROOT")
+        if(mp != ""):
+            m = os.path.abspath(os.path.join(mp, 'materials database', 'mxm files', 'default.mxm', ))
+            if(os.path.exists(m)):
+                return m
+        return ""
+    
     scene_time = IntProperty(name="Time (minutes)", default=60, min=1, max=50000, description="Maximum render time (in minutes) for the render", )
     scene_sampling_level = FloatProperty(name="Sampling Level", default=12.0, min=1.0, max=50.00, precision=2, description="Maximum sampling level required", )
     scene_multilight = EnumProperty(name="Multilight", items=[('DISABLED_0', "Disabled", ""), ('INTENSITY_1', "Intensity", ""), ('COLOR_2', "Color", "")], default='DISABLED_0', description="Multilight type", )
@@ -630,6 +648,7 @@ class SceneProperties(PropertyGroup):
     materials_override = BoolProperty(name="Override", default=False, description="Override all materials in scene with one material", )
     materials_override_path = StringProperty(name="Override File", default="", subtype='FILE_PATH', description="Path to override material (.MXM)", )
     materials_search_path = StringProperty(name="Search Path", default="", subtype='DIR_PATH', description="Set the path where Studio should look for any textures and other files used in your scene to avoid 'missing textures' errors when rendering.", )
+    materials_default_material = StringProperty(name="Default Material", default=_get_default_material(), subtype='FILE_PATH', )
     
     materials_directory = StringProperty(name="Default Material Directory", default="//", subtype='DIR_PATH', description="Default directory where new materials are created upon running operator 'Create Material'", )
     
@@ -793,6 +812,13 @@ class SceneProperties(PropertyGroup):
     material_preview_external = BoolProperty(name="Load Preview From Referenced MXMs", default=True, description="Prefer loading preview from referenced MXMs, rendering will start only when MXM has no saved preview. Uncheck to always render preview.", )
     material_preview_verbosity = IntProperty(name="Verbosity Level", default=1, min=0, max=4, description="0: no information given, 1: errors, 2: warnings, 3: info, 4: all", )
     material_preview_enable = BoolProperty(name="Enable Material Preview Rendering", default=False, )
+    
+    viewport_render_sl = IntProperty(name="Sampling Level", default=10, min=1, max=25, )
+    viewport_render_time = IntProperty(name="Time Limit (m)", default=10, min=1, max=60, )
+    viewport_render_quality = EnumProperty(name="Quality", items=[('RS0', "Draft", ""), ('RS1', "Production", "")], default='RS1', )
+    viewport_render_verbosity = IntProperty(name="Verbosity Level", default=1, min=0, max=4, description="0: no information given, 1: errors, 2: warnings, 3: info, 4: all", )
+    viewport_render_autofocus = BoolProperty(name="Autofocus", default=True, description="Auto focus viewport camera", )
+    viewport_render_update_interval = FloatProperty(name="Update Interval (s)", default=3.0, min=1.0, max=15.0, precision=1, )
     
     @classmethod
     def register(cls):

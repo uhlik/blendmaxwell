@@ -29,8 +29,6 @@ import argparse
 import textwrap
 import json
 import os
-import shlex
-import subprocess
 
 
 LOG_FILE_PATH = None
@@ -45,39 +43,51 @@ def log(msg, indent=0):
 
 
 def main(args):
-    mp = os.path.join(args.directory, 'render.mxi')
-    ep = os.path.join(args.directory, 'render.exr')
-    a = numpy.zeros((1, 1, 3), dtype=numpy.float, )
-    if(os.path.exists(mp)):
-        log('reading mxi: {}'.format(mp), 2)
-        i = CmaxwellMxi()
-        i.read(mp)
-        a, _ = i.getRenderBuffer(32)
-    elif(os.path.exists(ep)):
-        log('reading exr: {}'.format(ep), 2)
-        i = CmaxwellMxi()
-        i.readImage(ep)
-        i.write(mp)
-        a, _ = i.getRenderBuffer(32)
-    else:
-        log('image not found..', 2)
+    s = Cmaxwell(mwcallback)
+    p = os.path.join(args.directory, "scene.mxs")
+    log('reading scene: {}'.format(p), 2)
+    ok = s.readMXS(p)
+    if(not ok):
+        sys.exit(1)
     
-    np = os.path.join(args.directory, "preview.npy")
-    log('writing numpy: {}'.format(np), 2)
-    numpy.save(np, a)
+    log('setting parameters..', 2)
+    # if draft engine is selected, no mxi will be created.. now what..
+    s.setRenderParameter('ENGINE', args.quality)
+    
+    mxi = os.path.join(args.directory, "render.mxi")
+    s.setRenderParameter('MXI FULLNAME', mxi)
+    
+    exr = os.path.join(args.directory, "render.exr")
+    s.setPath('RENDER', exr, 32)
+    
+    s.setRenderParameter('DO NOT SAVE MXI FILE', False)
+    s.setRenderParameter('DO NOT SAVE IMAGE FILE', False)
+    
+    # turn off channels
+    s.setRenderParameter('EMBED CHANNELS', 1)
+    ls = ['DO ALPHA CHANNEL', 'DO IDOBJECT CHANNEL', 'DO IDMATERIAL CHANNEL', 'DO SHADOW PASS CHANNEL', 'DO MOTION CHANNEL',
+          'DO ROUGHNESS CHANNEL', 'DO FRESNEL CHANNEL', 'DO NORMALS CHANNEL', 'DO POSITION CHANNEL', 'DO ZBUFFER CHANNEL',
+          'DO DEEP CHANNEL', 'DO UV CHANNEL', 'DO ALPHA CUSTOM CHANNEL', 'DO REFLECTANCE CHANNEL', ]
+    for n in ls:
+        s.setRenderParameter(n, 0)
+    
+    log('writing scene: {}'.format(p), 2)
+    ok = s.writeMXS(p)
+    if(not ok):
+        sys.exit(1)
+    log('done.', 2)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=textwrap.dedent('''Make Maxwell Material from serialized data'''), epilog='',
+    parser = argparse.ArgumentParser(description=textwrap.dedent('''Modify viewport render scene settings'''), epilog='',
                                      formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True, )
     parser.add_argument('pymaxwell_path', type=str, help='path to directory containing pymaxwell')
-    parser.add_argument('numpy_path', type=str, help='path to directory containing numpy')
     parser.add_argument('log_file', type=str, help='path to log file')
     parser.add_argument('directory', type=str, help='path to temp directory')
+    parser.add_argument('quality', type=str, help='quality')
     args = parser.parse_args()
     
     PYMAXWELL_PATH = args.pymaxwell_path
-    NUMPY_PATH = args.numpy_path
     
     try:
         from pymaxwell import *
@@ -86,12 +96,6 @@ if __name__ == "__main__":
             raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
         sys.path.insert(0, PYMAXWELL_PATH)
         from pymaxwell import *
-    
-    try:
-        import numpy
-    except ImportError:
-        sys.path.insert(0, NUMPY_PATH)
-        import numpy
     
     LOG_FILE_PATH = args.log_file
     

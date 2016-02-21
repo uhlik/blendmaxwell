@@ -1862,6 +1862,12 @@ def scene(d, s, ):
     if(d["materials_search_path"] != ""):
         s.addSearchingPath(d["materials_search_path"])
     
+    if(d["materials_default_material"] != ""):
+        s.setDefaultMaterial(True)
+        s.setDefaultMaterial(d["materials_default_material"])
+    else:
+        s.setDefaultMaterial(False)
+    
     if(d['export_protect_mxs']):
         s.enableProtection(True)
     else:

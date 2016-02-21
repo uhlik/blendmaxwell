@@ -2082,6 +2082,7 @@ class MXSScene(Serializable):
         self.m_materials_override = mx.materials_override
         self.m_materials_override_path = bpy.path.abspath(mx.materials_override_path)
         self.m_materials_search_path = bpy.path.abspath(mx.materials_search_path)
+        self.m_materials_default_material = bpy.path.abspath(mx.materials_default_material)
         self.m_globals_motion_blur = mx.globals_motion_blur
         self.m_globals_diplacement = mx.globals_diplacement
         self.m_globals_dispersion = mx.globals_dispersion
