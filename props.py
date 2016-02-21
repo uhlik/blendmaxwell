@@ -813,6 +813,7 @@ class SceneProperties(PropertyGroup):
     material_preview_verbosity = IntProperty(name="Verbosity Level", default=1, min=0, max=4, description="0: no information given, 1: errors, 2: warnings, 3: info, 4: all", )
     material_preview_enable = BoolProperty(name="Enable Material Preview Rendering", default=False, )
     
+    viewport_render_enabled = BoolProperty(name="Enabled", default=False, )
     viewport_render_sl = IntProperty(name="Sampling Level", default=10, min=1, max=25, )
     viewport_render_time = IntProperty(name="Time Limit (m)", default=10, min=1, max=60, )
     viewport_render_quality = EnumProperty(name="Quality", items=[('RS0', "Draft", ""), ('RS1', "Production", "")], default='RS1', )

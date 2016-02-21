@@ -44,44 +44,51 @@ from . import maths
 from . import utils
 
 
-"""
-class ViewportRenderData():
-    __status = -1
-    __camera = None
-    __original_camera = None
-    __res_x = 0
-    __res_y = 0
-    __res_p = 0
+class ViewportRenderManager():
+    __threads = []
     
     @classmethod
-    def status(cls, v=None):
-        if(v is not None):
-            cls.__status = v
-        return cls.__status
+    def register(cls, rt, tmp_dir, ):
+        cls.__threads.append((rt, tmp_dir))
     
     @classmethod
-    def camera(cls, c=None, oc=None, ):
-        if(c is not None):
-            cls.__camera = c
-            cls.__original_camera = oc
-        return cls.__camera, cls.__original_camera
-    
+    def killall(cls):
+        for rt, tmp_dir in cls.__threads:
+            rt.stop()
+            cls._cleanup(tmp_dir)
+            
     @classmethod
-    def reset(cls):
-        cls.__status = -1
-        cls.__camera = None
-    
-    @classmethod
-    def resolution(cls, x=0, y=0, p=100, ):
-        if(x != 0 and y != 0):
-            cls.__res_x = x
-            cls.__res_y = y
-            cls.__res_p = p
-        return (cls.__res_x, cls.__res_y, cls.__res_p, )
-"""
+    def _cleanup(cls, tmp_dir):
+        # FIXME: if render is stopped when not finished and while maxwell is writing mxi or exr, directory will not be empty and won't be removed
+        
+        if(not os.path.exists(tmp_dir)):
+            return
+        
+        log("cleanup..", 1)
+        def rm(p, warn_if_missing=True, ):
+            if(os.path.exists(p)):
+                os.remove(p)
+            else:
+                if(warn_if_missing):
+                    log("cleanup: {} does not exist?".format(p), 1, LogStyles.WARNING, )
+        
+        rm(os.path.join(tmp_dir, 'scene.mxs'), True, )
+        rm(os.path.join(tmp_dir, 'render.exr'), True, )
+        rm(os.path.join(tmp_dir, 'render.mxi'), False, )
+        if(system.PLATFORM == 'Darwin'):
+            rm(os.path.join(tmp_dir, 'scene.py'))
+            rm(os.path.join(tmp_dir, 'preview.npy'), False, )
+            rm(os.path.join(tmp_dir, 'preview.py'), False, )
+        
+        if(os.path.exists(tmp_dir)):
+            os.rmdir(tmp_dir)
+        else:
+            log("cleanup: {} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
+
 
 class ViewportRenderThread(threading.Thread):
     def __init__(self, cmd, tmp_dir):
+        ViewportRenderManager.register(self, tmp_dir, )
         self.cmd = cmd
         self.tmp_dir = tmp_dir
         self.p = None
@@ -107,6 +114,7 @@ class ViewportRenderThread(threading.Thread):
         self.p = subprocess.Popen(self.cmd, cwd=self.tmp_dir, )
         self.p.communicate()
         self.stop()
+
 
 class ViewportUpdateThread(threading.Thread):
     def __init__(self, f, rt, t=1.0, ):
@@ -139,20 +147,21 @@ class MaxwellRenderExportEngine(RenderEngine):
     bl_use_preview = True
     
     lock = threading.Lock()
-    
-    tmp_dir = None
     t = None
     
-    """
-    vr_tmp_dir = None
-    vr_rt = None
-    vr_ut = None
-    """
+    # material preview rendering
+    tmp_dir = None
     
+    # viewport rendering
     vr = False
     vr_tmp_dir = None
     vr_rt = None
     vr_ut = None
+    vr_view = None
+    vr_draw_offset = None
+    vr_draw_dimensions = None
+    vr_previous_buffer = None
+    vr_space_data = None
     
     def _get_preview_material(self, scene):
         materials = {}
@@ -1014,111 +1023,11 @@ class MaxwellRenderExportEngine(RenderEngine):
                 #     time.sleep(1)
     
     def __del__(self):
+        # if(self.vr_ut is not None):
+        #     self.vr_ut.stop()
+        # if(self.vr_rt is not None):
+        #     self.vr_rt.stop()
         pass
-    
-    
-    def view_update(self, context=None, ):
-        # called when started and when some parameters are updated, anything from buttons for example
-        
-        # when called for first time, export temp scene. then block all other calls. this won't be interactive engine session..
-        # then start rendering
-        # from timer thread check if new render is saved and if so, laod it to buffer (stored somewhere) and flag it to update and then call tag_redraw()
-        
-        # somehow detect the rendering is no longer requested and kill rendering, changing viewport shading is not triggering anything
-        # so maybe timer thread will also check if viewport is still on 'RENDERED', if not kill it. will be a bit delayed though
-        # having persistent handler on scene_update_post can't get correct reference to RenderEngine instance
-        
-        # would be nice if i can get maxwell console output to read what is happening in sync updates with it. also print some status info from it..
-        # but how to do it in non-blocking way?
-        
-        if(self.vr):
-            return
-        
-        log("Viewport Render:", 1, LogStyles.MESSAGE, )
-        self.vr = True
-        
-        # get active camera
-        scene_camera = bpy.context.scene.camera
-        # clone data
-        cdname = 'VIEWPORT_CAMERA-{}'.format(self.uuid)
-        is_clone = False
-        if(scene_camera is None):
-            # create one with default settings
-            cd = bpy.data.cameras.new(cdname)
-        else:
-            # copy active
-            cd = scene_camera.data.copy()
-            cd.name = cdname
-            is_clone = True
-        
-        # viewport properties
-        region = context.region
-        region_data = context.region_data
-        space_data = context.space_data
-        m = Matrix(region_data.view_matrix).inverted()
-        w = region.width
-        h = region.height
-        cd.lens = space_data.lens / 2
-        
-        # auto focus (if requested and if possible)
-        mx = bpy.context.scene.maxwell_render
-        if(mx.viewport_render_autofocus):
-            d = 1000000.0
-            e, t, u = maths.eye_target_up_from_matrix(m, d)
-            a = e.copy()
-            b = maths.shift_vert_along_normal(a, t, d)
-            hit, _, _, loc, _ = bpy.context.scene.ray_cast(a, b)
-            if(hit):
-                cd.dof_object = None
-                cd.dof_distance = maths.distance_vectors(a, loc)
-            else:
-                if(is_clone):
-                    # is cloned from active scene camera
-                    pass
-                else:
-                    # nothing to do..
-                    pass
-        
-        # add to scene just for e while to export it
-        cam = bpy.data.objects.new(cdname, cd)
-        bpy.context.scene.objects.link(cam)
-        bpy.context.scene.camera = cam
-        cam.matrix_world = m
-        
-        rs = bpy.context.scene.render
-        orx = rs.resolution_x
-        ory = rs.resolution_y
-        orp = rs.resolution_percentage
-        rs.resolution_x = w
-        rs.resolution_y = h
-        rs.resolution_percentage = 100.0
-        
-        # export..
-        p = bpy.data.filepath
-        if(p == ""):
-            self.update_stats("Save file first.", "")
-            log("save file first.", 1, LogStyles.ERROR)
-            return
-        
-        self.update_stats("Exporting scene..", "")
-        log("exporting scene..", 1, )
-        
-        h, t = os.path.split(p)
-        n, e = os.path.splitext(t)
-        self.vr_tmp_dir = os.path.join(h, "tmp-viewport_render-{}-{}".format(n, self.uuid))
-        p = bpy.path.abspath(os.path.join(self.vr_tmp_dir, 'scene.mxs'))
-        ex = export.MXSExport(mxs_path=p, )
-        
-        # then remove it again, it is no longer needed
-        utils.wipe_out_object(cam, and_data=True, )
-        # and restore settings
-        rs.resolution_x = orx
-        rs.resolution_y = ory
-        rs.resolution_percentage = orp
-        bpy.context.scene.camera = scene_camera
-        
-        # mxs is ready, all changes reverted, now start rendering
-        self._vr_render_start()
     
     def _vr_render_start(self):
         self.update_stats("Starting render..", "")
@@ -1180,28 +1089,206 @@ class MaxwellRenderExportEngine(RenderEngine):
             
             m = bpy.context.scene.maxwell_render
             
-            self.vr_ut = ViewportUpdateThread(self.tag_redraw, self.vr_rt, m.viewport_render_update_interval, )
+            self.vr_ut = ViewportUpdateThread(self._vr_update_timer, self.vr_rt, m.viewport_render_update_interval, )
             self.vr_rt.start()
             self.vr_ut.start()
     
-    def view_draw(self, context=None, ):
-        # called right after view_update and each time when viewport is moved
+    def _vr_update_timer(self):
+        try:
+            if(self.vr_space_data.viewport_shade != 'RENDERED'):
+                log('stopping viewport render thread', 1, )
+                self.vr_rt.stop()
+        except ReferenceError:
+            # just kill them all, killing it more than once is not a problem..
+            ViewportRenderManager.killall()
+            return
         
-        # block calls from blender
-        # allow only those which follows buffer update. then draw to viewport new buffer
+        self.tag_redraw()
+    
+    def view_update(self, context=None, ):
+        if(not bpy.context.scene.maxwell_render.viewport_render_enabled):
+            self.update_stats("Disabled", "")
+            return
         
-        self.update_stats("Rendering..", "")
-        if(self.vr_rt is not None):
-            if(self.vr_rt.stopped()):
-                log("rendering stopped..", 1, )
-                self.update_stats("Stopped", "")
+        # called when started and when some parameters are updated, anything from buttons for example
         
+        # when called for first time, export temp scene. then block all other calls. this won't be interactive engine session..
+        # then start rendering
+        # from timer thread check if new render is saved and if so, load it to buffer (stored somewhere) and flag it to update and then call tag_redraw()
+        
+        # somehow detect the rendering is no longer requested and kill rendering, changing viewport shading is not triggering anything
+        # so maybe timer thread will also check if viewport is still on 'RENDERED', if not kill it. will be a bit delayed though
+        # having persistent handler on scene_update_post can't get correct reference to RenderEngine instance
+        
+        # would be nice if i can get maxwell console output to read what is happening in sync updates with it. also print some status info from it..
+        # but how to do it in non-blocking way?
+        
+        if(self.vr):
+            return
+        
+        # viewport properties
+        region = context.region
+        region_data = context.region_data
+        space_data = context.space_data
+        self.vr_space_data = space_data
+        perspective = region_data.view_perspective
+        
+        if(perspective == 'ORTHO'):
+            self.update_stats("Orthographic camera is not supported.", "")
+            log("orthographic camera is not supported.", 1, LogStyles.ERROR)
+            return
+        elif(perspective == 'CAMERA'):
+            log("Viewport Render:", 1, LogStyles.MESSAGE, )
+            self.vr = True
+            self.vr_view = perspective
+            
+            # get x,y and w,h of camera view
+            scene_camera = bpy.context.scene.camera
+            frame = scene_camera.data.view_frame()
+            center = sum(frame, Vector()) / 4
+            
+            rs = bpy.context.scene.render
+            y = rs.resolution_y
+            x = rs.resolution_x
+            if(x > y):
+                ar = y / x
+                vec = Vector((0.0, 1.0, 0.0))
+                landscape = True
+            else:
+                ar = x / y
+                vec = Vector((1.0, 0.0, 0.0))
+                landscape = False
+            
+            scale = Matrix.Scale(ar, 4, vec)
+            if(landscape):
+                scale[1][3] = (-center[1]) * scale[1][1] + center[1]
+            else:
+                scale[0][3] = (-center[0]) * scale[0][0] + center[0]
+            
+            mat = scene_camera.matrix_world
+            points = map(lambda v: mat * scale * v, (frame[0], frame[1], frame[2], frame[3]))
+            
+            from bpy_extras import view3d_utils
+            # points_on_screen = [top right, bottom right, bottom left, top left]
+            points_on_screen = [view3d_utils.location_3d_to_region_2d(region, region_data, point, ) for point in points]
+            self.vr_draw_dimensions = [int(points_on_screen[0].x - points_on_screen[3].x, ),
+                                       int(points_on_screen[3].y - points_on_screen[2].y, ), ]
+            self.vr_draw_offset = [int(points_on_screen[3].x), int(points_on_screen[3].y) - self.vr_draw_dimensions[1], ]
+            
+            # set render size to camera view w,h
+            rs = bpy.context.scene.render
+            orx = rs.resolution_x
+            ory = rs.resolution_y
+            orp = rs.resolution_percentage
+            rs.resolution_x = self.vr_draw_dimensions[0]
+            rs.resolution_y = self.vr_draw_dimensions[1]
+            rs.resolution_percentage = 100.0
+            
+        elif(perspective == 'PERSP'):
+            log("Viewport Render:", 1, LogStyles.MESSAGE, )
+            self.vr = True
+            self.vr_view = perspective
+            
+            m = Matrix(region_data.view_matrix).inverted()
+            w = region.width
+            h = region.height
+            lens = space_data.lens / 2
+            
+            # get active camera
+            scene_camera = bpy.context.scene.camera
+            # clone data
+            cdname = 'VIEWPORT_CAMERA-{}'.format(self.uuid)
+            is_clone = False
+            if(scene_camera is None):
+                # create one with default settings
+                cd = bpy.data.cameras.new(cdname)
+            else:
+                # copy active
+                cd = scene_camera.data.copy()
+                cd.name = cdname
+                is_clone = True
+            
+            # camera properties
+            cd.lens = lens
+            
+            # auto focus (if requested and if possible)
+            mx = bpy.context.scene.maxwell_render
+            if(mx.viewport_render_autofocus):
+                d = 1000000.0
+                e, t, u = maths.eye_target_up_from_matrix(m, d)
+                a = e.copy()
+                b = maths.shift_vert_along_normal(a, t, d)
+                hit, _, _, loc, _ = bpy.context.scene.ray_cast(a, b)
+                if(hit):
+                    cd.dof_object = None
+                    cd.dof_distance = maths.distance_vectors(a, loc)
+                else:
+                    if(is_clone):
+                        # is cloned from active scene camera
+                        pass
+                    else:
+                        # nothing to do..
+                        pass
+            
+            # add to scene just for e while to export it
+            cam = bpy.data.objects.new(cdname, cd)
+            bpy.context.scene.objects.link(cam)
+            bpy.context.scene.camera = cam
+            cam.matrix_world = m
+            
+            rs = bpy.context.scene.render
+            orx = rs.resolution_x
+            ory = rs.resolution_y
+            orp = rs.resolution_percentage
+            rs.resolution_x = w
+            rs.resolution_y = h
+            rs.resolution_percentage = 100.0
+            
+            self.vr_draw_offset = [0, 0]
+            self.vr_draw_dimensions = [w, h]
+        
+        # export..
+        p = bpy.data.filepath
+        if(p == ""):
+            self.update_stats("Save file first.", "")
+            log("save file first.", 1, LogStyles.ERROR)
+            return
+        
+        self.update_stats("Exporting scene..", "")
+        log("exporting scene..", 1, )
+        
+        h, t = os.path.split(p)
+        n, e = os.path.splitext(t)
+        self.vr_tmp_dir = os.path.join(h, "tmp-viewport_render-{}-{}".format(n, self.uuid))
+        p = bpy.path.abspath(os.path.join(self.vr_tmp_dir, 'scene.mxs'))
+        ex = export.MXSExport(mxs_path=p, )
+        
+        if(perspective == 'ORTHO'):
+            pass
+        elif(perspective == 'CAMERA'):
+            # restore settings
+            rs.resolution_x = orx
+            rs.resolution_y = ory
+            rs.resolution_percentage = orp
+        elif(perspective == 'PERSP'):
+            # then remove it again, it is no longer needed
+            utils.wipe_out_object(cam, and_data=True, )
+            # and restore settings
+            rs.resolution_x = orx
+            rs.resolution_y = ory
+            rs.resolution_percentage = orp
+            bpy.context.scene.camera = scene_camera
+        
+        # mxs is ready, all changes reverted, now start rendering
+        self._vr_render_start()
+    
+    def _vr_get_buffer(self):
         p = os.path.join(self.vr_tmp_dir, 'render.exr')
         pp = os.path.join(self.vr_tmp_dir, 'render2.exr')
         if(os.path.exists(p)):
             if(not os.access(p, os.R_OK, )):
                 # skip if not accessible (maxwell is writing to it?)
-                return
+                return None
             
             # copy to skip possible conflict
             shutil.copyfile(p, pp)
@@ -1231,7 +1318,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             process_scene = subprocess.Popen(args, cwd=self.vr_tmp_dir, )
             process_scene.wait()
             if(process_scene.returncode != 0):
-                return False
+                return None
             
             # remove copy, it is no longer needed
             os.remove(pp)
@@ -1244,18 +1331,11 @@ class MaxwellRenderExportEngine(RenderEngine):
                 if(a.shape == (1, 1, 3)):
                     # there was an error
                     log('preview render failed..', 1, LogStyles.ERROR, )
-                    
-                    # TODO: draw previous buffer if something went wrong.. (like, maxwell was writing the file while i was reading it)
-                    
-                    return
+                    return None
             else:
                 log('preview render pixels read failed..', 1, LogStyles.ERROR, )
-                
-                # TODO: draw previous buffer if something went wrong.. (like, maxwell was writing the file while i was reading it)
-                
-                return
+                return None
             
-            log("drawing..", 1)
             # gamma uncorrect
             g = 1 / 2.2
             a = a[:] ** g
@@ -1268,337 +1348,88 @@ class MaxwellRenderExportEngine(RenderEngine):
             a = np.reshape(a, (sz))
             # draw
             gl_buffer = bgl.Buffer(bgl.GL_FLOAT, [sz], a)
-            bgl.glRasterPos2i(0, 0)
-            bgl.glDrawPixels(w, h, bgl.GL_RGB, bgl.GL_FLOAT, gl_buffer)
-        else:
-            # leave it as it is. upon render finish and last draw, tmp files should be removed. or not?
-            pass
+            return gl_buffer
         
-        pass
+        # leave it as it is. upon render finish and last draw, tmp files should be removed. or not?
+        return None
     
-    
-    
-    
-    
-    """
-    def view_update(self, context=None):
-        if(context is None):
+    def view_draw(self, context=None, ):
+        if(not bpy.context.scene.maxwell_render.viewport_render_enabled):
             return
         
-        just_started = MaxwellRenderExportEngine._start_viewport_render(context, self.uuid)
-        if(just_started):
-            log("Viewport Render", 0, LogStyles.MESSAGE)
-            # store original resolution setting to restore when finished
-            rs = bpy.context.scene.render
-            ViewportRenderData.resolution(rs.resolution_x, rs.resolution_y, rs.resolution_percentage, )
-        
-        region = context.region
-        region_data = context.region_data
-        space_data = context.space_data
-        
-        view_persp = region_data.view_perspective
-        if(view_persp == 'ORTHO'):
-            self.update_stats("Viewport Render: Orthographic camera is not supported.", "")
-            log("orthographic camera is not supported.", 1, LogStyles.ERROR)
+        if(not self.vr):
             return
         
-        cam, _ = ViewportRenderData.camera()
+        # called right after view_update and each time when viewport is moved
         
-        self._align_viewport_camera(context)
+        # block calls from blender
+        # allow only those which follows buffer update. then draw to viewport new buffer
         
-        '''
-        if(just_started):
-            # export scene, start render
-            p = bpy.data.filepath
-            if(p == ""):
-                self.update_stats("Viewport Render: Save file first.", "")
-                log("save file first.", 1, LogStyles.ERROR)
-                return
-            
-            self.update_stats("Viewport Render: Exporting scene..", "")
-            log("exporting scene..", 1, )
-            
-            h, t = os.path.split(p)
-            n, e = os.path.splitext(t)
-            self.vr_tmp_dir = os.path.join(h, "tmp-viewport_render-{}-{}".format(n, self.uuid))
-            p = bpy.path.abspath(os.path.join(self.vr_tmp_dir, 'scene.mxs'))
-            ex = export.MXSExport(mxs_path=p, )
-            
-            self._vr_render_start()
-            
-        else:
-            # check if old camera is the same like current, and if not, reexport camera and start render again
-            pass
-        '''
+        # print('offset', self.vr_draw_offset)
+        # print('dimensions', self.vr_draw_dimensions)
+        # FIXME: if camera view is rendered and view is zoomed that camera borders are outside the view, nothing will be drawn, negative offset
         
-        # workflow:
-        # if just started
-        #     export scene to mxs
-        #     store camera (and relevant render) settings in a dict
-        #     start rendering each sl (is that possible?)
-        #     when something ready, draw to viewport (mxi > numpy array)
-        # if view is moved or camera/render settings is changed
-        #     stop rendering
-        #     export just camera
-        #     write new camera to scene
-        #     start rendering
-        #     when something ready, draw to viewport (mxi > numpy array)
-        # if stoped
-        #     stop rendering
-        #     remove temp files
-    
-    def _vr_render_start(self):
-        self.update_stats("Viewport Render: Starting render..", "")
-        
-        m = bpy.context.scene.maxwell_render
-        vr_sl = m.viewport_render_sl
-        vr_time = m.viewport_render_time
-        vr_quality = m.viewport_render_quality
-        vr_verbosity = m.viewport_render_verbosity
-        
-        scene_path = os.path.join(self.vr_tmp_dir, 'scene.mxs')
-        
-        if(not os.path.exists(scene_path)):
-            # TODO: fail nicely..
-            raise Exception("!")
-        
-        if(system.PLATFORM == 'Darwin'):
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
-            PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
-            TEMPLATE_SCENE = system.check_for_viewport_render_scene_settings_template()
-            log("scene render settings..", 1, )
-            
-            script_path = os.path.join(self.vr_tmp_dir, "scene.py")
-            with open(script_path, mode='w', encoding='utf-8') as f:
-                # read template
-                with open(TEMPLATE_SCENE, encoding='utf-8') as t:
-                    code = "".join(t.readlines())
-                # write template to a new file
-                f.write(code)
-            
-            q = shlex.quote
-            p = [q(PY), q(script_path), q(PYMAXWELL_PATH), q(LOG_FILE_PATH), q(self.vr_tmp_dir), q(vr_quality), ]
-            cmd = "{} {} {} {} {} {}".format(*p)
-            log("command:", 2)
-            log("{0}".format(cmd), 0, LogStyles.MESSAGE, prefix="")
-            args = shlex.split(cmd)
-            process_scene = subprocess.Popen(args, cwd=self.vr_tmp_dir, )
-            process_scene.wait()
-            if(process_scene.returncode != 0):
-                # TODO: fail nicely..
-                raise Exception("!")
-            
-            log("render scene..", 1, )
-            app = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Maxwell.app', ))
-            executable = os.path.join(app, "Contents/MacOS/Maxwell")
-            
-            q = shlex.quote
-            p = [q(executable),
-                 q(os.path.join(self.vr_tmp_dir, 'scene.mxs')),
-                 q(os.path.join(self.vr_tmp_dir, 'render.mxi')),
-                 q(os.path.join(self.vr_tmp_dir, 'render.exr')),
-                 q(str(vr_time)),
-                 q(str(vr_sl)),
-                 q(str(vr_verbosity)), ]
-            line = "{} -mxs:{} -mxi:{} -o:{} -time:{} -sl:{} -defaultmaterialenabled:yes -nowait -nogui -hide -verbose:{}".format(*p)
-            cmd = shlex.split(line)
-            
-            self.vr_rt = ViewportRenderThread(cmd, self.vr_tmp_dir)
-            
-            m = bpy.context.scene.maxwell_render
-            
-            self.vr_ut = ViewportUpdateThread(self.tag_redraw, self.vr_rt, m.viewport_render_update_interval, )
-            self.vr_rt.start()
-            self.vr_ut.start()
-    
-    def _vr_render_stop(self):
-        pass
-    
-    def _vr_render_update(self):
-        pass
-    
-    def view_draw(self, context=None):
-        if(context is None):
-            return
-        
-        self.update_stats("Viewport Render: Rendering..", "")
-        
+        self.update_stats("Rendering..", "")
         if(self.vr_rt is not None):
             if(self.vr_rt.stopped()):
-                self.update_stats("Viewport Render: Stopped..", "")
-            # else:
-            #     if(ViewportRenderData.status() == 0):
-            #         # kill it..
-            #         self.vr_rt.stop()
+                log("rendering stopped..", 1, )
+                self.update_stats("Stopped", "")
         
-        p = os.path.join(self.vr_tmp_dir, 'render.exr')
-        pp = os.path.join(self.vr_tmp_dir, 'render2.exr')
-        if(os.path.exists(p)):
-            if(not os.access(p, os.R_OK, )):
-                # skip if not accessible (maxwell is writing to it?)
-                return
-            
-            # copy to skip possible conflict
-            shutil.copyfile(p, pp)
-            
-            # load and draw
-            log("read viewport render..", 1, )
-            
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
-            PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
-            TEMPLATE_MXI = system.check_for_material_preview_mxi_template()
-            NUMPY_PATH = os.path.split(os.path.split(np.__file__)[0])[0]
-            
-            script_path = os.path.join(self.vr_tmp_dir, "preview.py")
-            with open(script_path, mode='w', encoding='utf-8') as f:
-                # read template
-                with open(TEMPLATE_MXI, encoding='utf-8') as t:
-                    code = "".join(t.readlines())
-                # write template to a new file
-                f.write(code)
-            
-            q = shlex.quote
-            p = [q(PY), q(script_path), q(PYMAXWELL_PATH), q(NUMPY_PATH), q(LOG_FILE_PATH), q(self.vr_tmp_dir), ]
-            cmd = "{} {} {} {} {} {}".format(*p)
-            log("command:", 2)
-            log("{0}".format(cmd), 0, LogStyles.MESSAGE, prefix="")
-            args = shlex.split(cmd)
-            process_scene = subprocess.Popen(args, cwd=self.vr_tmp_dir, )
-            process_scene.wait()
-            if(process_scene.returncode != 0):
-                return False
-            
-            # remove copy, it is no longer needed
-            os.remove(pp)
-            
-            a = None
-            npy = os.path.join(self.vr_tmp_dir, "preview.npy")
-            if(os.path.exists(npy)):
-                a = np.load(npy)
-            if(a is not None):
-                if(a.shape == (1, 1, 3)):
-                    # there was an error
-                    log('preview render failed..', 1, LogStyles.ERROR, )
-                    return
+        log("getting buffer..", 1)
+        gl_buffer = self._vr_get_buffer()
+        draw = True
+        if(gl_buffer is None):
+            if(self.vr_previous_buffer is None):
+                draw = False
             else:
-                log('preview render pixels read failed..', 1, LogStyles.ERROR, )
-                return
-            
-            log("drawing..", 1)
-            # gamma uncorrect
-            g = 1 / 2.2
-            a = a[:] ** g
-            # flip
-            a = np.flipud(a)
-            # flip dimensions
-            h, w, d = a.shape
-            # flatten
-            sz = w * h * d
-            a = np.reshape(a, (sz))
-            # draw
-            gl_buffer = bgl.Buffer(bgl.GL_FLOAT, [sz], a)
-            bgl.glRasterPos2i(0, 0)
-            bgl.glDrawPixels(w, h, bgl.GL_RGB, bgl.GL_FLOAT, gl_buffer)
+                log("something went wrong, using previous buffer..", 1, LogStyles.WARNING)
+                gl_buffer = self.vr_previous_buffer
         else:
-            # leave it as it is. upon render finish and last draw, tmp files should be removed. or not?
-            pass
-    
-    def _align_viewport_camera(self, context):
-        region = context.region
-        region_data = context.region_data
-        space_data = context.space_data
+            self.vr_previous_buffer = gl_buffer
         
-        cam, _ = ViewportRenderData.camera()
+        if(not draw):
+            log("nothing to draw..", 1)
+            return
         
-        # this should be set upon creating camera, not here, here just check if it is the same as before..
-        vm = Matrix(region_data.view_matrix)
-        cam.matrix_world = vm.inverted()
+        log("drawing..", 1)
+        # if(self.vr_view == 'CAMERA'):
+        #     bgl.glRasterPos2i(*self.vr_draw_offset)
+        #     bgl.glDrawPixels(self.vr_draw_dimensions[0], self.vr_draw_dimensions[1], bgl.GL_RGB, bgl.GL_FLOAT, gl_buffer)
+        # else:
+        #     bgl.glRasterPos2i(0, 0)
+        #     bgl.glDrawPixels(w, h, bgl.GL_RGB, bgl.GL_FLOAT, gl_buffer)
+        bgl.glRasterPos2i(*self.vr_draw_offset)
+        bgl.glDrawPixels(self.vr_draw_dimensions[0], self.vr_draw_dimensions[1], bgl.GL_RGB, bgl.GL_FLOAT, gl_buffer)
+        log("done.", 1)
         
-        rs = bpy.context.scene.render
-        rs.resolution_x = region.width
-        rs.resolution_y = region.height
-        rs.resolution_percentage = 100.0
+        # remove files after last buffer read
+        if(self.vr_rt is not None):
+            if(self.vr_rt.stopped()):
+                self._vr_cleanup()
+    
+    def _vr_cleanup(self):
+        if(self.vr_tmp_dir is None):
+            return
         
-        cam.data.lens = space_data.lens / 2
+        log("cleanup..", 1)
+        tmp_dir = self.vr_tmp_dir
         
-        mx = bpy.context.scene.maxwell_render
-        if(mx.viewport_render_autofocus):
-            bpy.ops.maxwell_render.auto_focus()
-    
-    @staticmethod
-    def _start_viewport_render(context, uid):
-        if(ViewportRenderData.status() == -1):
-            def add_object(name, data):
-                so = bpy.context.scene.objects
-                for i in so:
-                    i.select = False
-                o = bpy.data.objects.new(name, data)
-                so.link(o)
-                o.select = True
-                if(so.active is None or so.active.mode == 'OBJECT'):
-                    so.active = o
-                return o
-            
-            cam_name = 'VIEWPORT_CAMERA_CLONE-{}'.format(uid)
-            cd = bpy.data.cameras.new(cam_name)
-            cam = add_object(cam_name, cd)
-            
-            ViewportRenderData.camera(cam, bpy.context.scene.camera)
-            bpy.context.scene.camera = cam
-            
-            mx = bpy.context.scene.maxwell_render
-            if(mx.viewport_render_autofocus):
-                bpy.ops.maxwell_render.auto_focus()
-            
-            # region = context.region
-            # region_data = context.region_data
-            # space_data = context.space_data
-            #
-            # vm = Matrix(region_data.view_matrix)
-            # cam.matrix_world = vm.inverted()
-            # bpy.context.scene.render.resolution_x = region.width
-            # bpy.context.scene.render.resolution_y = region.height
-            # ratio = 1.0
-            # if(region.width > region.height):
-            #     ratio = region.width / region.height
-            # cam.data.lens = space_data.lens / 2
-            # cam.data.sensor_width = 32.0 / ratio
-            
-            ViewportRenderData.status(1)
-            return True
-        return False
-    
-    @staticmethod
-    def _stop_viewport_render():
-        if(ViewportRenderData.status() == 1):
-            ViewportRenderData.status(0)
-            c, oc = ViewportRenderData.camera()
-            utils.wipe_out_object(c, and_data=True, )
-            bpy.context.scene.camera = oc
-            x, y, p = ViewportRenderData.resolution()
-            rs = bpy.context.scene.render
-            rs.resolution_x = x
-            rs.resolution_y = y
-            rs.resolution_percentage = p
-            ViewportRenderData.reset()
-            return True
-        return False
-    """
-
-"""
-if(True):
-    # strange, isn't it. but i want to have this piece of code folded in Textmate..
-    from bpy.app.handlers import persistent
-    
-    @persistent
-    def stop_viewport_render(context):
-        if bpy.context.screen:
-            for area in bpy.context.screen.areas:
-                if area.type == 'VIEW_3D':
-                    for space in area.spaces:
-                        if space.type == 'VIEW_3D' and space.viewport_shade == 'RENDERED':
-                            return
-        MaxwellRenderExportEngine._stop_viewport_render()
-    
-    bpy.app.handlers.scene_update_post.append(stop_viewport_render)
-"""
+        def rm(p, warn_if_missing=True, ):
+            if(os.path.exists(p)):
+                os.remove(p)
+            else:
+                if(warn_if_missing):
+                    log("cleanup: {} does not exist?".format(p), 1, LogStyles.WARNING, )
+        
+        rm(os.path.join(tmp_dir, 'scene.mxs'), True, )
+        rm(os.path.join(tmp_dir, 'render.exr'), True, )
+        rm(os.path.join(tmp_dir, 'render.mxi'), False, )
+        if(system.PLATFORM == 'Darwin'):
+            rm(os.path.join(tmp_dir, 'scene.py'))
+            rm(os.path.join(tmp_dir, 'preview.npy'), False, )
+            rm(os.path.join(tmp_dir, 'preview.py'), False, )
+        
+        if(os.path.exists(tmp_dir)):
+            os.rmdir(tmp_dir)
+        else:
+            log("cleanup: {} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
