@@ -65,6 +65,7 @@ class ViewportRenderManager():
             return
         
         log("cleanup..", 1)
+        
         def rm(p, warn_if_missing=True, ):
             if(os.path.exists(p)):
                 os.remove(p)
