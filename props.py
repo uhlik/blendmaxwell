@@ -817,7 +817,7 @@ class SceneProperties(PropertyGroup):
     viewport_render_time = IntProperty(name="Time Limit (m)", default=10, min=1, max=60, )
     viewport_render_quality = EnumProperty(name="Quality", items=[('RS0', "Draft", ""), ('RS1', "Production", "")], default='RS1', )
     viewport_render_verbosity = IntProperty(name="Verbosity Level", default=1, min=0, max=4, description="0: no information given, 1: errors, 2: warnings, 3: info, 4: all", )
-    viewport_render_autofocus = BoolProperty(name="Autofocus", default=True, description="Auto focus viewport camera", )
+    viewport_render_autofocus = BoolProperty(name="Autofocus Viewport Camera", default=True, description="Focus camera on object in center if available, otherwise focus distance will be taken from active camera", )
     viewport_render_update_interval = FloatProperty(name="Update Interval (s)", default=3.0, min=1.0, max=15.0, precision=1, )
     
     @classmethod

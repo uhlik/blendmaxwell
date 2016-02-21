@@ -1978,6 +1978,7 @@ class ViewportRenderPanel(Panel):
         l.prop(m, 'viewport_render_time')
         l.prop(m, 'viewport_render_quality')
         l.prop(m, 'viewport_render_verbosity')
+        l.prop(m, 'viewport_render_update_interval')
         l.prop(m, 'viewport_render_autofocus')
 
 
