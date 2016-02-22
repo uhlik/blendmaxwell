@@ -1971,20 +1971,21 @@ class ViewportRenderPanel(Panel):
             return True
         return False
     
+    def draw_header(self, context):
+        m = context.scene.maxwell_render
+        self.layout.prop(m, 'viewport_render_enabled', text="", )
+    
     def draw(self, context):
         m = context.scene.maxwell_render
         l = self.layout.column()
-        l.prop(m, 'viewport_render_enabled')
-        
-        c = l.column()
-        c.prop(m, 'viewport_render_sl')
-        c.prop(m, 'viewport_render_time')
-        c.prop(m, 'viewport_render_quality')
-        c.prop(m, 'viewport_render_verbosity')
-        c.prop(m, 'viewport_render_update_interval')
-        c.prop(m, 'viewport_render_autofocus')
+        l.prop(m, 'viewport_render_sl')
+        l.prop(m, 'viewport_render_time')
+        l.prop(m, 'viewport_render_quality')
+        l.prop(m, 'viewport_render_verbosity')
+        l.prop(m, 'viewport_render_update_interval')
+        l.prop(m, 'viewport_render_autofocus')
         if(not m.viewport_render_enabled):
-            c.enabled = False
+            l.enabled = False
 
 
 class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
