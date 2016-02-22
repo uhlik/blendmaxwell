@@ -59,8 +59,6 @@ class ViewportRenderManager():
             
     @classmethod
     def _cleanup(cls, tmp_dir):
-        # FIXME: if render is stopped when not finished and while maxwell is writing mxi or exr, directory will not be empty and won't be removed
-        
         if(not os.path.exists(tmp_dir)):
             return
         
@@ -82,7 +80,13 @@ class ViewportRenderManager():
             rm(os.path.join(tmp_dir, 'preview.py'), False, )
         
         if(os.path.exists(tmp_dir)):
-            os.rmdir(tmp_dir)
+            try:
+                os.rmdir(tmp_dir)
+            except OSError as e:
+                log(e, 0, LogStyles.WARNING)
+                # use a bit more force..
+                log("removing whole directory tree", 0, LogStyles.ERROR)
+                shutil.rmtree(tmp_dir)
         else:
             log("cleanup: {} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
 
@@ -660,7 +664,13 @@ class MaxwellRenderExportEngine(RenderEngine):
             rm(os.path.join(tmp_dir, 'preview.py'), finished, )
         
         if(os.path.exists(tmp_dir)):
-            os.rmdir(tmp_dir)
+            try:
+                os.rmdir(tmp_dir)
+            except OSError as e:
+                log(e, 0, LogStyles.WARNING)
+                # use a bit more force..
+                log("removing whole directory tree", 0, LogStyles.ERROR)
+                shutil.rmtree(tmp_dir)
         else:
             log("cleanup: {} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
         
@@ -1388,7 +1398,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(not self.vr):
             return
         
-        # FIXME: when render finished normally, this is called one more time after files were removed and complains about missing files
+        # NOTE: when render finished normally, this is called one more time after files were removed and complains about missing files, update: seems to be fixed, but leave it here as reminder..
         
         # called right after view_update and each time when viewport is moved
         
@@ -1438,7 +1448,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         w, h = self.vr_draw_dimensions
         
         if(self.vr_view == 'CAMERA'):
-            # FIXME: use region rendering for it, will be much more efficient. currently whole image is rendered, and if you zoom close enough, you will be rendering pretty large image..
+            # TODO: use region rendering for it, will be much more efficient. currently whole image is rendered, and if you zoom close enough, you will be rendering pretty large image..
             # camera can be moved to negative coordinates
             if(x < 0 or y < 0):
                 # negative offset, nothing will be drawn, so slice array and make new buffer
@@ -1470,7 +1480,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(self.vr_tmp_dir is None):
             return
         
-        # FIXME: when render is finished normally, cleanup is called more times then it should, result in warning about missing files, following is a quick fix, seems like view_draw is also colled one more extra time, and complains about missing files
+        # NOTE: when render is finished normally, cleanup is called more times then it should, result in warning about missing files, following is a quick fix, seems like view_draw is also called one more extra time, and complains about missing files, i guess this is cause by global cleanup in ViewportRenderManager and cleanup here. leave it as it is for now..
         if(not os.path.exists(self.vr_tmp_dir)):
             return
         
@@ -1493,6 +1503,12 @@ class MaxwellRenderExportEngine(RenderEngine):
             rm(os.path.join(tmp_dir, 'preview.py'), False, )
         
         if(os.path.exists(tmp_dir)):
-            os.rmdir(tmp_dir)
+            try:
+                os.rmdir(tmp_dir)
+            except OSError as e:
+                log(e, 0, LogStyles.WARNING)
+                # use a bit more force..
+                log("removing whole directory tree", 0, LogStyles.ERROR)
+                shutil.rmtree(tmp_dir)
         else:
             log("cleanup: {} does not exist?".format(tmp_dir), 1, LogStyles.WARNING, )
