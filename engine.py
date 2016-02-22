@@ -149,20 +149,34 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     lock = threading.Lock()
     t = None
-    
-    # material preview rendering
+    uuid = None
     tmp_dir = None
     
-    # viewport rendering
+    # TODO: this is getting messy, reduce number of fields somehow.. also their names are confusing a bit. this is the first time i had to add comment to them.. what a mess..
+    # viewport rendering, will block view_draw
     vr = False
+    # absolute temp directory path
     vr_tmp_dir = None
+    # render thread
     vr_rt = None
+    # update timer thread
     vr_ut = None
+    # ORTHO, CAMERA or PERSP, ORTHO is not supported
     vr_view = None
+    # x, y for bgl draw
     vr_draw_offset = None
+    # width, height for bgl draw
     vr_draw_dimensions = None
+    # previous bgl.Buffer to be drawn if something went wrong while reading new render
     vr_previous_buffer = None
+    # previous raw array, used for slicing when in CAMERA
+    vr_previous_array = None
+    # context.space_data
     vr_space_data = None
+    # camera 2d screen coordinates [[int x, int y (top right)], [int x, int y (bottom right)], [int x, int y (bottom left)], int [x, int y (top left)], ]
+    vr_camera_frame_points_on_screen = None
+    # width and height of 3d viewport region
+    vr_space_dimensions = None
     
     def _get_preview_material(self, scene):
         materials = {}
@@ -1176,9 +1190,11 @@ class MaxwellRenderExportEngine(RenderEngine):
             from bpy_extras import view3d_utils
             # points_on_screen = [top right, bottom right, bottom left, top left]
             points_on_screen = [view3d_utils.location_3d_to_region_2d(region, region_data, point, ) for point in points]
-            self.vr_draw_dimensions = [int(points_on_screen[0].x - points_on_screen[3].x, ),
-                                       int(points_on_screen[3].y - points_on_screen[2].y, ), ]
-            self.vr_draw_offset = [int(points_on_screen[3].x), int(points_on_screen[3].y) - self.vr_draw_dimensions[1], ]
+            points_on_screen = [[int(v.x), int(v.y)] for v in points_on_screen]
+            self.vr_camera_frame_points_on_screen = points_on_screen
+            self.vr_draw_dimensions = [points_on_screen[0][0] - points_on_screen[3][0],
+                                       points_on_screen[3][1] - points_on_screen[2][1], ]
+            self.vr_draw_offset = [points_on_screen[3][0], points_on_screen[3][1] - self.vr_draw_dimensions[1], ]
             
             # set render size to camera view w,h
             rs = bpy.context.scene.render
@@ -1188,6 +1204,8 @@ class MaxwellRenderExportEngine(RenderEngine):
             rs.resolution_x = self.vr_draw_dimensions[0]
             rs.resolution_y = self.vr_draw_dimensions[1]
             rs.resolution_percentage = 100.0
+            
+            self.vr_space_dimensions = [region.width, region.height]
             
         elif(perspective == 'PERSP'):
             log("Viewport Render:", 1, LogStyles.MESSAGE, )
@@ -1251,6 +1269,7 @@ class MaxwellRenderExportEngine(RenderEngine):
             
             self.vr_draw_offset = [0, 0]
             self.vr_draw_dimensions = [w, h]
+            self.vr_space_dimensions = [w, h]
         
         # export..
         p = bpy.data.filepath
@@ -1351,9 +1370,9 @@ class MaxwellRenderExportEngine(RenderEngine):
             # flatten
             sz = w * h * d
             a = np.reshape(a, (sz))
-            # draw
-            gl_buffer = bgl.Buffer(bgl.GL_FLOAT, [sz], a)
-            return gl_buffer
+            # gl_buffer = bgl.Buffer(bgl.GL_FLOAT, [sz], a)
+            # return gl_buffer
+            return a, sz, w, h, d
         
         # leave it as it is. upon render finish and last draw, tmp files should be removed. or not?
         return None
@@ -1369,14 +1388,12 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(not self.vr):
             return
         
+        # FIXME: when render finished normally, this is called one more time after files were removed and complains about missing files
+        
         # called right after view_update and each time when viewport is moved
         
         # block calls from blender
         # allow only those which follows buffer update. then draw to viewport new buffer
-        
-        # print('offset', self.vr_draw_offset)
-        # print('dimensions', self.vr_draw_dimensions)
-        # FIXME: if camera view is rendered and view is zoomed that camera borders are outside the view, nothing will be drawn, negative offset
         
         self.update_stats("Rendering..", "")
         if(self.vr_rt is not None):
@@ -1385,7 +1402,14 @@ class MaxwellRenderExportEngine(RenderEngine):
                 self.update_stats("Stopped", "")
         
         log("getting buffer..", 1)
-        gl_buffer = self._vr_get_buffer()
+        a = None
+        gl_buffer = None
+        r = self._vr_get_buffer()
+        if(r is not None):
+            a, sz, _, _, _ = r
+            if(a is not None):
+                gl_buffer = bgl.Buffer(bgl.GL_FLOAT, [sz], a)
+        
         draw = True
         if(gl_buffer is None):
             if(self.vr_previous_buffer is None):
@@ -1393,8 +1417,10 @@ class MaxwellRenderExportEngine(RenderEngine):
             else:
                 log("something went wrong, using previous buffer..", 1, LogStyles.WARNING)
                 gl_buffer = self.vr_previous_buffer
+                a = self.vr_previous_array
         else:
             self.vr_previous_buffer = gl_buffer
+            self.vr_previous_array = a
         
         if(not draw):
             log("nothing to draw..", 1)
@@ -1407,8 +1433,32 @@ class MaxwellRenderExportEngine(RenderEngine):
         # else:
         #     bgl.glRasterPos2i(0, 0)
         #     bgl.glDrawPixels(w, h, bgl.GL_RGB, bgl.GL_FLOAT, gl_buffer)
-        bgl.glRasterPos2i(*self.vr_draw_offset)
-        bgl.glDrawPixels(self.vr_draw_dimensions[0], self.vr_draw_dimensions[1], bgl.GL_RGB, bgl.GL_FLOAT, gl_buffer)
+        
+        x, y = self.vr_draw_offset
+        w, h = self.vr_draw_dimensions
+        
+        if(self.vr_view == 'CAMERA'):
+            # FIXME: use region rendering for it, will be much more efficient. currently whole image is rendered, and if you zoom close enough, you will be rendering pretty large image..
+            # camera can be moved to negative coordinates
+            if(x < 0 or y < 0):
+                # negative offset, nothing will be drawn, so slice array and make new buffer
+                a = np.reshape(a, (h, w, 3))
+                # slice
+                if(x < 0):
+                    a = a[:, abs(x):, :, ]
+                    x = 0
+                if(y < 0):
+                    a = a[abs(y):, :, :, ]
+                    y = 0
+                h, w, _ = a.shape
+                # flatten
+                sz = w * h * 3
+                a = np.reshape(a, (sz))
+                # and create new buffer
+                gl_buffer = bgl.Buffer(bgl.GL_FLOAT, [sz], a)
+        
+        bgl.glRasterPos2i(x, y)
+        bgl.glDrawPixels(w, h, bgl.GL_RGB, bgl.GL_FLOAT, gl_buffer)
         log("done.", 1)
         
         # remove files after last buffer read
@@ -1418,6 +1468,10 @@ class MaxwellRenderExportEngine(RenderEngine):
     
     def _vr_cleanup(self):
         if(self.vr_tmp_dir is None):
+            return
+        
+        # FIXME: when render is finished normally, cleanup is called more times then it should, result in warning about missing files, following is a quick fix, seems like view_draw is also colled one more extra time, and complains about missing files
+        if(not os.path.exists(self.vr_tmp_dir)):
             return
         
         log("cleanup..", 1)
