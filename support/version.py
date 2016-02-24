@@ -1,4 +1,4 @@
-# #!/Library/Frameworks/Python.framework/Versions/3.4/bin/python3
+#!/Library/Frameworks/Python.framework/Versions/3.4/bin/python3
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)

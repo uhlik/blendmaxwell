@@ -815,6 +815,42 @@ class IllumCausticsOptionsPanel(RenderButtonsPanel, Panel):
         sub.prop(m, 'illum_caustics_refr_caustics')
 
 
+class OverlayTextPanel(BMPanel, RenderButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Overlay Text"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        # TODO: enable this when available (next version probably)
+        # if(system.get_pymaxwell_version() >= (3, 2, 1, 2)):
+        #     return True
+        return False
+    
+    def draw_header(self, context):
+        m = context.scene.maxwell_render
+        self.layout.prop(m, "overlay_enabled", text="")
+    
+    def draw(self, context):
+        l = self.layout.column()
+        m = context.scene.maxwell_render
+        
+        if(not m.overlay_enabled):
+            l.active = False
+        
+        self.tab_single(l, m, 'overlay_text', label=True, text=False, )
+        self.tab_single(l, m, 'overlay_position', label=True, text=False, )
+        self.tab_single(l, m, 'overlay_color', label=True, text=False, )
+        
+        r = l.row()
+        s = r.split(percentage=0.333)
+        s.label("Background:")
+        s = s.split(percentage=0.1)
+        s.prop(m, 'overlay_background', text="", )
+        s = s.split(percentage=1.0)
+        s.prop(m, 'overlay_background_color', text="", )
+
+
 class RenderLayersPanel(RenderLayerButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Layer"

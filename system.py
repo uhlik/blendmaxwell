@@ -33,6 +33,39 @@ from . import tmpio
 
 PLATFORM = platform.system()
 REQUIRED = (3, 2, 0, 0, )
+__VERSION = None
+
+def get_pymaxwell_version():
+    global __VERSION
+    if(__VERSION is not None):
+        return __VERSION
+    
+    v = None
+    if(PLATFORM == 'Darwin'):
+        py = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
+        sp = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "version2.py", )
+        pp = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        l = "{} {} {}".format(shlex.quote(py), shlex.quote(sp), shlex.quote(pp), )
+        cmd = shlex.split(l)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        if(p.returncode != 0):
+            raise Exception(stderr.decode())
+        else:
+            s = stdout.decode()
+            v = tuple([int(i) for i in s.split('.')])
+    elif(PLATFORM == 'Linux' or PLATFORM == 'Windows'):
+        try:
+            import pymaxwell
+            v = pymaxwell.getPyMaxwellVersion()
+            v = tuple([int(i) for i in v.split('.')])
+        except ImportError as e:
+            raise Exception(e)
+    else:
+        raise OSError("Unknown platform: {}.".format(PLATFORM))
+    
+    __VERSION = v
+    return v
 
 
 def prefs():
