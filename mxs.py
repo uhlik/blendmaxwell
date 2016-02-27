@@ -1967,9 +1967,9 @@ class MXSWriter():
             if(materials["search_path"] != ""):
                 s.addSearchingPath(materials["search_path"])
             
-            if(materials["materials_default_material"] != ""):
+            if(materials["default_material"] != ""):
                 s.setDefaultMaterial(True)
-                s.setDefaultMaterial(materials["materials_default_material"])
+                s.setDefaultMaterial(materials["default_material"])
             else:
                 s.setDefaultMaterial(False)
         
