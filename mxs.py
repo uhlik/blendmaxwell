@@ -30,6 +30,8 @@ import struct
 import math
 import sys
 
+import numpy
+
 from .log import log, LogStyles
 from . import utils
 
@@ -137,6 +139,52 @@ def material_preview_mxi(tmp_dir):
         a, _ = i.getRenderBuffer(32)
     else:
         log('image not found..', 2)
+    return a
+
+
+def viewport_render_scene(tmp_dir, quality, ):
+    s = Cmaxwell(mwcallback)
+    p = os.path.join(tmp_dir, "scene.mxs")
+    ok = s.readMXS(p)
+    if(not ok):
+        return False
+    
+    s.setRenderParameter('ENGINE', bytes(quality, encoding='UTF-8'))
+    
+    mxi = os.path.join(tmp_dir, "render.mxi")
+    s.setRenderParameter('MXI FULLNAME', bytes(mxi, encoding='UTF-8'))
+    
+    exr = os.path.join(tmp_dir, "render.exr")
+    s.setPath('RENDER', exr, 32)
+    
+    s.setRenderParameter('DO NOT SAVE MXI FILE', False)
+    s.setRenderParameter('DO NOT SAVE IMAGE FILE', False)
+    
+    # turn off channels
+    s.setRenderParameter('EMBED CHANNELS', 1)
+    ls = ['DO ALPHA CHANNEL', 'DO IDOBJECT CHANNEL', 'DO IDMATERIAL CHANNEL', 'DO SHADOW PASS CHANNEL', 'DO MOTION CHANNEL',
+          'DO ROUGHNESS CHANNEL', 'DO FRESNEL CHANNEL', 'DO NORMALS CHANNEL', 'DO POSITION CHANNEL', 'DO ZBUFFER CHANNEL',
+          'DO DEEP CHANNEL', 'DO UV CHANNEL', 'DO ALPHA CUSTOM CHANNEL', 'DO REFLECTANCE CHANNEL', ]
+    for n in ls:
+        s.setRenderParameter(n, 0)
+    
+    ok = s.writeMXS(p)
+    if(not ok):
+        return False
+    return True
+
+
+def viewport_render_mxi(tmp_dir):
+    ep = os.path.join(tmp_dir, 'render2.exr')
+    a = numpy.zeros((1, 1, 3), dtype=numpy.float, )
+    if(os.path.exists(ep)):
+        log('reading exr: {}'.format(ep), 2)
+        i = CmaxwellMxi()
+        i.readImage(ep)
+        # i.write(mp)
+        a, _ = i.getRenderBuffer(32)
+    else:
+        log('image not found..', 2, LogStyles.ERROR)
     return a
 
 

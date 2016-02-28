@@ -1117,6 +1117,30 @@ class MaxwellRenderExportEngine(RenderEngine):
             self.vr_ut = ViewportUpdateThread(self._vr_update_timer, self.vr_rt, m.viewport_render_update_interval, )
             self.vr_rt.start()
             self.vr_ut.start()
+        elif(system.PLATFORM in ['Windows', 'Linux', ]):
+            # set scene parameters and result paths
+            mxs.viewport_render_scene(self.vr_tmp_dir, vr_quality, )
+            
+            executable = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'maxwell.exe', ))
+            
+            q = shlex.quote
+            p = [q(executable),
+                 q(os.path.join(self.vr_tmp_dir, 'scene.mxs')),
+                 q(os.path.join(self.vr_tmp_dir, 'render.mxi')),
+                 q(os.path.join(self.vr_tmp_dir, 'render.exr')),
+                 q(str(vr_time)),
+                 q(str(vr_sl)),
+                 q(str(vr_verbosity)), ]
+            line = "{} -mxs:{} -mxi:{} -o:{} -time:{} -sl:{} -nowait -nogui -hide -verbose:{}".format(*p)
+            cmd = shlex.split(line)
+            
+            self.vr_rt = ViewportRenderThread(cmd, self.vr_tmp_dir)
+            
+            m = bpy.context.scene.maxwell_render
+            
+            self.vr_ut = ViewportUpdateThread(self._vr_update_timer, self.vr_rt, m.viewport_render_update_interval, )
+            self.vr_rt.start()
+            self.vr_ut.start()
     
     def _vr_update_timer(self):
         try:
@@ -1135,9 +1159,9 @@ class MaxwellRenderExportEngine(RenderEngine):
             self.update_stats("Disabled", "")
             return
         
-        if(system.PLATFORM != 'Darwin'):
-            self.update_stats("Currently Mac OS X only", "")
-            return
+        # if(system.PLATFORM != 'Darwin'):
+        #     self.update_stats("Currently Mac OS X only", "")
+        #     return
         
         # called when started and when some parameters are updated, anything from buttons for example
         
@@ -1291,9 +1315,22 @@ class MaxwellRenderExportEngine(RenderEngine):
         self.update_stats("Exporting scene..", "")
         log("exporting scene..", 1, )
         
+        # create temp directory explicitly, on os x it is created during export process
         h, t = os.path.split(p)
         n, e = os.path.splitext(t)
         self.vr_tmp_dir = os.path.join(h, "tmp-viewport_render-{}-{}".format(n, self.uuid))
+        if(not os.path.exists(self.vr_tmp_dir)):
+            os.makedirs(self.vr_tmp_dir)
+        
+        # set output image and mxi to something if empty
+        mx = bpy.context.scene.maxwell_render
+        if(mx.output_image == ''):
+            mx.output_depth = 'RGB32'
+            mx.output_image = bpy.path.abspath(os.path.join(h, '{}.exr'.format(n)))
+        if(mx.output_mxi == ''):
+            mx.output_mxi = bpy.path.abspath(os.path.join(h, '{}.mxi'.format(n)))
+        
+        # and export mxs
         p = bpy.path.abspath(os.path.join(self.vr_tmp_dir, 'scene.mxs'))
         ex = export.MXSExport(mxs_path=p, )
         
@@ -1330,45 +1367,62 @@ class MaxwellRenderExportEngine(RenderEngine):
             # load and draw
             log("reading render..", 1, )
             
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
-            PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
-            TEMPLATE_MXI = system.check_for_viewport_render_mxi_template()
-            NUMPY_PATH = os.path.split(os.path.split(np.__file__)[0])[0]
-            
-            script_path = os.path.join(self.vr_tmp_dir, "preview.py")
-            with open(script_path, mode='w', encoding='utf-8') as f:
-                # read template
-                with open(TEMPLATE_MXI, encoding='utf-8') as t:
-                    code = "".join(t.readlines())
-                # write template to a new file
-                f.write(code)
-            
-            q = shlex.quote
-            p = [q(PY), q(script_path), q(PYMAXWELL_PATH), q(NUMPY_PATH), q(LOG_FILE_PATH), q(self.vr_tmp_dir), ]
-            cmd = "{} {} {} {} {} {}".format(*p)
-            # log("command:", 2)
-            # log("{0}".format(cmd), 0, LogStyles.MESSAGE, prefix="")
-            args = shlex.split(cmd)
-            process_scene = subprocess.Popen(args, cwd=self.vr_tmp_dir, )
-            process_scene.wait()
-            if(process_scene.returncode != 0):
-                return None
-            
-            # remove copy, it is no longer needed
-            os.remove(pp)
-            
             a = None
-            npy = os.path.join(self.vr_tmp_dir, "preview.npy")
-            if(os.path.exists(npy)):
-                a = np.load(npy)
-            if(a is not None):
-                if(a.shape == (1, 1, 3)):
-                    # there was an error
-                    log('preview render failed..', 1, LogStyles.ERROR, )
+            if(system.PLATFORM == 'Darwin'):
+                PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
+                PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+                TEMPLATE_MXI = system.check_for_viewport_render_mxi_template()
+                NUMPY_PATH = os.path.split(os.path.split(np.__file__)[0])[0]
+                
+                script_path = os.path.join(self.vr_tmp_dir, "preview.py")
+                with open(script_path, mode='w', encoding='utf-8') as f:
+                    # read template
+                    with open(TEMPLATE_MXI, encoding='utf-8') as t:
+                        code = "".join(t.readlines())
+                    # write template to a new file
+                    f.write(code)
+                
+                q = shlex.quote
+                p = [q(PY), q(script_path), q(PYMAXWELL_PATH), q(NUMPY_PATH), q(LOG_FILE_PATH), q(self.vr_tmp_dir), ]
+                cmd = "{} {} {} {} {} {}".format(*p)
+                # log("command:", 2)
+                # log("{0}".format(cmd), 0, LogStyles.MESSAGE, prefix="")
+                args = shlex.split(cmd)
+                process_scene = subprocess.Popen(args, cwd=self.vr_tmp_dir, )
+                process_scene.wait()
+                if(process_scene.returncode != 0):
                     return None
-            else:
-                log('preview render pixels read failed..', 1, LogStyles.ERROR, )
-                return None
+                
+                # remove copy, it is no longer needed
+                os.remove(pp)
+                
+                npy = os.path.join(self.vr_tmp_dir, "preview.npy")
+                if(os.path.exists(npy)):
+                    a = np.load(npy)
+                if(a is not None):
+                    if(a.shape == (1, 1, 3)):
+                        # there was an error
+                        log('preview render failed..', 1, LogStyles.ERROR, )
+                        return None
+                else:
+                    log('preview render pixels read failed..', 1, LogStyles.ERROR, )
+                    return None
+                
+            elif(system.PLATFORM in ['Windows', 'Linux', ]):
+                # get render as numpy float array
+                a = mxs.viewport_render_mxi(self.vr_tmp_dir)
+                
+                # remove copy, it is no longer needed
+                os.remove(pp)
+                
+                if(a is not None):
+                    if(a.shape == (1, 1, 3)):
+                        # there was an error
+                        log('preview render failed..', 1, LogStyles.ERROR, )
+                        return None
+                else:
+                    log('preview render pixels read failed..', 1, LogStyles.ERROR, )
+                    return None
             
             # gamma uncorrect
             g = 1 / 2.2
@@ -1391,9 +1445,9 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(not bpy.context.scene.maxwell_render.viewport_render_enabled):
             return
         
-        if(system.PLATFORM != 'Darwin'):
-            self.update_stats("Currently Mac OS X only", "")
-            return
+        # if(system.PLATFORM != 'Darwin'):
+        #     self.update_stats("Currently Mac OS X only", "")
+        #     return
         
         if(not self.vr):
             return
