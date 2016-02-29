@@ -1275,7 +1275,14 @@ class MaxwellRenderExportEngine(RenderEngine):
                 e, t, u = maths.eye_target_up_from_matrix(m, d)
                 a = e.copy()
                 b = maths.shift_vert_along_normal(a, t, d)
-                hit, _, _, loc, _ = bpy.context.scene.ray_cast(a, b)
+                
+                # blender 2.77 api change
+                # hit, _, _, loc, _ = bpy.context.scene.ray_cast(a, b)
+                if bpy.app.version < (2, 77, 0):
+                    hit, _, _, loc, _ = bpy.context.scene.ray_cast(a, b)
+                else:
+                    hit, loc, _, _, _, _ = bpy.context.scene.ray_cast(a, b)
+                
                 if(hit):
                     cd.dof_object = None
                     cd.dof_distance = maths.distance_vectors(a, loc)

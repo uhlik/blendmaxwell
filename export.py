@@ -3615,11 +3615,15 @@ class MXSHair(MXSObject):
                 # put to mesh again..
                 bm.to_mesh(me)
                 uv_layers = me.uv_layers
+                
+                # blender 2.77 api change
+                bvhtree_find = tree.find if bpy.app.version < (2, 77, 0) else tree.find_nearest
+                
                 for p in range(0, num_curves):
                     # global hair root location
                     root_co = ps.co_hair(o, p, 0)
                     # find closest polygon
-                    polyloc, polynor, polyind, distance = tree.find(root_co)
+                    polyloc, polynor, polyind, distance = bvhtree_find(root_co)
                     poly = me.polygons[polyind]
                     # loop indexes
                     pl = me.loops[poly.loop_start:poly.loop_start + poly.loop_total]
