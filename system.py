@@ -35,6 +35,7 @@ PLATFORM = platform.system()
 REQUIRED = (3, 2, 0, 0, )
 __VERSION = None
 
+
 def get_pymaxwell_version():
     global __VERSION
     if(__VERSION is not None):
