@@ -1681,6 +1681,8 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         
         sub.prop(m, 'iso')
         sub.prop(m, 'response')
+        
+        sub.separator()
         sub.prop(m, 'screen_region')
         r = sub.row()
         c = r.column(align=True)

@@ -1102,7 +1102,7 @@ class CameraProperties(PropertyGroup):
     # resolution_height = IntProperty(name="Height", default=480, min=32, max=65536, subtype="PIXEL", )
     # pixel_aspect = FloatProperty(name="Pixel Aspect", default=1.0, min=0.010, max=100.000, precision=3, )
     iso = FloatProperty(name="ISO", default=100.0, min=1.0, max=16000.0, )
-    screen_region = EnumProperty(name="Selection", items=[('NONE', "None", ""), ('REGION', "Region", ""), ('BLOW UP', "Blow Up", "")], default='NONE', )
+    screen_region = EnumProperty(name="Selection", items=[('NONE', "Full", ""), ('REGION', "Region", ""), ('BLOW UP', "Blow Up", "")], default='NONE', )
     screen_region_x = IntProperty(name="X", default=0, min=0, max=65000, subtype="PIXEL", )
     screen_region_y = IntProperty(name="Y", default=0, min=0, max=65000, subtype="PIXEL", )
     screen_region_w = IntProperty(name="Width", default=1, min=0, max=65000, subtype="PIXEL", )
