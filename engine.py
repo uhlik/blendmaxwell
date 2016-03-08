@@ -1066,8 +1066,8 @@ class MaxwellRenderExportEngine(RenderEngine):
         scene_path = os.path.join(self.vr_tmp_dir, 'scene.mxs')
         
         if(not os.path.exists(scene_path)):
-            # TODO: fail nicely..
-            raise Exception("!")
+            self.update_stats("Something went wrong. Check console log.", "")
+            raise Exception("Something went wrong. Check console log.")
         
         if(system.PLATFORM == 'Darwin'):
             PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
@@ -1092,8 +1092,8 @@ class MaxwellRenderExportEngine(RenderEngine):
             process_scene = subprocess.Popen(args, cwd=self.vr_tmp_dir, )
             process_scene.wait()
             if(process_scene.returncode != 0):
-                # TODO: fail nicely..
-                raise Exception("!")
+                self.update_stats("Something went wrong. Check console log.", "")
+                raise Exception("Something went wrong. Check console log.")
             
             log("render scene..", 1, )
             app = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Maxwell.app', ))
@@ -1636,7 +1636,6 @@ class MaxwellRenderExportEngine(RenderEngine):
         w, h = self.vr_draw_dimensions
         
         if(self.vr_view == 'CAMERA'):
-            # TODO: use region rendering for it, will be much more efficient. currently whole image is rendered, and if you zoom close enough, you will be rendering pretty large image..
             # camera can be moved to negative coordinates
             if(x < 0 or y < 0):
                 # negative offset, nothing will be drawn, so slice array and make new buffer
