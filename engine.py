@@ -1197,6 +1197,12 @@ class MaxwellRenderExportEngine(RenderEngine):
             
             # get x,y and w,h of camera view
             scene_camera = bpy.context.scene.camera
+            
+            cdname = 'CAMERA-{}'.format(self.uuid)
+            cd = scene_camera.data.copy()
+            cd.name = cdname
+            is_clone = True
+            
             frame = scene_camera.data.view_frame()
             center = sum(frame, Vector()) / 4
             
@@ -1238,6 +1244,115 @@ class MaxwellRenderExportEngine(RenderEngine):
             rs.resolution_x = self.vr_draw_dimensions[0]
             rs.resolution_y = self.vr_draw_dimensions[1]
             rs.resolution_percentage = 100.0
+            
+            # use border render when camera is zoomed outside viewport area to speed things up
+            from collections import namedtuple
+            Rectangle = namedtuple('Rectangle', 'x y w h')
+            # camera rectangle
+            coords = points_on_screen[:]
+            a = Rectangle(coords[3][0], region.height - coords[3][1], coords[1][0] - coords[3][0], coords[3][1] - coords[1][1], )
+            # viewport rectangle
+            b = Rectangle(0, 0, region.width, region.height, )
+            
+            # intersection rectangle, zero point assumed at top left
+            x = 0
+            y = 0
+            w = 0
+            h = 0
+            if(a.x > b.x):
+                x = a.x
+                if(a.x + a.w < b.x + b.w):
+                    w = a.w
+                else:
+                    w = b.w - a.x
+            else:
+                x = b.x
+                if(a.x + a.w < b.x + b.w):
+                    w = a.w - (b.x - a.x)
+                else:
+                    w = b.w
+            if(a.y > b.y):
+                y = a.y
+                if(a.y + a.h < b.y + b.h):
+                    h = a.h
+                else:
+                    h = b.h - a.y
+            else:
+                y = b.y
+                if(a.y + a.h < b.y + b.h):
+                    h = a.h - (b.y - a.y)
+                else:
+                    h = b.h
+            
+            c = Rectangle(x, y, w, h)
+            
+            w = a.w
+            if(a.x < 0):
+                w = a.w + a.x
+                
+            h = a.h
+            if(a.y < 0):
+                h = a.h + a.y
+                
+            aa = Rectangle(0, 0, w, h)
+            
+            minx = 0.0
+            miny = 0.0
+            maxx = 1.0
+            maxy = 1.0
+            if(a.x > b.x):
+                pass
+            else:
+                minx = abs(a.x) / a.w
+            if(a.x + a.w < b.x + b.w):
+                pass
+            else:
+                maxx = (b.w - a.x) / a.w
+            if(a.y > b.y):
+                pass
+            else:
+                miny = abs(a.y) / a.h
+            if(a.y + a.h < b.y + b.h):
+                pass
+            else:
+                maxy = (b.h - a.y) / a.h
+            
+            # flip y axis
+            miny = 1.0 - miny
+            maxy = 1.0 - maxy
+            
+            if(miny > maxy):
+                q = maxy
+                maxy = miny
+                miny = q
+            
+            # set it properly..
+            rs = bpy.context.scene.render
+            oborder = (rs.use_border, rs.border_min_x, rs.border_min_y, rs.border_max_x, rs.border_max_y, )
+            rs.use_border = True
+            rs.border_min_x = minx
+            rs.border_min_y = miny
+            rs.border_max_x = maxx
+            rs.border_max_y = maxy
+            rp = bpy.context.scene.render
+            x_res = int(rp.resolution_x * rp.resolution_percentage / 100.0)
+            y_res = int(rp.resolution_y * rp.resolution_percentage / 100.0)
+            x = int(x_res * rp.border_min_x)
+            h = y_res - int(y_res * rp.border_min_y)
+            w = int(x_res * rp.border_max_x)
+            y = y_res - int(y_res * rp.border_max_y)
+            
+            cam = bpy.data.objects.new(cdname, cd)
+            bpy.context.scene.objects.link(cam)
+            bpy.context.scene.camera = cam
+            cam.matrix_world = mat
+            
+            m = cam.data.maxwell_render
+            m.screen_region = 'REGION'
+            m.screen_region_x = x
+            m.screen_region_y = y
+            m.screen_region_w = w
+            m.screen_region_h = h
             
             self.vr_space_dimensions = [region.width, region.height]
             
@@ -1344,10 +1459,22 @@ class MaxwellRenderExportEngine(RenderEngine):
         if(perspective == 'ORTHO'):
             pass
         elif(perspective == 'CAMERA'):
+            utils.wipe_out_object(cam, and_data=True, )
+            bpy.context.scene.camera = scene_camera
+            
+            bpy.ops.view3d.viewnumpad(type='CAMERA')
+            
             # restore settings
             rs.resolution_x = orx
             rs.resolution_y = ory
             rs.resolution_percentage = orp
+            
+            rs.use_border = oborder[0]
+            rs.border_min_x = oborder[1]
+            rs.border_min_y = oborder[2]
+            rs.border_max_x = oborder[3]
+            rs.border_max_y = oborder[4]
+            
         elif(perspective == 'PERSP'):
             # then remove it again, it is no longer needed
             utils.wipe_out_object(cam, and_data=True, )

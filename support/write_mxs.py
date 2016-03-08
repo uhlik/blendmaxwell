@@ -1557,6 +1557,10 @@ def camera(d, s, ):
     c.setShiftLens(d['set_shift_lens'][0], d['set_shift_lens'][1], )
     if(d['screen_region'] != 'NONE'):
         r = d['screen_region_xywh']
+        if(r[2] == d['resolution_x']):
+            r[2] -= 1
+        if(r[3] == d['resolution_y']):
+            r[3] -= 1
         c.setScreenRegion(r[0], r[1], r[2], r[3], d['screen_region'])
     if(d['active']):
         c.setActive()

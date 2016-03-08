@@ -1555,6 +1555,10 @@ class MXSWriter():
         if(shift_lens is not None):
             c.setShiftLens(*shift_lens)
         if(region is not None):
+            if(region[2] == props[3]):
+                region[2] -= 1
+            if(region[3] == props[4]):
+                region[3] -= 1
             c.setScreenRegion(*region)
         
         if(active):
