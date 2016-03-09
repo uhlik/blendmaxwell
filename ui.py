@@ -40,7 +40,6 @@ from . import mxs
 
 # NOTE: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works. at least try to remove that texture from texture drop down. but i think it is not possible to filter prop_search results, have to be enum with custom items function. update: leaving this as it is. there might be some solution for this, but it will rewuire rewrite of all texture selectors everywhere. to much work for small profit..
 # NOTE: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred) - seems like it will not work. texture preview might be usable when together with maxwell material basic blender material is created, then it can be used for preview in viewport
-# TODO: presets for procedural textures to compensate a bit absence of preview..
 
 
 class BMPanel():
@@ -2402,6 +2401,10 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
     bl_label = "Preview"
     bl_options = {'DEFAULT_CLOSED'}
     
+    def draw_header(self, context):
+        mx = context.scene.maxwell_render
+        self.layout.prop(mx, 'material_preview_enable', text="", )
+    
     def draw(self, context):
         l = self.layout
         mat = context.material
@@ -2414,7 +2417,7 @@ class MaterialPreviewPanel(MaterialButtonsPanel, Panel):
         
         l = self.layout.column()
         
-        l.prop(mx, 'material_preview_enable')
+        # l.prop(mx, 'material_preview_enable')
         c = l.column()
         if(not mx.material_preview_enable):
             c.enabled = False
@@ -4953,7 +4956,7 @@ class TextureProceduralPanel(BMPanel, TextureButtonsPanel, Panel):
         sub = l.column()
         
         r = sub.row()
-        r.template_list("TextureProceduralList", "", p, "textures", p, "index", rows=3, maxrows=6, )
+        r.template_list("TextureProceduralList", "", p, "textures", p, "index", rows=4, maxrows=6, )
         c = r.column(align=True)
         c.menu("TextureProceduralMenuAdd", text="", icon='ZOOMIN', )
         c.operator("maxwell_render.texture_procedural_remove", icon='ZOOMOUT', text="", )
