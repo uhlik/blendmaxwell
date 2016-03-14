@@ -29,6 +29,7 @@ import bpy
 from .log import log, LogStyles, LOG_FILE_PATH
 from . import mxs
 from . import tmpio
+from . import utils
 
 
 PLATFORM = platform.system()
@@ -212,28 +213,10 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=
         TEMPLATE = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "write_mxm.py")
         
         uid = uuid.uuid1()
+        
         h, t = os.path.split(path)
         n, e = os.path.splitext(t)
-        tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, uid))
-        
-        if(prefs().osx_tmp_use == 'SPECIFIC_DIRECTORY'):
-            tmpd = os.path.realpath(bpy.path.abspath(prefs().osx_tmp_use_directory))
-            if(os.path.exists(tmpd)):
-                if(os.path.isdir(tmpd)):
-                    if(os.access(tmpd, os.W_OK)):
-                        tmp_dir = os.path.join(tmpd, "{0}-tmp-{1}".format(n, uid))
-                    else:
-                        log("tmp directory ('{}') is not writeable, using default".format(tmpd), 2, LogStyles.WARNING)
-                else:
-                    log("tmp directory ('{}') is not a directory, using default".format(tmpd), 2, LogStyles.WARNING)
-            else:
-                log("tmp directory ('{}') does not exist, using default".format(tmpd), 2, LogStyles.WARNING)
-        else:
-            pass
-        
-        log("creating temp directory.. ({})".format(tmp_dir), 2, LogStyles.MESSAGE, )
-        if(os.path.exists(tmp_dir) is False):
-            os.makedirs(tmp_dir)
+        tmp_dir = utils.tmp_dir(purpose='export_material', uid=uid, use_blend_name=False, custom_name=n, )
         
         mxm_data_name = "{0}-{1}.json".format(n, uid)
         script_name = "{0}-{1}.py".format(n, uid)
@@ -310,29 +293,10 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
         TEMPLATE = check_for_export_mxm_template()
         
         uid = uuid.uuid1()
+        
         h, t = os.path.split(path)
         n, e = os.path.splitext(t)
-        tmp_dir = os.path.join(h, "{0}-tmp-{1}".format(n, uid))
-        
-        if(prefs().osx_tmp_use == 'SPECIFIC_DIRECTORY'):
-            tmpd = os.path.realpath(bpy.path.abspath(prefs().osx_tmp_use_directory))
-            if(os.path.exists(tmpd)):
-                if(os.path.isdir(tmpd)):
-                    if(os.access(tmpd, os.W_OK)):
-                        tmp_dir = os.path.join(tmpd, "{0}-tmp-{1}".format(n, uid))
-                    else:
-                        log("tmp directory ('{}') is not writeable, using default".format(tmpd), 2, LogStyles.WARNING)
-                else:
-                    log("tmp directory ('{}') is not a directory, using default".format(tmpd), 2, LogStyles.WARNING)
-            else:
-                log("tmp directory ('{}') does not exist, using default".format(tmpd), 2, LogStyles.WARNING)
-        else:
-            pass
-        
-        log("creating temp directory.. ({})".format(tmp_dir), 2, LogStyles.MESSAGE, )
-        
-        if(os.path.exists(tmp_dir) is False):
-            os.makedirs(tmp_dir)
+        tmp_dir = utils.tmp_dir(purpose='export_material', uid=uid, use_blend_name=False, custom_name=n, )
         
         mxm_data_name = "{0}-{1}.json".format(n, uid)
         script_name = "{0}-{1}.py".format(n, uid)

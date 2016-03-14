@@ -47,6 +47,7 @@ def main(args):
         sd = os.path.split(os.path.realpath(__file__))[0]
         mn = os.path.split(p)[1]
         np = os.path.join(sd, "{}.npy".format(mn))
+        # TODO: save this somewhere else, use the same rules as with other temp files (ie utils.tmp_dir)
         numpy.save(np, a)
 
 

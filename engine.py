@@ -409,12 +409,8 @@ class MaxwellRenderExportEngine(RenderEngine):
             # if file is not saved, draw warning in ui and skip rendering
             return False
         
-        h, t = os.path.split(p)
-        n = mat.name
-        tmp_dir = os.path.join(h, "tmp-material_preview-{}-{}".format(n, self.uuid))
+        tmp_dir = utils.tmp_dir(purpose='material_preview', uid=self.uuid, use_blend_name=True, )
         self.tmp_dir = tmp_dir
-        if(os.path.exists(tmp_dir) is False):
-            os.makedirs(tmp_dir)
         
         mxm = os.path.join(tmp_dir, "material.mxm")
         
@@ -1437,12 +1433,7 @@ class MaxwellRenderExportEngine(RenderEngine):
         self.update_stats("Exporting scene..", "")
         log("exporting scene..", 1, )
         
-        # create temp directory explicitly, on os x it is created during export process
-        h, t = os.path.split(p)
-        n, e = os.path.splitext(t)
-        self.vr_tmp_dir = os.path.join(h, "tmp-viewport_render-{}-{}".format(n, self.uuid))
-        if(not os.path.exists(self.vr_tmp_dir)):
-            os.makedirs(self.vr_tmp_dir)
+        self.vr_tmp_dir = utils.tmp_dir(purpose='viewport_render', uid=self.uuid, use_blend_name=True, )
         
         # set output image and mxi to something if empty
         mx = bpy.context.scene.maxwell_render

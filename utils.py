@@ -21,6 +21,7 @@ import sys
 import os
 import time
 import datetime
+import uuid
 
 import bpy
 from mathutils import Matrix, Vector
@@ -489,3 +490,77 @@ def benchmark(t=None):
     d = datetime.timedelta(seconds=time.time() - t)
     log("benchmark: {} {}".format(d, '-' * 50), 0, LogStyles.MESSAGE)
     return time.time()
+
+
+def tmp_dir(purpose=None, uid=None, use_blend_name=False, custom_name=None, ):
+    """create temp directory, look into preferences where to create it, build its name, create and return its absolute path
+    naming pattern: 'tmp-PURPOSE-UUID', without purpose 'tmp-UUID', when use_blend_name is True, 'BLEND_NAME-tmp_dir-PURPOSE-UUID' or 'BLEND_NAME-tmp_dir-UUID'
+    purpose:        string, something descriptive, such as 'material_preview' or so
+    uid:            to prevent overwriting what is already there, add uuid to directory name. probability that someone is using such names and probability for the identical name is sufficiently infinitesimal i guess
+    use_blend_name: blend name as directory prefix
+    custom_name:    the same like use_blend_name but you can set whatever you want, use_blend_name should be False
+    return          absolute path string
+    """
+    def prefs():
+        a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
+        p = bpy.context.user_preferences.addons[a].preferences
+        return p
+    
+    blend = os.path.realpath(bpy.path.abspath(bpy.data.filepath))
+    _, blend_file = os.path.split(blend)
+    blend_name, _ = os.path.splitext(blend_file)
+    
+    if(purpose is None):
+        purpose = ""
+    
+    if(uid is None or uid == ""):
+        uid = uuid.uuid1()
+    
+    if(custom_name is None):
+        custom_name = ""
+    
+    root = os.path.realpath(bpy.path.abspath("//"))
+    if(prefs().tmp_dir_use == 'SPECIFIC_DIRECTORY'):
+        tmpsd = os.path.realpath(bpy.path.abspath(prefs().tmp_dir_path))
+        if(os.path.exists(tmpsd)):
+            if(os.path.isdir(tmpsd)):
+                if(os.access(tmpsd, os.W_OK)):
+                    root = tmpsd
+                else:
+                    log("specific temp directory ('{}') is not writeable, using default".format(tmpsd), 1, LogStyles.WARNING)
+            else:
+                log("specific temp directory ('{}') is not a directory, using default".format(tmpsd), 1, LogStyles.WARNING)
+        else:
+            log("specific temp directory ('{}') does not exist, using default".format(tmpsd), 1, LogStyles.WARNING)
+    else:
+        # tmp_dir_use == 'BLEND_DIRECTORY' ie '//'
+        pass
+    
+    if(purpose == ""):
+        if(use_blend_name):
+            # BLEND_NAME-tmp-UUID
+            tmp_dir = os.path.join(root, "{}-tmp-{}".format(blend_name, uid))
+        else:
+            if(custom_name != ""):
+                # CUSTOM_NAME-tmp-UUID
+                tmp_dir = os.path.join(root, "{}-tmp-{}".format(custom_name, uid))
+            else:
+                # tmp-UUID
+                tmp_dir = os.path.join(root, "tmp-{}".format(uid))
+    else:
+        if(use_blend_name):
+            # BLEND_NAME-tmp-PURPOSE-UUID
+            tmp_dir = os.path.join(root, "{}-tmp-{}-{}".format(blend_name, purpose, uid))
+        else:
+            if(custom_name != ""):
+                # CUSTOM_NAME-tmp-PURPOSE-UUID
+                tmp_dir = os.path.join(root, "{}-tmp-{}-{}".format(custom_name, purpose, uid))
+            else:
+                # tmp-PURPOSE-UUID
+                tmp_dir = os.path.join(root, "tmp-{}-{}".format(purpose, uid))
+    
+    if(os.path.exists(tmp_dir) is False):
+        os.makedirs(tmp_dir)
+    
+    log("using temp directory at '{}'".format(tmp_dir), 1, LogStyles.MESSAGE, )
+    return tmp_dir
