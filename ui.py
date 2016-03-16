@@ -40,6 +40,7 @@ from . import mxs
 
 # NOTE: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works. at least try to remove that texture from texture drop down. but i think it is not possible to filter prop_search results, have to be enum with custom items function. update: leaving this as it is. there might be some solution for this, but it will rewuire rewrite of all texture selectors everywhere. to much work for small profit..
 # NOTE: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred) - seems like it will not work. texture preview might be usable when together with maxwell material basic blender material is created, then it can be used for preview in viewport
+# TODO: modifier panels are too chaotic.. maybe group properties to boxes (even though i hate them)
 
 
 class BMPanel():
