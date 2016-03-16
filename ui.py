@@ -593,7 +593,7 @@ class ExportSpecialsPanel(RenderButtonsPanel, Panel):
             # NOT TO DO: use UILayout.alert = True if missing values? prop_search does not support this..
 
 
-class SceneOptionsPanel(RenderButtonsPanel, Panel):
+class SceneOptionsPanel(BMPanel, RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Scene"
     
@@ -609,20 +609,14 @@ class SceneOptionsPanel(RenderButtonsPanel, Panel):
         r.operator("maxwell_render.render_preset_add", text="", icon='ZOOMOUT').remove_active = True
         sub.separator()
         
-        sub.prop(m, 'scene_time')
-        sub.prop(m, 'scene_sampling_level')
+        r = sub.row(align=True)
+        r.prop(m, 'scene_time')
+        r.prop(m, 'scene_sampling_level')
         
-        s = sub.split(percentage=0.2)
-        c = s.column()
-        c.label("Multilight:")
-        c = s.column()
-        r = c.row()
-        r.prop(m, 'scene_multilight', text="", )
-        r.prop(m, 'scene_multilight_type', text="", )
+        self.tab_double_half_split(sub, m, "Multilight", ['scene_multilight', 'scene_multilight_type'], align=True, label=True, text=False, )
         
-        r = sub.row()
-        r.prop(m, 'scene_cpu_threads')
-        # r.prop(m, 'scene_priority')
+        sub.prop(m, 'scene_cpu_threads')
+        # sub.prop(m, 'scene_priority')
         sub.prop(m, 'scene_quality')
         # sub.prop(m, 'scene_command_line')
 
@@ -638,7 +632,7 @@ class OutputOptionsPanel(RenderButtonsPanel, Panel):
         
         sub.prop(m, 'output_depth')
         
-        s = sub.split(percentage=0.25)
+        s = sub.split(percentage=0.333)
         c = s.column()
         c.prop(m, 'output_image_enabled')
         c = s.column()
@@ -646,7 +640,7 @@ class OutputOptionsPanel(RenderButtonsPanel, Panel):
         if(not m.output_image_enabled):
             c.enabled = False
         
-        s = sub.split(percentage=0.25)
+        s = sub.split(percentage=0.333)
         c = s.column()
         c.prop(m, 'output_mxi_enabled')
         c = s.column()
@@ -680,7 +674,7 @@ class MaterialsOptionsPanel(RenderButtonsPanel, Panel):
         sub.prop(m, 'materials_directory')
 
 
-class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
+class GlobalsOptionsPanel(BMPanel, RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Globals"
     bl_options = {'DEFAULT_CLOSED'}
@@ -698,18 +692,16 @@ class GlobalsOptionsPanel(RenderButtonsPanel, Panel):
         if(not m.globals_motion_blur):
             s.enabled = False
         
-        r = sub.row(align=True)
-        r.prop(m, 'globals_motion_blur_num_substeps')
-        r.prop(m, 'globals_motion_blur_shutter_open_offset')
+        e = self.tab_double_half_split(sub, m, "", ['globals_motion_blur_num_substeps', 'globals_motion_blur_shutter_open_offset'], align=True, label=False, text=True, )
         if(not m.globals_motion_blur):
-            r.enabled = False
+            e.enabled = False
         
         sub.separator()
         sub.prop(m, 'globals_diplacement')
         sub.prop(m, 'globals_dispersion')
 
 
-class ExtraSamplingOptionsPanel(RenderButtonsPanel, Panel):
+class ExtraSamplingOptionsPanel(BMPanel, RenderButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Extra Sampling"
     bl_options = {'DEFAULT_CLOSED'}
@@ -722,13 +714,16 @@ class ExtraSamplingOptionsPanel(RenderButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.scene.maxwell_render
+        if(not m.extra_sampling_enabled):
+            sub.active = False
         
         r = sub.row()
-        s = r.split(percentage=0.75)
-        c = s.column()
-        c.prop(m, 'extra_sampling_mask')
-        c = s.column()
-        c.prop(m, 'extra_sampling_invert', text="Invert", )
+        s = r.split(percentage=0.333)
+        s.label("Mask:")
+        s = s.split(percentage=0.666, align=False, )
+        s.prop(m, 'extra_sampling_mask', text="", )
+        s = s.split(percentage=1.0, align=False, )
+        s.prop(m, 'extra_sampling_invert', text="Invert", )
         
         sub.prop(m, 'extra_sampling_sl')
         sub.prop(m, 'extra_sampling_custom_alpha')
@@ -752,7 +747,7 @@ class ToneMappingOptionsPanel(RenderButtonsPanel, Panel):
         r.prop(m, 'tone_burn')
         r.prop(m, 'tone_gamma')
         r = sub.row()
-        s = r.split(percentage=0.5)
+        s = r.split(percentage=0.333)
         c = s.column()
         c.prop(m, 'tone_sharpness')
         c = s.column()
@@ -774,25 +769,25 @@ class SimulensOptionsPanel(RenderButtonsPanel, Panel):
         sub.prop(m, 'simulens_aperture_map')
         sub.prop(m, 'simulens_obstacle_map')
         
-        s = sub.split(percentage=0.35)
+        s = sub.split(percentage=0.333)
         c = s.column()
         c.prop(m, 'simulens_diffraction')
         c = s.column()
         c.prop(m, 'simulens_diffraction_value', text="", )
         
-        s = sub.split(percentage=0.35)
+        s = sub.split(percentage=0.333)
         c = s.column()
         c.label('Frequency')
         c = s.column()
         c.prop(m, 'simulens_frequency', text="", )
         
-        s = sub.split(percentage=0.35)
+        s = sub.split(percentage=0.333)
         c = s.column()
         c.prop(m, 'simulens_scattering')
         c = s.column()
         c.prop(m, 'simulens_scattering_value', text="", )
         
-        s = sub.split(percentage=0.35)
+        s = sub.split(percentage=0.333)
         c = s.column()
         c.prop(m, 'simulens_devignetting')
         c = s.column()
@@ -1196,7 +1191,7 @@ class SkySettingsPanel(WorldButtonsPanel, Panel):
                 sub.prop(m, 'sky_asymmetry')
 
 
-class SunSettingsPanel(WorldButtonsPanel, Panel):
+class SunSettingsPanel(BMPanel, WorldButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Sun"
     
@@ -1222,10 +1217,15 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
             r.prop(m, 'sun_temp')
             if(m.sun_type == 'CUSTOM'):
                 r.enabled = False
-            r = sub.row()
-            r.prop(m, 'sun_color')
+            
+            # r = sub.row()
+            # r.prop(m, 'sun_color')
+            # if(m.sun_type == 'PHYSICAL'):
+            #     r.enabled = False
+            
+            e = self.tab_single(sub, m, 'sun_color', label=True, text=False, )
             if(m.sun_type == 'PHYSICAL'):
-                r.enabled = False
+                e.enabled = False
             
             sub.label("Location:")
             r = sub.row()
@@ -1233,8 +1233,9 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
             sub.separator()
             
             if(m.sun_location_type == 'ANGLES'):
-                sub.prop(m, 'sun_angles_zenith')
-                sub.prop(m, 'sun_angles_azimuth')
+                r = sub.row(align=True)
+                r.prop(m, 'sun_angles_zenith')
+                r.prop(m, 'sun_angles_azimuth')
             elif(m.sun_location_type == 'DIRECTION'):
                 
                 r = sub.row()
@@ -1260,22 +1261,29 @@ class SunSettingsPanel(WorldButtonsPanel, Panel):
                 if(m.sun_lamp != '' and m.use_sun_lamp is True):
                     c.enabled = False
             else:
-                r = sub.row(align=True)
-                r.prop(m, 'sun_latlong_lat')
-                r.prop(m, 'sun_latlong_lon')
+                self.tab_double_half_split(sub, m, "Lat/Long", ['sun_latlong_lat', 'sun_latlong_lon'], align=True, label=True, text=True, )
+                
                 sub.prop(m, 'sun_date')
                 sub.prop(m, 'sun_time')
                 
                 r = sub.row()
-                c = r.column()
-                c.prop(m, 'sun_latlong_gmt')
-                r.prop(m, 'sun_latlong_gmt_auto')
+                s = r.split(percentage=0.333)
+                s.label("")
+                s = s.split(percentage=0.666)
+                r = s.row()
+                r.prop(m, 'sun_latlong_gmt')
+                s = s.split(percentage=1.0)
+                s.prop(m, 'sun_latlong_gmt_auto')
                 if(m.sun_latlong_gmt_auto):
-                    c.enabled = False
+                    r.enabled = False
                 
-                sub.operator('maxwell_render.now', "Now")
+                r = sub.row()
+                s = r.split(percentage=0.333)
+                s.label("")
+                s = s.split(percentage=1.0)
+                s.operator('maxwell_render.now', "Now")
                 
-                sub.prop(m, 'sun_latlong_ground_rotation')
+                self.tab_single(sub, m, 'sun_latlong_ground_rotation', label=True, text=False, )
 
 
 class IBLSettingsPanel(WorldButtonsPanel, Panel):
@@ -1393,7 +1401,7 @@ class CameraPresetsPanel(CameraButtonsPanel, Panel):
         r.operator("maxwell_render.camera_preset_add", text="", icon='ZOOMOUT').remove_active = True
 
 
-class CameraOpticsPanel(CameraButtonsPanel, Panel):
+class CameraOpticsPanel(BMPanel, CameraButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Optics"
     
@@ -1412,55 +1420,51 @@ class CameraOpticsPanel(CameraButtonsPanel, Panel):
             cam = context.camera
             sub.prop(o, 'dof_object')
             
-            r = sub.row()
-            r.enabled = cam.dof_object is None
-            r.prop(o, 'dof_distance')
+            e = self.tab_single(sub, o, 'dof_distance', label=True, text=False, )
+            e.enabled = cam.dof_object is None
         
+        sub.separator()
         sub.prop(m, 'lens')
-        r = sub.row()
-        r.prop(o, 'lens')
-        if(m.lens == 'TYPE_ORTHO_2'):
-            r.enabled = False
         
-        # sub.menu("Exposure_presets", text=bpy.types.Exposure_presets.bl_label)
-        #
-        # sub.prop(m, 'lock_exposure')
-        # sub.prop(m, 'shutter')
-        # sub.prop(m, 'fstop')
-        # sub.prop(m, 'ev')
+        e = self.tab_single(sub, o, 'lens', label=True, text=False, )
+        
+        if(m.lens == 'TYPE_ORTHO_2'):
+            e.enabled = False
         
         if(m.lens == 'TYPE_FISHEYE_3'):
-            sub.prop(m, 'fov')
+            # sub.prop(m, 'fov')
+            self.tab_single(sub, m, 'fov', label=True, text=False, )
         if(m.lens == 'TYPE_SPHERICAL_4'):
-            sub.prop(m, 'azimuth')
+            # sub.prop(m, 'azimuth')
+            self.tab_single(sub, m, 'azimuth', label=True, text=False, )
         if(m.lens == 'TYPE_CYLINDRICAL_5'):
-            sub.prop(m, 'angle')
+            # sub.prop(m, 'angle')
+            self.tab_single(sub, m, 'angle', label=True, text=False, )
         if(m.lens == 'TYPE_LAT_LONG_STEREO_6'):
             sub.separator()
             sub.label('Lat-Long Stereo:')
-            sub.prop(m, 'lls_type')
-            r = sub.row(align=True)
-            r.prop(m, 'lls_fovv')
-            r.prop(m, 'lls_fovh')
-            r = sub.row()
-            r.prop(m, 'lls_flip_ray_x')
-            r.prop(m, 'lls_flip_ray_y')
-            sub.prop(m, 'lls_parallax_distance')
-            sub.prop(m, 'lls_zenith_mode')
-            sub.prop(m, 'lls_separation')
+            
+            self.tab_single(sub, m, 'lls_type', label=True, text=False, )
+            self.tab_double_half_split(sub, m, 'FOV', ['lls_fovv', 'lls_fovh'], align=True, label=True, text=True, )
+            self.tab_double_half_split(sub, m, 'Flip Ray', ['lls_flip_ray_x', 'lls_flip_ray_y'], align=True, label=True, text=True, )
+            self.tab_single(sub, m, 'lls_parallax_distance', label=True, text=False, )
+            self.tab_single(sub, m, 'lls_zenith_mode', label=True, text=False, )
+            self.tab_single(sub, m, 'lls_separation', label=True, text=False, )
+            
             sub.prop_search(m, 'lls_separation_map', bpy.data, 'textures', icon='TEXTURE')
         if(m.lens == 'TYPE_FISH_STEREO_7'):
             sub.separator()
             sub.label('Fish Stereo:')
-            sub.prop(m, 'fs_type')
-            sub.prop(m, 'fs_fov')
-            sub.prop(m, 'fs_separation')
+            
+            self.tab_single(sub, m, 'fs_type', label=True, text=False, )
+            self.tab_single(sub, m, 'fs_fov', label=True, text=False, )
+            self.tab_single(sub, m, 'fs_separation', label=True, text=False, )
             sub.prop_search(m, 'fs_separation_map', bpy.data, 'textures', icon='TEXTURE')
-            sub.prop(m, 'fs_vertical_mode')
-            sub.prop(m, 'fs_dome_radius')
+            self.tab_single(sub, m, 'fs_vertical_mode', label=True, text=False, )
+            self.tab_single(sub, m, 'fs_dome_radius', label=True, text=False, )
             sub.prop_search(m, 'fs_head_turn_map', bpy.data, 'textures', icon='TEXTURE')
-            sub.prop(m, 'fs_dome_tilt_compensation')
-            sub.prop(m, 'fs_dome_tilt')
+            self.tab_single(sub, m, 'fs_dome_tilt_compensation', label=True, text=False, )
+            self.tab_single(sub, m, 'fs_dome_tilt', label=True, text=False, )
             sub.prop_search(m, 'fs_head_tilt_map', bpy.data, 'textures', icon='TEXTURE')
 
 
@@ -1558,7 +1562,7 @@ class CameraExposurePanel(BMPanel, CameraButtonsPanel, Panel):
             e.enabled = False
 
 
-class CameraSensorPanel(CameraButtonsPanel, Panel):
+class CameraSensorPanel(BMPanel, CameraButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Sensor"
     
@@ -1678,7 +1682,8 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         r.prop(o, 'sensor_height', text="", )
         sub.prop(o, 'sensor_fit')
         
-        sub.prop(m, 'iso')
+        # sub.prop(m, 'iso')
+        self.tab_single(sub, m, 'iso', label=True, text=False, )
         sub.prop(m, 'response')
         
         sub.separator()
@@ -1697,7 +1702,7 @@ class CameraSensorPanel(CameraButtonsPanel, Panel):
         r.operator("maxwell_render.camera_reset_region")
 
 
-class CameraOptionsPanel(CameraButtonsPanel, Panel):
+class CameraOptionsPanel(BMPanel, CameraButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Options"
     bl_options = {'DEFAULT_CLOSED'}
@@ -1711,32 +1716,39 @@ class CameraOptionsPanel(CameraButtonsPanel, Panel):
         
         sub.label("Diaphragm:")
         sub.prop(m, 'aperture')
-        r = sub.row()
-        r.prop(m, 'diaphragm_blades')
-        r.prop(m, 'diaphragm_angle')
-        if(m.aperture == 'CIRCULAR'):
-            r.enabled = False
         
-        sub.prop(m, 'custom_bokeh')
+        e = self.tab_double_half_split(sub, m, '', ['diaphragm_blades', 'diaphragm_angle'], align=True, label=False, text=True, )
+        if(m.aperture == 'CIRCULAR'):
+            e.enabled = False
+        
         r = sub.row()
-        r.prop(m, 'bokeh_ratio')
-        r.prop(m, 'bokeh_angle')
+        s = r.split(percentage=0.333)
+        s.prop(m, 'custom_bokeh')
+        s = s.split(percentage=0.5, align=True, )
+        e = s.row(align=True)
+        e.prop(m, 'bokeh_ratio', text='Ratio', )
         if(not m.custom_bokeh):
-            r.enabled = False
+            e.enabled = False
+        s = s.split(percentage=1.0, align=True, )
+        e = s.row(align=True)
+        e.prop(m, 'bokeh_angle', text='Angle', )
+        if(not m.custom_bokeh):
+            e.enabled = False
         
         sub.separator()
+        
         sub.label("Rotary Disc Shutter:")
         r = sub.row()
         r.prop(m, 'shutter_angle')
-        r.enabled = False
-        sub.prop(m, 'frame_rate')
+        r.prop(m, 'frame_rate')
         
         sub.separator()
-        sub.label("Z-clip Planes:")
         sub.prop(m, 'zclip')
         r = sub.row(align=True)
         r.prop(o, 'clip_start')
         r.prop(o, 'clip_end')
+        if(not m.zclip):
+            r.enabled = False
         
         sub.separator()
         sub.label("Shift Lens:")
@@ -1744,6 +1756,7 @@ class CameraOptionsPanel(CameraButtonsPanel, Panel):
         r.prop(o, 'shift_x')
         r.prop(o, 'shift_y')
         
+        sub.separator()
         sub.prop(m, 'hide')
 
 
@@ -1792,9 +1805,13 @@ class ObjectPanel(BMPanel, ObjectButtonsPanel, Panel):
         sub.separator()
         
         r = sub.row(align=True)
-        r.label("Motion Blur:")
-        r.prop(m, 'movement', toggle=True)
-        r.prop(m, 'deformation', toggle=True)
+        s = r.split(percentage=0.333)
+        s.label("Motion Blur:")
+        s = s.split(percentage=0.5, align=True, )
+        s.prop(m, 'movement', toggle=True)
+        s = s.split(percentage=1.0, align=True, )
+        s.prop(m, 'deformation', toggle=True)
+        
         # e = self.tab_double_enable_and_value(sub, m, "Custom Substeps", 'custom_substeps', 'substeps', m.custom_substeps, align=False, label=True, text=False, )
         e = self.tab_single_with_enable(sub, m, 'custom_substeps', m.custom_substeps, 'substeps', split=0.33, )
         if(not m.movement and not m.deformation):
@@ -1881,7 +1898,7 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL')
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
         
-        q = 0.33
+        q = 0.333
         
         r = sub.row()
         s = r.split(percentage=q)

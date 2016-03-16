@@ -881,7 +881,7 @@ class EnvironmentProperties(PropertyGroup):
     sun_color = FloatVectorProperty(name="Color", default=(1.0, 1.0, 1.0), min=0.0, max=1.0, precision=2, subtype='COLOR', update=update_sun_color, )
     sun_location_type = EnumProperty(name="Location", items=[('LATLONG', "Lat / Long", ""), ('ANGLES', "Angles", ""), ('DIRECTION', "Direction", "")], default='DIRECTION', )
     sun_latlong_lat = FloatProperty(name="Lat", default=40.000, min=-90.000, max=90.000, precision=3, )
-    sun_latlong_lon = FloatProperty(name="Lon", default=-3.000, min=-180.000, max=180.000, precision=3, update=_gmt_auto, )
+    sun_latlong_lon = FloatProperty(name="Long", default=-3.000, min=-180.000, max=180.000, precision=3, update=_gmt_auto, )
     
     sun_date = StringProperty(name="Date", default="DD.MM.YYYY", description="Date in format DD.MM.YYYY", )
     sun_time = StringProperty(name="Time", default="HH:MM", description="Time in format HH:MM", )
@@ -1078,10 +1078,10 @@ class CameraProperties(PropertyGroup):
     angle = FloatProperty(name="Angle", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     
     lls_type = EnumProperty(name="Type", items=[('CENTER_0', "Center", ""), ('LEFT_1', "Left", ""), ('RIGHT_2', "Right", ""), ], default='LEFT_1', )
-    lls_fovv = FloatProperty(name="FOV Vertical", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(180.0), subtype='ANGLE', )
-    lls_fovh = FloatProperty(name="FOV Horizontal", default=math.radians(360.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
-    lls_flip_ray_x = BoolProperty(name="Flip Ray X", default=False, )
-    lls_flip_ray_y = BoolProperty(name="Flip Ray X", default=False, )
+    lls_fovv = FloatProperty(name="Vertical", default=math.radians(180.0), min=math.radians(0.0), max=math.radians(180.0), subtype='ANGLE', )
+    lls_fovh = FloatProperty(name="Horizontal", default=math.radians(360.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
+    lls_flip_ray_x = BoolProperty(name="X", default=False, )
+    lls_flip_ray_y = BoolProperty(name="Y", default=False, )
     lls_parallax_distance = FloatProperty(name="Parallax Distance", default=math.radians(360.0), min=math.radians(0.0), max=math.radians(360.0), subtype='ANGLE', )
     lls_zenith_mode = BoolProperty(name="Zenith Mode", default=False, )
     lls_separation = FloatProperty(name="Separation", default=6.0, min=0.0, max=1000000.0, )
