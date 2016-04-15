@@ -56,6 +56,7 @@ class MXSImportMacOSX():
         
         self.uuid = uuid.uuid1()
         
+        # FIXME: path cannot be created when blend is not saved
         h, t = os.path.split(self.mxs_path)
         n, e = os.path.splitext(t)
         self.tmp_dir = utils.tmp_dir(purpose='import_scene', uid=self.uuid, use_blend_name=True, )
@@ -90,6 +91,11 @@ class MXSImportMacOSX():
                 log("element without type: {0}".format(d), 1, LogStyles.WARNING)
             if(d['type'] == 'EMPTY'):
                 o = self._empty(d)
+                
+                if(d['referenced_mxs']):
+                    o.maxwell_render.reference.enabled = True
+                    o.maxwell_render.reference.path = d['referenced_mxs_path']
+                
                 d['created'] = o
             elif(d['type'] == 'MESH'):
                 o = self._mesh(d)
@@ -118,7 +124,7 @@ class MXSImportMacOSX():
     def _empty(self, d):
         n = d['name']
         log("empty: {0}".format(n), 2)
-        o = utils.add_object(n, None)
+        o = utils.add_object2(n, None)
         return o
     
     def _mesh(self, d):
@@ -167,14 +173,22 @@ class MXSImportMacOSX():
         # mr90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
         # me.transform(mr90)
         
-        o = utils.add_object(nm, me)
+        o = utils.add_object2(nm, me)
         
         return o
     
     def _instance(self, d):
         log("instance: {0}".format(d['name']), 2)
-        m = bpy.data.meshes[d['instanced']]
-        o = utils.add_object(d['name'], m)
+        o = None
+        io = bpy.data.objects[d['instanced']]
+        if(io.type == 'MESH'):
+            m = bpy.data.meshes[d['instanced']]
+            o = utils.add_object2(d['name'], m)
+        elif(io.type == 'EMPTY'):
+            o = utils.add_object2(d['name'], None)
+            if(d['referenced_mxs']):
+                o.maxwell_render.reference.enabled = True
+                o.maxwell_render.reference.path = d['referenced_mxs_path']
         return o
     
     def _camera(self, d):
@@ -240,7 +254,7 @@ class MXSImportMacOSX():
         n = d['name']
         log("sun: {0}".format(n), 2)
         l = bpy.data.lamps.new(n, 'SUN')
-        o = utils.add_object(n, l)
+        o = utils.add_object2(n, l)
         v = Vector(d['xyz'])
         mrx90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
         v.rotate(mrx90)
@@ -446,6 +460,11 @@ class MXSImportWinLin():
                     continue
                 if(t == 'EMPTY'):
                     o = self._empty(d)
+                    
+                    if(d['referenced_mxs']):
+                        o.maxwell_render.reference.enabled = True
+                        o.maxwell_render.reference.path = d['referenced_mxs_path']
+                    
                     d['created'] = o
                 elif(t == 'MESH'):
                     o = self._mesh(d)
@@ -498,7 +517,7 @@ class MXSImportWinLin():
     def _empty(self, d):
         n = d['name']
         log("empty: {0}".format(n), 2)
-        o = utils.add_object(n, None)
+        o = utils.add_object2(n, None)
         return o
     
     def _mesh(self, d):
@@ -543,13 +562,21 @@ class MXSImportWinLin():
                 uvloops.data[li[1]].uv = v1
                 uvloops.data[li[2]].uv = v2
         
-        o = utils.add_object(nm, me)
+        o = utils.add_object2(nm, me)
         return o
     
     def _instance(self, d):
         log("instance: {0}".format(d['name']), 2)
-        m = bpy.data.meshes[d['instanced']]
-        o = utils.add_object(d['name'], m)
+        o = None
+        io = bpy.data.objects[d['instanced']]
+        if(io.type == 'MESH'):
+            m = bpy.data.meshes[d['instanced']]
+            o = utils.add_object2(d['name'], m)
+        elif(io.type == 'EMPTY'):
+            o = utils.add_object2(d['name'], None)
+            if(d['referenced_mxs']):
+                o.maxwell_render.reference.enabled = True
+                o.maxwell_render.reference.path = d['referenced_mxs_path']
         return o
     
     def _camera(self, d):
@@ -615,7 +642,7 @@ class MXSImportWinLin():
         n = d['name']
         log("sun: {0}".format(n), 2)
         l = bpy.data.lamps.new(n, 'SUN')
-        o = utils.add_object(n, l)
+        o = utils.add_object2(n, l)
         v = Vector(d['xyz'])
         mrx90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
         v.rotate(mrx90)

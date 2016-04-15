@@ -127,6 +127,18 @@ def camera(c):
     o = s[0]
     f = s[1]
     u = s[2]
+    
+    # skip weird cameras
+    flc = s[3]
+    co = s[0]
+    fp = s[1]
+    d = Cvector()
+    d.substract(fp, co)
+    fd = d.norm()
+    if(flc == 0.0 or fd == 0.0):
+        log("WARNING: {}: impossible camera, skipping..".format(v['name']), 2)
+        return None
+    
     r = {'name': v['name'],
          'shutter': 1.0 / v['shutter'],
          'iso': v['iso'],
@@ -168,11 +180,19 @@ def camera(c):
 
 
 def object(o):
+    object_name, _ = o.getName()
     is_instance, _ = o.isInstance()
     is_mesh, _ = o.isMesh()
     if(is_instance == 0 and is_mesh == 0):
-        log("WARNING: only empties, meshes and instances are supported..", 2)
+        log("WARNING: {}: only empties, meshes and instances are supported..".format(object_name), 2)
         return None
+    
+    # skip not posrotscale initialized objects
+    is_init, _ = o.isPosRotScaleInitialized()
+    if(not is_init):
+        log("WARNING: {}: object is not initialized, skipping..".format(object_name), 2)
+        return None
+    
     r = {'name': o.getName()[0],
          'vertices': [],
          'normals': [],
@@ -221,6 +241,13 @@ def object(o):
             h.append("RR")
         r['hidden'] = ", ".join(h)
         
+        r['referenced_mxs'] = False
+        r['referenced_mxs_path'] = None
+        rmp = io.getReferencedScenePath()
+        if(rmp != ""):
+            r['referenced_mxs'] = True
+            r['referenced_mxs_path'] = rmp
+        
         return r
     # counts
     nv, _ = o.getVerticesCount()
@@ -228,6 +255,10 @@ def object(o):
     nt, _ = o.getTrianglesCount()
     nppv, _ = o.getPositionsPerVertexCount()
     ppv = 0
+    
+    r['referenced_mxs'] = False
+    r['referenced_mxs_path'] = None
+    
     if(nv > 0):
         r['type'] = 'MESH'
         
@@ -244,9 +275,13 @@ def object(o):
         if(o.getHideToReflectionsRefractions()):
             h.append("RR")
         r['hidden'] = ", ".join(h)
-        
     else:
         r['type'] = 'EMPTY'
+        
+        rmp = o.getReferencedScenePath()
+        if(rmp != ""):
+            r['referenced_mxs'] = True
+            r['referenced_mxs_path'] = rmp
         
         cid, _ = o.getColorID()
         rgb8 = cid.toRGB8()
