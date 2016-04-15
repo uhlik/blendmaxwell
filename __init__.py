@@ -889,4 +889,4 @@ if __name__ == "__main__":
     register()
     
     # oh, btw, run this from time to time..
-    # pep8 --ignore=W293,E501 .
+    # pep8 --ignore=W293,E501,E402 .
