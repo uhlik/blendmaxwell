@@ -492,19 +492,25 @@ def benchmark(t=None):
     return time.time()
 
 
-def tmp_dir(purpose=None, uid=None, use_blend_name=False, custom_name=None, ):
+def tmp_dir(purpose=None, uid=None, use_blend_name=False, custom_name=None, override_path=None, ):
     """create temp directory, look into preferences where to create it, build its name, create and return its absolute path
     naming pattern: 'tmp-PURPOSE-UUID', without purpose 'tmp-UUID', when use_blend_name is True, 'BLEND_NAME-tmp_dir-PURPOSE-UUID' or 'BLEND_NAME-tmp_dir-UUID'
     purpose:        string, something descriptive, such as 'material_preview' or so
     uid:            to prevent overwriting what is already there, add uuid to directory name. probability that someone is using such names and probability for the identical name is sufficiently infinitesimal i guess
     use_blend_name: blend name as directory prefix
     custom_name:    the same like use_blend_name but you can set whatever you want, use_blend_name should be False
+    override_path:  path is set outside, so use this one. only create if needed..
     return          absolute path string
     """
     def prefs():
         a = os.path.split(os.path.split(os.path.realpath(__file__))[0])[1]
         p = bpy.context.user_preferences.addons[a].preferences
         return p
+    
+    if(override_path is not None):
+        if(os.path.exists(override_path) is False):
+            os.makedirs(override_path)
+        return override_path
     
     blend = os.path.realpath(bpy.path.abspath(bpy.data.filepath))
     _, blend_file = os.path.split(blend)

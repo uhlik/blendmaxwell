@@ -56,10 +56,13 @@ class MXSImportMacOSX():
         
         self.uuid = uuid.uuid1()
         
-        # FIXME: path cannot be created when blend is not saved
         h, t = os.path.split(self.mxs_path)
         n, e = os.path.splitext(t)
-        self.tmp_dir = utils.tmp_dir(purpose='import_scene', uid=self.uuid, use_blend_name=True, )
+        if(bpy.data.filepath == ""):
+            p = os.path.join(h, '{}-tmp-import_scene-{}'.format(n, self.uuid))
+            self.tmp_dir = utils.tmp_dir(override_path=p)
+        else:
+            self.tmp_dir = utils.tmp_dir(purpose='import_scene', uid=self.uuid, use_blend_name=True, )
         
         self.scene_data_name = "{0}-{1}.json".format(n, self.uuid)
         self.script_name = "{0}-{1}.py".format(n, self.uuid)
@@ -767,7 +770,11 @@ class MXMImportMacOSX():
         
         h, t = os.path.split(self.mxm_path)
         n, e = os.path.splitext(t)
-        self.tmp_dir = utils.tmp_dir(purpose='import_material', uid=self.uuid, use_blend_name=False, custom_name=n, )
+        if(bpy.data.filepath == ""):
+            p = os.path.join(h, '{}-tmp-import_material-{}'.format(n, self.uuid))
+            self.tmp_dir = utils.tmp_dir(override_path=p)
+        else:
+            self.tmp_dir = utils.tmp_dir(purpose='import_material', uid=self.uuid, use_blend_name=False, custom_name=n, )
         
         self.data_name = "{0}-{1}.json".format(n, self.uuid)
         self.script_name = "{0}-{1}.py".format(n, self.uuid)
