@@ -19,6 +19,8 @@
 * Material assignment (including backface materials) and multiple materials per object
 * Extension Materials creation and editing inside Blender
 * Maxwell procedural textures
+* Material preview rendering
+* Viewport rendering (not interactive)
 * Cameras
 * Render parameters
 * All render channels including Custom Alphas
@@ -27,7 +29,6 @@
 * Export objects and cameras for movement and deformation blur
 * Maxwell Extensions: Particles, Grass, Hair, Scatter, Subdivision, Sea, Cloner, Volumetrics
 * Export Subdivision modifiers if their type is Catmull-Clark and they are at the end of modifier stack on regular mesh objects (optional)
-* Wireframe scene export (all edges are converted to instanced cylinder of user defined radius)
 * Scene import (objects, emitters, cameras and sun selectively)
 
 ![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
@@ -61,6 +62,7 @@
 
 **changelog:**
 
+* 0.4.4 material preview and viewport (not interactive) rendering, mxs import with mxs references
 * 0.4.3 critical fix: smooth faces export, experimental feature: material preview rendering (currently Mac OS X only)
 * 0.4.2 movement and deformation blur, faster mesh export
 * 0.4.1 procedural textures, faster reading of mxs references
