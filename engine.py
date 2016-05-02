@@ -440,8 +440,8 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         # start rendering..
         if(system.PLATFORM == 'Darwin'):
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
-            PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+            PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.5', ))
+            PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
             TEMPLATE_SCENE = system.check_for_material_preview_scene_template()
             TEMPLATE_MXI = system.check_for_material_preview_mxi_template()
             NUMPY_PATH = os.path.split(os.path.split(np.__file__)[0])[0]
@@ -1066,8 +1066,8 @@ class MaxwellRenderExportEngine(RenderEngine):
             raise Exception("Something went wrong. Check console log.")
         
         if(system.PLATFORM == 'Darwin'):
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
-            PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+            PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.5', ))
+            PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
             TEMPLATE_SCENE = system.check_for_viewport_render_scene_settings_template()
             log("scene render settings..", 1, )
             
@@ -1494,8 +1494,8 @@ class MaxwellRenderExportEngine(RenderEngine):
             
             a = None
             if(system.PLATFORM == 'Darwin'):
-                PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.4', ))
-                PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+                PY = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().python_path), 'bin', 'python3.5', ))
+                PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(system.prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
                 TEMPLATE_MXI = system.check_for_viewport_render_mxi_template()
                 NUMPY_PATH = os.path.split(os.path.split(np.__file__)[0])[0]
                 

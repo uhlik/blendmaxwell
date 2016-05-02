@@ -845,7 +845,7 @@ def register():
     s = platform.system()
     if(p.python_path == ''):
         if(s == 'Darwin'):
-            py = '/Library/Frameworks/Python.framework/Versions/3.4/'
+            py = '/Library/Frameworks/Python.framework/Versions/3.5/'
         elif(s == 'Linux'):
             py = '/usr/bin/'
         elif(s == 'Windows'):

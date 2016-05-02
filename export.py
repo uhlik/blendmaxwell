@@ -1546,7 +1546,8 @@ class MXSExport():
                                     pack_prefix(o, 'tone_', ),
                                     pack_prefix(o, 'simulens_', ),
                                     pack_prefix(o, 'illum_caustics_', ),
-                                    other, )
+                                    other,
+                                    pack_prefix(o, 'overlay_', ), )
                 
                 mxi = None
                 if(o.m_output_mxi_enabled):
@@ -2127,12 +2128,14 @@ class MXSScene(Serializable):
         self.m_illum_caustics_illumination = int(mx.illum_caustics_illumination[-1:])
         self.m_illum_caustics_refl_caustics = int(mx.illum_caustics_refl_caustics[-1:])
         self.m_illum_caustics_refr_caustics = int(mx.illum_caustics_refr_caustics[-1:])
-        # self.m_overlay_enabled = mx.overlay_enabled
-        # self.m_overlay_text = mx.overlay_text
-        # self.m_overlay_position = mx.overlay_position
-        # self.m_overlay_color = tuple(mx.overlay_color)
-        # self.m_overlay_background = mx.overlay_background
-        # self.m_overlay_background_color = tuple(mx.overlay_background_color)
+        
+        self.m_overlay_enabled = mx.overlay_enabled
+        self.m_overlay_text = mx.overlay_text
+        self.m_overlay_position = int(mx.overlay_position[-1:])
+        self.m_overlay_color = self._gamma_uncorrect(mx.overlay_color)
+        self.m_overlay_background = mx.overlay_background
+        self.m_overlay_background_color = self._gamma_uncorrect(mx.overlay_background_color)
+        
         self.m_export_protect_mxs = mx.export_protect_mxs
         self.m_export_remove_unused_materials = mx.export_remove_unused_materials
         
@@ -2150,6 +2153,11 @@ class MXSScene(Serializable):
         self.m_export_wire_clay_material = mx.export_wire_clay_material
         
         self.m_plugin_id = utils.get_plugin_id()
+    
+    def _gamma_uncorrect(self, c, ):
+        g = 1 / 2.2
+        c = [v ** g for v in c]
+        return c
 
 
 class MXSEnvironment(Serializable):

@@ -817,10 +817,9 @@ class OverlayTextPanel(BMPanel, RenderButtonsPanel, Panel):
     
     @classmethod
     def poll(cls, context):
-        # TODO: enable this when available (next version probably)
         # if(system.get_pymaxwell_version() >= (3, 2, 1, 2)):
         #     return True
-        return False
+        return True
     
     def draw_header(self, context):
         m = context.scene.maxwell_render
