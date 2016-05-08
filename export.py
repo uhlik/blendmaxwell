@@ -1509,6 +1509,7 @@ class MXSExport():
                 screen_region = None
                 if(o.m_screen_region != 'NONE'):
                     screen_region = o.m_screen_region_xywh
+                    screen_region = screen_region + (o.m_screen_region, )
                 custom_bokeh = None
                 if(o.m_custom_bokeh):
                     custom_bokeh = (o.m_bokeh_ratio, o.m_bokeh_angle, o.m_custom_bokeh)

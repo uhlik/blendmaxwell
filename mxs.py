@@ -2046,18 +2046,19 @@ class MXSWriter():
                     s.setRenderParameter('EXTRA SAMPLING INVERT', 1)
         
         if(text_overlay is not None):
-            o = CoverlayTextOptions()
-            o.enabled_ = 1
-            o.text_ = Cstring(text_overlay['text'])
-            o.position_ = text_overlay['position']
-            c = Crgb()
-            c.assign(*text_overlay['color'])
-            o.color_ = c.toRGB8()
-            o.backgroundEnabled_ = text_overlay['background']
-            c = Crgb()
-            c.assign(*text_overlay['background_color'])
-            o.backgroundColor_ = c.toRGB8()
-            s.setOverlayTextOptions(o)
+            if(text_overlay['enabled']):
+                o = CoverlayTextOptions()
+                o.enabled_ = 1
+                o.text_ = Cstring(text_overlay['text'])
+                o.position_ = text_overlay['position']
+                c = Crgb()
+                c.assign(*text_overlay['color'])
+                o.color_ = c.toRGB8()
+                o.backgroundEnabled_ = text_overlay['background']
+                c = Crgb()
+                c.assign(*text_overlay['background_color'])
+                o.backgroundColor_ = c.toRGB8()
+                s.setOverlayTextOptions(o)
     
     def channels(self, base_path, mxi, image, image_depth='RGB8', channels_output_mode=0, channels_render=True, channels_render_type=0, channels=None, ):
         """Set scene render channels.
