@@ -34,6 +34,7 @@ from bpy_extras import io_utils
 import bmesh
 from mathutils.geometry import barycentric_transform
 from mathutils.bvhtree import BVHTree
+import numpy
 
 from .log import log, clear_log, LogStyles
 from . import utils
@@ -1377,7 +1378,8 @@ class MXSExport():
                 
                 d = {'name': o.m_name,
                      'num_vertexes': len(o.m_vertices[0]),
-                     'num_normals': len(o.m_normals[0]) + len(o.m_triangles),
+                     # 'num_normals': len(o.m_normals[0]) + len(o.m_triangles),
+                     'num_normals': len(o.m_normals[0]) + len(o.m_triangle_normals[0]),
                      'num_triangles': len(o.m_triangles),
                      'num_positions_per_vertex': o.m_num_positions,
                      'mesh_data': nm,
@@ -2783,12 +2785,8 @@ class MXSMesh(MXSObject):
                 if(steps[0][0] == cf and steps[0][1] == sf):
                     me = self._prepare_mesh()
                     # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
-                    try:
-                        import numpy
-                        self._mesh_to_data2(me)
-                    except ImportError:
-                        log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
-                        self._mesh_to_data(me)
+                    # self._mesh_to_data(me)
+                    self._mesh_to_data2(me)
                     
                     self._materials()
                     # cleanup
@@ -2802,13 +2800,8 @@ class MXSMesh(MXSObject):
                     # mesh
                     me = self._prepare_mesh(pos=position, )
                     
-                    # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
-                    try:
-                        import numpy
-                        self._mesh_to_data2(me)
-                    except ImportError:
-                        log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
-                        self._mesh_to_data(me)
+                    # self._mesh_to_data(me)
+                    self._mesh_to_data2(me)
                     
                     log("deformation: frame: {}, step: {}, position: {}".format(frame, round(sub, 6), position), 3, )
                     
@@ -2819,13 +2812,8 @@ class MXSMesh(MXSObject):
                 sc.frame_set(cf, subframe=sf, )
         else:
             me = self._prepare_mesh()
-            # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
-            try:
-                import numpy
-                self._mesh_to_data2(me)
-            except ImportError:
-                log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
-                self._mesh_to_data(me)
+            # self._mesh_to_data(me)
+            self._mesh_to_data2(me)
             
             self._materials()
             # cleanup
@@ -2929,6 +2917,7 @@ class MXSMesh(MXSObject):
         
         me.calc_tessface()
         me.calc_normals()
+        me.calc_normals_split()
         
         self.subdivision_modifier = None
         if(extra_subdiv):
@@ -3052,9 +3041,62 @@ class MXSMesh(MXSObject):
             ms = np.reshape(ms, (-1, 1))
             ms = np.concatenate((ti, ms), axis=1)
             
-            return (ts,
-                    np.reshape(ns, (l, 3)),
-                    ms, )
+            # return (ts, np.reshape(ns, (l, 3)), ms, )
+            
+            # split normals
+            # TODO: remove old normals code and use face loop normals for everything or make a switch on mesh to use split normals or not (better solution i guess, and faster as well)
+            vnn = len(me.vertices)
+            ll = len(me.loops)
+            lns = np.zeros((ll * 3), dtype=np.float, )
+            me.loops.foreach_get('normal', lns)
+            lns = np.reshape(lns, (ll, 3))
+            sn = np.zeros((l, 3, 3), dtype=np.float, )
+            tsa = np.array(ts, copy=True)
+            for i, p in enumerate(me.polygons):
+                a = p.loop_start
+                b = a + p.loop_total
+                sn[p.index] = lns[a:b]
+                for j in range(3):
+                    tsa[i][j + 3] = vnn + a + j
+            
+            return (tsa, np.reshape(sn, (ll, 3)), ms)
+        
+        def triangles2(me):
+            l = len(me.polygons)
+            ts = np.zeros((l * 3), dtype=np.int, )
+            ms = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('vertices', ts)
+            me.polygons.foreach_get('material_index', ms)
+            
+            # normals
+            vnn = len(me.vertices)
+            ll = len(me.loops)
+            # loop indices
+            ni = np.arange(vnn, vnn + ll, 1, dtype=np.int, )
+            ni = np.reshape(ni, (l, 3))
+            ts = np.reshape(ts, (l, 3))
+            ts = np.concatenate((ts, ni), axis=1)
+            # loops normals
+            lns = np.zeros((ll * 3), dtype=np.float, )
+            me.loops.foreach_get('normal', lns)
+            
+            sn = np.reshape(lns, (l, 3, 3))
+            
+            # lns = np.reshape(lns, (ll, 3))
+            # sn = np.zeros((l, 3, 3), dtype=np.float, )
+            # for i, p in enumerate(me.polygons):
+            #     a = p.loop_start
+            #     b = a + p.loop_total
+            #     sn[p.index] = lns[a:b]
+            
+            # materials
+            ti = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('index', ti)
+            ti = np.reshape(ti, (-1, 1))
+            ms = np.reshape(ms, (-1, 1))
+            ms = np.concatenate((ti, ms), axis=1)
+            
+            return (ts, np.reshape(sn, (ll, 3)), ms)
         
         def tess_uvs(tuv):
             l = len(tuv.data)
@@ -3072,7 +3114,8 @@ class MXSMesh(MXSObject):
             return r
         
         vertices, normals = verts(me)
-        triangles, triangle_normals, triangle_materials = triangles(me)
+        # triangles, triangle_normals, triangle_materials = triangles(me)
+        triangles, triangle_normals, triangle_materials = triangles2(me)
         
         uv_channels = []
         for tix, uvtex in enumerate(me.tessface_uv_textures):
