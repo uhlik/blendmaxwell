@@ -50,8 +50,12 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
-# FIXME: simple cube with default subdivision modifier refuses to render (An edge connecting two vertices was specified more than once. It's likely that an incident face was flipped)
-# FIXME: import is all broken. object names are causing it? change in api?
+# FIXME: (IMPORTANT) simple cube with default subdivision modifier refuses to render (An edge connecting two vertices was specified more than once. It's likely that an incident face was flipped)
+#        - 2.76 order of faces is different than in 2.77. this might be the problem because from 2.76 it renders fine
+#        - creating mesh again from data (bot orders), the result is the same too.. and this is the same for polygons/tessfaces/bmesh.faces
+#        - in 2.76 everything works, in 2.77 nothing, maxwell just don't like it. i have no idea what's going on.
+#        - also it seems to be not caused by split normals, reverting to old scheme doesn't fix anything.
+# FIXME: (IMPORTANT) import is all broken. object names are causing it? change in api?
 
 # TODO: restore instancer support for my personal use (python only)
 # NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
@@ -2880,7 +2884,8 @@ class MXSMesh(MXSObject):
                 break
         
         if(not only_tris):
-            bmesh.ops.triangulate(bm, faces=bm.faces)
+            # bmesh.ops.triangulate(bm, faces=bm.faces)
+            bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method=0, ngon_method=0)
         
         # quads again: list of lists of triangle indices which were quads before
         quad_pairs = None
@@ -3045,9 +3050,7 @@ class MXSMesh(MXSObject):
             ms = np.reshape(ms, (-1, 1))
             ms = np.concatenate((ti, ms), axis=1)
             
-            return (ts,
-                    np.reshape(ns, (l, 3)),
-                    ms, )
+            return (ts, np.reshape(ns, (l, 3)), ms, )
         
         def triangles1(me):
             l = len(me.polygons)
@@ -3129,6 +3132,35 @@ class MXSMesh(MXSObject):
             
             return (ts, np.reshape(sn, (ll, 3)), ms)
         
+        def triangles3(me):
+            l = len(me.tessfaces)
+            ts = np.zeros((l * 3), dtype=np.int, )
+            ms = np.zeros(l, dtype=np.int, )
+            me.tessfaces.foreach_get('vertices', ts)
+            me.tessfaces.foreach_get('material_index', ms)
+            
+            # normals
+            vnn = len(me.vertices)
+            ll = len(me.loops)
+            # loop indices
+            ni = np.arange(vnn, vnn + ll, 1, dtype=np.int, )
+            ni = np.reshape(ni, (l, 3))
+            ts = np.reshape(ts, (l, 3))
+            ts = np.concatenate((ts, ni), axis=1)
+            # loops normals
+            lns = np.zeros((ll * 3), dtype=np.float, )
+            me.loops.foreach_get('normal', lns)
+            sn = np.reshape(lns, (l, 3, 3))
+            
+            # materials
+            ti = np.zeros(l, dtype=np.int, )
+            me.tessfaces.foreach_get('index', ti)
+            ti = np.reshape(ti, (-1, 1))
+            ms = np.reshape(ms, (-1, 1))
+            ms = np.concatenate((ti, ms), axis=1)
+            
+            return (ts, np.reshape(sn, (ll, 3)), ms)
+        
         def tess_uvs(tuv):
             l = len(tuv.data)
             e = 6
@@ -3146,7 +3178,7 @@ class MXSMesh(MXSObject):
         
         vertices, normals = verts(me)
         if(me.use_auto_smooth):
-            triangles, triangle_normals, triangle_materials = triangles2(me)
+            triangles, triangle_normals, triangle_materials = triangles3(me)
         else:
             triangles, triangle_normals, triangle_materials = triangles(me)
         
