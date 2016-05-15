@@ -50,6 +50,9 @@ ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
 
+# FIXME: simple cube with default subdivision modifier refuses to render (An edge connecting two vertices was specified more than once. It's likely that an incident face was flipped)
+# FIXME: import is all broken. object names are causing it? change in api?
+
 # TODO: restore instancer support for my personal use (python only)
 # NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
 # NOTE: particles/cloner: problematic scenario: object with particles (particles or cloner is used) is a child of arbitrary transformed parent. the result is, one particle is misplaced far away. cloner can be fixed by putting object in scene root and changing it to use external bin (using embedded particles will not fix it). particles can be fixed by using external bin, there is no difference in hierarchy change. maybe add checkbox to fix this automatically or add warning when problematic scenario is detected. anyway, bug is reported (and hopefuly acknowledged) and now i've got two options, either write quick and dirty fix or leave it as it should be and wait for the fix. both are correct..
@@ -2917,7 +2920,8 @@ class MXSMesh(MXSObject):
         
         me.calc_tessface()
         me.calc_normals()
-        me.calc_normals_split()
+        if(me.use_auto_smooth):
+            me.calc_normals_split()
         
         self.subdivision_modifier = None
         if(extra_subdiv):
@@ -3041,6 +3045,41 @@ class MXSMesh(MXSObject):
             ms = np.reshape(ms, (-1, 1))
             ms = np.concatenate((ti, ms), axis=1)
             
+            return (ts,
+                    np.reshape(ns, (l, 3)),
+                    ms, )
+        
+        def triangles1(me):
+            l = len(me.polygons)
+            ts = np.zeros((l * 3), dtype=np.int, )
+            ns = np.zeros((l * 3), dtype=np.float, )
+            ms = np.zeros(l, dtype=np.int, )
+            fs = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('vertices', ts)
+            me.polygons.foreach_get('normal', ns)
+            me.polygons.foreach_get('material_index', ms)
+            me.polygons.foreach_get('use_smooth', fs)
+            
+            vl = len(me.vertices)
+            ni = np.arange(vl, vl + l, dtype=np.int, )
+            ni = np.reshape(ni, (-1, 1))
+            ni = np.concatenate((ni, ni, ni), axis=1)
+            
+            # smooth faces > use vertex normals
+            ts = np.reshape(ts, (l, 3))
+            for i, b in enumerate(fs):
+                if(b):
+                    # same indices as vertex locations, so just copy that
+                    ni[i] = ts[i]
+            
+            ts = np.concatenate((ts, ni), axis=1)
+            
+            ti = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('index', ti)
+            ti = np.reshape(ti, (-1, 1))
+            ms = np.reshape(ms, (-1, 1))
+            ms = np.concatenate((ti, ms), axis=1)
+            
             # return (ts, np.reshape(ns, (l, 3)), ms, )
             
             # split normals
@@ -3079,15 +3118,7 @@ class MXSMesh(MXSObject):
             # loops normals
             lns = np.zeros((ll * 3), dtype=np.float, )
             me.loops.foreach_get('normal', lns)
-            
             sn = np.reshape(lns, (l, 3, 3))
-            
-            # lns = np.reshape(lns, (ll, 3))
-            # sn = np.zeros((l, 3, 3), dtype=np.float, )
-            # for i, p in enumerate(me.polygons):
-            #     a = p.loop_start
-            #     b = a + p.loop_total
-            #     sn[p.index] = lns[a:b]
             
             # materials
             ti = np.zeros(l, dtype=np.int, )
@@ -3114,8 +3145,10 @@ class MXSMesh(MXSObject):
             return r
         
         vertices, normals = verts(me)
-        # triangles, triangle_normals, triangle_materials = triangles(me)
-        triangles, triangle_normals, triangle_materials = triangles2(me)
+        if(me.use_auto_smooth):
+            triangles, triangle_normals, triangle_materials = triangles2(me)
+        else:
+            triangles, triangle_normals, triangle_materials = triangles(me)
         
         uv_channels = []
         for tix, uvtex in enumerate(me.tessface_uv_textures):
