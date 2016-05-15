@@ -1226,27 +1226,30 @@ class ExtGrassProperties(PropertyGroup):
     
     material = StringProperty(name="Material", default="", )
     backface_material = StringProperty(name="Backface Material", default="", )
-    
     primitive_type = EnumProperty(name="Primitive Type", items=[('0', "Curve", ""), ('1', "Flat", ""), ('2', "Cylinder", "")], default='1', )
     points_per_blade = IntProperty(name="Points Per Blade", default=8, min=2, max=20, )
+    primitive_expand = BoolProperty(name="Expand", default=True, )
     
     density = IntProperty(name="Density (blades/m2)", default=3000, min=0, max=100000000, )
     density_map = StringProperty(name="Density Map", default="", )
-    
     seed = IntProperty(name="Random Seed", default=0, min=0, max=16300, )
+    density_expand = BoolProperty(name="Expand", default=True, )
     
     length = FloatProperty(name="Length (cm)", default=7.5, min=0.0, max=100000.0, precision=3, )
     length_map = StringProperty(name="Length Map", default="", )
     length_variation = FloatProperty(name="Length Variation (%)", default=60.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    length_expand = BoolProperty(name="Expand", default=False, )
     
     root_width = FloatProperty(name="Root Width (mm)", default=6.0, min=0.00001, max=100000.0, precision=3, )
     tip_width = FloatProperty(name="Tip Width (mm)", default=2.5, min=0.00001, max=100000.0, precision=3, )
+    width_expand = BoolProperty(name="Expand", default=False, )
     
     direction_type = FloatProperty(name="Grow Towards World-Y (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     
     initial_angle = FloatProperty(name="Initial Angle", default=math.radians(60.000), min=math.radians(0.000), max=math.radians(90.000), precision=1, subtype='ANGLE', )
     initial_angle_variation = FloatProperty(name="Initial Angle Variation (%)", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     initial_angle_map = StringProperty(name="Initial Angle Map", default="", )
+    angle_expand = BoolProperty(name="Expand", default=False, )
     
     start_bend = FloatProperty(name="Start Bend (%)", default=40.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     start_bend_variation = FloatProperty(name="Start Bend Variation (%)", default=25.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
@@ -1260,43 +1263,51 @@ class ExtGrassProperties(PropertyGroup):
     bend_angle_variation = FloatProperty(name="Bend Radius Variation (%)", default=50.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     bend_angle_map = StringProperty(name="Bend Radius Map", default="", )
     
+    bend_expand = BoolProperty(name="Expand", default=False, )
+    
     cut_off = FloatProperty(name="Cut Off (%)", default=100.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     cut_off_variation = FloatProperty(name="Cut Off Variation (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     cut_off_map = StringProperty(name="Cut Off Map", default="", )
+    cut_off_expand = BoolProperty(name="Expand", default=False, )
     
-    lod = BoolProperty(name="Enable Level of Detail", default=False, )
+    lod = BoolProperty(name="Enabled", default=False, )
     lod_min_distance = FloatProperty(name="Min Distance (m)", default=10.0, min=0.0, max=100000.0, precision=2, )
     lod_max_distance = FloatProperty(name="Max Distance (m)", default=50.0, min=0.0, max=100000.0, precision=2, )
     lod_max_distance_density = FloatProperty(name="Max Distance Density (%)", default=10.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
+    lod_expand = BoolProperty(name="Expand", default=False, )
     
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max_blades = IntProperty(name="Display Max. Blades", default=1000, min=0, max=100000, )
+    display_expand = BoolProperty(name="Expand", default=False, )
 
 
 class ExtScatterProperties(PropertyGroup):
     enabled = BoolProperty(name="Maxwell Scatter", default=False, )
     
-    scatter_object = StringProperty(name="Object", default="", )
+    scatter_object = StringProperty(name="Scatter Object", default="", )
     inherit_objectid = BoolProperty(name="Inherit ObjectID", default=False, )
     
     density = FloatProperty(name="Density (Units/m2)", default=100.0, min=0.0001, max=100000000.0, precision=3, )
     density_map = StringProperty(name="Density Map", default="", )
     remove_overlapped = BoolProperty(name="Remove Overlaps", default=False, )
     seed = IntProperty(name="Random Seed", default=0, min=0, max=16300, )
+    density_expand = BoolProperty(name="Expand", default=True, )
     
     direction_type = FloatProperty(name="Grow Towards World-Y (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     initial_angle = FloatProperty(name="Initial Angle", default=math.radians(90.0), min=math.radians(0.0), max=math.radians(90.0), precision=1, subtype='ANGLE', )
     initial_angle_variation = FloatProperty(name="Initial Angle Variation (%)", default=0.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     initial_angle_map = StringProperty(name="Initial Angle Map", default="", )
+    angle_expand = BoolProperty(name="Expand", default=False, )
     
     scale_x = FloatProperty(name="X", default=1.0, min=0.0, max=100000.0, precision=3, )
     scale_y = FloatProperty(name="Y", default=1.0, min=0.0, max=100000.0, precision=3, )
     scale_z = FloatProperty(name="Z", default=1.0, min=0.0, max=100000.0, precision=3, )
     scale_uniform = BoolProperty(name="Uniform Scale", default=False, )
-    scale_map = StringProperty(name="Length Map", default="", )
+    scale_map = StringProperty(name="Scale Map", default="", )
     scale_variation_x = FloatProperty(name="X", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     scale_variation_y = FloatProperty(name="X", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     scale_variation_z = FloatProperty(name="X", default=20.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
+    scale_expand = BoolProperty(name="Expand", default=False, )
     
     rotation_x = FloatProperty(name="X", default=math.radians(0.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )
     rotation_y = FloatProperty(name="Y", default=math.radians(0.000), min=math.radians(0.000), max=math.radians(360.000), precision=1, subtype='ANGLE', )
@@ -1306,14 +1317,17 @@ class ExtScatterProperties(PropertyGroup):
     rotation_variation_y = FloatProperty(name="Y", default=10.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     rotation_variation_z = FloatProperty(name="Z", default=10.0, min=0.0, max=100.0, precision=1, subtype='PERCENTAGE', )
     rotation_direction = EnumProperty(name="Direction", items=[('0', "Polygon Normal", ""), ('1', "World Z", "")], default='0', )
+    rotation_expand = BoolProperty(name="Expand", default=False, )
     
-    lod = BoolProperty(name="Enable Level of Detail", default=False, )
+    lod = BoolProperty(name="Enabled", default=False, )
     lod_min_distance = FloatProperty(name="Min Distance (m)", default=10.0, min=0.0, max=100000.0, precision=2, )
     lod_max_distance = FloatProperty(name="Max Distance (m)", default=50.0, min=0.0, max=100000.0, precision=2, )
     lod_max_distance_density = FloatProperty(name="Max Distance Density (%)", default=10.0, min=0.0, max=100.0, precision=2, subtype='PERCENTAGE', )
+    lod_expand = BoolProperty(name="Expand", default=False, )
     
     display_percent = FloatProperty(name="Display Percent (%)", default=10.0, min=0.0, max=100.0, precision=0, subtype='PERCENTAGE', )
     display_max_blades = IntProperty(name="Display Max. Instances", default=1000, min=0, max=100000, )
+    display_expand = BoolProperty(name="Expand", default=False, )
     
     # included but not shown in Studio ui
     # 19: ('Initial Angle', [90.0], 0.0, 90.0, '3 FLOAT', 4, 1, True)
@@ -1390,7 +1404,6 @@ class ObjectProperties(PropertyGroup):
     override_instance = BoolProperty(name="Override Instancing", default=False, description="Enable when object is an instance, but has different modifiers then original.", )
     
     blocked_emitters = PointerProperty(name="Blocked Emitters", type=ObjectBlockedEmitters, )
-    
     reference = PointerProperty(name="Reference", type=ReferenceProperties, )
     grass = PointerProperty(name="Grass", type=ExtGrassProperties, )
     scatter = PointerProperty(name="Scatter", type=ExtScatterProperties, )
