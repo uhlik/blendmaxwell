@@ -645,7 +645,6 @@ class CopyActiveObjectPropertiesToSelected(Operator):
                 m.custom_substeps = src.custom_substeps
                 m.substeps = src.substeps
                 
-        
         return {'FINISHED'}
 
 
