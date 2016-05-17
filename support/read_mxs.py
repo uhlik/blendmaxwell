@@ -123,6 +123,20 @@ def uncorrect_focal_length(step):
 
 def camera(c):
     v = c.getValues()
+    v = {'name': v[0],
+         'nSteps': v[1],
+         'shutter': v[2],
+         'filmWidth': v[3],
+         'filmHeight': v[4],
+         'iso': v[5],
+         'pDiaphragmType': v[6],
+         'angle': v[7],
+         'nBlades': v[8],
+         'fps': v[9],
+         'xRes': v[10],
+         'yRes': v[11],
+         'pixelAspect': v[12],
+         'lensType': v[13], }
     s = c.getStep(0)
     o = s[0]
     f = s[1]
