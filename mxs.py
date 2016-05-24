@@ -4075,8 +4075,9 @@ class MXSReader():
         # skip not posrotscale initialized objects
         is_init, _ = o.isPosRotScaleInitialized()
         if(not is_init):
-            log("{}: object is not initialized, skipping..".format(object_name), 2, LogStyles.WARNING, )
-            return None
+            # log("{}: object is not initialized, skipping..".format(object_name), 2, LogStyles.WARNING, )
+            log("{}: object is not initialized..".format(object_name), 2, LogStyles.WARNING, )
+            # return None
         
         r = {'name': o.getName()[0],
              'vertices': [],

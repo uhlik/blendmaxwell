@@ -100,12 +100,18 @@ def base_and_pivot(obj):
     z = p.zAxis
     rp = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
     
-    l, _ = obj.getPosition()
-    rl = (l.x(), l.y(), l.z())
-    r, _ = obj.getRotation()
-    rr = (r.x(), r.y(), r.z())
-    s, _ = obj.getScale()
-    rs = (s.x(), s.y(), s.z())
+    is_init, _ = obj.isPosRotScaleInitialized()
+    if(is_init):
+        l, _ = obj.getPosition()
+        rl = (l.x(), l.y(), l.z())
+        r, _ = obj.getRotation()
+        rr = (r.x(), r.y(), r.z())
+        s, _ = obj.getScale()
+        rs = (s.x(), s.y(), s.z())
+    else:
+        rl = None
+        rr = None
+        rs = None
     
     return rb, rp, rl, rr, rs
 
@@ -204,8 +210,9 @@ def object(o):
     # skip not posrotscale initialized objects
     is_init, _ = o.isPosRotScaleInitialized()
     if(not is_init):
-        log("WARNING: {}: object is not initialized, skipping..".format(object_name), 2)
-        return None
+        # log("WARNING: {}: object is not initialized, skipping..".format(object_name), 2)
+        log("WARNING: {}: object is not initialized..".format(object_name), 2)
+        # return None
     
     r = {'name': o.getName()[0],
          'vertices': [],
