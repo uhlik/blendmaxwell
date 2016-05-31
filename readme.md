@@ -65,6 +65,7 @@
 
 **changelog:**
 
+* 0.4.5 support for vertex-per-face normals, mesh auto-smooth, split normals etc., added text overlay, disabled subdivision modifier until fixed
 * 0.4.4 material preview and viewport (not interactive) rendering, mxs import with mxs references
 * 0.4.3 critical fix: smooth faces export, experimental feature: material preview rendering (currently Mac OS X only)
 * 0.4.2 movement and deformation blur, faster mesh export
