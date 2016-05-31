@@ -1,4 +1,4 @@
-#!/Library/Frameworks/Python.framework/Versions/3.4/bin/python3
+#!/Library/Frameworks/Python.framework/Versions/3.5/bin/python3
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
@@ -43,9 +43,9 @@ elif(s == 'Linux'):
         from pymaxwell import *
     except ImportError:
         mp = os.environ.get("MAXWELL3_ROOT")
-        pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
+        pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.5'))
         if(not os.path.exists(pp)):
-            raise OSError("pymaxwell for python 3.4 does not exist ({})".format(pp))
+            raise OSError("pymaxwell for python 3.5 does not exist ({})".format(pp))
         sys.path.insert(0, pp)
         from pymaxwell import *
 elif(s == 'Windows'):
@@ -53,9 +53,9 @@ elif(s == 'Windows'):
         from pymaxwell import *
     except ImportError:
         mp = os.environ.get("MAXWELL3_ROOT")
-        pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
+        pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.5'))
         if(not os.path.exists(pp)):
-            raise OSError("pymaxwell for python 3.4 does not exist ({})".format(pp))
+            raise OSError("pymaxwell for python 3.5 does not exist ({})".format(pp))
         sys.path.insert(0, pp)
         os.environ['PATH'] = ';'.join([mp, os.environ['PATH']])
         from pymaxwell import *
@@ -1905,7 +1905,7 @@ class MXSWriter():
             # env_type == 'NONE' or env_type == None
             env.setActiveSky('')
     
-    def parameters(self, scene, materials=None, generals=None, tone=None, simulens=None, illum_caustics=None, other=None, ):
+    def parameters(self, scene, materials=None, generals=None, tone=None, simulens=None, illum_caustics=None, other=None, text_overlay=None, ):
         """Set scene render parameters.
         scene           dict    {cpu_threads        int,
                                  multilight         int,
@@ -2044,6 +2044,21 @@ class MXSWriter():
                     s.setRenderParameter('EXTRA SAMPLING USER BITMAP', other['extra_sampling_user_bitmap'])
                 if(other['extra_sampling_invert']):
                     s.setRenderParameter('EXTRA SAMPLING INVERT', 1)
+        
+        if(text_overlay is not None):
+            if(text_overlay['enabled']):
+                o = CoverlayTextOptions()
+                o.enabled_ = 1
+                o.text_ = Cstring(text_overlay['text'])
+                o.position_ = text_overlay['position']
+                c = Crgb()
+                c.assign(*text_overlay['color'])
+                o.color_ = c.toRGB8()
+                o.backgroundEnabled_ = text_overlay['background']
+                c = Crgb()
+                c.assign(*text_overlay['background_color'])
+                o.backgroundColor_ = c.toRGB8()
+                s.setOverlayTextOptions(o)
     
     def channels(self, base_path, mxi, image, image_depth='RGB8', channels_output_mode=0, channels_render=True, channels_render_type=0, channels=None, ):
         """Set scene render channels.
@@ -4060,8 +4075,9 @@ class MXSReader():
         # skip not posrotscale initialized objects
         is_init, _ = o.isPosRotScaleInitialized()
         if(not is_init):
-            log("{}: object is not initialized, skipping..".format(object_name), 2, LogStyles.WARNING, )
-            return None
+            # log("{}: object is not initialized, skipping..".format(object_name), 2, LogStyles.WARNING, )
+            log("{}: object is not initialized..".format(object_name), 2, LogStyles.WARNING, )
+            # return None
         
         r = {'name': o.getName()[0],
              'vertices': [],
@@ -4207,6 +4223,20 @@ class MXSReader():
     
     def _mxs_camera(self, c):
         v = c.getValues()
+        v = {'name': v[0],
+             'nSteps': v[1],
+             'shutter': v[2],
+             'filmWidth': v[3],
+             'filmHeight': v[4],
+             'iso': v[5],
+             'pDiaphragmType': v[6],
+             'angle': v[7],
+             'nBlades': v[8],
+             'fps': v[9],
+             'xRes': v[10],
+             'yRes': v[11],
+             'pixelAspect': v[12],
+             'lensType': v[13], }
         s = c.getStep(0)
         o = s[0]
         f = s[1]

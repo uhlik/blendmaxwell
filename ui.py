@@ -40,7 +40,6 @@ from . import mxs
 
 # NOTE: better implement override map, now it is like: you add a map, set params (not indicated what works and what not) and that map can be also used somewhere else which is not the way maxwell works. at least try to remove that texture from texture drop down. but i think it is not possible to filter prop_search results, have to be enum with custom items function. update: leaving this as it is. there might be some solution for this, but it will rewuire rewrite of all texture selectors everywhere. to much work for small profit..
 # NOTE: link controls from texture panel where possible, so both can be used (even though maxwell panel is preferred) - seems like it will not work. texture preview might be usable when together with maxwell material basic blender material is created, then it can be used for preview in viewport
-# TODO: modifier panels are too chaotic.. maybe group properties to boxes (even though i hate them)
 
 
 class BMPanel():
@@ -534,7 +533,11 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         sub.label("Options:")
         r = sub.row()
         r.prop(m, 'export_use_instances')
-        r.prop(m, 'export_use_subdivision')
+        
+        # FIXME: disabled Subdivision until fixed
+        c = r.column()
+        c.prop(m, 'export_use_subdivision')
+        c.enabled = False
         
         sub.separator()
         
@@ -817,10 +820,9 @@ class OverlayTextPanel(BMPanel, RenderButtonsPanel, Panel):
     
     @classmethod
     def poll(cls, context):
-        # TODO: enable this when available (next version probably)
         # if(system.get_pymaxwell_version() >= (3, 2, 1, 2)):
         #     return True
-        return False
+        return True
     
     def draw_header(self, context):
         m = context.scene.maxwell_render
@@ -1813,18 +1815,16 @@ class ObjectPanel(BMPanel, ObjectButtonsPanel, Panel):
         s = s.split(percentage=1.0, align=True, )
         s.prop(m, 'deformation', toggle=True)
         
-        # e = self.tab_double_enable_and_value(sub, m, "Custom Substeps", 'custom_substeps', 'substeps', m.custom_substeps, align=False, label=True, text=False, )
         e = self.tab_single_with_enable(sub, m, 'custom_substeps', m.custom_substeps, 'substeps', split=0.33, )
         if(not m.movement and not m.deformation):
             e.enabled = False
         
         sub.separator()
         
-        sub.prop(m, 'opacity')
+        # sub.prop(m, 'opacity')
+        self.tab_single(sub, m, 'opacity', label=True, text=False, )
         sub.separator()
         
-        # r = sub.row()
-        # r.prop(m, 'object_id')
         self.tab_single(sub, m, 'object_id', label=True, text=False, )
         
         sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface Material', )
@@ -1848,8 +1848,25 @@ class ObjectPanel(BMPanel, ObjectButtonsPanel, Panel):
         c.menu("ObjectPanelBlockedEmittersMenu", text="", icon='ZOOMIN', )
         c.operator('maxwell_render.blocked_emitter_add', icon='ZOOMOUT', text="", ).remove = True
         c.prop(context.scene.maxwell_render, 'blocked_emitters_deep_check', icon='ZOOM_ALL', text="", )
+
+
+class ObjectPanelUtilities(BMPanel, ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Object Utilities"
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'ARMATURE', 'LATTICE', 'EMPTY', 'LAMP', 'SPEAKER']
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        m = context.object.maxwell_render
         
-        l.separator()
+        l.operator('maxwell_render.copy_active_object_properties_to_selected')
         
         l.label("Set Object ID color to multiple objects:")
         r = l.row(align=True)
@@ -1863,14 +1880,11 @@ class ObjectPanel(BMPanel, ObjectButtonsPanel, Panel):
         p.color = '3'
         p = r.operator('maxwell_render.set_object_id_color', text="Black", )
         p.color = '4'
-        
-        # l.label("Set object properties to multiple objects:")
-        l.operator('maxwell_render.copy_active_object_properties_to_selected')
 
 
 class ObjectReferencePanel(ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell MXS Reference Object"
+    bl_label = "Maxwell MXS Reference"
     bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
@@ -1893,6 +1907,8 @@ class ObjectReferencePanel(ObjectButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.object.maxwell_render.reference
+        if(not m.enabled):
+            sub.active = False
         
         sub.prop(m, 'path')
         
@@ -2068,6 +2084,8 @@ class ExtObjectVolumetricsPanel(ObjectButtonsPanel, Panel):
         l = self.layout
         sub = l.column()
         m = context.object.maxwell_render.volumetrics
+        if(not m.enabled):
+            sub.active = False
         
         r = sub.row()
         r.prop(m, 'vtype', expand=True)
@@ -2104,11 +2122,22 @@ class ExtObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
     def draw_header(self, context):
         m = context.object.maxwell_render.subdivision
         self.layout.prop(m, "enabled", text="")
+        
+        # FIXME: disabled Subdivision until fixed
+        self.layout.enabled = False
     
     def draw(self, context):
         l = self.layout
         m = context.object.maxwell_render.subdivision
+        
+        # FIXME: disabled Subdivision until fixed
+        l.label("Disabled due to changes in 2.77", icon='ERROR', )
+        
         sub = l.column()
+        
+        # FIXME: disabled Subdivision until fixed
+        sub.enabled = False
+        
         if(not m.enabled):
             sub.active = False
         sub.prop(m, 'level')
@@ -2119,7 +2148,7 @@ class ExtObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
         sub.prop(m, 'smooth')
 
 
-class ExtObjectScatterPanel(ObjectButtonsPanel, Panel):
+class ExtObjectScatterPanel(BMPanel, ObjectButtonsPanel, Panel):
     COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
     bl_label = "Maxwell Scatter Modifier"
     bl_options = {'DEFAULT_CLOSED'}
@@ -2143,74 +2172,205 @@ class ExtObjectScatterPanel(ObjectButtonsPanel, Panel):
             sub.active = False
         
         c = sub.column()
-        c.label("Primitive:")
         c.prop_search(m, "scatter_object", context.scene, "objects")
-        c.prop(m, 'inherit_objectid')
-        c.separator()
-        
-        c = sub.column()
-        c.label("Scatter Density:")
-        c.prop(m, 'density')
-        c = sub.column()
-        c.prop_search(m, 'density_map', bpy.data, 'textures', icon='TEXTURE')
-        c = sub.column()
-        c.prop(m, 'remove_overlapped')
-        c = sub.column()
-        c.prop(m, 'seed')
-        
-        c = sub.column()
-        sub.label("Angle:")
-        sub.prop(m, 'direction_type')
-        sub.prop(m, 'initial_angle')
-        r = sub.row()
-        r.prop_search(m, 'initial_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
-        r.prop(m, 'initial_angle_variation')
-        
-        c = sub.column(align=True)
-        c.label("Scale:")
-        c.prop(m, 'scale_x')
-        c.prop(m, 'scale_y')
-        c.prop(m, 'scale_z')
-        c = sub.column(align=True)
-        c.prop(m, 'scale_uniform')
-        c.separator()
-        c.prop_search(m, 'scale_map', bpy.data, 'textures', icon='TEXTURE')
-        c.label("Scale Variation:")
-        c.prop(m, 'scale_variation_x')
-        c.prop(m, 'scale_variation_y')
-        c.prop(m, 'scale_variation_z')
-        
-        c = sub.column(align=True)
-        c.label("Rotation:")
-        c.prop(m, 'rotation_x')
-        c.prop(m, 'rotation_y')
-        c.prop(m, 'rotation_z')
-        c.separator()
-        c.prop_search(m, 'rotation_map', bpy.data, 'textures', icon='TEXTURE')
-        c.label("Rotation Variation:")
-        c.prop(m, 'rotation_variation_x')
-        c.prop(m, 'rotation_variation_y')
-        c.prop(m, 'rotation_variation_z')
-        
+        self.tab_single(c, m, 'inherit_objectid', label=False, text=True, )
         sub.separator()
-        c = sub.column()
-        c.prop(m, 'lod')
-        r = c.row(align=True)
-        r.prop(m, 'lod_min_distance')
-        r.prop(m, 'lod_max_distance')
-        if(not m.lod):
-            r.enabled = False
-        r = c.row()
-        r.prop(m, 'lod_max_distance_density')
-        if(not m.lod):
-            r.enabled = False
         
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'density_expand', icon="TRIA_DOWN" if m.density_expand else "TRIA_RIGHT", icon_only=True, text="Density", emboss=False, )
+        if(m.density_expand):
+            c = b.column()
+            c.prop(m, 'density')
+            c.prop_search(m, 'density_map', bpy.data, 'textures', icon='TEXTURE')
+            r = c.row()
+            r.prop(m, 'remove_overlapped')
+            r.prop(m, 'seed')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'angle_expand', icon="TRIA_DOWN" if m.angle_expand else "TRIA_RIGHT", icon_only=True, text="Angle", emboss=False, )
+        if(m.angle_expand):
+            c = b.column()
+            c.prop(m, 'direction_type')
+            c.prop(m, 'initial_angle')
+            c.prop_search(m, 'initial_angle_map', bpy.data, 'textures', icon='TEXTURE', )
+            c.prop(m, 'initial_angle_variation')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'scale_expand', icon="TRIA_DOWN" if m.scale_expand else "TRIA_RIGHT", icon_only=True, text="Scale", emboss=False, )
+        if(m.scale_expand):
+            c = b.column(align=True)
+            c.prop(m, 'scale_x')
+            c.prop(m, 'scale_y')
+            c.prop(m, 'scale_z')
+            c = b.column(align=True)
+            c.prop(m, 'scale_uniform')
+            c.separator()
+            c.prop_search(m, 'scale_map', bpy.data, 'textures', icon='TEXTURE')
+            c.label("Scale Variation:")
+            c.prop(m, 'scale_variation_x')
+            c.prop(m, 'scale_variation_y')
+            c.prop(m, 'scale_variation_z')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'rotation_expand', icon="TRIA_DOWN" if m.rotation_expand else "TRIA_RIGHT", icon_only=True, text="Rotation", emboss=False, )
+        if(m.rotation_expand):
+            c = b.column(align=True)
+            c.label("Rotation:")
+            c.prop(m, 'rotation_x')
+            c.prop(m, 'rotation_y')
+            c.prop(m, 'rotation_z')
+            c.separator()
+            c.prop_search(m, 'rotation_map', bpy.data, 'textures', icon='TEXTURE')
+            c.label("Rotation Variation:")
+            c.prop(m, 'rotation_variation_x')
+            c.prop(m, 'rotation_variation_y')
+            c.prop(m, 'rotation_variation_z')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'lod_expand', icon="TRIA_DOWN" if m.lod_expand else "TRIA_RIGHT", icon_only=True, text="Level of Detail", emboss=False, )
+        if(m.lod_expand):
+            c = b.column()
+            c.prop(m, 'lod', toggle=True, )
+            r = c.row(align=True)
+            r.prop(m, 'lod_min_distance')
+            r.prop(m, 'lod_max_distance')
+            if(not m.lod):
+                r.enabled = False
+            r = c.row()
+            r.prop(m, 'lod_max_distance_density')
+            if(not m.lod):
+                r.enabled = False
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'display_expand', icon="TRIA_DOWN" if m.display_expand else "TRIA_RIGHT", icon_only=True, text="Display", emboss=False, )
+        if(m.display_expand):
+            c = b.column(align=True)
+            c.prop(m, 'display_percent')
+            c.prop(m, 'display_max_blades')
+
+
+class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
+    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
+    bl_label = "Maxwell Grass Modifier"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        e = context.scene.render.engine
+        o = context.active_object
+        ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
+        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
+    
+    def draw_header(self, context):
+        m = context.object.maxwell_render.grass
+        self.layout.prop(m, "enabled", text="")
+    
+    def draw(self, context):
+        l = self.layout
+        sub = l.column()
+        
+        m = context.object.maxwell_render.grass
+        if(not m.enabled):
+            sub.active = False
+        
+        sub.menu("Grass_Modifier_presets", text=bpy.types.Grass_Modifier_presets.bl_label)
         sub.separator()
-        c = sub.column()
-        c.label("Display:")
-        sc = c.column(align=True)
-        sc.prop(m, 'display_percent')
-        sc.prop(m, 'display_max_blades')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'primitive_expand', icon="TRIA_DOWN" if m.primitive_expand else "TRIA_RIGHT", icon_only=True, text="Primitive", emboss=False, )
+        if(m.primitive_expand):
+            b.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL', )
+            b.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
+            r = b.row()
+            r.label("Primitive Type:")
+            r.prop(m, 'primitive_type', expand=True, )
+            b.prop(m, 'points_per_blade')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'density_expand', icon="TRIA_DOWN" if m.density_expand else "TRIA_RIGHT", icon_only=True, text="Density", emboss=False, )
+        if(m.density_expand):
+            b.prop(m, 'density')
+            b.prop_search(m, 'density_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+            b.prop(m, 'seed')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'length_expand', icon="TRIA_DOWN" if m.length_expand else "TRIA_RIGHT", icon_only=True, text="Blade Length", emboss=False, )
+        if(m.length_expand):
+            b.prop(m, 'length')
+            b.prop_search(m, 'length_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+            b.prop(m, 'length_variation')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'width_expand', icon="TRIA_DOWN" if m.width_expand else "TRIA_RIGHT", icon_only=True, text="Blade Width", emboss=False, )
+        if(m.width_expand):
+            b.prop(m, 'root_width')
+            b.prop(m, 'tip_width')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'angle_expand', icon="TRIA_DOWN" if m.angle_expand else "TRIA_RIGHT", icon_only=True, text="Angle", emboss=False, )
+        if(m.angle_expand):
+            b.prop(m, 'direction_type')
+            b.prop(m, 'initial_angle')
+            b.prop_search(m, 'initial_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+            b.prop(m, 'initial_angle_variation')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'bend_expand', icon="TRIA_DOWN" if m.bend_expand else "TRIA_RIGHT", icon_only=True, text="Bend", emboss=False, )
+        if(m.bend_expand):
+            b.prop(m, 'start_bend')
+            b.prop_search(m, 'start_bend_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+            b.prop(m, 'start_bend_variation')
+            
+            b.prop(m, 'bend_radius')
+            b.prop_search(m, 'bend_radius_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+            b.prop(m, 'bend_radius_variation')
+            
+            b.prop(m, 'bend_angle')
+            b.prop_search(m, 'bend_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+            b.prop(m, 'bend_angle_variation')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'cut_off_expand', icon="TRIA_DOWN" if m.cut_off_expand else "TRIA_RIGHT", icon_only=True, text="Cut Off", emboss=False, )
+        if(m.cut_off_expand):
+            b.prop(m, 'cut_off')
+            b.prop_search(m, 'cut_off_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
+            b.prop(m, 'cut_off_variation')
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'lod_expand', icon="TRIA_DOWN" if m.lod_expand else "TRIA_RIGHT", icon_only=True, text="Level of Detail", emboss=False, )
+        if(m.lod_expand):
+            b.prop(m, 'lod', toggle=True)
+            r = b.row(align=True)
+            r.prop(m, 'lod_min_distance')
+            r.prop(m, 'lod_max_distance')
+            if(not m.lod):
+                r.enabled = False
+            r = b.row()
+            r.prop(m, 'lod_max_distance_density')
+            if(not m.lod):
+                r.enabled = False
+        
+        b = sub.box()
+        r = b.row()
+        r.prop(m, 'display_expand', icon="TRIA_DOWN" if m.display_expand else "TRIA_RIGHT", icon_only=True, text="Display", emboss=False, )
+        if(m.display_expand):
+            c = b.column(align=True)
+            c.prop(m, 'display_percent')
+            c.prop(m, 'display_max_blades')
 
 
 class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
@@ -2265,112 +2425,6 @@ class ExtObjectSeaPanel(ObjectButtonsPanel, Panel):
         c.prop(m, 'ocean_min_wave_length')
         c.prop(m, 'damp_factor_against_wind')
         c.separator()
-
-
-class ExtObjectGrassPanel(ObjectButtonsPanel, Panel):
-    COMPAT_ENGINES = {MaxwellRenderExportEngine.bl_idname}
-    bl_label = "Maxwell Grass Modifier"
-    bl_options = {'DEFAULT_CLOSED'}
-    
-    @classmethod
-    def poll(cls, context):
-        e = context.scene.render.engine
-        o = context.active_object
-        ts = ['MESH', 'CURVE', 'SURFACE', 'FONT', ]
-        return (o and o.type in ts) and (e in cls.COMPAT_ENGINES)
-    
-    def draw_header(self, context):
-        m = context.object.maxwell_render.grass
-        self.layout.prop(m, "enabled", text="")
-    
-    def draw(self, context):
-        l = self.layout
-        sub = l.column()
-        
-        m = context.object.maxwell_render.grass
-        
-        sub.menu("Grass_Modifier_presets", text=bpy.types.Grass_Modifier_presets.bl_label)
-        
-        sub.label("Primitive:")
-        
-        sub.prop_search(m, 'material', bpy.data, 'materials', icon='MATERIAL', )
-        
-        sub.prop_search(m, 'backface_material', bpy.data, 'materials', icon='MATERIAL', text='Backface', )
-        sub.separator()
-        
-        r = sub.row()
-        r.label("Primitive Type:")
-        r.prop(m, 'primitive_type', expand=True, )
-        sub.prop(m, 'points_per_blade')
-        sub.separator()
-        
-        sub.label("Grass Density:")
-        sub.prop(m, 'density')
-        r = sub.row()
-        r.prop_search(m, 'density_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
-        r.prop(m, 'seed')
-        sub.separator()
-        
-        sub.label("Blade Length:")
-        sub.prop(m, 'length')
-        r = sub.row()
-        r.prop_search(m, 'length_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
-        r.prop(m, 'length_variation')
-        sub.separator()
-        
-        sub.label("Width:")
-        sub.prop(m, 'root_width')
-        sub.prop(m, 'tip_width')
-        sub.separator()
-        
-        sub.label("Angle:")
-        sub.prop(m, 'direction_type')
-        sub.prop(m, 'initial_angle')
-        r = sub.row()
-        r.prop_search(m, 'initial_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
-        r.prop(m, 'initial_angle_variation')
-        sub.separator()
-        
-        sub.label("Bend:")
-        sub.prop(m, 'start_bend')
-        r = sub.row()
-        r.prop_search(m, 'start_bend_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
-        r.prop(m, 'start_bend_variation')
-        
-        sub.prop(m, 'bend_radius')
-        r = sub.row()
-        r.prop_search(m, 'bend_radius_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
-        r.prop(m, 'bend_radius_variation')
-        
-        sub.prop(m, 'bend_angle')
-        r = sub.row()
-        r.prop_search(m, 'bend_angle_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
-        r.prop(m, 'bend_angle_variation')
-        sub.separator()
-        
-        sub.label("Cut Off:")
-        sub.prop(m, 'cut_off')
-        r = sub.row()
-        r.prop_search(m, 'cut_off_map', bpy.data, 'textures', icon='TEXTURE', text="Map", )
-        r.prop(m, 'cut_off_variation')
-        sub.separator()
-        
-        sub.prop(m, 'lod')
-        r = sub.row(align=True)
-        r.prop(m, 'lod_min_distance')
-        r.prop(m, 'lod_max_distance')
-        if(not m.lod):
-            r.enabled = False
-        r = sub.row()
-        r.prop(m, 'lod_max_distance_density')
-        if(not m.lod):
-            r.enabled = False
-        sub.separator()
-        
-        sub.label("Display:")
-        c = sub.column(align=True)
-        c.prop(m, 'display_percent')
-        c.prop(m, 'display_max_blades')
 
 
 class MaterialContextPanel(MaterialButtonsPanel, Panel):

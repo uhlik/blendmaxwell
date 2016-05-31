@@ -1,4 +1,4 @@
-#!/Library/Frameworks/Python.framework/Versions/3.4/bin/python3
+#!/Library/Frameworks/Python.framework/Versions/3.5/bin/python3
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
@@ -229,7 +229,7 @@ if __name__ == "__main__":
         from pymaxwell import *
     except ImportError:
         if(not os.path.exists(PYMAXWELL_PATH)):
-            raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
+            raise OSError("pymaxwell for python 3.5 does not exist ({})".format(PYMAXWELL_PATH))
         sys.path.insert(0, PYMAXWELL_PATH)
         from pymaxwell import *
     

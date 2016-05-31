@@ -1,4 +1,4 @@
-#!/Library/Frameworks/Python.framework/Versions/3.4/bin/python3
+#!/Library/Frameworks/Python.framework/Versions/3.5/bin/python3
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
@@ -1886,6 +1886,20 @@ def scene(d, s, ):
         if(d['extra_sampling_invert']):
             s.setRenderParameter('EXTRA SAMPLING INVERT', 1)
     
+    if(d['overlay_enabled']):
+        o = CoverlayTextOptions()
+        o.enabled_ = 1
+        o.text_ = Cstring(d['overlay_text'])
+        o.position_ = d['overlay_position']
+        c = Crgb()
+        c.assign(*d['overlay_color'])
+        o.color_ = c.toRGB8()
+        o.backgroundEnabled_ = d['overlay_background']
+        c = Crgb()
+        c.assign(*d['overlay_background_color'])
+        o.backgroundColor_ = c.toRGB8()
+        s.setOverlayTextOptions(o)
+    
     if(d['plugin_id'] != ""):
         s.setPluginID(d['plugin_id'])
 
@@ -2673,7 +2687,7 @@ if __name__ == "__main__":
         from pymaxwell import *
     except ImportError:
         if(not os.path.exists(PYMAXWELL_PATH)):
-            raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
+            raise OSError("pymaxwell for python 3.5 does not exist ({})".format(PYMAXWELL_PATH))
         sys.path.insert(0, PYMAXWELL_PATH)
         from pymaxwell import *
     

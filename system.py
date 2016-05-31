@@ -44,9 +44,9 @@ def get_pymaxwell_version():
     
     v = None
     if(PLATFORM == 'Darwin'):
-        py = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
+        py = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
         sp = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "version2.py", )
-        pp = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        pp = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         l = "{} {} {}".format(shlex.quote(py), shlex.quote(sp), shlex.quote(pp), )
         cmd = shlex.split(l)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -242,9 +242,9 @@ def mxed_create_and_edit_ext_material_helper(path, material_data, force_preview=
             # write template to a new file
             f.write(code)
         
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
         command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
                                                         shlex.quote(script_path),
                                                         shlex.quote(PYMAXWELL_PATH),
@@ -322,9 +322,9 @@ def mxed_create_and_edit_custom_material_helper(path, material_data, force_previ
             # write template to a new file
             f.write(code)
         
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
         command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
                                                         shlex.quote(script_path),
                                                         shlex.quote(PYMAXWELL_PATH),
@@ -433,13 +433,13 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, w
         
         PY = ""
         if(PLATFORM == 'Darwin'):
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
+            PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
         if(PLATFORM == 'Linux'):
-            PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'python3.4', ))
+            PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'python3.5', ))
         if(PY == ""):
             raise Exception("huh?")
         
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         
         if(switches != ''):
             command_line = "{0} {1} {2} {3} {4} {5} {6}".format(shlex.quote(PY),
@@ -472,7 +472,7 @@ def python34_run_script_helper(script_path, scene_data_path, mxs_path, append, w
 
 def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, import_emitters, import_objects, import_cameras, import_sun, ):
     if(PLATFORM == 'Darwin'):
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
         if(PY == ""):
             raise Exception("huh?")
         
@@ -492,7 +492,7 @@ def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, im
                 switches += ' '
             switches += '-s'
         
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         
         # execute the script
         command_line = "{0} {1} {2} {3} {4} {5} {6}".format(shlex.quote(PY),
@@ -516,8 +516,8 @@ def python34_run_script_helper_import(script_path, mxs_path, scene_data_path, im
 def python34_run_mxm_preview(mxm_path):
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm_preview.py", )
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         import numpy
         NUMPY_PATH = os.path.split(os.path.split(numpy.__file__)[0])[0]
         command_line = "{} {} {} {} {}".format(shlex.quote(PY),
@@ -538,8 +538,8 @@ def python34_run_mxm_preview(mxm_path):
 def python34_run_mxm_is_emitter(mxm_path):
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxm_emitter.py", )
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
                                                 shlex.quote(script_path),
                                                 shlex.quote(PYMAXWELL_PATH),
@@ -560,8 +560,8 @@ def python34_run_mxm_is_emitter(mxm_path):
 def python34_run_read_mxs_reference(mxs_path):
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "read_mxs_ref.py", )
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         n = os.path.split(mxs_path)[1]
         scene_data_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "{}.binrefv".format(n), )
         
@@ -592,11 +592,11 @@ def python34_run_read_mxs_reference(mxs_path):
 
 def python34_run_script_helper_import_mxm(script_path, mxm_path, data_path, ):
     if(PLATFORM == 'Darwin'):
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
         if(PY == ""):
             raise Exception("huh?")
         
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         
         # execute the script
         command_line = "{0} {1} {2} {3} {4} {5}".format(shlex.quote(PY),
@@ -619,9 +619,9 @@ def python34_run_script_helper_import_mxm(script_path, mxm_path, data_path, ):
 def check_pymaxwell_version():
     if(PLATFORM == 'Darwin'):
         script_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "support", "version.py", )
-        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.4', ))
+        PY = os.path.abspath(os.path.join(bpy.path.abspath(prefs().python_path), 'bin', 'python3.5', ))
         req = ".".join(str(i) for i in REQUIRED)
-        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.4', ))
+        PYMAXWELL_PATH = os.path.abspath(os.path.join(bpy.path.abspath(prefs().maxwell_path), 'Libs', 'pymaxwell', 'python3.5', ))
         command_line = "{0} {1} {2} {3}".format(shlex.quote(PY),
                                                 shlex.quote(script_path),
                                                 shlex.quote(PYMAXWELL_PATH),
@@ -642,9 +642,9 @@ def check_pymaxwell_version():
             import pymaxwell
         except ImportError:
             mp = os.environ.get("MAXWELL3_ROOT")
-            pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.4'))
+            pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.5'))
             if(not os.path.exists(pp)):
-                raise OSError("pymaxwell for python 3.4 does not exist ({})".format(pp))
+                raise OSError("pymaxwell for python 3.5 does not exist ({})".format(pp))
             sys.path.insert(0, pp)
             # sys.path.append(pp)
             if(PLATFORM == 'Windows'):
@@ -713,20 +713,20 @@ def verify_installation():
             mp = ump
         if(not os.path.exists(mp)):
             raise OSError("Maxwell instalation not found at '{}'".format(mp))
-        # python 3.4 is installed
+        # python 3.5 is installed
         upp = prefs().python_path
-        dpp = '/Library/Frameworks/Python.framework/Versions/3.4/'
+        dpp = '/Library/Frameworks/Python.framework/Versions/3.5/'
         pp = ''
         if(upp == ''):
             pp = dpp
         else:
             pp = upp
         if(not os.path.exists(pp)):
-            raise OSError("Python 3.4 instalation not found at '{}'".format(mp))
+            raise OSError("Python 3.5 instalation not found at '{}'".format(mp))
         # pymaxwell imported from maxwell instalation is required version or above
         pym = check_pymaxwell_version()
         # check if there is pymaxwell in site-packages and complain
-        psp = os.path.join(pp, 'lib', 'python3.4', 'site-packages')
+        psp = os.path.join(pp, 'lib', 'python3.5', 'site-packages')
         if(os.path.exists(os.path.join(psp), 'pymaxwell.py') or os.path.exists(os.path.join(psp), '_pymaxwell.so')):
             log("found different pymaxwell at '{}', please remove it if possible, may cause conflicts..".format(psp), 1, LogStyles.WARNING, )
     elif(PLATFORM == 'Linux'):

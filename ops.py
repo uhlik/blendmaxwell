@@ -629,14 +629,22 @@ class CopyActiveObjectPropertiesToSelected(Operator):
             if(o.type in allowed):
                 m = o.maxwell_render
                 m.opacity = src.opacity
-                m.object_id = src.object_id
-                m.backface_material = src.backface_material
                 m.hidden_camera = src.hidden_camera
                 m.hidden_camera_in_shadow_channel = src.hidden_camera_in_shadow_channel
                 m.hidden_global_illumination = src.hidden_global_illumination
                 m.hidden_reflections_refractions = src.hidden_reflections_refractions
                 m.hidden_zclip_planes = src.hidden_zclip_planes
-        
+                m.object_id = src.object_id
+                m.backface_material = src.backface_material
+                
+                m.hide = src.hide
+                m.override_instance = src.override_instance
+                
+                m.movement = src.movement
+                m.deformation = src.deformation
+                m.custom_substeps = src.custom_substeps
+                m.substeps = src.substeps
+                
         return {'FINISHED'}
 
 

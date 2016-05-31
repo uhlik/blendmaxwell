@@ -1,4 +1,4 @@
-#!/Library/Frameworks/Python.framework/Versions/3.4/bin/python3
+#!/Library/Frameworks/Python.framework/Versions/3.5/bin/python3
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
@@ -100,12 +100,18 @@ def base_and_pivot(obj):
     z = p.zAxis
     rp = [[o.x(), o.y(), o.z()], [x.x(), x.y(), x.z()], [y.x(), y.y(), y.z()], [z.x(), z.y(), z.z()]]
     
-    l, _ = obj.getPosition()
-    rl = (l.x(), l.y(), l.z())
-    r, _ = obj.getRotation()
-    rr = (r.x(), r.y(), r.z())
-    s, _ = obj.getScale()
-    rs = (s.x(), s.y(), s.z())
+    is_init, _ = obj.isPosRotScaleInitialized()
+    if(is_init):
+        l, _ = obj.getPosition()
+        rl = (l.x(), l.y(), l.z())
+        r, _ = obj.getRotation()
+        rr = (r.x(), r.y(), r.z())
+        s, _ = obj.getScale()
+        rs = (s.x(), s.y(), s.z())
+    else:
+        rl = None
+        rr = None
+        rs = None
     
     return rb, rp, rl, rr, rs
 
@@ -123,6 +129,20 @@ def uncorrect_focal_length(step):
 
 def camera(c):
     v = c.getValues()
+    v = {'name': v[0],
+         'nSteps': v[1],
+         'shutter': v[2],
+         'filmWidth': v[3],
+         'filmHeight': v[4],
+         'iso': v[5],
+         'pDiaphragmType': v[6],
+         'angle': v[7],
+         'nBlades': v[8],
+         'fps': v[9],
+         'xRes': v[10],
+         'yRes': v[11],
+         'pixelAspect': v[12],
+         'lensType': v[13], }
     s = c.getStep(0)
     o = s[0]
     f = s[1]
@@ -190,8 +210,9 @@ def object(o):
     # skip not posrotscale initialized objects
     is_init, _ = o.isPosRotScaleInitialized()
     if(not is_init):
-        log("WARNING: {}: object is not initialized, skipping..".format(object_name), 2)
-        return None
+        # log("WARNING: {}: object is not initialized, skipping..".format(object_name), 2)
+        log("WARNING: {}: object is not initialized..".format(object_name), 2)
+        # return None
     
     r = {'name': o.getName()[0],
          'vertices': [],
@@ -495,7 +516,7 @@ if __name__ == "__main__":
         from pymaxwell import *
     except ImportError:
         if(not os.path.exists(PYMAXWELL_PATH)):
-            raise OSError("pymaxwell for python 3.4 does not exist ({})".format(PYMAXWELL_PATH))
+            raise OSError("pymaxwell for python 3.5 does not exist ({})".format(PYMAXWELL_PATH))
         sys.path.insert(0, PYMAXWELL_PATH)
         from pymaxwell import *
     

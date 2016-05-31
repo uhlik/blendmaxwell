@@ -34,6 +34,7 @@ from bpy_extras import io_utils
 import bmesh
 from mathutils.geometry import barycentric_transform
 from mathutils.bvhtree import BVHTree
+import numpy
 
 from .log import log, clear_log, LogStyles
 from . import utils
@@ -48,6 +49,13 @@ AXIS_CONVERSION = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0))).t
 ROTATE_X_90 = Matrix.Rotation(math.radians(90.0), 4, 'X')
 ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 
+
+# FIXME: (IMPORTANT) simple cube with default subdivision modifier refuses to render (An edge connecting two vertices was specified more than once. It's likely that an incident face was flipped)
+#        - 2.76 order of faces is different than in 2.77. this might be the problem because from 2.76 it renders fine
+#        - creating mesh again from data (bot orders), the result is the same too.. and this is the same for polygons/tessfaces/bmesh.faces
+#        - in 2.76 everything works, in 2.77 nothing, maxwell just don't like it. i have no idea what's going on.
+#        - also it seems to be not caused by split normals, reverting to old scheme doesn't fix anything.
+#        - ok, made it to work on cube and cube with one face triangulated. does not work on monkey, even though it should. what a mystery. will try again soon..
 
 # TODO: restore instancer support for my personal use (python only)
 # NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
@@ -1377,7 +1385,8 @@ class MXSExport():
                 
                 d = {'name': o.m_name,
                      'num_vertexes': len(o.m_vertices[0]),
-                     'num_normals': len(o.m_normals[0]) + len(o.m_triangles),
+                     # 'num_normals': len(o.m_normals[0]) + len(o.m_triangles),
+                     'num_normals': len(o.m_normals[0]) + len(o.m_triangle_normals[0]),
                      'num_triangles': len(o.m_triangles),
                      'num_positions_per_vertex': o.m_num_positions,
                      'mesh_data': nm,
@@ -1509,6 +1518,7 @@ class MXSExport():
                 screen_region = None
                 if(o.m_screen_region != 'NONE'):
                     screen_region = o.m_screen_region_xywh
+                    screen_region = screen_region + (o.m_screen_region, )
                 custom_bokeh = None
                 if(o.m_custom_bokeh):
                     custom_bokeh = (o.m_bokeh_ratio, o.m_bokeh_angle, o.m_custom_bokeh)
@@ -1546,7 +1556,8 @@ class MXSExport():
                                     pack_prefix(o, 'tone_', ),
                                     pack_prefix(o, 'simulens_', ),
                                     pack_prefix(o, 'illum_caustics_', ),
-                                    other, )
+                                    other,
+                                    pack_prefix(o, 'overlay_', ), )
                 
                 mxi = None
                 if(o.m_output_mxi_enabled):
@@ -2127,12 +2138,14 @@ class MXSScene(Serializable):
         self.m_illum_caustics_illumination = int(mx.illum_caustics_illumination[-1:])
         self.m_illum_caustics_refl_caustics = int(mx.illum_caustics_refl_caustics[-1:])
         self.m_illum_caustics_refr_caustics = int(mx.illum_caustics_refr_caustics[-1:])
-        # self.m_overlay_enabled = mx.overlay_enabled
-        # self.m_overlay_text = mx.overlay_text
-        # self.m_overlay_position = mx.overlay_position
-        # self.m_overlay_color = tuple(mx.overlay_color)
-        # self.m_overlay_background = mx.overlay_background
-        # self.m_overlay_background_color = tuple(mx.overlay_background_color)
+        
+        self.m_overlay_enabled = mx.overlay_enabled
+        self.m_overlay_text = mx.overlay_text
+        self.m_overlay_position = int(mx.overlay_position[-1:])
+        self.m_overlay_color = self._gamma_uncorrect(mx.overlay_color)
+        self.m_overlay_background = mx.overlay_background
+        self.m_overlay_background_color = self._gamma_uncorrect(mx.overlay_background_color)
+        
         self.m_export_protect_mxs = mx.export_protect_mxs
         self.m_export_remove_unused_materials = mx.export_remove_unused_materials
         
@@ -2150,6 +2163,11 @@ class MXSScene(Serializable):
         self.m_export_wire_clay_material = mx.export_wire_clay_material
         
         self.m_plugin_id = utils.get_plugin_id()
+    
+    def _gamma_uncorrect(self, c, ):
+        g = 1 / 2.2
+        c = [v ** g for v in c]
+        return c
 
 
 class MXSEnvironment(Serializable):
@@ -2774,12 +2792,8 @@ class MXSMesh(MXSObject):
                 if(steps[0][0] == cf and steps[0][1] == sf):
                     me = self._prepare_mesh()
                     # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
-                    try:
-                        import numpy
-                        self._mesh_to_data2(me)
-                    except ImportError:
-                        log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
-                        self._mesh_to_data(me)
+                    # self._mesh_to_data(me)
+                    self._mesh_to_data2(me)
                     
                     self._materials()
                     # cleanup
@@ -2793,13 +2807,8 @@ class MXSMesh(MXSObject):
                     # mesh
                     me = self._prepare_mesh(pos=position, )
                     
-                    # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
-                    try:
-                        import numpy
-                        self._mesh_to_data2(me)
-                    except ImportError:
-                        log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
-                        self._mesh_to_data(me)
+                    # self._mesh_to_data(me)
+                    self._mesh_to_data2(me)
                     
                     log("deformation: frame: {}, step: {}, position: {}".format(frame, round(sub, 6), position), 3, )
                     
@@ -2810,13 +2819,8 @@ class MXSMesh(MXSObject):
                 sc.frame_set(cf, subframe=sf, )
         else:
             me = self._prepare_mesh()
-            # about 5x faster. tested on 3.8m tris mesh with one uv map, 2.196191s (_mesh_to_data2) x 11.303212s (_mesh_to_data)
-            try:
-                import numpy
-                self._mesh_to_data2(me)
-            except ImportError:
-                log("numpy can't be imported, using slower mesh export method..", 3, LogStyles.WARNING, )
-                self._mesh_to_data(me)
+            # self._mesh_to_data(me)
+            self._mesh_to_data2(me)
             
             self._materials()
             # cleanup
@@ -2880,7 +2884,43 @@ class MXSMesh(MXSObject):
                 break
         
         if(not only_tris):
-            bmesh.ops.triangulate(bm, faces=bm.faces)
+            # onf = len(bm.faces)
+            # bmesh.ops.triangulate(bm, faces=bm.faces)
+            # bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method=0, ngon_method=0)
+            
+            # bm.faces.ensure_lookup_table()
+            # self.existing_triangles = [f.index for f in bm.faces if len(f.verts) == 3]
+            
+            rv = bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method=0, ngon_method=0)
+            # print(rv)
+            
+            # FIXME: disabled Subdivision until fixed
+            
+            # import pprint
+            # pp = pprint.PrettyPrinter(indent=4)
+            # pp.pprint(rv)
+            
+            # TODO: determining quads would be much easier with edges returned from triangulate
+            # for e in rv['edges']:
+            #     print(e.link_faces[:])
+            
+            # triangulated_faces = []
+            # for e in rv['edges']:
+            #     triangulated_faces.append(e.link_faces[:])
+            # print(triangulated_faces)
+            
+            # for f in former_quads:
+            #     print(f[0].index, f[1].index)
+            
+            # # new triangles have indexes after number original faces, so i can identify new triangles and spin indexes
+            # for f in bm.faces:
+            #     print(f.index, [v.index for v in f.verts])
+            
+            # bm.faces.ensure_lookup_table()
+            # self.created_faces_indexes = []
+            # for i in range(onf, len(bm.faces), 1):
+            #     self.created_faces_indexes.append(bm.faces[i].index)
+            # # print(self.created_faces_indexes)
         
         # quads again: list of lists of triangle indices which were quads before
         quad_pairs = None
@@ -2920,6 +2960,8 @@ class MXSMesh(MXSObject):
         
         me.calc_tessface()
         me.calc_normals()
+        if(me.use_auto_smooth):
+            me.calc_normals_split()
         
         self.subdivision_modifier = None
         if(extra_subdiv):
@@ -3043,9 +3085,188 @@ class MXSMesh(MXSObject):
             ms = np.reshape(ms, (-1, 1))
             ms = np.concatenate((ti, ms), axis=1)
             
-            return (ts,
-                    np.reshape(ns, (l, 3)),
-                    ms, )
+            # FIXME: disabled Subdivision until fixed
+            '''
+            # warning: ugly hacking starts here.. from 2.76b to 2.77a there was a slight change in vertex order in faces after triangulating
+            # the result of this is, subdivision modifier stopped to work. even though the mesh is exactly the same, subdivision throws error
+            
+            # swap columns
+            ps = self.b_object.data.polygons
+            n = len(ps)
+            n0 = n
+            # print(n)
+            nt = n - sum([1 for f in ps if len(f.vertices) == 3])
+            # print(nt)
+            n = nt
+            # print(n)
+            # print(self.existing_triangles)
+            # print(ts)
+            backup = np.copy(ts)
+            a = np.copy(ts[:n, 0])
+            b = np.copy(ts[:n, 1])
+            c = np.copy(ts[:n, 2])
+            ts[:n, 0] = c
+            ts[:n, 1] = a
+            ts[:n, 2] = b
+            
+            # print(ts)
+            # for i in self.existing_triangles:
+            #     ts[i] = backup[i]
+            # print(ts)
+            
+            a = np.copy(ts[:n0 - (n0 - n)])
+            b = np.copy(ts[n0:])
+            c = np.copy(ts[n0 - (n0 - n):n0])
+            # print(a)
+            # print(b)
+            # print(c)
+            
+            ts = np.concatenate((b, c, a, ), axis=0, )
+            # print(ts)
+            
+            # # default quad cube
+            # a = ([3, 2, 0],
+            #      [7, 6, 2],
+            #      [5, 4, 6],
+            #      [1, 0, 4],
+            #      [2, 6, 4],
+            #      [7, 3, 1],
+            #      [1, 3, 0],
+            #      [3, 7, 2],
+            #      [7, 5, 6],
+            #      [5, 1, 4],
+            #      [0, 2, 4],
+            #      [5, 7, 1], )
+            # for b in a:
+            #     print(b)
+            
+            # # 2.76b cube with top quad trianglated
+            # [[ 3  2  0  8  8  8]
+            #  [ 7  6  2  9  9  9]
+            #  [ 5  4  6 10 10 10]
+            #  [ 1  0  4 11 11 11]
+            #  [ 2  6  4 12 12 12]
+            #  [ 7  1  5 13 13 13] * 5
+            #  [ 7  3  1 14 14 14] * 6
+            #  [ 1  3  0 15 15 15]
+            #  [ 3  7  2 16 16 16]
+            #  [ 7  5  6 17 17 17]
+            #  [ 5  1  4 18 18 18]
+            #  [ 0  2  4 19 19 19]]
+            
+            # warning: ugly hacking ends here..
+            '''
+            
+            return (ts, np.reshape(ns, (l, 3)), ms, )
+        
+        def triangles1(me):
+            l = len(me.polygons)
+            ts = np.zeros((l * 3), dtype=np.int, )
+            ns = np.zeros((l * 3), dtype=np.float, )
+            ms = np.zeros(l, dtype=np.int, )
+            fs = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('vertices', ts)
+            me.polygons.foreach_get('normal', ns)
+            me.polygons.foreach_get('material_index', ms)
+            me.polygons.foreach_get('use_smooth', fs)
+            
+            vl = len(me.vertices)
+            ni = np.arange(vl, vl + l, dtype=np.int, )
+            ni = np.reshape(ni, (-1, 1))
+            ni = np.concatenate((ni, ni, ni), axis=1)
+            
+            # smooth faces > use vertex normals
+            ts = np.reshape(ts, (l, 3))
+            for i, b in enumerate(fs):
+                if(b):
+                    # same indices as vertex locations, so just copy that
+                    ni[i] = ts[i]
+            
+            ts = np.concatenate((ts, ni), axis=1)
+            
+            ti = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('index', ti)
+            ti = np.reshape(ti, (-1, 1))
+            ms = np.reshape(ms, (-1, 1))
+            ms = np.concatenate((ti, ms), axis=1)
+            
+            # return (ts, np.reshape(ns, (l, 3)), ms, )
+            
+            # split normals
+            # TODO: remove old normals code and use face loop normals for everything or make a switch on mesh to use split normals or not (better solution i guess, and faster as well)
+            vnn = len(me.vertices)
+            ll = len(me.loops)
+            lns = np.zeros((ll * 3), dtype=np.float, )
+            me.loops.foreach_get('normal', lns)
+            lns = np.reshape(lns, (ll, 3))
+            sn = np.zeros((l, 3, 3), dtype=np.float, )
+            tsa = np.array(ts, copy=True)
+            for i, p in enumerate(me.polygons):
+                a = p.loop_start
+                b = a + p.loop_total
+                sn[p.index] = lns[a:b]
+                for j in range(3):
+                    tsa[i][j + 3] = vnn + a + j
+            
+            return (tsa, np.reshape(sn, (ll, 3)), ms)
+        
+        def triangles2(me):
+            l = len(me.polygons)
+            ts = np.zeros((l * 3), dtype=np.int, )
+            ms = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('vertices', ts)
+            me.polygons.foreach_get('material_index', ms)
+            
+            # normals
+            vnn = len(me.vertices)
+            ll = len(me.loops)
+            # loop indices
+            ni = np.arange(vnn, vnn + ll, 1, dtype=np.int, )
+            ni = np.reshape(ni, (l, 3))
+            ts = np.reshape(ts, (l, 3))
+            ts = np.concatenate((ts, ni), axis=1)
+            # loops normals
+            lns = np.zeros((ll * 3), dtype=np.float, )
+            me.loops.foreach_get('normal', lns)
+            sn = np.reshape(lns, (l, 3, 3))
+            
+            # materials
+            ti = np.zeros(l, dtype=np.int, )
+            me.polygons.foreach_get('index', ti)
+            ti = np.reshape(ti, (-1, 1))
+            ms = np.reshape(ms, (-1, 1))
+            ms = np.concatenate((ti, ms), axis=1)
+            
+            return (ts, np.reshape(sn, (ll, 3)), ms)
+        
+        def triangles3(me):
+            l = len(me.tessfaces)
+            ts = np.zeros((l * 3), dtype=np.int, )
+            ms = np.zeros(l, dtype=np.int, )
+            me.tessfaces.foreach_get('vertices', ts)
+            me.tessfaces.foreach_get('material_index', ms)
+            
+            # normals
+            vnn = len(me.vertices)
+            ll = len(me.loops)
+            # loop indices
+            ni = np.arange(vnn, vnn + ll, 1, dtype=np.int, )
+            ni = np.reshape(ni, (l, 3))
+            ts = np.reshape(ts, (l, 3))
+            ts = np.concatenate((ts, ni), axis=1)
+            # loops normals
+            lns = np.zeros((ll * 3), dtype=np.float, )
+            me.loops.foreach_get('normal', lns)
+            sn = np.reshape(lns, (l, 3, 3))
+            
+            # materials
+            ti = np.zeros(l, dtype=np.int, )
+            me.tessfaces.foreach_get('index', ti)
+            ti = np.reshape(ti, (-1, 1))
+            ms = np.reshape(ms, (-1, 1))
+            ms = np.concatenate((ti, ms), axis=1)
+            
+            return (ts, np.reshape(sn, (ll, 3)), ms)
         
         def tess_uvs(tuv):
             l = len(tuv.data)
@@ -3063,7 +3284,10 @@ class MXSMesh(MXSObject):
             return r
         
         vertices, normals = verts(me)
-        triangles, triangle_normals, triangle_materials = triangles(me)
+        if(me.use_auto_smooth):
+            triangles, triangle_normals, triangle_materials = triangles3(me)
+        else:
+            triangles, triangle_normals, triangle_materials = triangles(me)
         
         uv_channels = []
         for tix, uvtex in enumerate(me.tessface_uv_textures):
@@ -4068,6 +4292,11 @@ class MXSScatter(MXSModifier):
 class MXSSubdivision(MXSModifier):
     def __init__(self, o, quad_pairs, ):
         log("'{}' ({})".format(o['object'].name, 'SUBDIVISION', ), 2)
+        
+        # FIXME: disabled Subdivision until fixed
+        log("Disabled due to changes in 2.77", 3, LogStyles.WARNING, )
+        self.skip = True
+        return
         
         super().__init__(o)
         self.m_type = 'SUBDIVISION'
