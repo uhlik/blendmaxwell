@@ -57,6 +57,9 @@
 
 * In case of problem with presets (emitters, extension materials, ..., ), remove on **Mac OS X**: ```~/Library/Application Support/Blender/2.77/scripts/presets/blendmaxwell```, on **Windows**: ```C:\Users\USERNAME\AppData\Roaming\Blender Foundation\Blender\2.77\scripts\presets\blendmaxwell```, or on **Linux**: ```~/.config/blender/2.77/scripts/presets/blendmaxwell``` and restart Blender. default presets will be recreated automatically.
 
+#### known issues:
+* Due to changes in Blender's triangulation operator, Maxwell Subdivision modifier is disabled.
+
 
 ***
 

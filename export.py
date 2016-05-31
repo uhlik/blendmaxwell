@@ -55,7 +55,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 #        - creating mesh again from data (bot orders), the result is the same too.. and this is the same for polygons/tessfaces/bmesh.faces
 #        - in 2.76 everything works, in 2.77 nothing, maxwell just don't like it. i have no idea what's going on.
 #        - also it seems to be not caused by split normals, reverting to old scheme doesn't fix anything.
-# FIXME: (IMPORTANT) import is all broken. object names are causing it? change in api?
+#        - ok, made it to work on cube and cube with one face triangulated. does not work on monkey, even though it should. what a mystery. will try again soon..
 
 # TODO: restore instancer support for my personal use (python only)
 # NOTE: grass: preview in viewport is wrong, looks like before parenting (i think), but i can't get back to modifier once is created without whole python crashing..
@@ -2884,8 +2884,43 @@ class MXSMesh(MXSObject):
                 break
         
         if(not only_tris):
+            # onf = len(bm.faces)
             # bmesh.ops.triangulate(bm, faces=bm.faces)
-            bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method=0, ngon_method=0)
+            # bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method=0, ngon_method=0)
+            
+            # bm.faces.ensure_lookup_table()
+            # self.existing_triangles = [f.index for f in bm.faces if len(f.verts) == 3]
+            
+            rv = bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method=0, ngon_method=0)
+            # print(rv)
+            
+            # FIXME: disabled Subdivision until fixed
+            
+            # import pprint
+            # pp = pprint.PrettyPrinter(indent=4)
+            # pp.pprint(rv)
+            
+            # TODO: determining quads would be much easier with edges returned from triangulate
+            # for e in rv['edges']:
+            #     print(e.link_faces[:])
+            
+            # triangulated_faces = []
+            # for e in rv['edges']:
+            #     triangulated_faces.append(e.link_faces[:])
+            # print(triangulated_faces)
+            
+            # for f in former_quads:
+            #     print(f[0].index, f[1].index)
+            
+            # # new triangles have indexes after number original faces, so i can identify new triangles and spin indexes
+            # for f in bm.faces:
+            #     print(f.index, [v.index for v in f.verts])
+            
+            # bm.faces.ensure_lookup_table()
+            # self.created_faces_indexes = []
+            # for i in range(onf, len(bm.faces), 1):
+            #     self.created_faces_indexes.append(bm.faces[i].index)
+            # # print(self.created_faces_indexes)
         
         # quads again: list of lists of triangle indices which were quads before
         quad_pairs = None
@@ -3049,6 +3084,78 @@ class MXSMesh(MXSObject):
             ti = np.reshape(ti, (-1, 1))
             ms = np.reshape(ms, (-1, 1))
             ms = np.concatenate((ti, ms), axis=1)
+            
+            # FIXME: disabled Subdivision until fixed
+            '''
+            # warning: ugly hacking starts here.. from 2.76b to 2.77a there was a slight change in vertex order in faces after triangulating
+            # the result of this is, subdivision modifier stopped to work. even though the mesh is exactly the same, subdivision throws error
+            
+            # swap columns
+            ps = self.b_object.data.polygons
+            n = len(ps)
+            n0 = n
+            # print(n)
+            nt = n - sum([1 for f in ps if len(f.vertices) == 3])
+            # print(nt)
+            n = nt
+            # print(n)
+            # print(self.existing_triangles)
+            # print(ts)
+            backup = np.copy(ts)
+            a = np.copy(ts[:n, 0])
+            b = np.copy(ts[:n, 1])
+            c = np.copy(ts[:n, 2])
+            ts[:n, 0] = c
+            ts[:n, 1] = a
+            ts[:n, 2] = b
+            
+            # print(ts)
+            # for i in self.existing_triangles:
+            #     ts[i] = backup[i]
+            # print(ts)
+            
+            a = np.copy(ts[:n0 - (n0 - n)])
+            b = np.copy(ts[n0:])
+            c = np.copy(ts[n0 - (n0 - n):n0])
+            # print(a)
+            # print(b)
+            # print(c)
+            
+            ts = np.concatenate((b, c, a, ), axis=0, )
+            # print(ts)
+            
+            # # default quad cube
+            # a = ([3, 2, 0],
+            #      [7, 6, 2],
+            #      [5, 4, 6],
+            #      [1, 0, 4],
+            #      [2, 6, 4],
+            #      [7, 3, 1],
+            #      [1, 3, 0],
+            #      [3, 7, 2],
+            #      [7, 5, 6],
+            #      [5, 1, 4],
+            #      [0, 2, 4],
+            #      [5, 7, 1], )
+            # for b in a:
+            #     print(b)
+            
+            # # 2.76b cube with top quad trianglated
+            # [[ 3  2  0  8  8  8]
+            #  [ 7  6  2  9  9  9]
+            #  [ 5  4  6 10 10 10]
+            #  [ 1  0  4 11 11 11]
+            #  [ 2  6  4 12 12 12]
+            #  [ 7  1  5 13 13 13] * 5
+            #  [ 7  3  1 14 14 14] * 6
+            #  [ 1  3  0 15 15 15]
+            #  [ 3  7  2 16 16 16]
+            #  [ 7  5  6 17 17 17]
+            #  [ 5  1  4 18 18 18]
+            #  [ 0  2  4 19 19 19]]
+            
+            # warning: ugly hacking ends here..
+            '''
             
             return (ts, np.reshape(ns, (l, 3)), ms, )
         
@@ -4185,6 +4292,11 @@ class MXSScatter(MXSModifier):
 class MXSSubdivision(MXSModifier):
     def __init__(self, o, quad_pairs, ):
         log("'{}' ({})".format(o['object'].name, 'SUBDIVISION', ), 2)
+        
+        # FIXME: disabled Subdivision until fixed
+        log("Disabled due to changes in 2.77", 3, LogStyles.WARNING, )
+        self.skip = True
+        return
         
         super().__init__(o)
         self.m_type = 'SUBDIVISION'

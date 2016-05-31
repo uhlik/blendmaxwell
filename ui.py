@@ -533,7 +533,11 @@ class ExportOptionsPanel(RenderButtonsPanel, Panel):
         sub.label("Options:")
         r = sub.row()
         r.prop(m, 'export_use_instances')
-        r.prop(m, 'export_use_subdivision')
+        
+        # FIXME: disabled Subdivision until fixed
+        c = r.column()
+        c.prop(m, 'export_use_subdivision')
+        c.enabled = False
         
         sub.separator()
         
@@ -2118,11 +2122,22 @@ class ExtObjectSubdivisionPanel(ObjectButtonsPanel, Panel):
     def draw_header(self, context):
         m = context.object.maxwell_render.subdivision
         self.layout.prop(m, "enabled", text="")
+        
+        # FIXME: disabled Subdivision until fixed
+        self.layout.enabled = False
     
     def draw(self, context):
         l = self.layout
         m = context.object.maxwell_render.subdivision
+        
+        # FIXME: disabled Subdivision until fixed
+        l.label("Disabled due to changes in 2.77", icon='ERROR', )
+        
         sub = l.column()
+        
+        # FIXME: disabled Subdivision until fixed
+        sub.enabled = False
+        
         if(not m.enabled):
             sub.active = False
         sub.prop(m, 'level')
