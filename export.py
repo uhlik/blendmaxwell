@@ -69,6 +69,8 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
 # NOTE: particle data with foreach_get, well, in particles there is a problem, i export only alive particles and each have to be checked first, and with hair, oh well, it was not easy to get it working and now i don't want to break it.. so i guess this will stay as it is..
 # TODO: when exporting motion blur, move timeline just once per step, eg. add each step to all objects at once per timeline move.
+# FIXME: empties can be used for duplication with dupligroup. now they aren't exported. this should be fixed now, but need to test a few more scenarios
+# FIXME: when mesh with just single vertices is used as duplication generator, it turns to empty with no instances
 
 
 class MXSExport():
@@ -571,6 +573,11 @@ class MXSExport():
             for o in oo['children']:
                 walk(o)
             
+            # keep empty if it has dupli group assigned
+            if(oo['object'].dupli_type == 'GROUP'):
+                if(oo['object'].dupli_group):
+                    return True
+            
             if(len(ov) == 0):
                 # nothing found, can be removed
                 return False
@@ -689,6 +696,25 @@ class MXSExport():
                 self._bases.append(o)
         
         # duplicate list, because i might modify it while looping it..
+        
+        class Unique():
+            # increments its value each time it is accessed or used as string.
+            # it is overkill a bit, because i can just increment an int after each of its use, but this is good practice and might be useful in future..
+            
+            def __init__(self, v=0, ):
+                self.__v = v
+
+            @property
+            def value(self):
+                v = self.__v
+                # increment each time it is accessed
+                self.__v += 1
+                return v
+            
+            def __str__(self):
+                return str(self.value)
+        
+        unique = Unique()
         meshes = self._meshes[:]
         for o in meshes:
             ob = o['object']
@@ -707,7 +733,7 @@ class MXSExport():
                         if(self.use_instances):
                             put_to_bases(io)
                         if(io is not None):
-                            nm = "{0}-duplicator-{1}-{2}".format(ob.name, io['object'].name, di)
+                            nm = "{}-duplicator-{}-{}-{}".format(ob.name, io['object'].name, di, unique)
                             d = {'object': do,
                                  'dupli_name': nm,
                                  'dupli_matrix': dm,
@@ -739,7 +765,7 @@ class MXSExport():
                                     if(self.use_instances and io is not None):
                                         put_to_bases(io)
                                     if(io is not None):
-                                        nm = "{0}-duplicator-{1}-{2}".format(ob.name, io['object'].name, di)
+                                        nm = "{}-duplicator-{}-{}-{}".format(ob.name, io['object'].name, di, unique)
                                         d = {'object': do,
                                              'dupli_name': nm,
                                              'dupli_matrix': dm,
@@ -768,6 +794,33 @@ class MXSExport():
                             # this is user's error, is clearly visible in ui that only OBJECT and GROUP are supported
                             # no.. report it as well..
                             log("{} > {} > {}: invalid settings, see 'Maxwell Particle Instances' panel.".format(ob.name, ps.name, 'PARTICLE_INSTANCES'), 2, LogStyles.WARNING, )
+        
+        empties = self._empties[:]
+        for o in empties:
+            ob = o['object']
+            if(ob.dupli_type == 'GROUP' and ob.dupli_group):
+                ob.dupli_list_create(self.context.scene, settings='RENDER')
+                for dli in ob.dupli_list:
+                    do = dli.object
+                    dm = dli.matrix.copy()
+                    di = dli.index
+                    io = find_dupli_object(do)
+                    if(self.use_instances):
+                        put_to_bases(io)
+                    if(io is not None):
+                        nm = "{}-duplicator-{}-{}-{}".format(ob.name, io['object'].name, di, unique)
+                        d = {'object': do,
+                             'dupli_name': nm,
+                             'dupli_matrix': dm,
+                             'children': [],
+                             'export': True,
+                             'export_type': 'INSTANCE',
+                             'mesh': io['mesh'],
+                             'converted': False,
+                             'parent': o,
+                             'type': 'MESH', }
+                        self._duplicates.append(d)
+                ob.dupli_list_clear()
         
         # find instances without base and change first one to base, quick and dirty..
         # this case happens when object (by name chosen as base) is on hidden layer and marked to be not exported
