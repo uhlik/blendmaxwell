@@ -69,8 +69,6 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
 # NOTE: particle data with foreach_get, well, in particles there is a problem, i export only alive particles and each have to be checked first, and with hair, oh well, it was not easy to get it working and now i don't want to break it.. so i guess this will stay as it is..
 # TODO: when exporting motion blur, move timeline just once per step, eg. add each step to all objects at once per timeline move.
-# FIXME: empties can be used for duplication with dupligroup. now they aren't exported. this should be fixed now, but need to test a few more scenarios
-# FIXME: when mesh with just single vertices is used as duplication generator, it turns to empty with no instances
 
 
 class MXSExport():
@@ -798,7 +796,9 @@ class MXSExport():
         empties = self._empties[:]
         for o in empties:
             ob = o['object']
-            if(ob.dupli_type == 'GROUP' and ob.dupli_group):
+            # check for objects that are exported as empty (eg real empty or mesh without faces), those cas still carry duplis
+            # or check for meshes with zero faces but vertex duplis
+            if((ob.dupli_type == 'GROUP' and ob.dupli_group) or (ob.type == 'MESH' and len(ob.data.polygons) == 0 and ob.dupli_type == 'VERTS')):
                 ob.dupli_list_create(self.context.scene, settings='RENDER')
                 for dli in ob.dupli_list:
                     do = dli.object
