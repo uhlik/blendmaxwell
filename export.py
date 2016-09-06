@@ -71,6 +71,112 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: when exporting motion blur, move timeline just once per step, eg. add each step to all objects at once per timeline move.
 
 
+class MXSExportStats():
+    materials = 0
+    cameras = 0
+    empties = 0
+    meshes = 0
+    vertices = 0
+    triangles = 0
+    instances = 0
+    particles = 0
+    particles_number = 0
+    hairs = 0
+    hair_curves = 0
+    references = 0
+    volumetrics = 0
+    modifiers = 0
+    
+    def __init__(self):
+        pass
+    
+    def add(self, o, ):
+        if(o.m_type == 'MATERIAL'):
+            self.materials += 1
+        elif(o.m_type == 'CAMERA'):
+            self.cameras += 1
+        elif(o.m_type == 'EMPTY'):
+            self.empties += 1
+        elif(o.m_type == 'MESH'):
+            self.meshes += 1
+            self.vertices += len(o.m_vertices[0])
+            self.triangles += len(o.m_triangles)
+        elif(o.m_type == 'MESH_INSTANCE'):
+            self.instances += 1
+        elif(o.m_type == 'SCENE'):
+            pass
+        elif(o.m_type == 'ENVIRONMENT'):
+            pass
+        elif(o.m_type == 'PARTICLES'):
+            self.particles += 1
+            self.particles_number += o.stat_num
+        elif(o.m_type == 'HAIR'):
+            self.hairs += 1
+            self.hair_curves += o.m_data['HAIR_GUIDES_COUNT'][0]
+        elif(o.m_type == 'REFERENCE'):
+            self.references += 1
+        elif(o.m_type == 'VOLUMETRICS'):
+            self.volumetrics += 1
+        elif(o.m_type == 'SUBDIVISION'):
+            self.modifiers += 1
+        elif(o.m_type == 'SCATTER'):
+            self.modifiers += 1
+        elif(o.m_type == 'GRASS'):
+            self.modifiers += 1
+        elif(o.m_type == 'CLONER'):
+            self.modifiers += 1
+        elif(o.m_type == 'SEA'):
+            self.modifiers += 1
+        elif(o.m_type == 'WIREFRAME_CONTAINER'):
+            self.empties += 1
+        elif(o.m_type == 'WIREFRAME_BASE'):
+            self.meshes += 1
+            self.vertices += len(o.m_vertices)
+            self.triangles += len(o.m_triangles)
+        elif(o.m_type == 'WIREFRAME_INSTANCES'):
+            self.instances += 1
+        else:
+            pass
+    
+    def int_to_short_notation(self, n, precision=1, ):
+        if(round(n / 10 ** 12, precision) >= 1):
+            r = int(round(n / 10 ** 12, precision))
+            return '{}t'.format(r)
+        elif(round(n / 10 ** 9, precision) >= 1):
+            r = int(round(n / 10 ** 9, precision))
+            return '{}g'.format(r)
+        elif(round(n / 10 ** 6, precision) >= 1):
+            r = int(round(n / 10 ** 6, precision))
+            return '{}m'.format(r)
+        elif(round(n / 10 ** 3, precision) >= 1):
+            r = int(round(n / 10 ** 3, precision))
+            return '{}k'.format(r)
+        else:
+            r = round(n / 10 ** 3, precision)
+            if(r >= 0.5):
+                return '{}k'.format(r)
+            else:
+                return '{}'.format(n)
+    
+    def pprint(self):
+        log("{}".format("-" * 30), 1, )
+        log("export statistics:", 1, )
+        log("materials:   {}".format(self.int_to_short_notation(self.materials)), 2, prefix="", )
+        log("cameras:     {}".format(self.int_to_short_notation(self.cameras)), 2, prefix="", )
+        log("empties:     {}".format(self.int_to_short_notation(self.empties)), 2, prefix="", )
+        log("meshes:      {} (verts: {}, tris: {})".format(self.int_to_short_notation(self.meshes),
+                                                           self.int_to_short_notation(self.vertices),
+                                                           self.int_to_short_notation(self.triangles)), 2, prefix="", )
+        log("instances:   {}".format(self.int_to_short_notation(self.instances)), 2, prefix="", )
+        log("particles:   {} ({})".format(self.int_to_short_notation(self.particles),
+                                          self.int_to_short_notation(self.particles_number)), 2, prefix="", )
+        log("hairs:       {} ({})".format(self.int_to_short_notation(self.hairs),
+                                          self.int_to_short_notation(self.hair_curves)), 2, prefix="", )
+        log("references:  {}".format(self.int_to_short_notation(self.references)), 2, prefix="", )
+        log("volumetrics: {}".format(self.int_to_short_notation(self.volumetrics)), 2, prefix="", )
+        log("modifiers:   {}".format(self.int_to_short_notation(self.modifiers)), 2, prefix="", )
+
+
 class MXSExport():
     def __init__(self, mxs_path, engine=None, ):
         # clear db, before we start, previous error will cause more errors
@@ -1011,6 +1117,9 @@ class MXSExport():
         return h
     
     def _export(self):
+        # init stats
+        self.stats = MXSExportStats()
+        
         # collect all objects to be exported, split them by type. keep this dict if hierarchy would be needed
         log("collecting objects..", 1, LogStyles.MESSAGE, )
         self.tree = self._collect()
@@ -1412,6 +1521,10 @@ class MXSExport():
             utils.wipe_out_object(bpy.data.objects[self.wireframe_container_name], and_data=True, )
     
     def _write(self, o, ):
+        # add to stats
+        if(not o.skip):
+            self.stats.add(o)
+        
         self._progress()
         
         if(system.PLATFORM == 'Darwin'):
@@ -3481,6 +3594,8 @@ class MXSParticles(MXSObject):
         
         has_uvs = False
         pdata = {}
+        self.stat_num = 0
+        
         if(mxex.source == 'BLENDER_PARTICLES'):
             def check(ps):
                 if(len(ps.particles) == 0):
@@ -3648,6 +3763,9 @@ class MXSParticles(MXSObject):
                         'log_indent': 3, }
                 rfbw = rfbin.RFBinWriter(**prms)
                 mxex.bin_filename = rfbw.path
+                
+                self.stat_num = len(particles)
+                
         else:
             mxex.embed = False
             

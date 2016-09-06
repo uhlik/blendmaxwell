@@ -893,6 +893,8 @@ class MaxwellRenderExportEngine(RenderEngine):
         
         ex = export.MXSExport(mxs_path=p, engine=self, )
         
+        ex.stats.pprint()
+        
         from .log import NUMBER_OF_WARNINGS
         if(NUMBER_OF_WARNINGS > 0):
             if(m.export_suppress_warning_popups):
