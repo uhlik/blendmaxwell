@@ -69,6 +69,7 @@ ROTATE_X_MINUS_90 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
 # TODO: put wireframe scene creation to special export operator, remove all wireframe related stuff from normal workflow. also when done this way, no ugly hacking is needed to put new object during render export (which might crash blender). also implement wireframe without special switches and functions. modify current scene, rewrite serialized scene data and then pass to external script as regular scene.
 # NOTE: particle data with foreach_get, well, in particles there is a problem, i export only alive particles and each have to be checked first, and with hair, oh well, it was not easy to get it working and now i don't want to break it.. so i guess this will stay as it is..
 # TODO: when exporting motion blur, move timeline just once per step, eg. add each step to all objects at once per timeline move.
+# TODO: export group instances
 
 
 class MXSExportStats():
