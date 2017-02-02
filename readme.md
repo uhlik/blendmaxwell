@@ -1,12 +1,16 @@
 # **blendmaxwell**
-#### Maxwell Render exporter for Blender
+#### Maxwell Render 3 exporter for Blender
 
 ![teaser](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr2.jpg)
+
+### notice
+
+This exporter addon is for **Maxwell Render 3** series only, compatible with version 3.2.1.3 and later
 
 ### features:
 
 * Works on Mac OS X, Linux and Windows
-* Compatible with Maxwell Render 3.2.1.3+ and Blender 2.77a+
+* Compatible with Maxwell Render 3 version 3.2.1.3+ and Blender 2.77a+
 * UI as close to Maxwell Studio as possible
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
