@@ -5,7 +5,7 @@
 
 ### notice
 
-This exporter addon is for **Maxwell Render 3** series only, compatible with version 3.2.1.3 and later
+This exporter addon is for **Maxwell Render 3** only, compatible with version 3.2.1.3 and later
 
 ### features:
 
