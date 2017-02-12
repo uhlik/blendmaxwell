@@ -2232,11 +2232,21 @@ class MXSScene(Serializable):
         self.m_scene_quality = mx.scene_quality
         self.m_output_depth = mx.output_depth
         self.m_output_image_enabled = mx.output_image_enabled
+        
+        bp = bpy.path.abspath(bpy.context.blend_data.filepath)
+        h, t = os.path.split(bp)
+        n, e = os.path.splitext(t)
+        
         if(mx.output_image != ''):
             self.m_output_image = bpy.path.abspath(mx.output_image)
+        else:
+            self.m_output_image = os.path.join(h, "{}.png".format(n))
         self.m_output_mxi_enabled = mx.output_mxi_enabled
         if(mx.output_mxi != ''):
             self.m_output_mxi = bpy.path.abspath(mx.output_mxi)
+        else:
+            self.m_output_mxi = os.path.join(h, "{}.mxi".format(n))
+        
         self.m_materials_override = mx.materials_override
         self.m_materials_override_path = bpy.path.abspath(mx.materials_override_path)
         self.m_materials_search_path = bpy.path.abspath(mx.materials_search_path)
