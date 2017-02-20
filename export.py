@@ -3468,7 +3468,7 @@ class MXSMesh(MXSObject):
         
         uv_channels = []
         for tix, uvtex in enumerate(me.tessface_uv_textures):
-            uv = tess_uvs(me.tessface_uv_textures.active)
+            uv = tess_uvs(uvtex)
             uv_channels.append(uv)
         
         self.m_num_positions += 1
