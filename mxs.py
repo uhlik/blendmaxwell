@@ -43,6 +43,8 @@ elif(s == 'Linux'):
         from pymaxwell import *
     except ImportError:
         mp = os.environ.get("MAXWELL3_ROOT")
+        if(not mp):
+            raise OSError("missing MAXWELL3_ROOT environment variable")
         pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.5'))
         if(not os.path.exists(pp)):
             raise OSError("pymaxwell for python 3.5 does not exist ({})".format(pp))
@@ -53,6 +55,8 @@ elif(s == 'Windows'):
         from pymaxwell import *
     except ImportError:
         mp = os.environ.get("MAXWELL3_ROOT")
+        if(not mp):
+            raise OSError("missing MAXWELL3_ROOT environment variable")
         pp = os.path.abspath(os.path.join(mp, 'python', 'pymaxwell', 'python3.5'))
         if(not os.path.exists(pp)):
             raise OSError("pymaxwell for python 3.5 does not exist ({})".format(pp))
