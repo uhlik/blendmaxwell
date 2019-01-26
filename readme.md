@@ -10,7 +10,7 @@ This exporter addon is for **Maxwell Render 3** only, compatible with version 3.
 ### features:
 
 * Works on Mac OS X, Linux and Windows
-* Compatible with Maxwell Render 3 version 3.2.1.3+ and Blender 2.77a+
+* Compatible with Maxwell Render 3 version 3.2.1.3+ and Blender 2.77a+ < 2.80
 * UI as close to Maxwell Studio as possible
 * All renderable geometry (except Metaballs)
 * Object hierarchy (not renderable objects are removed unless they have renderable child objects)
