@@ -1,7 +1,7 @@
 # **blendmaxwell**
 #### Maxwell Render 3 exporter for Blender
 
-![teaser](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr2.jpg)
+![teaser](https://raw.githubusercontent.com/uhlik/bpy/media/bmr2.jpg)
 
 ### notice
 
@@ -35,7 +35,7 @@ This exporter addon is for **Maxwell Render 3** only, compatible with version 3.
 * Export Subdivision modifiers if their type is Catmull-Clark and they are at the end of modifier stack on regular mesh objects (optional)
 * Scene import (objects, emitters, cameras and sun selectively)
 
-![ui](https://raw.githubusercontent.com/uhlik/bpy/master/x/bmr.png)
+![ui](https://raw.githubusercontent.com/uhlik/bpy/media/bmr.png)
 
 ### addon installation - Mac OS X:
 
